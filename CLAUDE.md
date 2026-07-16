@@ -5,10 +5,14 @@ Vite + React 18 + TS, Tailwind 3.4, Zustand (persist), Radix, React Router 6, Lu
 
 ## Rules
 - ALL nav derives from src/config/navigation.ts. Never hardcode nav items elsewhere.
-- GRAYSCALE ONLY via CSS-var tokens. No hex, no gray-XXX, no semantic colors.
-- No page bodies. PlaceholderPage renders H1 only (+ TEMP detail link).
+- Grayscale via CSS-var tokens everywhere. No hex, no gray-XXX in components.
+  EXCEPTION: status badges and vitals use the semantic status tokens in index.css.
+  Buttons, CTAs, chrome, and all other surfaces stay neutral — no color.
+- Pages not yet built render via PlaceholderPage (H1 only). Real pages live in src/pages/
+  and are wired through the page registry in src/routes/index.tsx.
 - Only the 9 product items are pinnable (see PINNABLE_PATHS).
 - Spacing: modern, generous, low-density.
+- Everything is client-side over dummy data. No server, no API calls.
 
 ## Terminology
 - main-nav item / section / sub-nav item / direct item (= main-nav item with no sections)

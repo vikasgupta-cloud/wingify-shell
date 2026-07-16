@@ -5,13 +5,14 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import { ChevronDown, Plus, Search } from "lucide-react";
 import { getEntities, getFilters } from "../../config/entities";
-import { firstChildPath, resolveBreadcrumb } from "../../lib/nav";
+import { mainNavCrumbPath, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import PrimaryRail from "./PrimaryRail";
-import SubNavPanel from "./SubNavPanel";
 
-const EDGE_OPEN_DELAY_MS = 400;
+const EDGE_OPEN_DELAY_MS = 240;
 const OVERLAY_CLOSE_GRACE_MS = 250;
+/** Must match the duration-[180ms] classes on the overlay scrim and panel. */
+const OVERLAY_ANIM_MS = 180;
 
 type DetailShellProps = {
   /** The leaf page path this detail surface belongs to, e.g. "/feature-management/holdouts". Defaults to the URL before "/c/". */
@@ -25,6 +26,11 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
+  // Animation pair: the overlay stays mounted (navRendered) while it slides
+  // out, and the "shown" styles (navShown) lag mount by a frame so the
+  // slide-in transition actually plays.
+  const [navRendered, setNavRendered] = useState(false);
+  const [navShown, setNavShown] = useState(false);
   const [entityOpen, setEntityOpen] = useState(false);
   const openTimer = useRef<number | undefined>(undefined);
   const closeTimer = useRef<number | undefined>(undefined);
@@ -74,6 +80,28 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
     };
   }, []);
 
+  useEffect(() => {
+    if (navOpen) {
+      setNavRendered(true);
+      // Double rAF: let the browser commit the off-screen styles before
+      // switching to the shown ones, so the transition runs.
+      let raf2: number | undefined;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setNavShown(true));
+      });
+      return () => {
+        cancelAnimationFrame(raf1);
+        if (raf2 !== undefined) cancelAnimationFrame(raf2);
+      };
+    }
+    setNavShown(false);
+    const unmountTimer = window.setTimeout(
+      () => setNavRendered(false),
+      OVERLAY_ANIM_MS
+    );
+    return () => window.clearTimeout(unmountTimer);
+  }, [navOpen]);
+
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
@@ -89,9 +117,12 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
 
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <Link
-              to={item ? firstChildPath(item) : "/"}
-              className="truncate rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              to={mainNavCrumbPath(basePath)}
+              className="flex items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
+              {item?.icon && (
+                <item.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              )}
               {item?.label ?? basePath}
             </Link>
             {leaf && (
@@ -229,15 +260,26 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
         onMouseLeave={cancelOpen}
       />
 
-      {navOpen &&
+      {navRendered &&
         createPortal(
-          <div className="fixed inset-0 z-50">
+          <div
+            className={cn(
+              "fixed inset-0 z-50",
+              !navShown && "pointer-events-none"
+            )}
+          >
             <div
-              className="absolute inset-0 bg-foreground opacity-20"
+              className={cn(
+                "absolute inset-0 bg-foreground transition-opacity duration-[180ms] ease-out",
+                navShown ? "opacity-20" : "opacity-0"
+              )}
               onClick={() => setNavOpen(false)}
             />
             <div
-              className="absolute inset-y-0 left-0 flex bg-background shadow-xl"
+              className={cn(
+                "absolute inset-y-0 left-0 flex bg-background shadow-xl transition-transform duration-[180ms] ease-out motion-reduce:transition-none",
+                navShown ? "translate-x-0" : "-translate-x-full"
+              )}
               onMouseEnter={cancelScheduledClose}
               onMouseLeave={scheduleOverlayClose}
               onClick={(e) => {
@@ -248,8 +290,7 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
                 }
               }}
             >
-              <PrimaryRail />
-              {item?.sections && <SubNavPanel item={item} variant="docked" />}
+              <PrimaryRail forceFlyout />
             </div>
           </div>,
           document.body

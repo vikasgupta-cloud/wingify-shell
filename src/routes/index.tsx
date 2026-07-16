@@ -1,9 +1,16 @@
+import type { ComponentType } from "react";
 import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
 import { NAV } from "../config/navigation";
 import { firstChildPath } from "../lib/nav";
 import AppLayout from "../components/layout/AppLayout";
 import DetailShell from "../components/layout/DetailShell";
 import PlaceholderPage from "../pages/PlaceholderPage";
+import WebExperimentation from "../pages/WebExperimentation";
+
+// Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
+const PAGES: Partial<Record<string, ComponentType>> = {
+  "/web-experiment": WebExperimentation,
+};
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
 // DetailShell brings its own chrome) are generated together: every leaf page
@@ -18,6 +25,11 @@ const addDetailRoute = (leafPath: string) => {
   });
 };
 
+const leafElement = (leafPath: string) => {
+  const Page = PAGES[leafPath] ?? PlaceholderPage;
+  return <Page />;
+};
+
 for (const item of NAV) {
   if (item.sections) {
     const leaves = item.sections.flatMap((section) => section.items);
@@ -27,16 +39,22 @@ for (const item of NAV) {
         { index: true, element: <Navigate to={firstChildPath(item)} replace /> },
         ...leaves.map((leaf) => ({
           path: leaf.path,
-          element: <PlaceholderPage />,
+          element: leafElement(leaf.path),
         })),
       ],
     });
     leaves.forEach((leaf) => addDetailRoute(leaf.path));
   } else {
-    pageRoutes.push({ path: item.path, element: <PlaceholderPage /> });
+    pageRoutes.push({ path: item.path, element: leafElement(item.path) });
     addDetailRoute(item.path);
   }
 }
+
+// Reports view of the web-experiment detail surface — same shell, own URL.
+detailRoutes.push({
+  path: "/web-experiment/c/:entityId/reports",
+  element: <DetailShell basePath="/web-experiment" />,
+});
 
 export const router = createBrowserRouter([
   ...detailRoutes,

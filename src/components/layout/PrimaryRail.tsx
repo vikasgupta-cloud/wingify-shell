@@ -1,6 +1,5 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { MoreHorizontal, Pin, PinOff } from "lucide-react";
@@ -11,12 +10,39 @@ import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
 
 const FLYOUT_CLOSE_GRACE_MS = 120;
+const MORE_CLOSE_GRACE_MS = 150;
 const FLYOUT_VIEWPORT_MARGIN = 8;
+const MORE_FLYOUT_WIDTH = 248;
 
 const tooltipContentClass =
   "z-50 rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md";
 
-export default function PrimaryRail() {
+/** Clamp a fixed-position flyout inside the viewport once its height is measurable. */
+function useClampedFlyoutTop(
+  ref: React.RefObject<HTMLDivElement | null>,
+  state: { top: number } | null
+) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !state) return;
+    const maxTop = window.innerHeight - el.offsetHeight - FLYOUT_VIEWPORT_MARGIN;
+    el.style.top = `${Math.max(FLYOUT_VIEWPORT_MARGIN, Math.min(state.top, maxTop))}px`;
+  }, [ref, state]);
+}
+
+type PrimaryRailProps = {
+  /** Open hover flyouts even when docked — used by the level-2 nav overlay, which has no docked panel. */
+  forceFlyout?: boolean;
+  /** Whether the docked panel column is showing the More panel — owned by AppLayout, which renders that column. */
+  moreSelected?: boolean;
+  onMoreSelectedChange?: (selected: boolean) => void;
+};
+
+export default function PrimaryRail({
+  forceFlyout = false,
+  moreSelected = false,
+  onMoreSelectedChange,
+}: PrimaryRailProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isDocked = useUIStore((s) => s.isDocked);
@@ -29,9 +55,29 @@ export default function PrimaryRail() {
   const closeTimer = useRef<number | undefined>(undefined);
   const flyoutRef = useRef<HTMLDivElement>(null);
 
+  // More flyout (undocked mode B): click-opened list of unpinned items, plus a
+  // nested sub-nav flyout for the hovered row.
+  const [moreFlyout, setMoreFlyout] = useState<{ top: number } | null>(null);
+  const [moreNested, setMoreNested] = useState<{ path: string; top: number } | null>(null);
+  const moreCloseTimer = useRef<number | undefined>(undefined);
+  const moreFlyoutRef = useRef<HTMLDivElement>(null);
+  const moreNestedRef = useRef<HTMLDivElement>(null);
+
+  const closeMore = () => {
+    setMoreFlyout(null);
+    setMoreNested(null);
+  };
+  const scheduleMoreClose = () => {
+    window.clearTimeout(moreCloseTimer.current);
+    moreCloseTimer.current = window.setTimeout(closeMore, MORE_CLOSE_GRACE_MS);
+  };
+  const cancelMoreClose = () => window.clearTimeout(moreCloseTimer.current);
+
   const openFlyout = (item: NavItem, target: HTMLElement) => {
-    if (isDocked) return;
+    if (isDocked && !forceFlyout) return;
     window.clearTimeout(closeTimer.current);
+    // Item flyouts and the More flyout occupy the same strip — never both.
+    closeMore();
     setFlyout(
       item.sections
         ? { path: item.path, top: target.getBoundingClientRect().top }
@@ -47,13 +93,20 @@ export default function PrimaryRail() {
   };
   const cancelClose = () => window.clearTimeout(closeTimer.current);
 
-  // Clamp the flyout inside the viewport once its height is measurable.
-  useLayoutEffect(() => {
-    const el = flyoutRef.current;
-    if (!el || !flyout) return;
-    const maxTop = window.innerHeight - el.offsetHeight - FLYOUT_VIEWPORT_MARGIN;
-    el.style.top = `${Math.max(FLYOUT_VIEWPORT_MARGIN, Math.min(flyout.top, maxTop))}px`;
-  }, [flyout]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMore();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.clearTimeout(moreCloseTimer.current);
+    };
+  }, []);
+
+  useClampedFlyoutTop(flyoutRef, flyout);
+  useClampedFlyoutTop(moreFlyoutRef, moreFlyout);
+  useClampedFlyoutTop(moreNestedRef, moreNested);
 
   const isVisible = (item: NavItem) =>
     !item.pinnable || pinnedPaths.includes(item.path);
@@ -66,6 +119,37 @@ export default function PrimaryRail() {
   const flyoutItem = flyout
     ? NAV.find((i) => i.path === flyout.path)
     : undefined;
+  // Resolving from `unpinned` auto-dismisses the nested flyout when its item gets pinned.
+  const moreNestedItem = moreNested
+    ? unpinned.find((i) => i.path === moreNested.path)
+    : undefined;
+  const moreUsesDock = isDocked && !forceFlyout;
+
+  // Hover, focus, and click all open the More flyout (never toggle it shut),
+  // matching the other rail items' immediate hover-open behavior.
+  const openMoreFlyout = (target: HTMLElement) => {
+    if (moreUsesDock) return;
+    cancelMoreClose();
+    setFlyout(null);
+    setMoreFlyout({ top: target.getBoundingClientRect().top });
+  };
+
+  const handleMoreClick = (target: HTMLElement) => {
+    if (moreUsesDock) {
+      onMoreSelectedChange?.(true);
+      return;
+    }
+    openMoreFlyout(target);
+  };
+
+  const revealMoreNested = (item: NavItem, target: HTMLElement) => {
+    cancelMoreClose();
+    setMoreNested(
+      item.sections
+        ? { path: item.path, top: target.getBoundingClientRect().top }
+        : null
+    );
+  };
 
   const renderRailButton = (item: NavItem) => {
     const Icon = item.icon;
@@ -75,20 +159,53 @@ export default function PrimaryRail() {
       <button
         type="button"
         aria-label={item.label}
-        onClick={() => navigate(firstChildPath(item))}
-        onMouseEnter={(e) => openFlyout(item, e.currentTarget)}
-        onMouseLeave={scheduleClose}
-        onFocus={(e) => openFlyout(item, e.currentTarget)}
-        onBlur={scheduleClose}
+        onClick={
+          item.flyoutOnly
+            ? undefined
+            : () => {
+                onMoreSelectedChange?.(false);
+                navigate(firstChildPath(item));
+              }
+        }
+        onMouseEnter={item.flyoutOnly ? undefined : (e) => openFlyout(item, e.currentTarget)}
+        onMouseLeave={item.flyoutOnly ? undefined : scheduleClose}
+        onFocus={item.flyoutOnly ? undefined : (e) => openFlyout(item, e.currentTarget)}
+        onBlur={item.flyoutOnly ? undefined : scheduleClose}
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rail-foreground transition-colors hover:bg-accent",
           isActive &&
             "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
         )}
       >
-        <Icon className="h-5 w-5" strokeWidth={1.75} />
+        {item.initials ? (
+          <span
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground",
+              isActive && "bg-rail-active text-rail-active-foreground"
+            )}
+          >
+            {item.initials}
+          </span>
+        ) : (
+          <Icon className="h-5 w-5" strokeWidth={1.75} />
+        )}
       </button>
     );
+
+    // Flyout-only items (Profile, Activity, Help): no navigation, no sub-nav
+    // flyout — just a plain tooltip naming the item.
+    if (item.flyoutOnly) {
+      return (
+        <Tooltip.Root key={item.path}>
+          <Tooltip.Trigger asChild>{button}</Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content side="right" sideOffset={8} className={tooltipContentClass}>
+              {item.label}
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      );
+    }
 
     // Items with a flyout panel reveal their name there — no tooltip needed.
     if (item.sections) {
@@ -124,7 +241,7 @@ export default function PrimaryRail() {
       );
     }
 
-    // Direct non-pinnable items (Helpdesk, Activity timeline): plain tooltip.
+    // Direct non-pinnable items: plain tooltip.
     return (
       <Tooltip.Root key={item.path}>
         <Tooltip.Trigger asChild>{button}</Tooltip.Trigger>
@@ -151,7 +268,10 @@ export default function PrimaryRail() {
           <button
             type="button"
             aria-label="Go to Home dashboard"
-            onClick={() => navigate("/home/dashboard")}
+            onClick={() => {
+              onMoreSelectedChange?.(false);
+              navigate("/home/dashboard");
+            }}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-rail-active text-base font-bold text-rail-active-foreground"
           >
             W
@@ -164,64 +284,35 @@ export default function PrimaryRail() {
           <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {group2.map(renderRailButton)}
             {unpinned.length > 0 && (
-              <DropdownMenu.Root modal={false}>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <DropdownMenu.Trigger asChild>
-                      <button
-                        type="button"
-                        aria-label="More navigation items"
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rail-foreground transition-colors hover:bg-accent"
-                      >
-                        <MoreHorizontal className="h-5 w-5" strokeWidth={1.75} />
-                      </button>
-                    </DropdownMenu.Trigger>
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content
-                      side="right"
-                      sideOffset={8}
-                      className={tooltipContentClass}
-                    >
-                      More
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    side="right"
-                    align="start"
-                    sideOffset={6}
-                    className="z-50 min-w-[240px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <button
+                    type="button"
+                    aria-label="More navigation items"
+                    onClick={(e) => handleMoreClick(e.currentTarget)}
+                    onMouseEnter={(e) => openMoreFlyout(e.currentTarget)}
+                    onMouseLeave={scheduleMoreClose}
+                    onFocus={(e) => openMoreFlyout(e.currentTarget)}
+                    onBlur={scheduleMoreClose}
+                    className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rail-foreground transition-colors hover:bg-accent",
+                      (moreUsesDock ? moreSelected : !!moreFlyout) &&
+                        "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
+                    )}
                   >
-                    {unpinned.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <DropdownMenu.Item
-                          key={item.path}
-                          onSelect={() => navigate(firstChildPath(item))}
-                          className="group flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent"
-                        >
-                          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span className="flex-1 truncate">{item.label}</span>
-                          <button
-                            type="button"
-                            aria-label={`Pin ${item.label} to sidebar`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              pin(item.path);
-                            }}
-                            className="rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                          >
-                            <Pin className="h-3.5 w-3.5" />
-                          </button>
-                        </DropdownMenu.Item>
-                      );
-                    })}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
+                    <MoreHorizontal className="h-5 w-5" strokeWidth={1.75} />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="right"
+                    sideOffset={8}
+                    className={tooltipContentClass}
+                  >
+                    More
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
             )}
           </div>
           {separator}
@@ -230,7 +321,7 @@ export default function PrimaryRail() {
           </div>
         </div>
 
-        {!isDocked && flyout && flyoutItem?.sections && (
+        {(!isDocked || forceFlyout) && flyout && flyoutItem?.sections && (
           <div
             ref={flyoutRef}
             className="fixed z-40 pl-1.5"
@@ -242,6 +333,95 @@ export default function PrimaryRail() {
               item={flyoutItem}
               variant="flyout"
               onRequestClose={() => setFlyout(null)}
+            />
+          </div>
+        )}
+
+        {moreFlyout && unpinned.length > 0 && (
+          <div
+            ref={moreFlyoutRef}
+            className="fixed z-40 pl-1.5"
+            style={{ left: RAIL_WIDTH, top: moreFlyout.top }}
+            onMouseEnter={cancelMoreClose}
+            onMouseLeave={scheduleMoreClose}
+          >
+            <div
+              className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+              style={{ width: MORE_FLYOUT_WIDTH }}
+            >
+              {unpinned.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.path}
+                    onMouseEnter={(e) => revealMoreNested(item, e.currentTarget)}
+                    onFocus={(e) => revealMoreNested(item, e.currentTarget)}
+                    className={cn(
+                      "flex items-center gap-1 rounded-sm pr-1.5 transition-colors hover:bg-accent",
+                      moreNestedItem?.path === item.path && "bg-accent"
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate(firstChildPath(item));
+                        closeMore();
+                      }}
+                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left outline-none"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="flex-1 truncate">{item.label}</span>
+                    </button>
+                    <Tooltip.Root>
+                      <Tooltip.Trigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`Pin ${item.label} to sidebar`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            pin(item.path);
+                          }}
+                          className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <Pin className="h-3.5 w-3.5" />
+                        </button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Portal>
+                        <Tooltip.Content
+                          side="bottom"
+                          sideOffset={4}
+                          className={tooltipContentClass}
+                        >
+                          Pin to sidebar
+                        </Tooltip.Content>
+                      </Tooltip.Portal>
+                    </Tooltip.Root>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {moreFlyout && moreNested && moreNestedItem?.sections && (
+          <div
+            ref={moreNestedRef}
+            className="fixed z-40 pl-1.5"
+            style={{
+              left: RAIL_WIDTH + 6 + MORE_FLYOUT_WIDTH,
+              top: moreNested.top,
+            }}
+            onMouseEnter={cancelMoreClose}
+            onMouseLeave={scheduleMoreClose}
+            onClick={(e) => {
+              // Sub-nav link clicks navigate; dismiss the whole More stack.
+              if ((e.target as HTMLElement).closest("a")) closeMore();
+            }}
+          >
+            <SubNavPanel
+              item={moreNestedItem}
+              variant="flyout"
+              onRequestClose={closeMore}
             />
           </div>
         )}

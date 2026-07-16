@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import { NAV, type NavItem, type NavLeaf } from "../config/navigation";
 
 /** Width of the primary rail in px — shared by the rail, its flyout, and the app grid. */
@@ -9,6 +10,15 @@ export function findItemByPath(pathname: string): NavItem | undefined {
     (item) =>
       pathname === item.path || pathname.startsWith(item.path + "/")
   );
+}
+
+/**
+ * Icon for a path: sub-nav items have no icon of their own, so they inherit the
+ * icon of the main-nav item that owns their path. For a main-nav item's own
+ * path, that's its own icon.
+ */
+export function iconForPath(pathname: string): LucideIcon | undefined {
+  return findItemByPath(pathname)?.icon;
 }
 
 /** First sub-nav item path for items with sections, else the item's own path. */
@@ -33,6 +43,20 @@ export function resolveBreadcrumb(pathname: string): Breadcrumb {
     (l) => pathname === l.path || pathname.startsWith(l.path + "/")
   );
   return { item, leaf, siblings };
+}
+
+/** Href for the main-nav breadcrumb segment: the current leaf's path, falling back to the section's first child. */
+export function mainNavCrumbPath(pathname: string): string {
+  const { item, leaf } = resolveBreadcrumb(pathname);
+  if (leaf) return leaf.path;
+  return item ? firstChildPath(item) : "/";
+}
+
+/** Whether the top bar's Create button shows on this path, per nav config. */
+export function showsCreate(pathname: string): boolean {
+  const { item, leaf } = resolveBreadcrumb(pathname);
+  if (leaf) return !leaf.hideCreate;
+  return !item?.hideCreate;
 }
 
 /** Label for the current page: sub-nav leaf label, direct item label, or fallback. */

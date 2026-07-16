@@ -29,6 +29,34 @@
   --panel: 0 0% 100%;
   --panel-foreground: 0 0% 9%;
   --panel-border: 0 0% 90%;
+
+  /* Semantic status tokens — the ONLY colored tokens in the app.
+     Used exclusively by StatusBadge and the vitals icon; never by chrome. */
+  --status-draft-bg: 214 95% 93%;
+  --status-draft-fg: 214 70% 38%;
+  --status-qa-bg: 45 93% 89%;
+  --status-qa-fg: 32 81% 33%;
+  --status-ready-bg: 215 25% 92%;
+  --status-ready-fg: 215 25% 34%;
+  --status-running-bg: 141 76% 92%;
+  --status-running-fg: 142 64% 26%;
+  --status-analysis-bg: 262 83% 94%;
+  --status-analysis-fg: 262 52% 42%;
+  --status-paused-bg: 27 96% 91%;
+  --status-paused-fg: 24 75% 34%;
+  --status-ended-bg: 0 0% 91%;
+  --status-ended-fg: 0 0% 24%;
+  --vitals-healthy: 142 64% 34%;
+  --vitals-unhealthy: 0 72% 46%;
+
+  /* Decision tokens — the only colored tokens outside status/vitals.
+     Reuse the running green and QA amber values. */
+  --decision-winner-fg: 142 64% 26%;
+  --decision-baseline-fg: 32 81% 33%;
+
+  /* Result tokens — used ONLY for uplift values and the confidence bar. */
+  --success-fg: 142 64% 26%;
+  --danger-fg: 0 72% 46%;
 }
 
 * {

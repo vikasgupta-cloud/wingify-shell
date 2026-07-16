@@ -1,7 +1,7 @@
 import { useLocation, Link, NavLink } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
-import { firstChildPath, resolveBreadcrumb } from "../../lib/nav";
+import { mainNavCrumbPath, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 
 export default function BreadcrumbNav() {
@@ -10,11 +10,14 @@ export default function BreadcrumbNav() {
 
   if (!item) return null;
 
+  const Icon = item.icon;
+
   // Direct item: the main-nav label is the current (last) segment.
   if (!item.sections || !leaf) {
     return (
       <div className="flex min-w-0 items-center text-sm">
-        <span className="truncate px-1.5 font-semibold text-foreground">
+        <span className="flex items-center gap-1.5 truncate px-1.5 font-semibold text-foreground">
+          <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
           {item.label}
         </span>
       </div>
@@ -24,9 +27,10 @@ export default function BreadcrumbNav() {
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm">
       <Link
-        to={firstChildPath(item)}
-        className="truncate rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        to={mainNavCrumbPath(pathname)}
+        className="flex items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
+        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
         {item.label}
       </Link>
       <span className="text-muted-foreground">/</span>

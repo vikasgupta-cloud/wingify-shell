@@ -44,6 +44,28 @@ export default {
           foreground: "hsl(var(--panel-foreground))",
           border: "hsl(var(--panel-border))",
         },
+        // Semantic status tokens — used only by StatusBadge / VitalsIcon.
+        status: {
+          draft: { bg: "hsl(var(--status-draft-bg))", fg: "hsl(var(--status-draft-fg))" },
+          qa: { bg: "hsl(var(--status-qa-bg))", fg: "hsl(var(--status-qa-fg))" },
+          ready: { bg: "hsl(var(--status-ready-bg))", fg: "hsl(var(--status-ready-fg))" },
+          running: { bg: "hsl(var(--status-running-bg))", fg: "hsl(var(--status-running-fg))" },
+          analysis: { bg: "hsl(var(--status-analysis-bg))", fg: "hsl(var(--status-analysis-fg))" },
+          paused: { bg: "hsl(var(--status-paused-bg))", fg: "hsl(var(--status-paused-fg))" },
+          ended: { bg: "hsl(var(--status-ended-bg))", fg: "hsl(var(--status-ended-fg))" },
+        },
+        vitals: {
+          healthy: "hsl(var(--vitals-healthy))",
+          unhealthy: "hsl(var(--vitals-unhealthy))",
+        },
+        // Decision tokens — used only by DecisionIcon.
+        decision: {
+          "winner-fg": "hsl(var(--decision-winner-fg))",
+          "baseline-fg": "hsl(var(--decision-baseline-fg))",
+        },
+        // Result tokens — used only for uplift values and the confidence bar.
+        "success-fg": "hsl(var(--success-fg))",
+        "danger-fg": "hsl(var(--danger-fg))",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -18,6 +18,7 @@ export default function SubNavPanel({
   onRequestClose,
 }: SubNavPanelProps) {
   const unpin = useUIStore((s) => s.unpin);
+  const pinnedPaths = useUIStore((s) => s.pinnedPaths);
 
   if (!item.sections) return null;
 
@@ -35,7 +36,7 @@ export default function SubNavPanel({
         <div className="truncate text-sm font-semibold text-foreground">
           {item.label}
         </div>
-        {item.pinnable && (
+        {item.pinnable && pinnedPaths.includes(item.path) && (
           <Tooltip.Provider delayDuration={300}>
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
@@ -64,13 +65,11 @@ export default function SubNavPanel({
           </Tooltip.Provider>
         )}
       </div>
-      <div className="flex flex-col gap-6 px-3">
+      <div className="flex flex-col px-3">
         {item.sections.map((section, i) => (
           <div key={section.heading ?? i} className="flex flex-col gap-1">
-            {section.heading && (
-              <div className="px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {section.heading}
-              </div>
+            {i > 0 && (
+              <div className="my-3 h-px bg-panel-border" aria-hidden="true" />
             )}
             {section.items.map((leaf) => (
               <NavLink
