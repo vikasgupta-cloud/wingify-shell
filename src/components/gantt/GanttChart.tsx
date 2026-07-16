@@ -462,7 +462,7 @@ export default function GanttChart() {
                     style={{ width: DAY_WIDTH }}
                   >
                     <span className="text-[11px] text-muted-foreground">{top}</span>
-                    <span className="text-xs text-foreground">{bottom}</span>
+                    <span className="text-xs tabular-nums text-foreground">{bottom}</span>
                   </div>
                 );
               })}

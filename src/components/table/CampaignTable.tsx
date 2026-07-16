@@ -207,22 +207,22 @@ function renderCell(c: Campaign, column: ColumnDef) {
     case "vitals":
       return <VitalsIcon vitals={c.vitals} />;
     case "variations":
-      return formatNumber(c.variations);
+      return <span className="tabular-nums">{formatNumber(c.variations)}</span>;
     case "visitors":
-      return formatNumber(c.visitors);
+      return <span className="tabular-nums">{formatNumber(c.visitors)}</span>;
     case "uniqueConversion":
-      return formatNumber(c.uniqueConversions);
+      return <span className="tabular-nums">{formatNumber(c.uniqueConversions)}</span>;
     case "createdOnBy":
       return (
         <div className="whitespace-nowrap">
-          <div>{formatDate(c.createdOn)}</div>
+          <div className="tabular-nums">{formatDate(c.createdOn)}</div>
           <div className="text-xs text-muted-foreground">by {c.createdBy}</div>
         </div>
       );
     case "startedOn":
-      return <span className="whitespace-nowrap">{formatDate(c.startedOn)}</span>;
+      return <span className="whitespace-nowrap tabular-nums">{formatDate(c.startedOn)}</span>;
     case "expectedImprovement":
-      return formatImprovement(c.expectedImprovement);
+      return <span className="tabular-nums">{formatImprovement(c.expectedImprovement)}</span>;
     case "primaryMetric":
       return <span className="whitespace-nowrap">{c.primaryMetric}</span>;
     case "leadingVariation":
@@ -249,7 +249,7 @@ function renderCell(c: Campaign, column: ColumnDef) {
         </div>
       );
     case "lastUpdated":
-      return <span className="whitespace-nowrap">{formatDate(c.lastUpdated)}</span>;
+      return <span className="whitespace-nowrap tabular-nums">{formatDate(c.lastUpdated)}</span>;
   }
 }
 
@@ -619,7 +619,7 @@ export default function CampaignTable() {
                 type="button"
                 onClick={() => setPage(p)}
                 className={cn(
-                  "min-w-[28px] rounded-md px-2 py-1 text-sm transition-colors",
+                  "min-w-[28px] rounded-md px-2 py-1 text-sm tabular-nums transition-colors",
                   p === currentPage
                     ? "bg-secondary font-medium text-secondary-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"

@@ -182,13 +182,22 @@ const iso = (year: number, month: number, day: number) =>
   new Date(Date.UTC(year, month - 1, day)).toISOString();
 const addDays = (isoDate: string, days: number) => {
   const d = new Date(isoDate);
+  // Reject null/undefined/"" (new Date(null) silently yields the epoch) and any
+  // malformed input, so a bad date fails loudly here instead of surfacing as an
+  // opaque "RangeError: Invalid time value" from a later .toISOString().
+  if (!isoDate || isNaN(d.getTime())) throw new Error("addDays: invalid date");
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString();
 };
 
 const MS_PER_DAY = 86_400_000;
-const diffDaysISO = (a: string, b: string) =>
-  Math.round((new Date(b).getTime() - new Date(a).getTime()) / MS_PER_DAY);
+const diffDaysISO = (a: string, b: string) => {
+  const ta = new Date(a).getTime();
+  const tb = new Date(b).getTime();
+  if (!a || isNaN(ta)) throw new Error("diffDaysISO: invalid date (a)");
+  if (!b || isNaN(tb)) throw new Error("diffDaysISO: invalid date (b)");
+  return Math.round((tb - ta) / MS_PER_DAY);
+};
 
 // Canonical STATUS_WORKFLOW-legal path from Draft to each status. Every hop is a
 // legal transition (see src/config/statusWorkflow.ts).
@@ -308,11 +317,14 @@ function generateReport(
   };
 
   const requiredDays = rng(14, 45);
-  // No-decision rows must read "Conclusion in N days" with N > 0 → elapsed < required.
+  // A campaign that never started has no elapsed duration — 0, never NaN.
+  // Otherwise: no-decision rows must read "Conclusion in N days" with N > 0 → elapsed < required.
   const elapsedDays =
-    decision === "No decision"
-      ? rng(2, Math.max(3, requiredDays - 2))
-      : rng(Math.floor(requiredDays / 2), requiredDays + 8);
+    startedOn === null
+      ? 0
+      : decision === "No decision"
+        ? rng(2, Math.max(3, requiredDays - 2))
+        : rng(Math.floor(requiredDays / 2), requiredDays + 8);
 
   const requiredVisitors = Math.max(visitors, 5000) + rng(3000, 45000);
   const requiredConversions = Math.max(uniqueConversions, 100) + rng(80, 2200);

@@ -39,7 +39,7 @@ const CARD_ICON_BUTTON =
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <div className="min-w-0">
-      <div className="text-lg font-semibold text-foreground">
+      <div className="text-lg font-semibold tabular-nums text-foreground">
         {value.toLocaleString("en-US")}
       </div>
       <div className="truncate text-xs text-muted-foreground">{label}</div>

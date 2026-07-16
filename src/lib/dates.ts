@@ -15,6 +15,9 @@ export function startOfDay(d: Date): Date {
 }
 
 export function addDays(d: Date, n: number): Date {
+  if (!(d instanceof Date) || isNaN(d.getTime())) {
+    throw new Error("addDays: invalid date");
+  }
   const x = new Date(d);
   x.setDate(x.getDate() + n);
   return x;
@@ -22,6 +25,12 @@ export function addDays(d: Date, n: number): Date {
 
 // Whole days between two dates (rounded to day boundaries).
 export function diffDays(a: Date, b: Date): number {
+  if (!(a instanceof Date) || isNaN(a.getTime())) {
+    throw new Error("diffDays: invalid date (a)");
+  }
+  if (!(b instanceof Date) || isNaN(b.getTime())) {
+    throw new Error("diffDays: invalid date (b)");
+  }
   return Math.round(
     (startOfDay(b).getTime() - startOfDay(a).getTime()) / MS_PER_DAY
   );

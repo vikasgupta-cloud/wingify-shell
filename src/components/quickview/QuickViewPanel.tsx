@@ -69,7 +69,7 @@ function ConclusionStat({
         {/* TODO: wire up conversions info tooltip */}
         {info && <Info className="h-3 w-3 shrink-0" aria-hidden />}
       </div>
-      <div className="mt-1 truncate">
+      <div className="mt-1 truncate tabular-nums">
         <span className="text-lg font-semibold text-foreground">{achieved}</span>{" "}
         <span className="text-sm text-muted-foreground">{rest}</span>
       </div>
@@ -175,7 +175,7 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
         ) : (
           <div
             className={cn(
-              "text-2xl font-semibold",
+              "text-2xl font-semibold tabular-nums",
               uplift >= 0 ? "text-success-fg" : "text-danger-fg"
             )}
           >
@@ -190,7 +190,7 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
         <div className="mt-1 flex items-center gap-3">
           <span
             className={cn(
-              "text-2xl font-semibold",
+              "text-2xl font-semibold tabular-nums",
               (confidence ?? 0) >= 95 ? "text-success-fg" : "text-foreground"
             )}
           >
@@ -211,7 +211,7 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
             </div>
             <div className="relative mt-1 h-3">
               <span
-                className="absolute -translate-x-1/2 text-[10px] text-muted-foreground"
+                className="absolute -translate-x-1/2 text-[10px] tabular-nums text-muted-foreground"
                 style={{ left: "95%" }}
               >
                 95%
@@ -243,7 +243,7 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
               ) : (
                 <span
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-0.5 text-sm font-medium",
+                    "inline-flex shrink-0 items-center gap-0.5 text-sm font-medium tabular-nums",
                     m.uplift >= 0 ? "text-success-fg" : "text-danger-fg"
                   )}
                 >

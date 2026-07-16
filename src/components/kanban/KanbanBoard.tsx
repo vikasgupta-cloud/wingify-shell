@@ -90,7 +90,7 @@ export default function KanbanBoard() {
                   {key}
                 </span>
               )}
-              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
                 {colRows.length}
               </span>
             </div>
