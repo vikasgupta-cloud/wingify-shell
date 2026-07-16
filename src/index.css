@@ -22,6 +22,10 @@
   --ring: 0 0% 9%;
   --radius: 0.5rem;
 
+  /* shadcn destructive tokens — required by Button/AlertDialog destructive variants. */
+  --destructive: 0 72% 46%;
+  --destructive-foreground: 0 0% 98%;
+
   --rail: 0 0% 98%;
   --rail-foreground: 0 0% 32%;
   --rail-active: 0 0% 9%;
