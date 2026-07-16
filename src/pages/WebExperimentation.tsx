@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Search } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { Input } from "@/components/ui/input";
 import CampaignTable from "../components/table/CampaignTable";
 import ColumnConfig from "../components/table/ColumnConfig";
 import FilterBar from "../components/table/FilterBar";
@@ -49,12 +50,12 @@ export default function WebExperimentation() {
         <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
           <div className="flex w-72 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
+            <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search campaigns…"
-              className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              className="h-auto border-0 bg-transparent px-0 py-0 text-foreground shadow-none focus-visible:ring-0"
             />
           </div>
           <FilterBar />

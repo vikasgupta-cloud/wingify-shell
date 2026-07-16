@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { MoreVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   BASE_STATE,
   BASE_VIEW_ID,
@@ -11,8 +12,10 @@ import {
 } from "../../store/views";
 import { cn } from "../../lib/utils";
 
-const SOLID_BUTTON =
-  "rounded-md border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/80";
+// Grey filled "Save view" button — secondary variant, sized/bordered to match the
+// original hand-styled control exactly.
+const SAVE_VIEW_CLS =
+  "h-auto border border-border px-2.5 py-1 shadow-none";
 
 function DirtyDot() {
   return (
@@ -172,18 +175,20 @@ export default function ViewBar() {
                   {!renaming && (
                     <DropdownMenu.Root>
                       <DropdownMenu.Trigger asChild>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon"
                           aria-label={`${view.name} options`}
                           className={cn(
-                            "mr-1.5 rounded-md p-1 text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:opacity-100",
+                            "mr-1.5 h-auto w-auto p-1 text-muted-foreground hover:text-foreground focus-visible:opacity-100 [&_svg]:size-3.5",
                             active
                               ? "opacity-100"
                               : "opacity-0 group-hover:opacity-100"
                           )}
                         >
                           <MoreVertical className="h-3.5 w-3.5" />
-                        </button>
+                        </Button>
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Portal>
                         <DropdownMenu.Content
@@ -218,23 +223,36 @@ export default function ViewBar() {
         {/* B) SAVE CONTROLS — only while the active view is dirty */}
         {isDirty && (
           <div className="mb-1.5 flex shrink-0 items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={discardActiveViewDraft}
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
             >
               Discard
-            </button>
+            </Button>
             {activeViewId === BASE_VIEW_ID ? (
-              <button type="button" onClick={openSaveAs} className={SOLID_BUTTON}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={openSaveAs}
+                className={SAVE_VIEW_CLS}
+              >
                 Save view
-              </button>
+              </Button>
             ) : (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <button type="button" className={SOLID_BUTTON}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className={SAVE_VIEW_CLS}
+                  >
                     Save view
-                  </button>
+                  </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content
@@ -329,19 +347,20 @@ export default function ViewBar() {
               />
               <div className="mt-5 flex justify-end gap-2">
                 <Dialog.Close asChild>
-                  <button
+                  <Button
                     type="button"
-                    className="rounded-md border border-input px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+                    variant="ghost"
+                    className="h-auto border border-input px-3 py-1.5 text-foreground hover:bg-muted hover:text-foreground"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </Dialog.Close>
-                <button
+                <Button
                   type="submit"
-                  className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                  className="h-auto px-3 py-1.5 shadow-none"
                 >
                   Save
-                </button>
+                </Button>
               </div>
             </form>
           </Dialog.Content>

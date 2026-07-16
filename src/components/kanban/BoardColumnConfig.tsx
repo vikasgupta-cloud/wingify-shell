@@ -1,6 +1,8 @@
 import { useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { GripVertical, RotateCcw, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useVisibleCampaigns } from "../../store/rows";
 import {
   useActiveViewState,
@@ -12,7 +14,7 @@ import { cn } from "../../lib/utils";
 import { arrangeKeys, naturalKeys } from "./columns";
 
 const CHECKBOX_CLASS =
-  "h-3.5 w-3.5 shrink-0 accent-foreground disabled:cursor-not-allowed";
+  "h-3.5 w-3.5 [&_svg]:size-3 disabled:cursor-not-allowed";
 
 export default function BoardColumnConfig() {
   const { groupBy, boardColumns } = useActiveViewState();
@@ -79,15 +81,17 @@ export default function BoardColumnConfig() {
             <span className="text-xs font-medium text-muted-foreground">
               Board columns
             </span>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               title="Reset to default"
               aria-label="Reset to default"
               onClick={reset}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="h-auto w-auto p-1 text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
 
           <div className="mt-1.5 flex flex-col">
@@ -119,10 +123,9 @@ export default function BoardColumnConfig() {
                 {dragIndex !== null && dropIndex === index && (
                   <div className="pointer-events-none absolute inset-x-0 -top-px h-0.5 bg-foreground" />
                 )}
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={!hidden.has(key)}
-                  onChange={() => toggle(key)}
+                  onCheckedChange={() => toggle(key)}
                   className={CHECKBOX_CLASS}
                 />
                 <span className="flex-1 truncate">{key}</span>

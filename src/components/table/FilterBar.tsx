@@ -3,6 +3,7 @@ import * as Popover from "@radix-ui/react-popover";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import { Check, ChevronDown, Plus, Rows3, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   getFilterFields,
   type Filter,
@@ -14,8 +15,10 @@ import { useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { cn } from "../../lib/utils";
 
+// Dashed outline (Add filter / Group) — outline variant with the dashed border and
+// the original muted-text / hover styling restored via className.
 const DASHED_BUTTON =
-  "inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-foreground hover:text-foreground";
+  "h-auto gap-1.5 border-dashed border-border px-2.5 py-1.5 text-sm text-muted-foreground shadow-none hover:border-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3.5";
 const OP_LABELS: Record<Exclude<FilterOp, "is">, string> = {
   isAnyOf: "is any of",
   isNoneOf: "is none of",
@@ -69,10 +72,15 @@ export default function FilterBar() {
 
       <Popover.Root>
         <Popover.Trigger asChild>
-          <button type="button" className={DASHED_BUTTON}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={DASHED_BUTTON}
+          >
             <Plus className="h-3.5 w-3.5" />
             Add filter
-          </button>
+          </Button>
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content
@@ -123,11 +131,16 @@ export default function FilterBar() {
       ) : (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button type="button" className={DASHED_BUTTON}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={DASHED_BUTTON}
+            >
               <Rows3 className="h-3.5 w-3.5" />
               Group
               <ChevronDown className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </DropdownMenu.Trigger>
           <GroupMenu value={null} onSelect={(g) => updateDraft({ groupBy: g })} />
         </DropdownMenu.Root>
@@ -230,14 +243,16 @@ function FilterChip({
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
-        <button
+        <Button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+          variant="outline"
+          size="sm"
+          className="h-auto gap-1.5 border-border bg-background px-2.5 py-1.5 text-sm text-foreground shadow-none hover:bg-muted hover:text-foreground"
         >
           <span className="font-medium">{fieldLabel}</span>
           <span className="text-muted-foreground">{opLabel(filter.op)}</span>
           <span className="max-w-[160px] truncate">{summary}</span>
-        </button>
+        </Button>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
@@ -301,21 +316,25 @@ function FilterChip({
 
           {/* Footer */}
           <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => onChange({ value: [] })}
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
             >
               Clear
-            </button>
+            </Button>
             <Popover.Close asChild>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={onRemove}
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
               >
                 Remove filter
-              </button>
+              </Button>
             </Popover.Close>
           </div>
         </Popover.Content>

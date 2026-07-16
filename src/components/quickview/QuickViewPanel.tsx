@@ -23,6 +23,7 @@ import {
 } from "../../data/campaigns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
+import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { useQuickViewStore } from "../../store/quickView";
 import { useVisibleCampaigns } from "../../store/rows";
@@ -48,7 +49,7 @@ const formatNumber = (n: number) => n.toLocaleString("en-US");
 const formatUplift = (n: number) => `${n >= 0 ? "+" : ""}${n}%`;
 
 const NAV_BUTTON =
-  "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40";
+  "h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40";
 const METRIC_LINK = "inline-flex items-center gap-1 text-foreground underline decoration-muted-foreground/40 underline-offset-2";
 
 function ConclusionStat({
@@ -321,15 +322,17 @@ export default function QuickViewPanel() {
           {campaign.name}
         </span>
         <StatusMenu campaign={campaign} />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={close}
           title="Close"
           aria-label="Close quick view"
-          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
 
       {/* Body */}
@@ -386,8 +389,10 @@ export default function QuickViewPanel() {
       {/* Footer */}
       <div className="flex shrink-0 items-center justify-between border-t border-border bg-background px-6 py-4">
         <div className="flex items-center gap-1">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => prevId && setId(prevId)}
             disabled={!prevId}
             title="Previous campaign"
@@ -395,9 +400,11 @@ export default function QuickViewPanel() {
             className={NAV_BUTTON}
           >
             <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => nextId && setId(nextId)}
             disabled={!nextId}
             title="Next campaign"
@@ -405,14 +412,13 @@ export default function QuickViewPanel() {
             className={NAV_BUTTON}
           >
             <ChevronRight className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
-        <Link
-          to={`/web-experiment/c/${campaign.id}/reports`}
-          className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-        >
-          View detailed report
-        </Link>
+        <Button asChild className="h-auto px-3 py-1.5 shadow-none">
+          <Link to={`/web-experiment/c/${campaign.id}/reports`}>
+            View detailed report
+          </Link>
+        </Button>
       </div>
     </div>
   );

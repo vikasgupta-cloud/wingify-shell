@@ -1,6 +1,7 @@
 import { ChevronDown, PanelLeft, Plus } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { useUIStore } from "../../store/ui";
 import { showsCreate, pageLabel } from "../../lib/nav";
 import { getCreateOptions, type CreateOption } from "../../config/createMenu";
@@ -57,14 +58,14 @@ export default function TopBar() {
         {showsCreate(pathname) && (
           <DropdownMenu.Root modal={false}>
             <DropdownMenu.Trigger asChild>
-              <button
+              <Button
                 type="button"
-                className="flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+                className="h-auto gap-1.5 px-3 py-1.5 shadow-none [&>svg:last-child]:size-3.5"
               >
                 <Plus className="h-4 w-4" />
                 Create
                 <ChevronDown className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content

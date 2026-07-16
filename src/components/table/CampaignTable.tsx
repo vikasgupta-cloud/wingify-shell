@@ -2,11 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import * as Checkbox from "@radix-ui/react-checkbox";
 import {
   Archive,
   BarChart3,
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -19,12 +17,20 @@ import {
   Files,
   GitBranch,
   Grid2x2,
-  Minus,
   PanelRight,
   Sparkles,
   Trash2,
   type LucideIcon,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { hasReport, type Campaign, type CampaignType } from "../../data/campaigns";
 import { COLUMNS, type ColumnDef, type ColumnId } from "../../config/columns";
 import { applyFilters } from "../../config/filters";
@@ -98,8 +104,10 @@ export function sortCampaigns(
   });
 }
 
+// Hover-revealed row action icons — ghost icon Buttons sized to the original 28px hit
+// area (p-1.5 around a 16px icon) instead of the default 36px icon size.
 const ROW_ICON_BUTTON =
-  "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  "h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground";
 
 // Pinned first two columns (checkbox + campaign name). Every sticky cell keeps an
 // explicit OPAQUE background in all states — default bg-background, and the SAME
@@ -134,38 +142,50 @@ function NameCell({ campaign }: { campaign: Campaign }) {
       {/* Hover-revealed row actions */}
       <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
         {/* TODO: wire up Summarise with Wandz */}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           title="Summarise with Wandz"
           aria-label="Summarise with Wandz"
           className={ROW_ICON_BUTTON}
         >
           <Sparkles className="h-4 w-4" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => openQuickView(campaign.id)}
           title="Quick view"
           aria-label="Quick view"
           className={ROW_ICON_BUTTON}
         >
           <PanelRight className="h-4 w-4" />
-        </button>
+        </Button>
         {hasReport(campaign.status) && (
-          <Link
-            to={`/web-experiment/c/${campaign.id}/reports`}
-            title="Reports"
-            aria-label="Reports"
-            className={ROW_ICON_BUTTON}
-          >
-            <BarChart3 className="h-4 w-4" />
-          </Link>
+          <Button asChild variant="ghost" size="icon" className={ROW_ICON_BUTTON}>
+            <Link
+              to={`/web-experiment/c/${campaign.id}/reports`}
+              title="Reports"
+              aria-label="Reports"
+            >
+              <BarChart3 className="h-4 w-4" />
+            </Link>
+          </Button>
         )}
         <DropdownMenu.Root modal={false}>
           <DropdownMenu.Trigger asChild>
-            <button type="button" title="More" aria-label="More" className={ROW_ICON_BUTTON}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title="More"
+              aria-label="More"
+              className={ROW_ICON_BUTTON}
+            >
               <EllipsisVertical className="h-4 w-4" />
-            </button>
+            </Button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content
@@ -264,10 +284,12 @@ function pageWindow(current: number, total: number): number[] {
 }
 
 const PAGER_BUTTON =
-  "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40";
+  "h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40";
 
+// The compact 14px select box — shadcn Checkbox restyled to the original neutral look
+// (light border, foreground fill, 10px check/minus) rather than the default variant.
 const SELECT_BOX =
-  "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border border-input bg-background data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground";
+  "h-3.5 w-3.5 rounded-[3px] border-input bg-background shadow-none data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background [&_svg]:size-2.5";
 
 function SelectCheckbox({
   checked,
@@ -279,20 +301,12 @@ function SelectCheckbox({
   label: string;
 }) {
   return (
-    <Checkbox.Root
+    <Checkbox
       checked={checked}
       onCheckedChange={onCheckedChange}
       aria-label={label}
       className={SELECT_BOX}
-    >
-      <Checkbox.Indicator>
-        {checked === "indeterminate" ? (
-          <Minus className="h-2.5 w-2.5 text-background" />
-        ) : (
-          <Check className="h-2.5 w-2.5 text-background" />
-        )}
-      </Checkbox.Indicator>
-    </Checkbox.Root>
+    />
   );
 }
 
@@ -474,29 +488,35 @@ export default function CampaignTable() {
                     <span className="text-sm font-medium text-foreground">
                       {selected.size} selected
                     </span>
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={doArchive}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-input px-2.5 py-1 text-sm text-foreground transition-colors hover:bg-muted"
+                      className="h-auto gap-1.5 bg-transparent px-2.5 py-1 text-sm text-foreground shadow-none hover:bg-muted hover:text-foreground [&_svg]:size-3.5"
                     >
                       <Archive className="h-3.5 w-3.5" />
                       Archive
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setConfirmDelete(true)}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-input px-2.5 py-1 text-sm text-foreground transition-colors hover:bg-muted"
+                      className="h-auto gap-1.5 bg-transparent px-2.5 py-1 text-sm text-foreground shadow-none hover:bg-muted hover:text-foreground [&_svg]:size-3.5"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Delete
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={clearSelection}
-                      className="ml-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="ml-auto h-auto px-0 py-0 text-sm text-muted-foreground hover:bg-transparent hover:text-foreground"
                     >
                       Clear selection
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -579,40 +599,50 @@ export default function CampaignTable() {
         <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>Showing</span>
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Results per page"
-              className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground outline-none transition-colors hover:bg-muted"
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => setPageSize(Number(v))}
             >
-              {PAGE_SIZES.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                aria-label="Results per page"
+                className="h-auto w-auto gap-1 bg-background px-2 py-1 text-sm text-foreground shadow-none hover:bg-muted focus:ring-0"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <span>results</span>
           </div>
 
           <div className="flex items-center gap-0.5">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               aria-label="First page"
               disabled={currentPage === 1}
               onClick={() => setPage(1)}
               className={PAGER_BUTTON}
             >
               <ChevronsLeft className="h-4 w-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               aria-label="Previous page"
               disabled={currentPage === 1}
               onClick={() => setPage(currentPage - 1)}
               className={PAGER_BUTTON}
             >
               <ChevronLeft className="h-4 w-4" />
-            </button>
+            </Button>
             {pageWindow(currentPage, totalPages).map((p) => (
               <button
                 key={p}
@@ -628,24 +658,28 @@ export default function CampaignTable() {
                 {p}
               </button>
             ))}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               aria-label="Next page"
               disabled={currentPage === totalPages}
               onClick={() => setPage(currentPage + 1)}
               className={PAGER_BUTTON}
             >
               <ChevronRight className="h-4 w-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               aria-label="Last page"
               disabled={currentPage === totalPages}
               onClick={() => setPage(totalPages)}
               className={PAGER_BUTTON}
             >
               <ChevronsRight className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </div>
       )}

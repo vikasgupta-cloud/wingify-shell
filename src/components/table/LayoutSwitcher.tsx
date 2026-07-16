@@ -1,5 +1,6 @@
 import { Columns3, GanttChartSquare, Table } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useActiveViewState, useViewsStore, type Layout } from "../../store/views";
 import { cn } from "../../lib/utils";
 
@@ -28,22 +29,24 @@ export default function LayoutSwitcher({ layouts }: { layouts: Layout[] }) {
       {options.map(({ layout: value, label, icon: Icon }) => {
         const active = layout === value;
         return (
-          <button
+          <Button
             key={value}
             type="button"
+            variant="ghost"
+            size="icon"
             title={label}
             aria-label={label}
             aria-pressed={active}
             onClick={() => updateDraft({ layout: value })}
             className={cn(
-              "rounded-md p-1.5 transition-colors",
+              "h-auto w-auto rounded-md p-1.5",
               active
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground hover:bg-transparent hover:text-foreground"
             )}
           >
             <Icon className="h-4 w-4" />
-          </button>
+          </Button>
         );
       })}
     </div>

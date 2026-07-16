@@ -31,6 +31,7 @@ import { useTableStore } from "../../store/table";
 import { useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { useQuickViewStore } from "../../store/quickView";
+import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
@@ -64,8 +65,9 @@ const SEGMENT_CLASSES: Record<CampaignStatus, string> = {
 };
 
 const SCROLL_SHADOW = "shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]";
+// Hover-revealed row action icons — ghost icon Button sized to the original 28px hit area.
 const ROW_ICON_BUTTON =
-  "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  "h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground";
 const PAGER_BUTTON =
   "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40";
 
@@ -165,17 +167,21 @@ function GanttRow({
         {/* Hover-revealed actions */}
         <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
           {/* TODO: wire up Summarise with Wandz */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             title="Summarise with Wandz"
             aria-label="Summarise with Wandz"
             onClick={stop}
             className={ROW_ICON_BUTTON}
           >
             <Sparkles className="h-4 w-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             title="Quick view"
             aria-label="Quick view"
             onClick={(e) => {
@@ -185,17 +191,18 @@ function GanttRow({
             className={ROW_ICON_BUTTON}
           >
             <PanelRight className="h-4 w-4" />
-          </button>
+          </Button>
           {hasReport(c.status) && (
-            <Link
-              to={`/web-experiment/c/${c.id}/reports`}
-              title="Reports"
-              aria-label="Reports"
-              onClick={stop}
-              className={ROW_ICON_BUTTON}
-            >
-              <BarChart3 className="h-4 w-4" />
-            </Link>
+            <Button asChild variant="ghost" size="icon" className={ROW_ICON_BUTTON}>
+              <Link
+                to={`/web-experiment/c/${c.id}/reports`}
+                title="Reports"
+                aria-label="Reports"
+                onClick={stop}
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Link>
+            </Button>
           )}
         </div>
         <div className="shrink-0">

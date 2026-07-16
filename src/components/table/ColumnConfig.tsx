@@ -1,12 +1,14 @@
 import { useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { GripVertical, RotateCcw, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { COLUMNS, type ColumnId } from "../../config/columns";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { cn } from "../../lib/utils";
 
 const CHECKBOX_CLASS =
-  "h-3.5 w-3.5 shrink-0 accent-foreground disabled:cursor-not-allowed";
+  "h-3.5 w-3.5 [&_svg]:size-3 disabled:cursor-not-allowed";
 
 const isLocked = (id: ColumnId) =>
   COLUMNS.find((c) => c.id === id)?.locked === true;
@@ -72,15 +74,17 @@ export default function ColumnConfig() {
             <span className="text-xs font-medium text-muted-foreground">
               Active view
             </span>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               title="Reset to default"
               aria-label="Reset to default"
               onClick={resetColumns}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="h-auto w-auto p-1 text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
 
           <div className="mt-1.5 flex flex-col">
@@ -118,11 +122,10 @@ export default function ColumnConfig() {
                   {dragIndex !== null && dropIndex === index && (
                     <div className="pointer-events-none absolute inset-x-0 -top-px h-0.5 bg-foreground" />
                   )}
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked
                     disabled={locked}
-                    onChange={() => toggleColumn(id)}
+                    onCheckedChange={() => toggleColumn(id)}
                     className={CHECKBOX_CLASS}
                   />
                   <span
@@ -152,10 +155,9 @@ export default function ColumnConfig() {
                 key={col.id}
                 className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1.5 hover:bg-muted"
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={false}
-                  onChange={() => toggleColumn(col.id)}
+                  onCheckedChange={() => toggleColumn(col.id)}
                   className={CHECKBOX_CLASS}
                 />
                 <span className="flex-1 truncate">{col.label}</span>

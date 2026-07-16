@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { hasReport, type Campaign, type CampaignStatus, type CampaignType } from "../../data/campaigns";
+import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { useQuickViewStore } from "../../store/quickView";
 import { VitalsIcon } from "../ui/StatusBadge";
@@ -34,7 +35,7 @@ const STATUS_BAR: Record<CampaignStatus, string> = {
 };
 
 const CARD_ICON_BUTTON =
-  "rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  "h-auto w-auto p-1 text-muted-foreground hover:text-foreground";
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
@@ -102,17 +103,21 @@ export default function KanbanCard({
         <VitalsIcon vitals={campaign.vitals} />
         <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
           {/* TODO: wire up Summarise with Wandz */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             title="Summarise with Wandz"
             aria-label="Summarise with Wandz"
             onClick={stop}
             className={CARD_ICON_BUTTON}
           >
             <Sparkles className="h-4 w-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             title="Quick view"
             aria-label="Quick view"
             onClick={(e) => {
@@ -122,17 +127,18 @@ export default function KanbanCard({
             className={CARD_ICON_BUTTON}
           >
             <PanelRight className="h-4 w-4" />
-          </button>
+          </Button>
           {hasReport(campaign.status) && (
-            <Link
-              to={`/web-experiment/c/${campaign.id}/reports`}
-              title="Reports"
-              aria-label="Reports"
-              onClick={stop}
-              className={CARD_ICON_BUTTON}
-            >
-              <BarChart3 className="h-4 w-4" />
-            </Link>
+            <Button asChild variant="ghost" size="icon" className={CARD_ICON_BUTTON}>
+              <Link
+                to={`/web-experiment/c/${campaign.id}/reports`}
+                title="Reports"
+                aria-label="Reports"
+                onClick={stop}
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Link>
+            </Button>
           )}
         </div>
       </div>
