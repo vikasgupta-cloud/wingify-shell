@@ -89,6 +89,7 @@ export function defaultConfig(name: string): CampaignConfig {
     trafficAllocation: 100,
     segment: "All Traffic",
     trigger: "Page Viewed",
+    frequency: "",
     editorUrl: "",
     editorView: "desktop",
     variationSplitEnabled: false,
