@@ -6,6 +6,7 @@ import AppLayout from "../components/layout/AppLayout";
 import DetailShell from "../components/layout/DetailShell";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import WebExperimentation from "../pages/WebExperimentation";
+import ConfigPage from "../pages/config/ConfigPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -19,9 +20,12 @@ const pageRoutes: RouteObject[] = [];
 const detailRoutes: RouteObject[] = [];
 
 const addDetailRoute = (leafPath: string) => {
+  // Only /web-experiment gets the ConfigPage body; every other detail route
+  // keeps DetailShell's empty body.
+  const body = leafPath === "/web-experiment" ? <ConfigPage /> : undefined;
   detailRoutes.push({
     path: `${leafPath}/c/:entityId`,
-    element: <DetailShell basePath={leafPath} />,
+    element: <DetailShell basePath={leafPath}>{body}</DetailShell>,
   });
 };
 

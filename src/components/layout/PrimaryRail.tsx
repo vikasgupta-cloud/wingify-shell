@@ -262,7 +262,7 @@ export default function PrimaryRail({
     <Tooltip.Provider delayDuration={300} skipDelayDuration={100}>
       <div className="relative h-full">
         <div
-          className="flex h-full flex-col items-center bg-rail py-4"
+          className="flex h-full flex-col items-center border-r border-border bg-rail py-4"
           style={{ width: RAIL_WIDTH }}
         >
           <button
@@ -324,7 +324,7 @@ export default function PrimaryRail({
         {(!isDocked || forceFlyout) && flyout && flyoutItem?.sections && (
           <div
             ref={flyoutRef}
-            className="fixed z-40 pl-1.5"
+            className="fixed z-40 animate-scale-in pl-1.5 duration-150"
             style={{ left: RAIL_WIDTH, top: flyout.top }}
             onMouseEnter={cancelClose}
             onMouseLeave={scheduleClose}
@@ -340,7 +340,7 @@ export default function PrimaryRail({
         {moreFlyout && unpinned.length > 0 && (
           <div
             ref={moreFlyoutRef}
-            className="fixed z-40 pl-1.5"
+            className="fixed z-40 animate-scale-in pl-1.5 duration-150"
             style={{ left: RAIL_WIDTH, top: moreFlyout.top }}
             onMouseEnter={cancelMoreClose}
             onMouseLeave={scheduleMoreClose}
@@ -406,7 +406,7 @@ export default function PrimaryRail({
         {moreFlyout && moreNested && moreNestedItem?.sections && (
           <div
             ref={moreNestedRef}
-            className="fixed z-40 pl-1.5"
+            className="fixed z-40 animate-scale-in pl-1.5 duration-150"
             style={{
               left: RAIL_WIDTH + 6 + MORE_FLYOUT_WIDTH,
               top: moreNested.top,

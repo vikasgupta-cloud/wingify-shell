@@ -26,11 +26,12 @@ import {
 } from "../../data/campaigns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
-import { addDays, diffDays, formatDayHeader, isSameDay, startOfDay } from "../../lib/dates";
-import { useTableStore } from "../../store/table";
+import { addDays, diffDays, formatDayHeader, startOfDay } from "../../lib/dates";
+import { useTableStore, type GanttZoom } from "../../store/table";
 import { useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { useQuickViewStore } from "../../store/quickView";
+import { useWandzStore } from "../../store/wandz";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
@@ -38,13 +39,35 @@ import StatusMenu from "../ui/StatusMenu";
 import DecisionIcon from "../ui/DecisionIcon";
 import { sortCampaigns } from "../table/CampaignTable";
 
-const DAY_WIDTH = 44;
+// Horizontal scale (px per calendar day) by zoom — a week reads ~84px, a month ~120px.
+const PX_PER_DAY: Record<GanttZoom, number> = { day: 44, week: 12, month: 4 };
+const MONTHS_ABBR = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 const FROZEN_WIDTH = 380;
 const ROW_HEIGHT = 64;
 const BAR_HEIGHT = 28;
 const MIN_BAR = 24;
 const LABEL_MIN = 48;
 const PAGE_SIZES = [10, 25, 50];
+
+const daysInMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+
+// Snap the axis origin to a zoom-appropriate boundary so week columns start on a
+// Monday and month columns start on the 1st (bars stay correct — they're measured
+// relative to this origin).
+function snapStart(d: Date, zoom: GanttZoom): Date {
+  const x = startOfDay(d);
+  if (zoom === "week") {
+    const dow = x.getDay(); // 0=Sun..6=Sat
+    return addDays(x, -((dow + 6) % 7)); // back up to Monday
+  }
+  if (zoom === "month") {
+    return startOfDay(new Date(x.getFullYear(), x.getMonth(), 1));
+  }
+  return x;
+}
 
 const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
   "A/B": Columns2,
@@ -101,22 +124,27 @@ function GanttRow({
   today,
   isScrolled,
   showTodayLabel,
+  pxPerDay,
+  gridInterval,
 }: {
   c: Campaign;
   axis: Axis;
   today: Date;
   isScrolled: boolean;
   showTodayLabel: boolean;
+  pxPerDay: number;
+  gridInterval: number;
 }) {
   const TypeIcon = TYPE_ICONS[c.type];
   const openQuickView = useQuickViewStore((s) => s.open);
+  const openWandz = useWandzStore((s) => s.openWandz);
   const phases = phasesFor(c);
 
   const segs = phases.map((ph, idx) => {
     const from = new Date(ph.from);
     const to = ph.to ? new Date(ph.to) : addDays(today, 1);
-    const left = diffDays(axis.start, from) * DAY_WIDTH;
-    const width = Math.max(diffDays(from, to) * DAY_WIDTH, MIN_BAR);
+    const left = diffDays(axis.start, from) * pxPerDay;
+    const width = Math.max(diffDays(from, to) * pxPerDay, MIN_BAR);
     return { ph, idx, left, width, isFirst: idx === 0, isLast: idx === phases.length - 1 };
   });
 
@@ -128,13 +156,10 @@ function GanttRow({
   });
   const decisionX =
     c.decision !== "No decision" && lastRunning >= 0 && lastRunning < phases.length - 1
-      ? diffDays(axis.start, new Date(phases[lastRunning + 1].from)) * DAY_WIDTH
+      ? diffDays(axis.start, new Date(phases[lastRunning + 1].from)) * pxPerDay
       : null;
 
-  const lastSeg = segs[segs.length - 1];
-  const vitalsX = c.vitals === "unhealthy" && lastSeg ? lastSeg.left + lastSeg.width : null;
-
-  const todayX = diffDays(axis.start, today) * DAY_WIDTH + DAY_WIDTH / 2;
+  const todayX = diffDays(axis.start, today) * pxPerDay + pxPerDay / 2;
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -166,14 +191,16 @@ function GanttRow({
         </div>
         {/* Hover-revealed actions */}
         <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-          {/* TODO: wire up Summarise with Wandz */}
           <Button
             type="button"
             variant="ghost"
             size="icon"
             title="Summarise with Wandz"
             aria-label="Summarise with Wandz"
-            onClick={stop}
+            onClick={(e) => {
+              stop(e);
+              openWandz({ kind: "campaign", campaignId: c.id });
+            }}
             className={ROW_ICON_BUTTON}
           >
             <Sparkles className="h-4 w-4" />
@@ -214,8 +241,8 @@ function GanttRow({
       <div
         className="relative shrink-0"
         style={{
-          width: axis.totalDays * DAY_WIDTH,
-          backgroundImage: `repeating-linear-gradient(to right, var(--border) 0, var(--border) 1px, transparent 1px, transparent ${DAY_WIDTH}px)`,
+          width: axis.totalDays * pxPerDay,
+          backgroundImage: `repeating-linear-gradient(to right, var(--border) 0, var(--border) 1px, transparent 1px, transparent ${gridInterval}px)`,
         }}
       >
         {/* Status-coloured segments — one continuous bar */}
@@ -224,7 +251,7 @@ function GanttRow({
             key={idx}
             title={ph.status}
             className={cn(
-              "absolute flex items-center justify-center overflow-hidden px-1",
+              "absolute flex items-center justify-center overflow-hidden px-1 transition-[width,left] duration-200 ease-out",
               SEGMENT_CLASSES[ph.status],
               isFirst && "rounded-l-md",
               isLast && "rounded-r-md"
@@ -242,16 +269,9 @@ function GanttRow({
           </MarkerChip>
         )}
 
-        {/* Vitals marker at the right edge of the last segment */}
-        {vitalsX !== null && (
-          <MarkerChip left={vitalsX}>
-            <VitalsIcon vitals="unhealthy" />
-          </MarkerChip>
-        )}
-
         {/* TODAY line */}
         <div
-          className="absolute bottom-0 top-0 z-10 w-0.5 bg-vitals-unhealthy"
+          className="absolute bottom-0 top-0 z-10 w-0.5 bg-vitals-unhealthy transition-[width,left] duration-200 ease-out"
           style={{ left: todayX }}
         >
           {showTodayLabel && (
@@ -289,11 +309,12 @@ function GanttGroupHeader({
         )}
         style={{ width: FROZEN_WIDTH }}
       >
-        {isCollapsed ? (
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        )}
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform duration-200",
+            isCollapsed && "-rotate-90"
+          )}
+        />
         <span className="font-medium text-foreground">{group.key}</span>
         <span className="text-muted-foreground">({group.rows.length})</span>
       </button>
@@ -302,10 +323,16 @@ function GanttGroupHeader({
 }
 
 export default function GanttChart() {
-  const { search, page, pageSize, setPage, setPageSize } = useTableStore();
+  const { search, page, pageSize, setPage, setPageSize, ganttZoom, setGanttZoom } =
+    useTableStore();
   const { filters, sort, groupBy } = useActiveViewState();
   const updateDraft = useViewsStore((s) => s.updateActiveViewDraft);
   const campaigns = useVisibleCampaigns();
+
+  const pxPerDay = PX_PER_DAY[ganttZoom];
+  // Grid line interval matches the zoom: one line per day / week / ~month.
+  const gridInterval =
+    ganttZoom === "day" ? pxPerDay : ganttZoom === "week" ? 7 * pxPerDay : 30 * pxPerDay;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -349,10 +376,13 @@ export default function GanttChart() {
   const today = useMemo(() => startOfDay(new Date()), []);
 
   // Axis spans the earliest createdOn across the visible page to 14 days past the
-  // latest phase end (or today, whichever is later).
+  // latest phase end (or today, whichever is later). The origin is snapped to a
+  // zoom-appropriate boundary (Monday for week, 1st for month).
   const axis = useMemo<Axis>(() => {
     if (pageRows.length === 0) {
-      return { start: today, end: addDays(today, 14), totalDays: 14 };
+      const start = snapStart(today, ganttZoom);
+      const end = addDays(today, 14);
+      return { start, end, totalDays: diffDays(start, end) };
     }
     let earliest = startOfDay(new Date(pageRows[0].createdOn));
     let latestEnd = today;
@@ -364,30 +394,71 @@ export default function GanttChart() {
         if (end > latestEnd) latestEnd = end;
       }
     }
-    const start = earliest;
+    const start = snapStart(earliest, ganttZoom);
     const end = addDays(startOfDay(latestEnd), 14);
     return { start, end, totalDays: diffDays(start, end) };
-  }, [pageRows, today]);
+  }, [pageRows, today, ganttZoom]);
 
-  const innerWidth = FROZEN_WIDTH + axis.totalDays * DAY_WIDTH;
+  const innerWidth = FROZEN_WIDTH + axis.totalDays * pxPerDay;
 
-  const days = useMemo(
-    () => Array.from({ length: axis.totalDays }, (_, i) => addDays(axis.start, i)),
-    [axis.start, axis.totalDays]
-  );
+  // Header columns by zoom. Day → one cell per day; week → one Monday-anchored
+  // cell per 7 days (month abbrev on the first week of a month, else blank; day
+  // number below); month → one cell per calendar month (year on Jan/first column,
+  // month abbrev below). Widths sum to exactly totalDays * pxPerDay so the header
+  // stays aligned with the body grid.
+  const headerCells = useMemo(() => {
+    const cells: { width: number; top: string; bottom: string; highlight: boolean }[] = [];
+    const todayOffset = diffDays(axis.start, today);
+    if (ganttZoom === "day") {
+      for (let o = 0; o < axis.totalDays; o++) {
+        const d = addDays(axis.start, o);
+        const { top, bottom } = formatDayHeader(d);
+        cells.push({ width: pxPerDay, top, bottom, highlight: o === todayOffset });
+      }
+    } else if (ganttZoom === "week") {
+      for (let o = 0; o < axis.totalDays; o += 7) {
+        const d = addDays(axis.start, o);
+        const span = Math.min(7, axis.totalDays - o);
+        const dom = d.getDate();
+        cells.push({
+          width: span * pxPerDay,
+          top: dom <= 7 ? MONTHS_ABBR[d.getMonth()] : "",
+          bottom: String(dom),
+          highlight: todayOffset >= o && todayOffset < o + span,
+        });
+      }
+    } else {
+      let o = 0;
+      let first = true;
+      while (o < axis.totalDays) {
+        const d = addDays(axis.start, o); // always the 1st (origin snapped to a month)
+        const dim = daysInMonth(d);
+        const span = Math.min(dim, axis.totalDays - o);
+        cells.push({
+          width: span * pxPerDay,
+          top: d.getMonth() === 0 || first ? String(d.getFullYear()) : "",
+          bottom: MONTHS_ABBR[d.getMonth()],
+          highlight: todayOffset >= o && todayOffset < o + span,
+        });
+        first = false;
+        o += dim;
+      }
+    }
+    return cells;
+  }, [ganttZoom, axis.start, axis.totalDays, pxPerDay, today]);
 
   const scrollToToday = () => {
     const el = scrollRef.current;
     if (!el) return;
-    const todayX = FROZEN_WIDTH + diffDays(axis.start, today) * DAY_WIDTH;
+    const todayX = FROZEN_WIDTH + diffDays(axis.start, today) * pxPerDay;
     el.scrollLeft = todayX - el.clientWidth * 0.6;
   };
 
-  // Auto-centre on today on first mount and whenever the axis shifts.
+  // Auto-centre on today on first mount and whenever the axis or zoom changes.
   useEffect(() => {
     scrollToToday();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [axis.start, axis.totalDays]);
+  }, [axis.start, axis.totalDays, pxPerDay]);
 
   const cycleSort = () => {
     if (sort?.column !== "name") updateDraft({ sort: { column: "name", dir: "asc" } });
@@ -424,6 +495,8 @@ export default function GanttChart() {
         today={today}
         isScrolled={isScrolled}
         showTodayLabel={showTodayLabel}
+        pxPerDay={pxPerDay}
+        gridInterval={gridInterval}
       />
     );
   };
@@ -432,13 +505,13 @@ export default function GanttChart() {
 
   return (
     <div>
-      <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-border">
+      <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-border bg-background">
         <div style={{ width: innerWidth }}>
           {/* Header */}
-          <div className="sticky top-0 z-40 flex border-b border-border bg-background">
+          <div className="sticky top-0 z-40 flex border-b border-border bg-muted">
             <div
               className={cn(
-                "sticky left-0 z-10 flex shrink-0 items-center border-r border-border bg-background px-3 py-2.5 transition-shadow duration-150",
+                "sticky left-0 z-10 flex shrink-0 items-center border-r border-border bg-muted px-3 py-2.5 transition-shadow duration-150",
                 isScrolled && SCROLL_SHADOW
               )}
               style={{ width: FROZEN_WIDTH }}
@@ -455,24 +528,20 @@ export default function GanttChart() {
                 {sortIcon}
               </button>
             </div>
-            <div className="flex shrink-0" style={{ width: axis.totalDays * DAY_WIDTH }}>
-              {days.map((d, i) => {
-                const { top, bottom } = formatDayHeader(d);
-                const isToday = isSameDay(d, today);
-                return (
-                  <div
-                    key={i}
-                    className={cn(
-                      "flex flex-col items-center justify-center border-r border-border py-1",
-                      isToday && "bg-vitals-unhealthy/10"
-                    )}
-                    style={{ width: DAY_WIDTH }}
-                  >
-                    <span className="text-[11px] text-muted-foreground">{top}</span>
-                    <span className="text-xs tabular-nums text-foreground">{bottom}</span>
-                  </div>
-                );
-              })}
+            <div className="flex shrink-0" style={{ width: axis.totalDays * pxPerDay }}>
+              {headerCells.map((cell, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex flex-col items-center justify-center border-r border-border py-1",
+                    cell.highlight && "bg-vitals-unhealthy/10"
+                  )}
+                  style={{ width: cell.width }}
+                >
+                  <span className="text-[11px] text-muted-foreground">{cell.top || " "}</span>
+                  <span className="text-xs tabular-nums text-foreground">{cell.bottom}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -511,6 +580,24 @@ export default function GanttChart() {
       {/* Controls + pagination */}
       <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center gap-3">
+          {/* Zoom control — same treatment as the layout switcher. */}
+          <div className="inline-flex items-center rounded-md bg-muted p-0.5">
+            {(["day", "week", "month"] as const).map((z) => (
+              <button
+                key={z}
+                type="button"
+                onClick={() => setGanttZoom(z)}
+                className={cn(
+                  "rounded-[5px] px-2.5 py-1 text-sm capitalize transition-colors",
+                  ganttZoom === z
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {z}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={scrollToToday}

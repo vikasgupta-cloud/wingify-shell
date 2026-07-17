@@ -11,7 +11,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronsUpDown,
-  ChevronUp,
   Columns2,
   EllipsisVertical,
   Files,
@@ -35,10 +34,11 @@ import { hasReport, type Campaign, type CampaignType } from "../../data/campaign
 import { COLUMNS, type ColumnDef, type ColumnId } from "../../config/columns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
-import { useTableStore } from "../../store/table";
+import { useTableStore, type RowDensity } from "../../store/table";
 import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { useQuickViewStore } from "../../store/quickView";
+import { useWandzStore } from "../../store/wandz";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
@@ -52,8 +52,10 @@ const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const formatDate = (isoDate: string | null) => {
-  if (!isoDate) return "—";
+// Subtle placeholder for any null cell — a small en-dash, not a graphic em-dash.
+const NULL_DASH = <span className="text-sm text-muted-foreground">–</span>;
+const formatDate = (isoDate: string | null): React.ReactNode => {
+  if (!isoDate) return NULL_DASH;
   const d = new Date(isoDate);
   return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 };
@@ -117,16 +119,32 @@ const ROW_ICON_BUTTON =
 const STICKY_CHECKBOX_BODY =
   "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-muted";
 const STICKY_NAME_BODY =
-  "sticky left-[44px] z-10 border-r border-border bg-background group-hover:bg-muted";
-const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-background";
-const STICKY_NAME_HEAD =
-  "sticky left-[44px] z-10 border-r border-border bg-background";
-// Right-edge shadow cast by the pinned name column once the table is scrolled.
-const SCROLL_SHADOW = "shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]";
+  "sticky left-[44px] z-10 bg-background group-hover:bg-muted";
+const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-muted";
+const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-muted";
+// The pinned name column's right edge. Drawn as a box-shadow — NOT a cell border —
+// so it travels with the sticky cell; a collapsed-table border belongs to the grid
+// and would scroll away. A soft drop shadow fades in once scrolled, matching Gantt.
+// Arbitrary *property* (not shadow-[…]) so Tailwind's ring-color processing doesn't
+// mangle the multi-shadow value.
+const NAME_EDGE = "[box-shadow:1px_0_0_0_hsl(var(--border))]";
+const NAME_EDGE_SCROLLED =
+  "[box-shadow:1px_0_0_0_hsl(var(--border)),4px_0_8px_-4px_rgba(0,0,0,0.12)]";
+
+// Vertical padding for body cells by the global row-density preference.
+const DENSITY_PAD: Record<RowDensity, string> = {
+  compact: "py-2",
+  default: "py-3",
+  comfortable: "py-5",
+};
+
+const MIN_COL_WIDTH = 80;
+const CHECKBOX_COL_WIDTH = 44;
 
 function NameCell({ campaign }: { campaign: Campaign }) {
   const TypeIcon = TYPE_ICONS[campaign.type];
   const openQuickView = useQuickViewStore((s) => s.open);
+  const openWandz = useWandzStore((s) => s.openWandz);
   return (
     <div className="flex items-center gap-2.5">
       <TypeIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={campaign.type} />
@@ -140,14 +158,17 @@ function NameCell({ campaign }: { campaign: Campaign }) {
         <div className="truncate text-xs text-muted-foreground">{campaign.url}</div>
       </div>
       {/* Hover-revealed row actions */}
-      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-        {/* TODO: wire up Summarise with Wandz */}
+      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
         <Button
           type="button"
           variant="ghost"
           size="icon"
           title="Summarise with Wandz"
           aria-label="Summarise with Wandz"
+          onClick={(e) => {
+            e.stopPropagation();
+            openWandz({ kind: "campaign", campaignId: campaign.id });
+          }}
           className={ROW_ICON_BUTTON}
         >
           <Sparkles className="h-4 w-4" />
@@ -191,7 +212,7 @@ function NameCell({ campaign }: { campaign: Campaign }) {
             <DropdownMenu.Content
               align="end"
               sideOffset={4}
-              className="z-50 min-w-[160px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+              className="z-50 min-w-[160px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
             >
               {/* TODO: wire up row actions (Clone / Timeline / Archive / Delete) */}
               {ROW_ACTIONS.map((action) => (
@@ -255,7 +276,7 @@ function renderCell(c: Campaign, column: ColumnDef) {
       );
     case "labels":
       return c.labels.length === 0 ? (
-        <span className="text-muted-foreground">—</span>
+        NULL_DASH
       ) : (
         <div className="flex flex-wrap gap-1">
           {c.labels.map((label) => (
@@ -311,8 +332,8 @@ function SelectCheckbox({
 }
 
 export default function CampaignTable() {
-  const { search, page, pageSize, setPage, setPageSize } = useTableStore();
-  const { filters, sort, groupBy, visibleColumns } = useActiveViewState();
+  const { search, page, pageSize, setPage, setPageSize, rowDensity } = useTableStore();
+  const { filters, sort, groupBy, visibleColumns, columnWidths } = useActiveViewState();
   const activeViewId = useViewsStore((s) => s.activeViewId);
   const updateDraft = useViewsStore((s) => s.updateActiveViewDraft);
   const campaigns = useVisibleCampaigns();
@@ -322,6 +343,42 @@ export default function CampaignTable() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Column resize: live widths during a drag (local only); committed to the view
+  // draft once on mouseup. Older persisted views may predate columnWidths.
+  const savedWidths = columnWidths ?? {};
+  const [liveWidths, setLiveWidths] = useState<Partial<Record<ColumnId, number>>>({});
+  const effWidth = (col: ColumnDef): number =>
+    liveWidths[col.id] ?? savedWidths[col.id] ?? col.width;
+
+  const startResize = (e: React.MouseEvent, col: ColumnDef) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = col.id;
+    const startX = e.clientX;
+    const startW = effWidth(col);
+    const widthAt = (ev: MouseEvent) =>
+      Math.max(MIN_COL_WIDTH, startW + (ev.clientX - startX));
+    const onMove = (ev: MouseEvent) =>
+      setLiveWidths((prev) => ({ ...prev, [id]: widthAt(ev) }));
+    const onUp = (ev: MouseEvent) => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      setLiveWidths((prev) => {
+        const { [id]: _dropped, ...rest } = prev;
+        return rest;
+      });
+      updateDraft({ columnWidths: { ...savedWidths, [id]: widthAt(ev) } });
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  // Double-click on a handle resets that column to its default width.
+  const resetWidth = (id: ColumnId) => {
+    const { [id]: _dropped, ...rest } = savedWidths;
+    updateDraft({ columnWidths: rest });
+  };
 
   // Track horizontal scroll so the pinned name column can cast a shadow over the
   // scrolling content once scrollLeft > 0.
@@ -370,8 +427,13 @@ export default function CampaignTable() {
   const columns = visibleColumns
     .map((id) => COLUMNS.find((c) => c.id === id))
     .filter((c): c is ColumnDef => c !== undefined);
-  // checkbox column + the visible data columns (name is one of them).
-  const totalColSpan = columns.length + 1;
+  // checkbox column + the visible data columns (name is one of them) + the filler.
+  const totalColSpan = columns.length + 2;
+  // table-layout: fixed needs an explicit width. This is the natural (min) width;
+  // the table stretches to w-full and the filler column absorbs any extra space, so
+  // there is no white gap when the columns are narrower than the card.
+  const tableWidth =
+    CHECKBOX_COL_WIDTH + columns.reduce((sum, col) => sum + effWidth(col), 0);
 
   const grouped = groupBy !== null;
   const groups = useMemo(
@@ -433,10 +495,14 @@ export default function CampaignTable() {
   const sortIcon = (col: ColumnDef) => {
     if (sort?.column !== col.id)
       return <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-60" />;
-    return sort.dir === "asc" ? (
-      <ChevronUp className="h-3 w-3 shrink-0" />
-    ) : (
-      <ChevronDown className="h-3 w-3 shrink-0" />
+    // Single chevron that rotates between asc/desc so the flip animates rather than swaps.
+    return (
+      <ChevronDown
+        className={cn(
+          "h-3 w-3 shrink-0 transition-transform duration-150",
+          sort.dir === "asc" && "rotate-180"
+        )}
+      />
     );
   };
 
@@ -445,9 +511,9 @@ export default function CampaignTable() {
   const renderRow = (c: Campaign) => (
     <tr
       key={c.id}
-      className="group border-b border-border last:border-b-0 hover:bg-muted"
+      className="group border-b border-border transition-colors duration-150 last:border-b-0 hover:bg-muted"
     >
-      <td className={cn("px-3 py-2.5 align-middle", STICKY_CHECKBOX_BODY)}>
+      <td className={cn("px-3 align-middle", DENSITY_PAD[rowDensity], STICKY_CHECKBOX_BODY)}>
         <SelectCheckbox
           checked={selected.has(c.id)}
           onCheckedChange={() => toggleRow(c.id)}
@@ -458,26 +524,42 @@ export default function CampaignTable() {
         <td
           key={col.id}
           className={cn(
-            "px-3 py-2.5 align-middle",
+            "overflow-hidden px-3 align-middle",
+            DENSITY_PAD[rowDensity],
             col.id === "name" && STICKY_NAME_BODY,
             col.id === "name" && "transition-shadow duration-150",
-            col.id === "name" && isScrolled && SCROLL_SHADOW,
+            col.id === "name" && (isScrolled ? NAME_EDGE_SCROLLED : NAME_EDGE),
             col.align === "right" && "text-right tabular-nums"
           )}
         >
           {renderCell(c, col)}
         </td>
       ))}
+      {/* Filler cell so the row spans the full card width when columns are narrow. */}
+      <td aria-hidden />
     </tr>
   );
 
   return (
     <div>
-      <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-border">
-        <table className="min-w-full border-collapse text-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-background">
+        {/* Horizontal scroll only — the card grows vertically and the PAGE scrolls it. */}
+        <div ref={scrollRef} className="overflow-x-auto">
+          <table
+            className="w-full table-fixed border-collapse text-sm"
+            style={{ minWidth: tableWidth }}
+          >
+            <colgroup>
+              <col style={{ width: CHECKBOX_COL_WIDTH }} />
+              {columns.map((col) => (
+                <col key={col.id} style={{ width: effWidth(col) }} />
+              ))}
+              {/* Filler column (auto width) absorbs space beyond the fixed columns. */}
+              <col />
+            </colgroup>
           <thead>
             {hasSelection ? (
-              <tr className="border-b border-border bg-muted/50">
+              <tr className="animate-fade-in border-b border-border bg-muted/50 duration-150">
                 <td colSpan={totalColSpan} className="sticky left-0 z-10 px-3 py-2">
                   <div className="flex items-center gap-3">
                     <SelectCheckbox
@@ -521,7 +603,7 @@ export default function CampaignTable() {
                 </td>
               </tr>
             ) : (
-              <tr className="border-b border-border">
+              <tr className="border-b border-border bg-muted">
                 <th className={cn("px-3 py-2.5", STICKY_CHECKBOX_HEAD)}>
                   <SelectCheckbox
                     checked={headerState}
@@ -532,12 +614,11 @@ export default function CampaignTable() {
                 {columns.map((col) => (
                   <th
                     key={col.id}
-                    style={col.width ? { minWidth: col.width } : undefined}
                     className={cn(
-                      "whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
+                      "relative whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
                       col.id === "name" && STICKY_NAME_HEAD,
                       col.id === "name" && "transition-shadow duration-150",
-                      col.id === "name" && isScrolled && SCROLL_SHADOW,
+                      col.id === "name" && (isScrolled ? NAME_EDGE_SCROLLED : NAME_EDGE),
                       col.align === "right" && "text-right"
                     )}
                   >
@@ -556,8 +637,18 @@ export default function CampaignTable() {
                     ) : (
                       col.label
                     )}
+                    {/* Drag to resize; double-click to reset to the default width. */}
+                    <div
+                      role="separator"
+                      aria-label={`Resize ${col.label} column`}
+                      onMouseDown={(e) => startResize(e, col)}
+                      onDoubleClick={() => resetWidth(col.id)}
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border"
+                    />
                   </th>
                 ))}
+                {/* Filler header cell, matches the filler column. */}
+                <th aria-hidden />
               </tr>
             )}
           </thead>
@@ -590,8 +681,9 @@ export default function CampaignTable() {
             ) : (
               pageRows.map(renderRow)
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination — hidden entirely while grouped */}
@@ -736,19 +828,22 @@ function GroupSection({
 }) {
   return (
     <>
-      <tr className="border-b border-border bg-muted">
-        <td colSpan={colSpan} className="px-3 py-2">
+      <tr className="border-b border-border bg-canvas">
+        <td colSpan={colSpan} className="p-0">
+          {/* The label sticks to the left edge while the band spans the full row,
+              so "Draft (6)" stays in view when the table scrolls horizontally. */}
           <button
             type="button"
             onClick={onToggle}
-            className="flex items-center gap-2 text-sm"
+            className="sticky left-0 flex w-max max-w-full items-center gap-2 bg-canvas px-3 py-2 text-sm"
           >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span className="font-medium text-foreground">{group.key}</span>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                isCollapsed && "-rotate-90"
+              )}
+            />
+            <span className="text-sm font-medium text-foreground">{group.key}</span>
             <span className="text-muted-foreground">({group.rows.length})</span>
           </button>
         </td>

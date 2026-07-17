@@ -18,7 +18,7 @@ import { cn } from "../../lib/utils";
 // Dashed outline (Add filter / Group) — outline variant with the dashed border and
 // the original muted-text / hover styling restored via className.
 const DASHED_BUTTON =
-  "h-auto gap-1.5 border-dashed border-border px-2.5 py-1.5 text-sm text-muted-foreground shadow-none hover:border-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3.5";
+  "h-auto gap-1.5 border-dashed border-input px-2.5 py-1.5 text-sm text-muted-foreground shadow-none hover:border-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3.5";
 const OP_LABELS: Record<Exclude<FilterOp, "is">, string> = {
   isAnyOf: "is any of",
   isNoneOf: "is none of",
@@ -56,7 +56,7 @@ export default function FilterBar() {
   const groupLabel = GROUP_FIELDS.find((g) => g.id === groupBy)?.label;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3">
       {filters.map((filter, index) => (
         <FilterChip
           // Filters are positional; index is stable for a given chip instance.
@@ -86,7 +86,7 @@ export default function FilterBar() {
           <Popover.Content
             align="start"
             sideOffset={4}
-            className="z-50 min-w-[180px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+            className="z-50 min-w-[180px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
           >
             {fields.map((f) => (
               <Popover.Close asChild key={f.field}>
@@ -105,7 +105,7 @@ export default function FilterBar() {
 
       {/* Group by */}
       {groupBy ? (
-        <div className="inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2.5 py-1.5 text-sm text-foreground">
+        <div className="inline-flex items-center gap-1 rounded-md border border-dashed border-input bg-background px-2.5 py-1.5 text-sm text-foreground">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button type="button" className="inline-flex items-center gap-1.5">
@@ -165,7 +165,7 @@ function GroupMenu({
       <DropdownMenu.Content
         align="start"
         sideOffset={4}
-        className="z-50 min-w-[180px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+        className="z-50 min-w-[180px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
       >
         <DropdownMenu.Item
           onSelect={() => onSelect(null)}
@@ -242,23 +242,31 @@ function FilterChip({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger asChild>
-        <Button
+      <div className="inline-flex animate-scale-in items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground duration-150">
+        <Popover.Trigger asChild>
+          <button type="button" className="inline-flex items-center gap-1.5 outline-none">
+            <span className="font-medium">{fieldLabel}</span>
+            <span className="text-muted-foreground">{opLabel(filter.op)}</span>
+            <span className="max-w-[160px] truncate">{summary}</span>
+          </button>
+        </Popover.Trigger>
+        <button
           type="button"
-          variant="outline"
-          size="sm"
-          className="h-auto gap-1.5 border-border bg-background px-2.5 py-1.5 text-sm text-foreground shadow-none hover:bg-muted hover:text-foreground"
+          aria-label={`Remove ${fieldLabel} filter`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="rounded-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <span className="font-medium">{fieldLabel}</span>
-          <span className="text-muted-foreground">{opLabel(filter.op)}</span>
-          <span className="max-w-[160px] truncate">{summary}</span>
-        </Button>
-      </Popover.Trigger>
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
       <Popover.Portal>
         <Popover.Content
           align="start"
           sideOffset={4}
-          className="z-50 w-[240px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
+          className="z-50 w-[240px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
         >
           {/* Op selector */}
           <DropdownMenu.Root>
@@ -275,7 +283,7 @@ function FilterChip({
               <DropdownMenu.Content
                 align="start"
                 sideOffset={4}
-                className="z-50 min-w-[160px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+                className="z-50 min-w-[160px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
               >
                 {(["isAnyOf", "isNoneOf"] as const).map((op) => (
                   <DropdownMenu.Item

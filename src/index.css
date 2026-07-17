@@ -15,10 +15,11 @@
   --secondary-foreground: 0 0% 9%;
   --muted: 0 0% 96.1%;
   --muted-foreground: 0 0% 45.1%;
+  --canvas: 0 0% 93.5%;
   --accent: 0 0% 96.1%;
   --accent-foreground: 0 0% 9%;
   --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
+  --input: 0 0% 80%;
   --ring: 0 0% 3.9%;
   --radius: 0.5rem;
 
@@ -26,7 +27,7 @@
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
 
-  --rail: 0 0% 98%;
+  --rail: 0 0% 100%;
   --rail-foreground: 0 0% 32%;
   --rail-active: 0 0% 9%;
   --rail-active-foreground: 0 0% 98%;
@@ -76,4 +77,18 @@ body {
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv11", "ss01";
   font-variation-settings: "opsz" 32;
+}
+
+/* Respect the OS "Reduce motion" setting: collapse every transition and
+   animation to effectively-instant. Elements settle in their resting (final)
+   state, so nothing is left stuck mid-fade or hidden. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

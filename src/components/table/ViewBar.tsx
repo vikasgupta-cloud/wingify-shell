@@ -7,21 +7,17 @@ import { Button } from "@/components/ui/button";
 import {
   BASE_STATE,
   BASE_VIEW_ID,
+  isDirtyIgnoringLayout,
   useIsActiveViewDirty,
   useViewsStore,
 } from "../../store/views";
 import { cn } from "../../lib/utils";
 
-// Grey filled "Save view" button — secondary variant, sized/bordered to match the
-// original hand-styled control exactly.
-const SAVE_VIEW_CLS =
-  "h-auto border border-border px-2.5 py-1 shadow-none";
-
 function DirtyDot() {
   return (
     <span
       aria-hidden
-      className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground"
+      className="ml-1.5 inline-block h-1.5 w-1.5 animate-scale-in rounded-full bg-muted-foreground duration-150"
     />
   );
 }
@@ -50,9 +46,8 @@ export default function ViewBar() {
   const hasStrip = views.length > 0;
   const activeView = views.find((v) => v.id === activeViewId);
 
-  // Render nothing when there's no tab strip and no unsaved changes, so the page's
-  // header→toolbar gap stays exactly 32px; the bar only occupies that region once
-  // there are saved views and/or Discard/Save-view controls to show.
+  // One row: tab strip left, Discard/Save right. Renders when either exists;
+  // otherwise nothing at all, keeping the header→toolbar gap exactly 32px.
   if (!hasStrip && !isDirty) return null;
 
   const dirtyFor = (id: string) => {
@@ -62,7 +57,7 @@ export default function ViewBar() {
       id === BASE_VIEW_ID
         ? BASE_STATE
         : views.find((v) => v.id === id)?.state ?? BASE_STATE;
-    return JSON.stringify(draft) !== JSON.stringify(saved);
+    return isDirtyIgnoringLayout(draft, saved);
   };
 
   const startRename = (id: string, name: string) => {
@@ -220,37 +215,25 @@ export default function ViewBar() {
           <div />
         )}
 
-        {/* B) SAVE CONTROLS — only while the active view is dirty */}
+        {/* B) SAVE CONTROLS — right-aligned, only while the active view is dirty */}
         {isDirty && (
-          <div className="mb-1.5 flex shrink-0 items-center gap-2">
+          <div className="mb-1 flex shrink-0 animate-fade-in items-center gap-2 duration-150">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={discardActiveViewDraft}
-              className="h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
             >
               Discard
             </Button>
             {activeViewId === BASE_VIEW_ID ? (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={openSaveAs}
-                className={SAVE_VIEW_CLS}
-              >
+              <Button type="button" size="sm" onClick={openSaveAs}>
                 Save view
               </Button>
             ) : (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className={SAVE_VIEW_CLS}
-                  >
+                  <Button type="button" size="sm">
                     Save view
                   </Button>
                 </DropdownMenu.Trigger>
@@ -355,10 +338,7 @@ export default function ViewBar() {
                     Cancel
                   </Button>
                 </Dialog.Close>
-                <Button
-                  type="submit"
-                  className="h-auto px-3 py-1.5 shadow-none"
-                >
+                <Button type="submit" className="h-auto px-3 py-1.5 shadow-none">
                   Save
                 </Button>
               </div>

@@ -1,13 +1,250 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
-import { ChevronDown, Plus, Search } from "lucide-react";
-import { getEntities, getFilters } from "../../config/entities";
+import {
+  Archive,
+  ChevronDown,
+  Clock,
+  Copy,
+  Download,
+  Eraser,
+  FileBarChart,
+  MoreHorizontal,
+  PenLine,
+  Printer,
+  Save,
+  Search,
+  Share2,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
 import { mainNavCrumbPath, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu as DropdownMenuRoot,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import StatusMenu from "@/components/ui/StatusMenu";
+import { useConfigStore, useIsConfigDirty } from "../../store/config";
+import { useWandzStore } from "../../store/wandz";
+import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
+import type { Campaign } from "../../data/campaigns";
 import PrimaryRail from "./PrimaryRail";
+
+// The vertical icon rail on the left of a detail surface: Ask Wandz (stub),
+// Configure, and Reports. Split out so DetailShell's body stays readable.
+function IconRail({ basePath, entityId }: { basePath: string; entityId?: string }) {
+  const { pathname } = useLocation();
+  const configPath = `${basePath}/c/${entityId}`;
+  const reportsPath = `${configPath}/reports`;
+  const onReports = pathname.endsWith("/reports");
+  const onConfigure = !onReports;
+  const wandzOpen = useWandzStore((s) => s.open);
+  const openWandz = useWandzStore((s) => s.openWandz);
+
+  const railButton = (active: boolean) =>
+    cn(
+      "flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+      active && "bg-accent text-foreground"
+    );
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <nav className="flex w-14 shrink-0 flex-col items-center gap-4 border-r border-border bg-background pt-4">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="Ask Wandz"
+              onClick={() => openWandz({ kind: "campaign", campaignId: entityId ?? "" })}
+              className={railButton(wandzOpen)}
+            >
+              <Sparkles className="h-[18px] w-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Ask Wandz</TooltipContent>
+        </Tooltip>
+
+        <div className="h-px w-6 bg-border" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link to={configPath} aria-label="Configure" className={railButton(onConfigure)}>
+              <PenLine className="h-[18px] w-[18px]" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">Configure</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link to={reportsPath} aria-label="Reports" className={railButton(onReports)}>
+              <FileBarChart className="h-[18px] w-[18px]" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">Reports</TooltipContent>
+        </Tooltip>
+      </nav>
+    </TooltipProvider>
+  );
+}
+
+// The Save button in the actions cluster — disabled until the config is dirty.
+function SaveButton({ entityId }: { entityId?: string }) {
+  const dirty = useIsConfigDirty(entityId ?? "");
+  const save = useConfigStore((s) => s.save);
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={!dirty}
+      onClick={() => entityId && save(entityId)}
+      className="transition-opacity duration-200"
+    >
+      <Save className="h-4 w-4" />
+      Save
+    </Button>
+  );
+}
+
+// Filter the real campaign list by the active chip + search text, mapping each
+// down to the entity-switcher's {id, name} shape. "Recent" is a sort (10 most
+// recently updated), not a status; the others match campaign.status.
+function filterCampaigns(
+  campaigns: Campaign[],
+  filter: string,
+  search: string
+): { id: string; name: string }[] {
+  let list = campaigns;
+  if (filter === "Recent") {
+    list = [...campaigns]
+      .sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))
+      .slice(0, 10);
+  } else if (filter === "Running") {
+    list = campaigns.filter((c) => c.status === "Running");
+  } else if (filter === "Drafts") {
+    list = campaigns.filter((c) => c.status === "Draft");
+  } else if (filter === "Paused") {
+    list = campaigns.filter((c) => c.status === "Paused");
+  }
+  const q = search.trim().toLowerCase();
+  if (q) list = list.filter((c) => c.name.toLowerCase().includes(q));
+  return list.map((c) => ({ id: c.id, name: c.name }));
+}
+
+// The kebab in the level-2 action cluster. Flush Data and Archive are disabled
+// on a Draft; Delete Permanently confirms, removes the row, and returns to the list.
+function KebabMenu({ campaign }: { campaign: Campaign }) {
+  const navigate = useNavigate();
+  const archive = useRowsStore((s) => s.archive);
+  const remove = useRowsStore((s) => s.remove);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const isDraft = campaign.status === "Draft";
+
+  return (
+    <>
+      <DropdownMenuRoot modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" aria-label="More actions" className="h-9 w-9">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem onSelect={() => { /* TODO — Clone modal is a deferred prompt */ }}>
+            <Copy />
+            Clone
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => { /* TODO — Timeline drawer is a deferred prompt */ }}>
+            <Clock />
+            Timeline
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => { /* TODO */ }}>
+            <Share2 />
+            Share
+          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Download />
+              Download CSV
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onSelect={() => { /* TODO */ }}>Summary</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { /* TODO */ }}>Detailed</DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuItem onSelect={() => { /* TODO */ }}>
+            <Printer />
+            Print
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem disabled={isDraft} onSelect={() => { /* TODO */ }}>
+            <Eraser />
+            Flush Data
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={isDraft} onSelect={() => archive([campaign.id])}>
+            <Archive />
+            Archive
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDeleteOpen(true)}>
+            <Trash2 />
+            Delete Permanently
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenuRoot>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete campaign?</DialogTitle>
+            <DialogDescription>This can't be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                remove([campaign.id]);
+                setDeleteOpen(false);
+                navigate("/web-experiment");
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 const EDGE_OPEN_DELAY_MS = 240;
 const OVERLAY_CLOSE_GRACE_MS = 250;
@@ -17,11 +254,13 @@ const OVERLAY_ANIM_MS = 180;
 type DetailShellProps = {
   /** The leaf page path this detail surface belongs to, e.g. "/feature-management/holdouts". Defaults to the URL before "/c/". */
   basePath?: string;
+  /** Route-dependent body rendered below the top bar. */
+  children?: ReactNode;
 };
 
 // Level-2 shell: renders its own chrome, outside AppLayout. Level-1 navigation
 // is revealed by dwelling on the left viewport edge (or pressing "[").
-export default function DetailShell({ basePath: basePathProp }: DetailShellProps) {
+export default function DetailShell({ basePath: basePathProp, children }: DetailShellProps) {
   const { entityId } = useParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -41,10 +280,34 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
 
   // Breadcrumb trail: main-nav label, plus the sub-nav label when basePath is a leaf.
   const { item, leaf, siblings } = resolveBreadcrumb(basePath);
-  const entities = getEntities(basePath);
+
+  // /web-experiment resolves its entity switcher from the REAL campaign store so
+  // the breadcrumb always agrees with the config page header. Every other
+  // basePath keeps the dummy getEntities()/getFilters() lists unchanged.
+  // TODO: migrate other sections to real data as they're built.
+  const realData = isRealDataPath(basePath);
+  const campaigns = useVisibleCampaigns();
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [entitySearch, setEntitySearch] = useState("");
+
+  const dummyEntities = getEntities(basePath);
   const filters = getFilters(basePath);
-  // Seed selection from the URL, falling back to the first dummy entity.
-  const selected = entities.find((e) => e.id === entityId) ?? entities[0];
+
+  // The real campaign backing this detail surface (real-data paths only) — drives
+  // the breadcrumb name, the StatusMenu, and the kebab actions.
+  const campaign = realData
+    ? campaigns.find((c) => c.id === entityId) ?? campaigns[0]
+    : undefined;
+
+  // Entities listed in the switcher popover.
+  const entities = realData
+    ? filterCampaigns(campaigns, activeFilter, entitySearch)
+    : dummyEntities;
+
+  // The selected row shown in the breadcrumb trigger.
+  const selected = realData
+    ? campaign && { id: campaign.id, name: campaign.name }
+    : dummyEntities.find((e) => e.id === entityId) ?? dummyEntities[0];
 
   const cancelOpen = () => window.clearTimeout(openTimer.current);
   const cancelScheduledClose = () => window.clearTimeout(closeTimer.current);
@@ -183,29 +446,35 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
                   sideOffset={6}
                   className="z-50 w-[300px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
                 >
-                  {/* Search + filter chips are visual-only for now. */}
+                  {/* Real-data paths wire search + chips; others stay visual-only. */}
                   <div className="flex items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
                     <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     <input
                       type="text"
                       placeholder="Search…"
+                      value={realData ? entitySearch : undefined}
+                      onChange={realData ? (e) => setEntitySearch(e.target.value) : undefined}
                       className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                     />
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {filters.map((filter, i) => (
-                      <button
-                        key={filter}
-                        type="button"
-                        className={cn(
-                          "rounded-full border border-input px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted",
-                          i === 0 &&
-                            "border-transparent bg-secondary font-medium text-secondary-foreground"
-                        )}
-                      >
-                        {filter}
-                      </button>
-                    ))}
+                    {filters.map((filter, i) => {
+                      const chipActive = realData ? filter === activeFilter : i === 0;
+                      return (
+                        <button
+                          key={filter}
+                          type="button"
+                          onClick={() => realData && setActiveFilter(filter)}
+                          className={cn(
+                            "rounded-full border border-input px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted",
+                            chipActive &&
+                              "border-transparent bg-secondary font-medium text-secondary-foreground"
+                          )}
+                        >
+                          {filter}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
                     {entities.map((entity) => (
@@ -234,24 +503,19 @@ export default function DetailShell({ basePath: basePathProp }: DetailShellProps
           </div>
         </div>
 
-        {/* Actions slot — global for now; swap per-page later. */}
+        {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
+            the list pages only. Status + kebab need a real campaign. */}
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            <Plus className="h-4 w-4" />
-            Create
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          <SaveButton entityId={entityId} />
+          {campaign && <StatusMenu campaign={campaign} />}
+          {campaign && <KebabMenu campaign={campaign} />}
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto">
-        <h1 className="pt-10 pl-12 text-3xl font-semibold tracking-tight text-foreground">
-          {selected?.name ?? `Entity ${entityId}`}
-        </h1>
-      </main>
+      <div className="flex flex-1 overflow-hidden">
+        <IconRail basePath={basePath} entityId={entityId} />
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
 
       {/* Edge-reveal hotzone: dwell on the left viewport edge to open the nav overlay. */}
       <div

@@ -22,25 +22,26 @@ export type ColumnDef = {
   locked?: boolean;
   sortable: boolean;
   align?: "left" | "right";
-  width?: string;
+  /** Default width in px; a view's columnWidths override takes precedence. */
+  width: number;
 };
 
 export const COLUMNS: ColumnDef[] = [
-  { id: "name", label: "Campaign name", locked: true, sortable: true, width: "320px" },
-  { id: "status", label: "Status", sortable: true },
-  { id: "conclusion", label: "Conclusion", sortable: true },
-  { id: "vitals", label: "Vitals", sortable: true },
-  { id: "variations", label: "Variations", sortable: true, align: "right" },
-  { id: "visitors", label: "Visitors", sortable: true, align: "right" },
-  { id: "uniqueConversion", label: "Unique Conversion", sortable: true, align: "right" },
-  { id: "createdOnBy", label: "Created on/by", sortable: true },
-  { id: "startedOn", label: "Started on", sortable: true },
-  { id: "expectedImprovement", label: "Expected Improvement", sortable: true, align: "right" },
-  { id: "primaryMetric", label: "Primary Metric", sortable: true },
-  { id: "leadingVariation", label: "Leading variation", sortable: true },
-  { id: "hypothesis", label: "Hypothesis", sortable: false, width: "260px" },
-  { id: "labels", label: "Labels", sortable: false },
-  { id: "lastUpdated", label: "Last Updated", sortable: true },
+  { id: "name", label: "Campaign name", locked: true, sortable: true, width: 320 },
+  { id: "status", label: "Status", sortable: true, width: 140 },
+  { id: "conclusion", label: "Conclusion", sortable: true, width: 140 },
+  { id: "vitals", label: "Vitals", sortable: true, width: 90 },
+  { id: "variations", label: "Variations", sortable: true, align: "right", width: 110 },
+  { id: "visitors", label: "Visitors", sortable: true, align: "right", width: 110 },
+  { id: "uniqueConversion", label: "Unique Conversion", sortable: true, align: "right", width: 150 },
+  { id: "createdOnBy", label: "Created on/by", sortable: true, width: 160 },
+  { id: "startedOn", label: "Started on", sortable: true, width: 130 },
+  { id: "expectedImprovement", label: "Expected Improvement", sortable: true, align: "right", width: 170 },
+  { id: "primaryMetric", label: "Primary Metric", sortable: true, width: 160 },
+  { id: "leadingVariation", label: "Leading variation", sortable: true, width: 150 },
+  { id: "hypothesis", label: "Hypothesis", sortable: false, width: 260 },
+  { id: "labels", label: "Labels", sortable: false, width: 160 },
+  { id: "lastUpdated", label: "Last Updated", sortable: true, width: 130 },
 ];
 
 export const DEFAULT_VISIBLE: ColumnId[] = [

@@ -5,10 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { COLUMNS, type ColumnId } from "../../config/columns";
 import { useActiveViewState, useViewsStore } from "../../store/views";
+import { useTableStore, type RowDensity } from "../../store/table";
 import { cn } from "../../lib/utils";
 
 const CHECKBOX_CLASS =
   "h-3.5 w-3.5 [&_svg]:size-3 disabled:cursor-not-allowed";
+
+// Row-density options: S / M / L with full names as tooltips.
+const DENSITIES: { key: RowDensity; label: string; title: string }[] = [
+  { key: "compact", label: "S", title: "Compact" },
+  { key: "default", label: "M", title: "Default" },
+  { key: "comfortable", label: "L", title: "Comfortable" },
+];
 
 const isLocked = (id: ColumnId) =>
   COLUMNS.find((c) => c.id === id)?.locked === true;
@@ -17,6 +25,8 @@ export default function ColumnConfig() {
   const { visibleColumns } = useActiveViewState();
   const updateDraft = useViewsStore((s) => s.updateActiveViewDraft);
   const resetColumns = useViewsStore((s) => s.resetActiveViewColumns);
+  const rowDensity = useTableStore((s) => s.rowDensity);
+  const setRowDensity = useTableStore((s) => s.setRowDensity);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
@@ -68,8 +78,34 @@ export default function ColumnConfig() {
         <Popover.Content
           align="end"
           sideOffset={6}
-          className="z-50 w-[280px] rounded-md border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
+          className="z-50 w-[280px] rounded-md border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
         >
+          {/* Row height — global preference, not part of the view. */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Row height</span>
+            <div className="inline-flex items-center rounded-md bg-muted p-0.5">
+              {DENSITIES.map((d) => (
+                <button
+                  key={d.key}
+                  type="button"
+                  title={d.title}
+                  aria-label={`${d.title} row height`}
+                  onClick={() => setRowDensity(d.key)}
+                  className={cn(
+                    "rounded-[5px] px-2 py-0.5 text-xs transition-colors",
+                    rowDensity === d.key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="my-2 h-px bg-border" />
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
               Active view

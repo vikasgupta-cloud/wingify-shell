@@ -51,7 +51,7 @@ export default function KanbanBoard() {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-border px-3 py-16 text-center text-muted-foreground">
+      <div className="rounded-lg border border-border bg-background px-3 py-16 text-center text-muted-foreground">
         {search.trim()
           ? "No campaigns match your search."
           : "Nothing here yet."}
@@ -77,12 +77,12 @@ export default function KanbanBoard() {
               setDraggedId(null);
             }}
             className={cn(
-              "flex max-h-[70vh] w-80 shrink-0 flex-col rounded-lg transition-opacity",
+              "flex w-80 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background transition-[opacity,box-shadow] duration-150",
               dragging && !isValid && "opacity-50",
               dragging && isValid && "ring-2 ring-foreground/20"
             )}
           >
-            <div className="flex items-center justify-between gap-2 px-1 pb-2">
+            <div className="flex items-center justify-between gap-2 border-b border-border bg-muted px-3 py-2">
               {isStatus ? (
                 <StatusBadge status={key as CampaignStatus} />
               ) : (
@@ -95,7 +95,7 @@ export default function KanbanBoard() {
               </span>
             </div>
 
-            <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-0.5">
+            <div className="flex flex-1 flex-col gap-2 p-2">
               {colRows.length === 0 ? (
                 <div className="py-10 text-center text-sm text-muted-foreground">
                   Nothing here
@@ -105,6 +105,10 @@ export default function KanbanBoard() {
                   <div
                     key={c.id}
                     draggable={isStatus}
+                    className={cn(
+                      "transition-opacity duration-150",
+                      draggedId === c.id && "opacity-50"
+                    )}
                     onDragStart={
                       isStatus
                         ? (e) => {

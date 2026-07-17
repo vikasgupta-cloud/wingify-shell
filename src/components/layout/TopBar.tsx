@@ -1,19 +1,20 @@
 import { ChevronDown, PanelLeft, Plus } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "../../store/ui";
+import { useRowsStore } from "../../store/rows";
 import { showsCreate, pageLabel } from "../../lib/nav";
 import { getCreateOptions, type CreateOption } from "../../config/createMenu";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import BreadcrumbNav from "./BreadcrumbNav";
 
-function CreateItem({ option }: { option: CreateOption }) {
+function CreateItem({ option, onSelect }: { option: CreateOption; onSelect: () => void }) {
   const Icon = option.icon;
-  // Non-functional stub for now.
+  // Options with a campaignType mint a campaign; the rest stay stubs.
   return (
     <DropdownMenu.Item
-      onSelect={() => {}}
+      onSelect={onSelect}
       className="flex cursor-pointer items-start gap-3 rounded-md px-2.5 py-2.5 outline-none hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
     >
       <Icon className="mt-0.5 h-[18px] w-[18px] shrink-0 text-foreground" />
@@ -31,10 +32,18 @@ function CreateItem({ option }: { option: CreateOption }) {
 
 export default function TopBar() {
   const toggleDock = useUIStore((s) => s.toggleDock);
+  const navigate = useNavigate();
+  const createCampaign = useRowsStore((s) => s.createCampaign);
   const { pathname } = useLocation();
   const createOptions = getCreateOptions(pathname, pageLabel(pathname));
   const aiOptions = createOptions.filter((o) => o.group === "ai");
   const restOptions = createOptions.filter((o) => o.group !== "ai");
+
+  const handleSelect = (option: CreateOption) => {
+    if (!option.campaignType) return; // stub
+    const id = createCampaign(option.campaignType);
+    navigate(`/web-experiment/c/${id}`);
+  };
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
@@ -71,17 +80,17 @@ export default function TopBar() {
               <DropdownMenu.Content
                 align="end"
                 sideOffset={6}
-                className="z-50 w-[340px] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg"
+                className="z-50 w-[340px] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
               >
-                {/* TODO: wire up Create options — all items are non-functional stubs for now. */}
+                {/* Options with a campaignType mint a campaign; Copilot + generic fallback stay stubs. */}
                 {aiOptions.map((option) => (
-                  <CreateItem key={option.id} option={option} />
+                  <CreateItem key={option.id} option={option} onSelect={() => handleSelect(option)} />
                 ))}
                 {aiOptions.length > 0 && restOptions.length > 0 && (
                   <DropdownMenu.Separator className="my-1.5 h-px bg-border" />
                 )}
                 {restOptions.map((option) => (
-                  <CreateItem key={option.id} option={option} />
+                  <CreateItem key={option.id} option={option} onSelect={() => handleSelect(option)} />
                 ))}
               </DropdownMenu.Content>
             </DropdownMenu.Portal>

@@ -311,13 +311,15 @@ export default function QuickViewPanel() {
   const r = campaign.report;
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    // flex-1 min-h-0 so the panel fills its sticky wrapper up to the wrapper's
+    // max-height; when content exceeds it, only the body scrolls.
+    <div className="flex min-h-0 flex-1 animate-fade-in-up flex-col bg-background duration-200">
       {/* Header */}
-      <div className="flex shrink-0 items-center gap-3 border-b border-border px-6 py-4">
-        <TypeIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-label={campaign.type} />
+      <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3">
+        <TypeIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={campaign.type} />
         <span
           title={campaign.name}
-          className="min-w-0 flex-1 truncate text-base font-medium text-foreground"
+          className="min-w-0 flex-1 truncate text-sm font-medium text-foreground"
         >
           {campaign.name}
         </span>
@@ -336,7 +338,7 @@ export default function QuickViewPanel() {
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         {!hasReport(campaign.status) ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No report data yet.
@@ -387,7 +389,7 @@ export default function QuickViewPanel() {
       </div>
 
       {/* Footer */}
-      <div className="flex shrink-0 items-center justify-between border-t border-border bg-background px-6 py-4">
+      <div className="flex shrink-0 items-center justify-between border-t border-border bg-background px-4 py-3">
         <div className="flex items-center gap-1">
           <Button
             type="button"

@@ -18,6 +18,8 @@ export type ViewState = {
   // Keyed by group field so a view's Status board order is independent of its
   // Creator board order.
   boardColumns: Partial<Record<GroupField, BoardColumnConfig>>;
+  // Per-view column width overrides (px); a column absent here uses its default.
+  columnWidths: Partial<Record<ColumnId, number>>;
 };
 
 export type View = { id: string; name: string; state: ViewState };
@@ -30,6 +32,7 @@ export const BASE_STATE: ViewState = {
   visibleColumns: [...DEFAULT_VISIBLE],
   layout: "table",
   boardColumns: {},
+  columnWidths: {},
 };
 
 type ViewsState = {
@@ -171,6 +174,15 @@ const savedStateFor = (s: ViewsState, id: string): ViewState =>
     ? BASE_STATE
     : s.views.find((v) => v.id === id)?.state ?? BASE_STATE;
 
+// A view is dirty when its draft differs from the saved state on any key EXCEPT
+// `layout`. Switching Table/Kanban/Gantt still writes layout into the draft and
+// still saves with the view, but must never on its own show Discard / Save view.
+export function isDirtyIgnoringLayout(draft: ViewState, saved: ViewState): boolean {
+  const { layout: _draftLayout, ...draftRest } = draft;
+  const { layout: _savedLayout, ...savedRest } = saved;
+  return JSON.stringify(draftRest) !== JSON.stringify(savedRest);
+}
+
 export function useActiveViewState(): ViewState {
   return useViewsStore(
     (s) => s.drafts[s.activeViewId] ?? savedStateFor(s, s.activeViewId)
@@ -181,6 +193,6 @@ export function useIsActiveViewDirty(): boolean {
   return useViewsStore((s) => {
     const draft = s.drafts[s.activeViewId];
     if (!draft) return false;
-    return JSON.stringify(draft) !== JSON.stringify(savedStateFor(s, s.activeViewId));
+    return isDirtyIgnoringLayout(draft, savedStateFor(s, s.activeViewId));
   });
 }

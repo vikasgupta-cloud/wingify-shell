@@ -40,7 +40,7 @@ export default function AppLayout() {
       )}
       <div className="flex min-w-0 flex-col">
         <TopBar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-canvas">
           <Outlet />
         </main>
       </div>

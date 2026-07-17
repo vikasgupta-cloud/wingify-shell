@@ -190,15 +190,6 @@ const addDays = (isoDate: string, days: number) => {
   return d.toISOString();
 };
 
-const MS_PER_DAY = 86_400_000;
-const diffDaysISO = (a: string, b: string) => {
-  const ta = new Date(a).getTime();
-  const tb = new Date(b).getTime();
-  if (!a || isNaN(ta)) throw new Error("diffDaysISO: invalid date (a)");
-  if (!b || isNaN(tb)) throw new Error("diffDaysISO: invalid date (b)");
-  return Math.round((tb - ta) / MS_PER_DAY);
-};
-
 // Canonical STATUS_WORKFLOW-legal path from Draft to each status. Every hop is a
 // legal transition (see src/config/statusWorkflow.ts).
 const PHASE_CHAIN: Record<CampaignStatus, CampaignStatus[]> = {
@@ -221,60 +212,65 @@ function hashId(id: string): number {
   return h >>> 0;
 }
 
-// Split `total` days into `n` positive integers summing to total, seeded by rng.
-function distribute(total: number, n: number, rng: (min: number, max: number) => number): number[] {
-  const parts = new Array(n).fill(1);
-  let rem = total - n;
-  for (let k = 0; k < n - 1 && rem > 0; k++) {
-    const add = rng(0, rem);
-    parts[k] += add;
-    rem -= add;
+// Split `total` days into `n` integers each ~3–7 days, summing to total, seeded
+// by rng. `total` is always >= 3*n so every phase clears the 3-day floor.
+function splitDuration(total: number, n: number, rng: (min: number, max: number) => number): number[] {
+  const parts = new Array(n).fill(3);
+  let rem = total - 3 * n;
+  // Hand out the surplus one day at a time, keeping phases at or below 7 so
+  // segments stay visibly distinct.
+  let guard = 0;
+  while (rem > 0 && guard < 10000) {
+    const k = rng(0, n - 1);
+    if (parts[k] < 7) {
+      parts[k] += 1;
+      rem -= 1;
+    }
+    guard += 1;
   }
-  parts[n - 1] += rem;
+  // Any leftover (every phase already at 7) spills over — only for very short
+  // chains that must still reach `total`.
+  let k = 0;
+  while (rem > 0) {
+    parts[k % n] += 1;
+    rem -= 1;
+    k += 1;
+  }
   return parts;
 }
 
-function generatePhases(
-  id: string,
-  status: CampaignStatus,
-  createdOn: string,
-  startedOn: string | null
-): Phase[] {
+// Compact lifecycle: the whole phase sequence spans 15–25 days (>= 3 per phase),
+// deterministic from the id. Every phase — including the last — is a BOUNDED
+// window ending L days after createdOn; nothing runs open-ended to today, so a
+// Draft row is just a short Draft segment near its createdOn. `startedOn` is not
+// an input — it is derived from the generated Running phase in CAMPAIGNS below,
+// so the first Running phase's `from` equals startedOn by construction.
+function generatePhases(id: string, status: CampaignStatus, createdOn: string): Phase[] {
   const chain = PHASE_CHAIN[status];
+  const n = chain.length;
   let seed = hashId(id) || 1;
   const rng = (min: number, max: number) => {
     seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
     return min + (seed % (max - min + 1));
   };
 
-  const runningIdx = chain.indexOf("Running");
-  const froms: string[] = new Array(chain.length);
-  froms[0] = createdOn;
+  // 15–25 days, but never below 3 days per phase (a 6-phase Ended chain needs 18).
+  const total = Math.min(25, Math.max(3 * n, 15 + (hashId(id) % 11)));
+  const durations = splitDuration(total, n, rng);
 
-  if (startedOn && runningIdx > 0) {
-    // Pre-Running phases span createdOn..startedOn exactly; Running begins on startedOn.
-    const total = Math.max(runningIdx, diffDaysISO(createdOn, startedOn));
-    const parts = distribute(total, runningIdx, rng);
-    let acc = 0;
-    for (let k = 1; k < runningIdx; k++) {
-      acc += parts[k - 1];
-      froms[k] = addDays(createdOn, acc);
-    }
-    froms[runningIdx] = startedOn;
-    for (let k = runningIdx + 1; k < chain.length; k++) {
-      froms[k] = addDays(froms[k - 1], rng(3, 8));
-    }
-  } else {
-    // Never-started rows: a few days per phase, starting at createdOn.
-    for (let k = 1; k < chain.length; k++) {
-      froms[k] = addDays(froms[k - 1], rng(3, 8));
-    }
+  const froms: string[] = new Array(n);
+  froms[0] = createdOn;
+  let acc = 0;
+  for (let k = 1; k < n; k++) {
+    acc += durations[k - 1];
+    froms[k] = addDays(createdOn, acc);
   }
+  const lastEnd = addDays(createdOn, total);
 
   return chain.map((s, k) => ({
     status: s,
     from: froms[k],
-    to: k < chain.length - 1 ? froms[k + 1] : null,
+    to: k < n - 1 ? froms[k + 1] : lastEnd,
   }));
 }
 
@@ -410,9 +406,13 @@ export const CAMPAIGNS: Campaign[] = BASE.map((row, i) => {
     (monthOffset % 12) + 1,
     ((i * 11) % 27) + 1
   );
-  const startedOn = started ? addDays(createdOn, (i % 20) + 3) : null;
-  const visitors = started ? ((i * 7919 + 1543) % 91237) + 3000 : 0;
   const id = String(7189 + i * 13).padStart(6, "0");
+  // Phases drive startedOn: it is exactly the generated Running phase's `from`
+  // (null when the chain never reaches Running). createdOn keeps its cross-month
+  // spread, so startedOn stays spread across months too.
+  const phases = generatePhases(id, row.status, createdOn);
+  const startedOn = phases.find((p) => p.status === "Running")?.from ?? null;
+  const visitors = started ? ((i * 7919 + 1543) % 91237) + 3000 : 0;
   const variations = (i % 4) + 2;
   const uniqueConversions = Math.round((visitors * ((i % 7) + 3)) / 100);
   const primaryMetric = METRICS[i % METRICS.length];
@@ -446,7 +446,7 @@ export const CAMPAIGNS: Campaign[] = BASE.map((row, i) => {
     addresses: ADDRESSES[i % ADDRESSES.length],
     labels: row.labels,
     lastUpdated: addDays(startedOn ?? createdOn, (i % 30) + 1),
-    phases: generatePhases(id, row.status, createdOn, startedOn),
+    phases,
     report: generateReport(id, decision, variations, visitors, uniqueConversions, primaryMetric, startedOn),
   };
 });

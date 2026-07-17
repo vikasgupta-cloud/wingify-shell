@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { Sparkles, Columns2, Files, GitBranch, Grid2x2, Plus } from "lucide-react";
+import type { CampaignType } from "../data/campaigns";
 
 export type CreateOption = {
   id: string;
@@ -7,6 +8,8 @@ export type CreateOption = {
   description: string;
   icon: LucideIcon;
   group?: "ai" | "default";
+  /** When set, selecting the option mints a campaign of this type; otherwise it's a stub. */
+  campaignType?: CampaignType;
 };
 
 // The four campaign-type icons match CampaignTable's TYPE_ICONS so the same
@@ -15,10 +18,10 @@ export type CreateOption = {
 export const CREATE_MENU: Record<string, CreateOption[]> = {
   "/web-experiment": [
     { id: "copilot", label: "Create with Copilot", description: "Let AI transform your idea into a campaign using VWO Copilot", icon: Sparkles, group: "ai" },
-    { id: "ab-single", label: "AB - Single Page", description: "Compare different versions of the same page on your website", icon: Columns2 },
-    { id: "ab-multi", label: "AB - Multi Page", description: "Test all the page of a conversion funnel on your site", icon: Files },
-    { id: "split-url", label: "Split URL", description: "Compare different URLs against each other", icon: GitBranch },
-    { id: "mvt", label: "Multivariate test", description: "Test a combination of modifications on your website", icon: Grid2x2 },
+    { id: "ab-single", label: "AB - Single Page", description: "Compare different versions of the same page on your website", icon: Columns2, campaignType: "A/B" },
+    { id: "ab-multi", label: "AB - Multi Page", description: "Test all the page of a conversion funnel on your site", icon: Files, campaignType: "Multipage" },
+    { id: "split-url", label: "Split URL", description: "Compare different URLs against each other", icon: GitBranch, campaignType: "Split URL" },
+    { id: "mvt", label: "Multivariate test", description: "Test a combination of modifications on your website", icon: Grid2x2, campaignType: "MVT" },
   ],
 };
 

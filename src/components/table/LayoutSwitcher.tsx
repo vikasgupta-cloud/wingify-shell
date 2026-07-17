@@ -39,7 +39,7 @@ export default function LayoutSwitcher({ layouts }: { layouts: Layout[] }) {
             aria-pressed={active}
             onClick={() => updateDraft({ layout: value })}
             className={cn(
-              "h-auto w-auto rounded-md p-1.5",
+              "h-auto w-auto rounded-md p-1.5 transition-all duration-150",
               active
                 ? "bg-background text-foreground shadow-sm hover:bg-background"
                 : "text-muted-foreground hover:bg-transparent hover:text-foreground"

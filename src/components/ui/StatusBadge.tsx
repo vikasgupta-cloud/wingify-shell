@@ -37,7 +37,7 @@ export default function StatusBadge({
 }
 
 export function VitalsIcon({ vitals }: { vitals: Campaign["vitals"] }) {
-  if (vitals === null) return <span className="text-muted-foreground">—</span>;
+  if (vitals === null) return <span className="text-sm text-muted-foreground">–</span>;
   return (
     <HeartPulse
       aria-label={vitals === "healthy" ? "Vitals healthy" : "Vitals unhealthy"}
