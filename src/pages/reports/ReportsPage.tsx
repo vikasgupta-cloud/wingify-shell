@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowUpLeft,
@@ -161,26 +161,30 @@ const REPORT = {
 
 // ---------------------------------------------------------------------------
 
+/** Reports inherit Inter Variable (see tailwind `fontFamily.sans` + index.css base). */
+const reportsRootClass = "font-sans antialiased";
+/** Sticky report tab bar height — Results metrics nav stacks below it. */
+const reportsTabsStickyHeight = "3.25rem";
+
 function LinkButton({ children }: { children: ReactNode }) {
   return (
-    <button type="button" className="text-sm font-semibold text-report-link hover:underline">
+    <Button variant="link" className="h-auto p-0 text-sm font-semibold">
       {children}
-    </button>
+    </Button>
   );
 }
 
 function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
   return (
-    <section
+    <Card
       className={cn(
         overviewRadius,
-        "border border-report-green-border bg-gradient-to-br from-report-green-tint via-report-green-tint/50 to-background lg:col-span-2"
+        "border-border bg-card shadow-sm lg:col-span-2"
       )}
     >
       <div className="flex h-full flex-col gap-7 px-10 py-9">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-report-green-badge px-2.5 py-1 text-sm font-semibold text-report-green">
-            <span className="h-1.5 w-1.5 rounded-full bg-report-green" aria-hidden />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-status-ended-bg px-2.5 py-1 text-sm font-semibold text-status-ended-fg">
             {REPORT.status}
           </span>
           <p className="text-sm text-muted-foreground">{REPORT.runTime}</p>
@@ -198,13 +202,13 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
             {REPORT.stats.map((stat, i) => (
               <div key={stat.label} className="flex items-center gap-6">
                 {i > 0 && (
-                  <Separator orientation="vertical" className="h-10 bg-report-green-border/40" />
+                  <Separator orientation="vertical" className="h-10 bg-border" />
                 )}
                 <div>
                   <p
                     className={cn(
                       "text-2xl font-bold tabular-nums",
-                      stat.accent ? "text-report-green" : "text-foreground"
+                      stat.accent ? "text-success-fg" : "text-foreground"
                     )}
                   >
                     {stat.value}
@@ -216,33 +220,25 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
           </div>
 
           <div className="flex items-center gap-6">
-            <Button className={cn(overviewRadius, "bg-report-green px-5 text-white hover:bg-report-green/90")}>
-              Rollout variation
-            </Button>
-            <button
+            <Button className={cn(overviewRadius, "px-5")}>Rollout variation</Button>
+            <Button
               type="button"
+              variant="link"
               onClick={onViewFullStats}
-              className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+              className="h-auto p-0 text-sm font-semibold text-muted-foreground"
             >
               View full stats
-            </button>
+            </Button>
           </div>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
 
-function GraphChip({ children, tone }: { children: ReactNode; tone: "blue" | "neutral" }) {
+function GraphChip({ children }: { children: ReactNode }) {
   return (
-    <span
-      className={cn(
-        "flex h-5 min-w-[21px] items-center justify-center rounded-full border px-1.5 text-[10px] font-medium",
-        tone === "blue"
-          ? "border-report-blue-border bg-report-blue-bg text-report-blue-fg"
-          : "border-border bg-background text-foreground/70"
-      )}
-    >
+    <span className="flex h-5 min-w-[21px] items-center justify-center rounded-full border border-border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
       {children}
     </span>
   );
@@ -268,7 +264,7 @@ function RevenueRow({
       <div className="flex items-baseline">{value}</div>
       <div className="flex h-1 w-full overflow-hidden rounded-full">
         <div className={cn("h-full", barClass)} style={{ width: `${pct}%` }} />
-        <div className="h-full flex-1 bg-report-track" />
+        <div className="h-full flex-1 bg-muted" />
       </div>
     </div>
   );
@@ -281,12 +277,12 @@ function RevenueImpactCard() {
         <p className="text-base font-semibold text-foreground/80">Revenue Impact</p>
         <div className="flex items-center gap-3 text-sm text-foreground/80">
           <span className="flex items-center gap-1.5">
-            <GraphChip tone="blue">{REPORT.revenue.best.label}</GraphChip>
+            <GraphChip>{REPORT.revenue.best.label}</GraphChip>
             {REPORT.revenue.best.name}
           </span>
           <span>vs</span>
           <span className="flex items-center gap-1.5">
-            <GraphChip tone="neutral">{REPORT.revenue.control.label}</GraphChip>
+            <GraphChip>{REPORT.revenue.control.label}</GraphChip>
             {REPORT.revenue.control.name}
           </span>
         </div>
@@ -295,17 +291,17 @@ function RevenueImpactCard() {
       <RevenueRow
         label="Projected impact"
         pct={93}
-        barClass="bg-report-green-bar"
+        barClass="bg-foreground/80"
         value={
           <>
-            <span className="text-2xl font-medium leading-8 tabular-nums text-report-green-deep">
+            <span className="text-2xl font-medium leading-8 tabular-nums text-success-fg">
               +$2,482
             </span>
             <span className="ml-0.5 text-sm text-muted-foreground">/ month</span>
             <span className="ml-1.5 text-sm font-medium text-foreground">($0.48</span>
             <span className="ml-0.5 text-sm text-muted-foreground">/ visitor</span>
             <span className="ml-0.5 text-sm font-medium text-foreground">)</span>
-            <ArrowUpRight className="ml-1 h-3.5 w-3.5 self-center text-report-green-deep" aria-hidden />
+            <ArrowUpRight className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
           </>
         }
       />
@@ -315,24 +311,24 @@ function RevenueImpactCard() {
         barClass="bg-muted-foreground"
         value={
           <>
-            <span className="text-2xl font-medium leading-8 tabular-nums text-report-green-deep">
+            <span className="text-2xl font-medium leading-8 tabular-nums text-success-fg">
               +1.40%
             </span>
-            <ArrowUpRight className="ml-1 h-3.5 w-3.5 self-center text-report-green-deep" aria-hidden />
+            <ArrowUpRight className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
           </>
         }
       />
       <RevenueRow
         label="Average order value"
         pct={75}
-        barClass="bg-report-green-mid"
+        barClass="bg-foreground/50"
         value={
           <>
-            <span className="text-2xl font-medium leading-8 tabular-nums text-report-green-deep">
+            <span className="text-2xl font-medium leading-8 tabular-nums text-success-fg">
               +$3.20
             </span>
             <span className="ml-1 text-sm text-foreground/80">/ order</span>
-            <ArrowUpLeft className="ml-1 h-3.5 w-3.5 self-center text-report-green-deep" aria-hidden />
+            <ArrowUpLeft className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
           </>
         }
       />
@@ -367,7 +363,7 @@ function AnnotationDot({ n, className }: { n: number; className?: string }) {
   return (
     <span
       className={cn(
-        "absolute z-10 flex h-[19px] w-[19px] items-center justify-center rounded-full border border-background bg-report-green-mid text-[11px] font-extrabold text-white shadow",
+        "absolute z-10 flex h-[19px] w-[19px] items-center justify-center rounded-full border border-background bg-foreground text-[11px] font-extrabold text-primary-foreground shadow",
         className
       )}
       aria-hidden
@@ -405,9 +401,9 @@ function WebpagePreview({
       {/* Browser chrome */}
       <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border/60 bg-muted/60 px-2.5">
         <div className="flex gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-report-red/70" />
-          <span className="h-1.5 w-1.5 rounded-full bg-report-amber" />
-          <span className="h-1.5 w-1.5 rounded-full bg-report-green/70" />
+          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/35" />
+          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/55" />
+          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/75" />
         </div>
         <div className="flex h-4 flex-1 items-center justify-center rounded-full border border-border bg-background text-[10px] leading-none text-muted-foreground">
           vwo.com/experience
@@ -440,7 +436,7 @@ function WebpagePreview({
               {headline}
             </p>
           ) : (
-            <span className="relative inline-block rounded bg-report-green-mid/[0.07] px-1.5 pb-1 pt-0.5 shadow-[inset_0_-2px_0_0_hsl(var(--report-green-mid)/0.32)]">
+            <span className="relative inline-block rounded bg-muted px-1.5 pb-1 pt-0.5 shadow-[inset_0_-2px_0_0_hsl(var(--foreground)/0.12)]">
               <AnnotationDot n={1} className="-left-2.5 -top-2" />
               <span className="whitespace-nowrap text-lg font-bold leading-[22px] tracking-tight text-foreground">
                 {headline}
@@ -456,10 +452,8 @@ function WebpagePreview({
         <div className="relative mt-8">
           <span
             className={cn(
-              "flex h-[38px] items-center rounded-md px-4 text-[11px] font-bold text-white",
-              isControl
-                ? "bg-foreground/90"
-                : "bg-report-green-mid shadow-[0_0_0_4px_hsl(var(--report-green-mid)/0.15)]"
+              "flex h-[38px] items-center rounded-md px-4 text-[11px] font-bold text-primary-foreground",
+              isControl ? "bg-foreground/90" : "bg-foreground shadow-[0_0_0_4px_hsl(var(--foreground)/0.08)]"
             )}
           >
             {cta}
@@ -467,25 +461,11 @@ function WebpagePreview({
           {!isControl && <AnnotationDot n={2} className="-left-2.5 -top-2.5" />}
           <span
             className={cn(
-              "absolute -bottom-4 left-12 flex h-[30px] items-center gap-1 whitespace-nowrap rounded-full border bg-background/95 px-2.5 shadow-sm",
-              isControl ? "border-border" : "border-report-green-border"
+              "absolute -bottom-4 left-12 flex h-[30px] items-center gap-1 whitespace-nowrap rounded-full border border-border bg-background/95 px-2.5 shadow-sm"
             )}
           >
-            <MousePointerClick
-              className={cn(
-                "h-3.5 w-3.5",
-                isControl ? "text-muted-foreground" : "text-report-green-deep"
-              )}
-              aria-hidden
-            />
-            <span
-              className={cn(
-                "text-[10px] font-bold",
-                isControl ? "text-foreground/70" : "text-report-green-deep"
-              )}
-            >
-              {conversionsLabel}
-            </span>
+            <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+            <span className="text-[10px] font-bold text-foreground/70">{conversionsLabel}</span>
           </span>
         </div>
 
@@ -499,17 +479,9 @@ function WebpagePreview({
   );
 }
 
-function VariantChip({ children, tone }: { children: ReactNode; tone: BadgeTone }) {
+function VariantChip({ children }: { children: ReactNode }) {
   return (
-    <span
-      className={cn(
-        "flex h-[23px] min-w-[29px] items-center justify-center rounded-full border px-2 text-xs font-bold",
-        tone === "green" && "border-report-green-border bg-report-green-badge text-report-green-deep",
-        tone === "blue" && "border-report-blue-border bg-report-blue-bg text-report-blue-fg",
-        tone === "purple" && "border-report-purple-border bg-report-purple-bg text-report-purple-fg",
-        tone === "neutral" && "border-border bg-muted text-muted-foreground"
-      )}
-    >
+    <span className="flex h-[23px] min-w-[29px] items-center justify-center rounded-full border border-border bg-muted px-2 text-xs font-bold text-muted-foreground">
       {children}
     </span>
   );
@@ -524,21 +496,17 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
         "shrink-0 border bg-background p-4",
         overviewRadius,
         isControl ? "w-[420px]" : "w-[450px]",
-        isWinner
-          ? "border-report-green bg-background shadow-[0_0_0_1px_hsl(var(--report-green-mid)/0.08),0_5px_16px_hsl(var(--report-green-mid)/0.06)]"
-          : "border-border shadow-sm"
+        "border-border shadow-sm"
       )}
     >
       <div className="flex h-[34px] items-center gap-2">
-        <VariantChip tone={variant.tone}>{variant.label}</VariantChip>
+        <VariantChip>{variant.label}</VariantChip>
         <span className="text-sm font-bold text-foreground/80">{variant.name}</span>
-        {variant.rank !== null && (
-          <VariantChip tone={isWinner ? "green" : "neutral"}>#{variant.rank}</VariantChip>
-        )}
+        {variant.rank !== null && <VariantChip>#{variant.rank}</VariantChip>}
         {isWinner && (
-          <span className="ml-auto flex h-[25px] items-center gap-1 rounded-full bg-report-green-badge px-2.5">
-            <Trophy className="h-3 w-3 text-report-green-deep" aria-hidden />
-            <span className="text-xs font-bold text-report-green-deep">Winner</span>
+          <span className="ml-auto flex h-[25px] items-center gap-1 rounded-full border border-border bg-muted px-2.5">
+            <Trophy className="h-3 w-3 text-decision-winner-fg" aria-hidden />
+            <span className="text-xs font-bold text-decision-winner-fg">Winner</span>
           </span>
         )}
         {isControl && <span className="ml-auto text-xs text-muted-foreground">Original</span>}
@@ -556,8 +524,7 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
         <div>
           <p
             className={cn(
-              "text-[38px] font-semibold leading-10 tracking-[-0.025em] tabular-nums",
-              isControl ? "text-foreground" : "text-report-green-deep"
+              "text-[38px] font-semibold leading-10 tracking-[-0.025em] tabular-nums text-foreground"
             )}
           >
             {variant.conversions}
@@ -567,7 +534,9 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
         <p
           className={cn(
             "pb-1 text-sm tabular-nums",
-            isControl ? "text-muted-foreground" : "font-bold text-report-green-mid"
+            isControl || variant.upliftLabel === "Baseline"
+              ? "text-muted-foreground"
+              : "font-bold text-success-fg"
           )}
         >
           {variant.upliftLabel}
@@ -675,7 +644,7 @@ export default function ReportsPage() {
 
   if (!campaign) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
+      <div className={cn("flex h-full items-center justify-center bg-background", reportsRootClass)}>
         <p className="text-sm text-muted-foreground">Campaign not found.</p>
       </div>
     );
@@ -683,20 +652,23 @@ export default function ReportsPage() {
 
   if (!hasReport(campaign.status)) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
+      <div className={cn("flex h-full items-center justify-center bg-background", reportsRootClass)}>
         <p className="text-sm text-muted-foreground">No report data yet.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-background">
+    <div
+      className={cn("flex min-h-full flex-col bg-background", reportsRootClass)}
+      style={{ "--reports-tabs-height": reportsTabsStickyHeight } as CSSProperties}
+    >
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="flex min-h-full flex-col"
       >
-        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-7 pt-1.5">
+        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-7 pt-1.5">
           <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
             {TABS.map((tab) => (
               <TabsTrigger

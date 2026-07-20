@@ -15,12 +15,17 @@ import {
   Pencil,
   PieChart,
   Settings,
-  Triangle,
+  TrendingUp,
   X,
 } from "lucide-react";
 import type { Campaign, Variant } from "../../data/campaigns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -29,7 +34,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import DateRangeDropdown from "./DateRangeDropdown";
+import {
+  REPORT_DIMENSION_OPTIONS,
+  REPORT_SEGMENT_OPTIONS,
+  fromYmd,
+  toYmd,
+  useReportActiveViewState,
+  useReportViewsStore,
+  type ReportDateRange,
+} from "../../store/reportViews";
+import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
+import ReportViewBar from "./ReportViewBar";
 
 const WINNER_THRESHOLD = 95;
 
@@ -111,9 +126,9 @@ function GraphBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }
     <span
       className={cn(
         "flex h-5 min-w-[28px] shrink-0 items-center justify-center rounded-full border px-2 text-xs font-medium",
-        tone === "ctrl" && "border-report-ctrl-border bg-report-ctrl-bg text-report-ctrl-fg",
-        tone === "v1" && "border-report-v1-border bg-report-v1-bg text-report-v1-fg",
-        tone === "v2" && "border-report-v2-border bg-report-v2-bg text-report-v2-fg",
+        tone === "ctrl" && "border-border bg-muted text-muted-foreground",
+        tone === "v1" && "border-border bg-secondary text-foreground",
+        tone === "v2" && "border-foreground/30 bg-background text-foreground",
         tone === "total" && "border-transparent bg-muted-foreground text-background"
       )}
     >
@@ -122,21 +137,11 @@ function GraphBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }
   );
 }
 
+const activeTabClass =
+  "-mb-px border-b-2 border-foreground font-medium text-foreground";
+
 // ---------------------------------------------------------------------------
 // Filter bar
-
-function FilterChip({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <button
-      type="button"
-      className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm text-foreground/80 transition-colors hover:bg-muted/60"
-    >
-      {icon}
-      {label}
-      <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
-    </button>
-  );
-}
 
 function FunnelIcon({ className }: { className?: string }) {
   return (
@@ -146,16 +151,141 @@ function FunnelIcon({ className }: { className?: string }) {
   );
 }
 
-function FilterBar({ right }: { right?: ReactNode }) {
+function MultiSelectFilterChip({
+  icon,
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  icon: ReactNode;
+  label: string;
+  options: readonly string[];
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const summary =
+    value.length === 0
+      ? label
+      : value.length === 1
+        ? value[0]
+        : `${value[0]} +${value.length - 1}`;
+
+  const toggle = (option: string) => {
+    onChange(
+      value.includes(option)
+        ? value.filter((v) => v !== option)
+        : [...value, option]
+    );
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60",
+            value.length > 0 ? "text-foreground" : "text-foreground/80"
+          )}
+        >
+          {icon}
+          <span className="max-w-[140px] truncate">{summary}</span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-2">
+        <div className="max-h-[240px] space-y-0.5 overflow-y-auto">
+          {options.map((option) => {
+            const checked = value.includes(option);
+            return (
+              <label
+                key={option}
+                className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent"
+              >
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={() => toggle(option)}
+                />
+                <span className="truncate">{option}</span>
+              </label>
+            );
+          })}
+        </div>
+        {value.length > 0 && (
+          <div className="mt-2 border-t border-border pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange([])}
+              className="h-auto px-2 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            >
+              Clear
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function storedToDateRange(range: ReportDateRange): DateRange {
+  return {
+    id: range.id,
+    label: range.label,
+    from: fromYmd(range.from),
+    to: fromYmd(range.to),
+  };
+}
+
+function dateRangeToStored(range: DateRange): ReportDateRange {
+  return {
+    id: range.id,
+    label: range.label,
+    from: toYmd(range.from),
+    to: toYmd(range.to),
+  };
+}
+
+function FilterBar({
+  campaignId,
+  right,
+}: {
+  campaignId: string;
+  right?: ReactNode;
+}) {
+  const { dateRange, segments, dimensions } =
+    useReportActiveViewState(campaignId);
+  const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
+
   return (
     <div className="flex flex-wrap items-center gap-2.5 rounded-md border border-border bg-background px-4 py-3">
       <span className="mr-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
         <FunnelIcon className="h-3.5 w-3.5" />
         Filter by :
       </span>
-      <DateRangeDropdown variant="filter" />
-      <FilterChip icon={<Compass className="h-3.5 w-3.5" aria-hidden />} label="Segments" />
-      <FilterChip icon={<Layers className="h-3.5 w-3.5" aria-hidden />} label="Dimensions" />
+      <DateRangeDropdown
+        variant="filter"
+        value={storedToDateRange(dateRange)}
+        onChange={(range) =>
+          updateDraft(campaignId, { dateRange: dateRangeToStored(range) })
+        }
+      />
+      <MultiSelectFilterChip
+        icon={<Compass className="h-3.5 w-3.5" aria-hidden />}
+        label="Segments"
+        options={REPORT_SEGMENT_OPTIONS}
+        value={segments}
+        onChange={(next) => updateDraft(campaignId, { segments: next })}
+      />
+      <MultiSelectFilterChip
+        icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
+        label="Dimensions"
+        options={REPORT_DIMENSION_OPTIONS}
+        value={dimensions}
+        onChange={(next) => updateDraft(campaignId, { dimensions: next })}
+      />
       {right && <div className="ml-auto flex items-center gap-2">{right}</div>}
     </div>
   );
@@ -166,8 +296,8 @@ function FilterBar({ right }: { right?: ReactNode }) {
 
 function ConclusionBanner({ variantName }: { variantName: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-t-md border border-report-green-deep bg-report-conclusion-bg px-4 py-3">
-      <Award className="h-4 w-4 shrink-0 text-report-green-deep" aria-hidden />
+    <div className="flex items-center gap-3 rounded-t-md border border-border bg-muted/40 px-4 py-3">
+      <Award className="h-4 w-4 shrink-0 text-decision-winner-fg" aria-hidden />
       <p className="text-base font-medium text-foreground/80">
         {variantName} is better or equivalent to baseline and the best choice as it gives the
         highest improvement
@@ -223,7 +353,7 @@ function InnerTabs() {
             className={cn(
               "relative px-1 pb-2 text-sm transition-colors",
               i === 0
-                ? "-mb-px border-b-2 border-report-brand font-medium text-report-brand-fg"
+                ? activeTabClass
                 : "text-foreground/70 hover:text-foreground"
             )}
           >
@@ -344,14 +474,14 @@ function ExpectedImprovementCell({ value }: { value: number | null }) {
     <div className="relative flex h-[60px] items-center border-b border-border px-5">
       <div className="relative h-full flex-1">
         {/* median range band */}
-        <div className="absolute inset-y-0 left-1/2 w-[35px] -translate-x-1/2 bg-report-info-bg/50" />
+        <div className="absolute inset-y-0 left-1/2 w-[35px] -translate-x-1/2 bg-muted/50" />
         {/* 0% centre line */}
         <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border" />
         {/* value bar */}
         <div
           className={cn(
             "absolute top-1/2 h-[15px] -translate-y-1/2 rounded-[1px]",
-            positive ? "bg-report-green-deep" : "bg-muted-foreground"
+            positive ? "bg-success-fg" : "bg-danger-fg"
           )}
           style={{ left: `${left}%`, width: `${Math.max(width, 1)}%` }}
         />
@@ -382,7 +512,7 @@ function ProbabilityCell({ value }: { value: number | null }) {
     <div className="relative flex h-[60px] items-center border-b border-border px-5">
       <div className="relative h-[15px] w-full">
         {isWinner && (
-          <span className="absolute -top-[18px] left-0 whitespace-nowrap text-xs font-medium text-report-green-deep">
+          <span className="absolute -top-[18px] left-0 whitespace-nowrap text-xs font-medium text-success-fg">
             Better than baseline
           </span>
         )}
@@ -392,7 +522,7 @@ function ProbabilityCell({ value }: { value: number | null }) {
         <div
           className={cn(
             "absolute inset-y-0 left-0 rounded-[2px]",
-            isWinner ? "bg-report-prob-fill" : "bg-report-track"
+            isWinner ? "bg-success-fg" : "bg-muted-foreground/30"
           )}
           style={{ width: `${value}%` }}
         />
@@ -400,14 +530,14 @@ function ProbabilityCell({ value }: { value: number | null }) {
         <span
           className={cn(
             "absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase",
-            isWinner ? "text-report-green-deep" : "text-foreground/70"
+            isWinner ? "text-success-fg" : "text-foreground/70"
           )}
         >
           {value}%
         </span>
         {/* winner-threshold divider spanning the row */}
         <div
-          className="absolute top-[-22px] h-[60px] border-r border-dashed border-report-threshold"
+          className="absolute top-[-22px] h-[60px] border-r border-dashed border-border"
           style={{ left: `${WINNER_THRESHOLD}%` }}
         />
       </div>
@@ -523,7 +653,7 @@ function ResultsTable({ campaign, metricName }: { campaign: Campaign; metricName
 
 const GRAPH_TABS = [
   { label: "Date Range Graph", icon: CalendarRange },
-  { label: "Expected Improvement Graph", icon: Triangle },
+  { label: "Expected Improvement Graph", icon: TrendingUp },
 ];
 
 const Y_AXIS = ["1.00%", "0.90%", "0.80%", "0.70%", "0.60%"];
@@ -537,9 +667,9 @@ const CHART_POINT_COUNT = 13;
 const CHART_MARKER_X = 62;
 
 const CHART_STROKE: Record<Exclude<BadgeTone, "total">, string> = {
-  ctrl: "hsl(var(--report-ctrl-border))",
-  v1: "hsl(var(--report-v1-border))",
-  v2: "hsl(var(--report-v2-fg))",
+  ctrl: "hsl(var(--muted-foreground))",
+  v1: "hsl(var(--foreground) / 0.45)",
+  v2: "hsl(var(--foreground))",
 };
 
 function chartY(value: number): number {
@@ -622,9 +752,9 @@ function DateRangeLineChart({ metricName }: { metricName: string }) {
               key={`${key}-marker`}
               className={cn(
                 "absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                key === "ctrl" && "bg-report-ctrl-border",
-                key === "v1" && "bg-report-v1-border",
-                key === "v2" && "bg-report-v2-fg"
+                key === "ctrl" && "bg-muted-foreground",
+                key === "v1" && "bg-foreground/45",
+                key === "v2" && "bg-foreground"
               )}
               style={{ left: `${CHART_MARKER_X}%`, top: `${topPct}%` }}
             />
@@ -652,7 +782,7 @@ function LegendItem({ tone, label, days }: { tone: BadgeTone; label: string; day
     <label className="flex cursor-pointer items-center gap-2">
       <Checkbox
         defaultChecked
-        className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-report-brand data-[state=checked]:bg-report-brand"
+        className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
       />
       <span className="flex items-center gap-1.5">
         <GraphBadge tone={tone}>{label}</GraphBadge>
@@ -674,7 +804,7 @@ function GraphPanel({ metricName }: { metricName: string }) {
             className={cn(
               "relative flex items-center gap-1.5 px-1 pb-2 text-sm transition-colors",
               i === 0
-                ? "-mb-px border-b-2 border-report-brand font-medium text-report-brand-fg"
+                ? activeTabClass
                 : "text-foreground/70 hover:text-foreground"
             )}
           >
@@ -692,7 +822,7 @@ function GraphPanel({ metricName }: { metricName: string }) {
           <ChartDropdown label="Daily" />
         </div>
         <label className="flex cursor-pointer items-center gap-1.5">
-          <Checkbox className="h-4 w-4 rounded-[2px] border-muted-foreground data-[state=checked]:border-report-brand data-[state=checked]:bg-report-brand" />
+          <Checkbox className="h-4 w-4 rounded-[2px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary" />
           <span className="flex items-center gap-1 text-sm font-medium text-foreground">
             Show ranges
             <HelpCircle className="h-3.5 w-3.5 opacity-60" aria-hidden />
@@ -740,6 +870,9 @@ function GraphPanel({ metricName }: { metricName: string }) {
 // ---------------------------------------------------------------------------
 // Metric selector (left panel)
 
+const metricsNavAsideClass =
+  "sticky top-[var(--reports-tabs-height,0px)] z-10 flex h-[calc(100vh-3.5rem-var(--reports-tabs-height,0px))] shrink-0 self-start flex-col border-r border-border bg-background transition-[width] duration-200 motion-reduce:transition-none";
+
 function MetricsNavShell({
   collapsed,
   onToggleCollapsed,
@@ -753,7 +886,7 @@ function MetricsNavShell({
 }) {
   if (collapsed) {
     return (
-      <aside className="flex w-11 shrink-0 flex-col border-r border-border bg-background transition-[width] duration-200 motion-reduce:transition-none">
+      <aside className={cn(metricsNavAsideClass, "w-11")}>
         <div className="flex-1" />
         <div className="flex justify-center border-t border-border p-3">
           <button
@@ -770,7 +903,7 @@ function MetricsNavShell({
   }
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-background transition-[width] duration-200 motion-reduce:transition-none">
+    <aside className={cn(metricsNavAsideClass, "w-80")}>
       {children}
       <div
         className={cn(
@@ -812,16 +945,16 @@ function MetricListItem({
       aria-current={active ? "true" : undefined}
       className={cn(
         "flex w-full items-center gap-2 rounded px-3 py-2 text-left transition-colors",
-        active ? "bg-report-brand-tint" : "hover:bg-muted/60"
+        active ? "bg-accent" : "hover:bg-muted/60"
       )}
     >
-      <span className={cn("shrink-0", active ? "text-report-brand-fg" : "text-foreground/70")}>
+      <span className={cn("shrink-0", active ? "text-foreground" : "text-foreground/70")}>
         {icon}
       </span>
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-sm",
-          active ? "font-medium text-report-brand-fg" : "text-foreground"
+          active ? "font-medium text-foreground" : "text-foreground"
         )}
       >
         {label}
@@ -954,20 +1087,20 @@ function CompareCheckItem({
     <label
       className={cn(
         "flex w-full cursor-pointer items-center gap-2 rounded px-3 py-2 transition-colors",
-        checked ? "bg-report-brand-tint" : "hover:bg-muted/60"
+        checked ? "bg-accent" : "hover:bg-muted/60"
       )}
     >
       <span className="flex h-4 w-4 shrink-0 items-center justify-center">
         <Checkbox
           checked={checked}
           onCheckedChange={() => onToggle()}
-          className="h-4 w-4 rounded-[4px] border-muted-foreground data-[state=checked]:border-report-brand data-[state=checked]:bg-report-brand"
+          className="h-4 w-4 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
         />
       </span>
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-sm",
-          checked ? "font-medium text-report-brand-fg" : "text-foreground"
+          checked ? "font-medium text-foreground" : "text-foreground"
         )}
       >
         {name}
@@ -1047,7 +1180,7 @@ function CompareMetricSelector({
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex items-center gap-1 text-sm font-medium text-report-brand-fg hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
           >
             <X className="h-3.5 w-3.5" aria-hidden />
             Clear
@@ -1301,7 +1434,7 @@ function CompareView({
         <button
           type="button"
           onClick={onClear}
-          className="inline-flex items-center gap-1 text-sm font-medium text-report-brand-fg hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
         >
           <X className="h-3.5 w-3.5" aria-hidden />
           Clear
@@ -1320,6 +1453,8 @@ function CompareView({
 }
 
 // ---------------------------------------------------------------------------
+
+const resultsRootClass = "font-sans antialiased";
 
 export default function ResultsTab({ campaign }: { campaign: Campaign }) {
   const [selectedMetric, setSelectedMetric] = useState(campaign.primaryMetric);
@@ -1357,7 +1492,7 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
     variants[variants.length - 1];
 
   return (
-    <div className="flex h-full min-h-full">
+    <div className={cn("flex min-h-full items-start", resultsRootClass)}>
       {compareMode ? (
         <CompareMetricSelector
           campaign={campaign}
@@ -1379,9 +1514,11 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1120px] space-y-4 px-7 py-6">
+          <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
             <>
               <FilterBar
+                campaignId={campaign.id}
                 right={
                   <>
                     <span className="text-sm text-muted-foreground">Group by :</span>
@@ -1406,7 +1543,7 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
             </>
           ) : (
             <>
-              <FilterBar />
+              <FilterBar campaignId={campaign.id} />
               <div>
                 <ConclusionBanner variantName={best.name} />
                 <div className="overflow-hidden rounded-b-md border border-border border-t-0 bg-background">

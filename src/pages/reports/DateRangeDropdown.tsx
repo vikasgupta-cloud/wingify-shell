@@ -90,6 +90,9 @@ export const DEFAULT_DATE_RANGE_PRESETS: DateRange[] = [
 type DateRangeDropdownProps = {
   presets?: DateRange[];
   defaultPresetId?: string;
+  /** Controlled value — when set, changes go through onChange. */
+  value?: DateRange;
+  onChange?: (range: DateRange) => void;
   /** Filter bar chip (compact) vs overview outline control */
   variant?: "filter" | "outline";
   className?: string;
@@ -98,6 +101,8 @@ type DateRangeDropdownProps = {
 export default function DateRangeDropdown({
   presets = DEFAULT_DATE_RANGE_PRESETS,
   defaultPresetId = "campaign",
+  value,
+  onChange,
   variant = "filter",
   className,
 }: DateRangeDropdownProps) {
@@ -106,9 +111,15 @@ export default function DateRangeDropdown({
     [presets, defaultPresetId]
   );
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<DateRange>(initial);
-  const [draftFrom, setDraftFrom] = useState(() => toInputValue(initial.from));
-  const [draftTo, setDraftTo] = useState(() => toInputValue(initial.to));
+  const [uncontrolled, setUncontrolled] = useState<DateRange>(initial);
+  const selected = value ?? uncontrolled;
+  const setSelected = (range: DateRange) => {
+    onChange?.(range);
+    if (value === undefined) setUncontrolled(range);
+  };
+
+  const [draftFrom, setDraftFrom] = useState(() => toInputValue(selected.from));
+  const [draftTo, setDraftTo] = useState(() => toInputValue(selected.to));
 
   useEffect(() => {
     if (open) {
@@ -119,7 +130,8 @@ export default function DateRangeDropdown({
 
   const chipLabel = formatRangeChip(selected.from, selected.to);
   const customActive = selected.id === CUSTOM_RANGE_ID;
-  const canApplyCustom = fromInputValue(draftFrom) !== null && fromInputValue(draftTo) !== null;
+  const canApplyCustom =
+    fromInputValue(draftFrom) !== null && fromInputValue(draftTo) !== null;
 
   const applyCustom = () => {
     let from = fromInputValue(draftFrom);
@@ -142,15 +154,16 @@ export default function DateRangeDropdown({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="outline"
           aria-haspopup="dialog"
           aria-expanded={open}
           className={cn(
-            "inline-flex items-center gap-2 border border-border bg-background text-foreground/80 transition-colors hover:bg-muted/60",
+            "gap-2 border-border bg-background font-normal text-foreground/80 shadow-none hover:bg-muted/60",
             variant === "filter" && "h-7 rounded-md px-2.5 text-sm gap-1.5",
             variant === "outline" &&
-              "h-[34px] rounded-lg px-3 text-sm font-normal shadow-sm",
+              "h-[34px] rounded-lg px-3 text-sm shadow-sm",
             className
           )}
         >
@@ -169,7 +182,7 @@ export default function DateRangeDropdown({
             )}
             aria-hidden
           />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-0">
         <ul role="listbox" aria-label="Date range presets" className="flex flex-col gap-0.5 p-1">
@@ -203,10 +216,7 @@ export default function DateRangeDropdown({
         <Separator />
 
         <div
-          className={cn(
-            "space-y-3 p-3",
-            customActive && "bg-accent/40"
-          )}
+          className={cn("space-y-3 p-3", customActive && "bg-accent/40")}
         >
           <p className="text-sm font-medium text-foreground">Custom range</p>
           <div className="grid grid-cols-2 gap-3">
