@@ -51,6 +51,7 @@ import {
 } from "../../store/reportViews";
 import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
+import SegmentsDrawer from "./SegmentsDrawer";
 
 const WINNER_THRESHOLD = 95;
 
@@ -191,7 +192,7 @@ function MultiSelectFilterChip({
         <button
           type="button"
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm transition-colors hover:border-foreground/20 hover:bg-muted/50 data-[state=open]:border-foreground/25 data-[state=open]:bg-muted/50",
+            "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
             value.length > 0 ? "text-foreground" : "text-foreground/80"
           )}
         >
@@ -236,6 +237,45 @@ function MultiSelectFilterChip({
   );
 }
 
+function SegmentsFilterChip({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const summary =
+    value.length === 0
+      ? "Segments"
+      : value.length === 1
+        ? value[0]
+        : `${value[0]} +${value.length - 1}`;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={cn(
+          "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
+          value.length > 0 ? "text-foreground" : "text-foreground/80"
+        )}
+      >
+        <Compass className="h-3.5 w-3.5" aria-hidden />
+        <span className="max-w-[140px] truncate">{summary}</span>
+        <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+      </button>
+      <SegmentsDrawer
+        open={open}
+        onOpenChange={setOpen}
+        value={value}
+        onChange={onChange}
+      />
+    </>
+  );
+}
+
 function storedToDateRange(range: ReportDateRange): DateRange {
   return {
     id: range.id,
@@ -266,7 +306,7 @@ function FilterBar({
   const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 shadow-sm">
+    <div className="flex flex-wrap items-center gap-3">
       <span className="mr-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
         <FunnelIcon className="h-3.5 w-3.5" />
         Filter by :
@@ -278,10 +318,7 @@ function FilterBar({
           updateDraft(campaignId, { dateRange: dateRangeToStored(range) })
         }
       />
-      <MultiSelectFilterChip
-        icon={<Compass className="h-3.5 w-3.5" aria-hidden />}
-        label="Segments"
-        options={REPORT_SEGMENT_OPTIONS}
+      <SegmentsFilterChip
         value={segments}
         onChange={(next) => updateDraft(campaignId, { segments: next })}
       />
@@ -302,11 +339,11 @@ function FilterBar({
 
 function ConclusionBanner({ variantName }: { variantName: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-t-xl border border-border bg-muted/40 px-5 py-3.5">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-background shadow-sm">
+    <div className="flex items-center gap-3 rounded-t-lg border border-border bg-muted/40 px-5 py-3.5">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-background">
         <Award className="h-4 w-4 text-decision-winner-fg" aria-hidden />
       </span>
-      <p className="text-[15px] font-medium leading-snug text-foreground/80">
+      <p className="text-sm font-medium leading-snug text-foreground">
         {variantName} is better or equivalent to baseline and the best choice as it gives the
         highest improvement
       </p>
@@ -810,7 +847,7 @@ function LegendItem({ tone, label, days }: { tone: BadgeTone; label: string; day
 
 function GraphPanel({ metricName }: { metricName: string }) {
   return (
-    <div className="flex flex-col gap-6 rounded-b-xl bg-background px-5 py-6">
+    <div className="flex flex-col gap-6 rounded-b-lg bg-background px-5 py-6">
       {/* Graph tabs */}
       <div className="flex items-end gap-5 border-b border-border">
         {GRAPH_TABS.map(({ label, icon: Icon }, i) => (
@@ -1519,7 +1556,7 @@ function CompareView({
   const count = metrics.length;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-background shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border bg-background">
       <div className="flex items-start justify-between px-5 py-4">
         <div className="flex items-start gap-3">
           <Columns3 className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" aria-hidden />
@@ -1552,8 +1589,6 @@ function CompareView({
 }
 
 // ---------------------------------------------------------------------------
-
-const resultsRootClass = "font-sans antialiased";
 
 export default function ResultsTab({ campaign }: { campaign: Campaign }) {
   const [selectedMetric, setSelectedMetric] = useState(campaign.primaryMetric);
@@ -1591,7 +1626,7 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
     variants[variants.length - 1];
 
   return (
-    <div className={cn("flex min-h-full items-start", resultsRootClass)}>
+    <div className="flex min-h-full items-start">
       {compareMode ? (
         <CompareMetricSelector
           campaign={campaign}
@@ -1612,7 +1647,7 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
         />
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1120px] space-y-4 px-7 py-6">
+        <div className="mx-auto max-w-[1120px] space-y-4 px-12 py-8">
           <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
             <>
@@ -1643,9 +1678,9 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
           ) : (
             <>
               <FilterBar campaignId={campaign.id} />
-              <div className="rounded-xl shadow-sm">
+              <div>
                 <ConclusionBanner variantName={best.name} />
-                <div className="overflow-hidden rounded-b-xl border border-border border-t-0 bg-background">
+                <div className="overflow-hidden rounded-b-lg border border-border border-t-0 bg-background">
                   <MetricHeader
                     metric={selectedMetric}
                     isPrimary={selectedMetric === campaign.primaryMetric}

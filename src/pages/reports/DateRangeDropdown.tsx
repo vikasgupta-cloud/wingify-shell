@@ -229,7 +229,7 @@ export default function DateRangeDropdown({
             "gap-2 border-border bg-background font-normal text-foreground/80 shadow-none hover:bg-muted/60",
             variant === "filter" && "h-7 rounded-md px-2.5 text-sm gap-1.5",
             variant === "outline" &&
-              "h-[34px] rounded-lg px-3 text-sm shadow-sm",
+              "h-[34px] rounded-md px-3 text-sm shadow-none",
             className
           )}
         >

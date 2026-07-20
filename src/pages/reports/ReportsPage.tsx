@@ -46,8 +46,8 @@ type ReportVariant = {
   upliftLabel: string;
 };
 
-/** Overview surfaces share one corner radius (decision banner + sibling cards). */
-const overviewRadius = "rounded-[14px]";
+/** Overview surfaces share listing-page corner radius. */
+const overviewRadius = "rounded-lg";
 
 const REPORT = {
   lastUpdated: "Jun 2, 2026",
@@ -161,14 +161,12 @@ const REPORT = {
 
 // ---------------------------------------------------------------------------
 
-/** Reports inherit Inter Variable (see tailwind `fontFamily.sans` + index.css base). */
-const reportsRootClass = "font-sans antialiased";
 /** Sticky report tab bar height — Results metrics nav stacks below it. */
 const reportsTabsStickyHeight = "3.25rem";
 
 function LinkButton({ children }: { children: ReactNode }) {
   return (
-    <Button variant="link" className="h-auto p-0 text-sm font-semibold">
+    <Button variant="link" className="h-auto p-0 text-sm font-medium">
       {children}
     </Button>
   );
@@ -179,22 +177,24 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
     <Card
       className={cn(
         overviewRadius,
-        "border-border bg-card shadow-sm lg:col-span-2"
+        "border-border bg-background shadow-none lg:col-span-2"
       )}
     >
-      <div className="flex h-full flex-col gap-7 px-10 py-9">
+      <div className="flex h-full flex-col gap-6 px-8 py-8">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-status-ended-bg px-2.5 py-1 text-sm font-semibold text-status-ended-fg">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-status-ended-bg px-2.5 py-1 text-xs font-medium text-status-ended-fg">
             {REPORT.status}
           </span>
           <p className="text-sm text-muted-foreground">{REPORT.runTime}</p>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-[28px] font-semibold leading-9 tracking-tight text-foreground">
+        <div className="space-y-3">
+          <h3 className="text-2xl font-semibold tracking-tight text-foreground">
             {REPORT.headline}
           </h3>
-          <p className="max-w-3xl text-[15px] leading-6 text-muted-foreground">{REPORT.body}</p>
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+            {REPORT.body}
+          </p>
         </div>
 
         <div className="mt-auto space-y-6">
@@ -207,7 +207,7 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
                 <div>
                   <p
                     className={cn(
-                      "text-2xl font-bold tabular-nums",
+                      "text-2xl font-semibold tabular-nums",
                       stat.accent ? "text-success-fg" : "text-foreground"
                     )}
                   >
@@ -225,7 +225,7 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
               type="button"
               variant="link"
               onClick={onViewFullStats}
-              className="h-auto p-0 text-sm font-semibold text-muted-foreground"
+              className="h-auto p-0 text-sm font-medium text-muted-foreground"
             >
               View full stats
             </Button>
@@ -238,7 +238,7 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
 
 function GraphChip({ children }: { children: ReactNode }) {
   return (
-    <span className="flex h-5 min-w-[21px] items-center justify-center rounded-full border border-border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
+    <span className="flex h-5 min-w-[21px] items-center justify-center rounded-md border border-border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
       {children}
     </span>
   );
@@ -272,16 +272,16 @@ function RevenueRow({
 
 function RevenueImpactCard() {
   return (
-    <Card className={cn(overviewRadius, "flex flex-col gap-6 p-6 shadow-sm")}>
+    <Card className={cn(overviewRadius, "flex flex-col gap-6 border-border bg-background p-6 shadow-none")}>
       <div className="flex flex-wrap items-center gap-3">
-        <p className="text-base font-semibold text-foreground/80">Revenue Impact</p>
-        <div className="flex items-center gap-3 text-sm text-foreground/80">
-          <span className="flex items-center gap-1.5">
+        <p className="text-sm font-semibold text-foreground">Revenue Impact</p>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-foreground">
             <GraphChip>{REPORT.revenue.best.label}</GraphChip>
             {REPORT.revenue.best.name}
           </span>
           <span>vs</span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 text-foreground">
             <GraphChip>{REPORT.revenue.control.label}</GraphChip>
             {REPORT.revenue.control.name}
           </span>
@@ -294,7 +294,7 @@ function RevenueImpactCard() {
         barClass="bg-foreground/80"
         value={
           <>
-            <span className="text-2xl font-medium leading-8 tabular-nums text-success-fg">
+            <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
               +$2,482
             </span>
             <span className="ml-0.5 text-sm text-muted-foreground">/ month</span>
@@ -311,7 +311,7 @@ function RevenueImpactCard() {
         barClass="bg-muted-foreground"
         value={
           <>
-            <span className="text-2xl font-medium leading-8 tabular-nums text-success-fg">
+            <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
               +1.40%
             </span>
             <ArrowUpRight className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
@@ -324,10 +324,10 @@ function RevenueImpactCard() {
         barClass="bg-foreground/50"
         value={
           <>
-            <span className="text-2xl font-medium leading-8 tabular-nums text-success-fg">
+            <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
               +$3.20
             </span>
-            <span className="ml-1 text-sm text-foreground/80">/ order</span>
+            <span className="ml-1 text-sm text-muted-foreground">/ order</span>
             <ArrowUpLeft className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
           </>
         }
@@ -339,13 +339,13 @@ function RevenueImpactCard() {
 function HypothesisSection() {
   return (
     <section className="space-y-4">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.086em] text-muted-foreground">
+      <h2 className="text-sm font-medium text-muted-foreground">
         What is being tested
       </h2>
-      <Card className={cn(overviewRadius, "shadow-sm")}>
+      <Card className={cn(overviewRadius, "border-border bg-background shadow-none")}>
         <div className="space-y-4 p-6">
-          <p className="text-base font-semibold text-foreground">Hypothesis</p>
-          <div className="max-w-6xl space-y-3 text-[15px] leading-6 text-muted-foreground">
+          <p className="text-sm font-semibold text-foreground">Hypothesis</p>
+          <div className="max-w-6xl space-y-3 text-sm leading-6 text-muted-foreground">
             <p>I expect that {REPORT.hypothesis.expect}</p>
             <p>Will address: {REPORT.hypothesis.address}</p>
           </div>
@@ -363,7 +363,7 @@ function AnnotationDot({ n, className }: { n: number; className?: string }) {
   return (
     <span
       className={cn(
-        "absolute z-10 flex h-[19px] w-[19px] items-center justify-center rounded-full border border-background bg-foreground text-[11px] font-extrabold text-primary-foreground shadow",
+        "absolute z-10 flex h-[19px] w-[19px] items-center justify-center rounded-md border border-background bg-foreground text-[11px] font-semibold text-primary-foreground shadow-sm",
         className
       )}
       aria-hidden
@@ -397,24 +397,24 @@ function WebpagePreview({
   isControl: boolean;
 }) {
   return (
-    <div className={cn("mt-2.5 flex h-[435px] flex-col overflow-hidden border border-border bg-background shadow-sm", overviewRadius)}>
+    <div className={cn("mt-2.5 flex h-[435px] flex-col overflow-hidden border border-border bg-background", overviewRadius)}>
       {/* Browser chrome */}
-      <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border/60 bg-muted/60 px-2.5">
+      <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border bg-muted/60 px-2.5">
         <div className="flex gap-1">
           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/35" />
           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/55" />
           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/75" />
         </div>
-        <div className="flex h-4 flex-1 items-center justify-center rounded-full border border-border bg-background text-[10px] leading-none text-muted-foreground">
+        <div className="flex h-4 flex-1 items-center justify-center rounded-md border border-border bg-background text-[10px] leading-none text-muted-foreground">
           vwo.com/experience
         </div>
       </div>
 
       {/* Site nav */}
-      <div className="flex h-[39px] shrink-0 items-center gap-3 border-b border-border/60 px-3">
+      <div className="flex h-[39px] shrink-0 items-center gap-3 border-b border-border px-3">
         <div className="flex items-center gap-1">
           <img src={vwoMark} alt="" className="h-3 w-3" />
-          <span className="text-xs font-extrabold text-foreground">VWO</span>
+          <span className="text-xs font-semibold text-foreground">VWO</span>
         </div>
         <div className="flex flex-1 justify-center gap-2">
           <span className="h-1 w-6 rounded-full bg-border" />
@@ -425,20 +425,20 @@ function WebpagePreview({
       </div>
 
       {/* Hero */}
-      <div className="flex flex-1 flex-col items-center bg-gradient-to-b from-background to-muted/40 px-5 pt-10">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="flex flex-1 flex-col items-center bg-muted/20 px-5 pt-10">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Experiment with confidence
         </p>
 
         <div className="relative mt-2.5">
           {isControl ? (
-            <p className="max-w-[290px] text-center text-lg font-bold leading-[22px] tracking-tight text-foreground">
+            <p className="max-w-[290px] text-center text-lg font-semibold leading-[22px] tracking-tight text-foreground">
               {headline}
             </p>
           ) : (
-            <span className="relative inline-block rounded bg-muted px-1.5 pb-1 pt-0.5 shadow-[inset_0_-2px_0_0_hsl(var(--foreground)/0.12)]">
+            <span className="relative inline-block rounded-md bg-muted px-1.5 pb-1 pt-0.5">
               <AnnotationDot n={1} className="-left-2.5 -top-2" />
-              <span className="whitespace-nowrap text-lg font-bold leading-[22px] tracking-tight text-foreground">
+              <span className="whitespace-nowrap text-lg font-semibold leading-[22px] tracking-tight text-foreground">
                 {headline}
               </span>
             </span>
@@ -452,8 +452,8 @@ function WebpagePreview({
         <div className="relative mt-8">
           <span
             className={cn(
-              "flex h-[38px] items-center rounded-md px-4 text-[11px] font-bold text-primary-foreground",
-              isControl ? "bg-foreground/90" : "bg-foreground shadow-[0_0_0_4px_hsl(var(--foreground)/0.08)]"
+              "flex h-[38px] items-center rounded-md px-4 text-[11px] font-semibold text-primary-foreground",
+              isControl ? "bg-foreground/90" : "bg-foreground"
             )}
           >
             {cta}
@@ -461,11 +461,11 @@ function WebpagePreview({
           {!isControl && <AnnotationDot n={2} className="-left-2.5 -top-2.5" />}
           <span
             className={cn(
-              "absolute -bottom-4 left-12 flex h-[30px] items-center gap-1 whitespace-nowrap rounded-full border border-border bg-background/95 px-2.5 shadow-sm"
+              "absolute -bottom-4 left-12 flex h-[30px] items-center gap-1 whitespace-nowrap rounded-md border border-border bg-background px-2.5 shadow-sm"
             )}
           >
             <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-            <span className="text-[10px] font-bold text-foreground/70">{conversionsLabel}</span>
+            <span className="text-[10px] font-medium text-muted-foreground">{conversionsLabel}</span>
           </span>
         </div>
 
@@ -481,7 +481,7 @@ function WebpagePreview({
 
 function VariantChip({ children }: { children: ReactNode }) {
   return (
-    <span className="flex h-[23px] min-w-[29px] items-center justify-center rounded-full border border-border bg-muted px-2 text-xs font-bold text-muted-foreground">
+    <span className="flex h-[23px] min-w-[29px] items-center justify-center rounded-md border border-border bg-muted px-2 text-xs font-medium text-muted-foreground">
       {children}
     </span>
   );
@@ -493,20 +493,19 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
   return (
     <article
       className={cn(
-        "shrink-0 border bg-background p-4",
+        "shrink-0 border border-border bg-background p-4",
         overviewRadius,
-        isControl ? "w-[420px]" : "w-[450px]",
-        "border-border shadow-sm"
+        isControl ? "w-[420px]" : "w-[450px]"
       )}
     >
       <div className="flex h-[34px] items-center gap-2">
         <VariantChip>{variant.label}</VariantChip>
-        <span className="text-sm font-bold text-foreground/80">{variant.name}</span>
+        <span className="text-sm font-semibold text-foreground">{variant.name}</span>
         {variant.rank !== null && <VariantChip>#{variant.rank}</VariantChip>}
         {isWinner && (
-          <span className="ml-auto flex h-[25px] items-center gap-1 rounded-full border border-border bg-muted px-2.5">
+          <span className="ml-auto flex h-[25px] items-center gap-1 rounded-md border border-border bg-muted px-2.5">
             <Trophy className="h-3 w-3 text-decision-winner-fg" aria-hidden />
-            <span className="text-xs font-bold text-decision-winner-fg">Winner</span>
+            <span className="text-xs font-medium text-decision-winner-fg">Winner</span>
           </span>
         )}
         {isControl && <span className="ml-auto text-xs text-muted-foreground">Original</span>}
@@ -522,11 +521,7 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
 
       <div className="flex items-end justify-between pt-3">
         <div>
-          <p
-            className={cn(
-              "text-[38px] font-semibold leading-10 tracking-[-0.025em] tabular-nums text-foreground"
-            )}
-          >
+          <p className="text-3xl font-semibold tabular-nums tracking-tight text-foreground">
             {variant.conversions}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">Unique conversions</p>
@@ -536,7 +531,7 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
             "pb-1 text-sm tabular-nums",
             isControl || variant.upliftLabel === "Baseline"
               ? "text-muted-foreground"
-              : "font-bold text-success-fg"
+              : "font-semibold text-success-fg"
           )}
         >
           {variant.upliftLabel}
@@ -545,20 +540,20 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
 
       <div className="grid grid-cols-3 gap-3 pt-2.5">
         <div>
-          <p className="text-xs text-muted-foreground/90">{REPORT.comparison.metric}</p>
-          <p className="mt-[3px] text-sm font-bold tabular-nums text-foreground/80">
+          <p className="text-xs text-muted-foreground">{REPORT.comparison.metric}</p>
+          <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
             {variant.ctaRate}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground/90">Visitors</p>
-          <p className="mt-[3px] text-sm font-bold tabular-nums text-foreground/80">
+          <p className="text-xs text-muted-foreground">Visitors</p>
+          <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
             {variant.visitors}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground/90">Confidence</p>
-          <p className="mt-[3px] text-sm font-bold tabular-nums text-foreground/80">
+          <p className="text-xs text-muted-foreground">Confidence</p>
+          <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
             {variant.confidence}
           </p>
         </div>
@@ -573,12 +568,12 @@ function VariationComparison() {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h3 className="max-w-2xl text-base font-semibold text-foreground">
+        <h3 className="max-w-2xl text-sm font-semibold text-foreground">
           {REPORT.comparison.heading}
         </h3>
         <div className="flex flex-wrap gap-2">
           <DateRangeDropdown variant="outline" />
-          <Button variant="outline" size="sm" className="h-[34px] gap-2 rounded-lg font-normal">
+          <Button variant="outline" size="sm" className="h-[34px] gap-2 rounded-md font-normal">
             <Users className="h-[15px] w-[15px]" aria-hidden />
             {REPORT.comparison.audience}
             <ChevronDown className="h-[13px] w-[13px] opacity-60" aria-hidden />
@@ -589,7 +584,7 @@ function VariationComparison() {
       <div className="flex items-start gap-5">
         <div className="sticky top-6 z-10 flex shrink-0 items-start">
           <VariationCard variant={control} />
-          <span className="z-10 -mx-8 mt-[18px] flex h-[25px] shrink-0 translate-x-[26px] items-center rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground/70 shadow-sm">
+          <span className="z-10 -mx-8 mt-[18px] flex h-[25px] shrink-0 translate-x-[26px] items-center rounded-md border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground shadow-sm">
             vs
           </span>
         </div>
@@ -605,7 +600,7 @@ function VariationComparison() {
 
 function ReportsOverview({ onViewFullStats }: { onViewFullStats: () => void }) {
   return (
-    <div className="mx-auto max-w-[1384px] space-y-12 px-14 pb-16 pt-10">
+    <div className="mx-auto max-w-[1384px] space-y-10 px-12 pb-12 pt-8">
       <div className="grid gap-4 lg:grid-cols-3">
         <DecisionBanner onViewFullStats={onViewFullStats} />
         <RevenueImpactCard />
@@ -644,7 +639,7 @@ export default function ReportsPage() {
 
   if (!campaign) {
     return (
-      <div className={cn("flex h-full items-center justify-center bg-background", reportsRootClass)}>
+      <div className="flex h-full items-center justify-center bg-canvas">
         <p className="text-sm text-muted-foreground">Campaign not found.</p>
       </div>
     );
@@ -652,7 +647,7 @@ export default function ReportsPage() {
 
   if (!hasReport(campaign.status)) {
     return (
-      <div className={cn("flex h-full items-center justify-center bg-background", reportsRootClass)}>
+      <div className="flex h-full items-center justify-center bg-canvas">
         <p className="text-sm text-muted-foreground">No report data yet.</p>
       </div>
     );
@@ -660,7 +655,7 @@ export default function ReportsPage() {
 
   return (
     <div
-      className={cn("flex min-h-full flex-col bg-background", reportsRootClass)}
+      className="flex min-h-full flex-col bg-canvas"
       style={{ "--reports-tabs-height": reportsTabsStickyHeight } as CSSProperties}
     >
       <Tabs
@@ -668,13 +663,13 @@ export default function ReportsPage() {
         onValueChange={setActiveTab}
         className="flex min-h-full flex-col"
       >
-        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-7 pt-1.5">
+        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-12 pt-1.5">
           <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
             {TABS.map((tab) => (
               <TabsTrigger
                 key={tab}
                 value={tabValue(tab)}
-                className="relative rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:scale-x-0 after:bg-foreground after:transition-transform data-[state=active]:after:scale-x-100"
+                className="relative rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:scale-x-0 after:bg-foreground after:transition-transform data-[state=active]:after:scale-x-100"
               >
                 {tab}
               </TabsTrigger>
@@ -682,7 +677,7 @@ export default function ReportsPage() {
           </TabsList>
 
           <div className="flex items-center gap-2 pb-1.5">
-            <span className="text-[13px] text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               Last updated {REPORT.lastUpdated}
             </span>
             <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Refresh report">
