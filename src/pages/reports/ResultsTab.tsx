@@ -14,9 +14,7 @@ import {
   PanelLeftOpen,
   Pencil,
   PieChart,
-  Radar,
   Settings,
-  Table as TableIcon,
   Triangle,
   X,
 } from "lucide-react";
@@ -531,6 +529,112 @@ const GRAPH_TABS = [
 const Y_AXIS = ["1.00%", "0.90%", "0.80%", "0.70%", "0.60%"];
 const X_AXIS = ["Oct 25", "Nov 25", "Dec 25", "Jan 26"];
 
+const CHART_Y_MIN = 0.6;
+const CHART_Y_MAX = 1.0;
+const CHART_PLOT_H = 172;
+const CHART_PLOT_W = 100;
+const CHART_POINT_COUNT = 13;
+const CHART_MARKER_X = 62;
+
+const CHART_STROKE: Record<Exclude<BadgeTone, "total">, string> = {
+  ctrl: "hsl(var(--report-ctrl-border))",
+  v1: "hsl(var(--report-v1-border))",
+  v2: "hsl(var(--report-v2-fg))",
+};
+
+function chartY(value: number): number {
+  const t = (value - CHART_Y_MIN) / (CHART_Y_MAX - CHART_Y_MIN);
+  return (1 - t) * CHART_PLOT_H;
+}
+
+function chartSeriesValues(metricName: string, seriesKey: string): number[] {
+  const seed = hashMetricSeed(`${metricName}:date-range:${seriesKey}`);
+  const base = seriesKey === "ctrl" ? 0.66 : seriesKey === "v1" ? 0.68 : 0.7;
+  const endBias = seriesKey === "ctrl" ? 0.06 : seriesKey === "v1" ? 0.27 : 0.11;
+  const values: number[] = [];
+  for (let i = 0; i < CHART_POINT_COUNT; i++) {
+    const t = i / (CHART_POINT_COUNT - 1);
+    const wave = (((seed >> (i % 12)) & 7) - 3.5) * 0.004;
+    const v = base + endBias * t + wave;
+    values.push(Math.min(CHART_Y_MAX - 0.005, Math.max(CHART_Y_MIN + 0.005, v)));
+  }
+  return values;
+}
+
+function chartLinePath(values: number[]): string {
+  return values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * CHART_PLOT_W;
+      const y = chartY(v);
+      return `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
+function DateRangeLineChart({ metricName }: { metricName: string }) {
+  const series: { key: Exclude<BadgeTone, "total">; values: number[] }[] = [
+    { key: "ctrl", values: chartSeriesValues(metricName, "ctrl") },
+    { key: "v1", values: chartSeriesValues(metricName, "v1") },
+    { key: "v2", values: chartSeriesValues(metricName, "v2") },
+  ];
+  const markerIndex = Math.round((CHART_MARKER_X / CHART_PLOT_W) * (CHART_POINT_COUNT - 1));
+
+  return (
+    <>
+      <svg
+        className="pointer-events-none absolute inset-x-0 top-1.5 h-[172px] w-full"
+        viewBox={`0 0 ${CHART_PLOT_W} ${CHART_PLOT_H}`}
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <line
+          x1={CHART_MARKER_X}
+          x2={CHART_MARKER_X}
+          y1={0}
+          y2={CHART_PLOT_H}
+          stroke="hsl(var(--border))"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+          strokeDasharray="4 4"
+        />
+        {series.map(({ key, values }) => (
+          <path
+            key={key}
+            d={chartLinePath(values)}
+            fill="none"
+            stroke={CHART_STROKE[key]}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </svg>
+      <div
+        className="pointer-events-none absolute inset-x-0 top-1.5 h-[172px]"
+        aria-hidden
+      >
+        {series.map(({ key, values }) => {
+          const y = chartY(values[markerIndex] ?? values[values.length - 1]!);
+          const topPct = (y / CHART_PLOT_H) * 100;
+          return (
+            <span
+              key={`${key}-marker`}
+              className={cn(
+                "absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full",
+                key === "ctrl" && "bg-report-ctrl-border",
+                key === "v1" && "bg-report-v1-border",
+                key === "v2" && "bg-report-v2-fg"
+              )}
+              style={{ left: `${CHART_MARKER_X}%`, top: `${topPct}%` }}
+            />
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 function ChartDropdown({ label }: { label: string }) {
   return (
     <button
@@ -607,17 +711,12 @@ function GraphPanel({ metricName }: { metricName: string }) {
           </div>
           {/* Plot */}
           <div className="relative flex-1">
-            <div className="flex flex-col justify-between py-1.5" style={{ height: 172 }}>
+            <div className="flex flex-col justify-between py-1.5" style={{ height: CHART_PLOT_H }}>
               {Y_AXIS.map((v) => (
                 <div key={v} className="h-px w-full bg-border" />
               ))}
             </div>
-            {/* dashed marker line with the three series points */}
-            <div className="pointer-events-none absolute inset-y-1.5 left-[62%] w-px border-l border-dashed border-border">
-              <span className="absolute -left-[3px] top-[2%] h-1.5 w-1.5 rounded-full bg-report-ctrl-border" />
-              <span className="absolute -left-[3px] top-[24%] h-1.5 w-1.5 rounded-full bg-report-v1-border" />
-              <span className="absolute -left-[3px] top-[97%] h-1.5 w-1.5 rounded-full bg-report-v2-fg" />
-            </div>
+            <DateRangeLineChart metricName={metricName} />
             {/* X axis */}
             <div className="mt-1.5 flex justify-between px-12 text-xs text-foreground/70">
               {X_AXIS.map((d) => (
@@ -736,6 +835,13 @@ function MetricGroupLabel({ children }: { children: ReactNode }) {
   return <p className="text-sm font-medium text-muted-foreground">{children}</p>;
 }
 
+const metricsSidebarScrollClass =
+  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-7";
+const metricsSidebarPrimarySectionClass = "flex flex-col gap-1.5";
+const metricsSidebarSectionClass = "flex flex-col gap-1";
+const metricsSidebarActionStripClass =
+  "mt-2 flex min-h-[44px] items-center border-t border-border pt-3";
+
 const cursorIcon = <MousePointerClick className="h-4 w-4" aria-hidden />;
 
 function MetricSelector({
@@ -762,9 +868,9 @@ function MetricSelector({
 
   return (
     <MetricsNavShell collapsed={collapsed} onToggleCollapsed={onToggleCollapsed}>
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-7">
+      <div className={metricsSidebarScrollClass}>
         {/* Primary Metric */}
-        <div className="flex flex-col gap-1.5">
+        <div className={metricsSidebarPrimarySectionClass}>
           <MetricGroupLabel>Primary Metric</MetricGroupLabel>
           <MetricListItem
             icon={cursorIcon}
@@ -782,7 +888,7 @@ function MetricSelector({
         </div>
 
         {/* Guardrails */}
-        <div className="flex flex-col gap-1">
+        <div className={metricsSidebarSectionClass}>
           <MetricGroupLabel>Guardrails</MetricGroupLabel>
           {guardrails.map((metric, i) => (
             <MetricListItem
@@ -798,7 +904,7 @@ function MetricSelector({
         </div>
 
         {/* Secondary */}
-        <div className="flex flex-col gap-1">
+        <div className={metricsSidebarSectionClass}>
           <MetricGroupLabel>Secondary</MetricGroupLabel>
           {secondary.map((metric) => (
             <MetricListItem
@@ -812,8 +918,8 @@ function MetricSelector({
         </div>
 
         {/* Compare Metrics */}
-        <div className="mt-2 border-t border-border pt-3">
-          <div className="flex justify-center">
+        <div className={metricsSidebarActionStripClass}>
+          <div className="flex w-full justify-center">
             <Button
               variant="outline"
               size="sm"
@@ -847,15 +953,17 @@ function CompareCheckItem({
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 transition-colors",
+        "flex w-full cursor-pointer items-center gap-2 rounded px-3 py-2 transition-colors",
         checked ? "bg-report-brand-tint" : "hover:bg-muted/60"
       )}
     >
-      <Checkbox
-        checked={checked}
-        onCheckedChange={() => onToggle()}
-        className="h-4 w-4 rounded-[4px] border-muted-foreground data-[state=checked]:border-report-brand data-[state=checked]:bg-report-brand"
-      />
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+        <Checkbox
+          checked={checked}
+          onCheckedChange={() => onToggle()}
+          className="h-4 w-4 rounded-[4px] border-muted-foreground data-[state=checked]:border-report-brand data-[state=checked]:bg-report-brand"
+        />
+      </span>
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-sm",
@@ -888,16 +996,51 @@ function CompareMetricSelector({
   collapsed: boolean;
   onToggleCollapsed: () => void;
 }) {
+  const others = campaign.report.otherMetrics;
+  const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
+  const guardrails = others.slice(0, splitAt);
+  const secondary = others.slice(splitAt);
   const primary = campaign.primaryMetric;
-  const secondary = campaign.report.otherMetrics;
   const count = selected.length;
 
   return (
-    <MetricsNavShell
-      collapsed={collapsed}
-      onToggleCollapsed={onToggleCollapsed}
-      footer={
-        <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+    <MetricsNavShell collapsed={collapsed} onToggleCollapsed={onToggleCollapsed}>
+      <div className={metricsSidebarScrollClass}>
+        <div className={metricsSidebarPrimarySectionClass}>
+          <MetricGroupLabel>Primary Metric</MetricGroupLabel>
+          <CompareCheckItem
+            name={primary}
+            checked={selected.includes(primary)}
+            onToggle={() => onToggle(primary)}
+            badge={selected.includes(primary) ? "Primary" : undefined}
+          />
+        </div>
+
+        <div className={metricsSidebarSectionClass}>
+          <MetricGroupLabel>Guardrails</MetricGroupLabel>
+          {guardrails.map((metric) => (
+            <CompareCheckItem
+              key={metric.name}
+              name={metric.name}
+              checked={selected.includes(metric.name)}
+              onToggle={() => onToggle(metric.name)}
+            />
+          ))}
+        </div>
+
+        <div className={metricsSidebarSectionClass}>
+          <MetricGroupLabel>Secondary</MetricGroupLabel>
+          {secondary.map((metric) => (
+            <CompareCheckItem
+              key={metric.name}
+              name={metric.name}
+              checked={selected.includes(metric.name)}
+              onToggle={() => onToggle(metric.name)}
+            />
+          ))}
+        </div>
+
+        <div className={cn(metricsSidebarActionStripClass, "justify-between")}>
           <span className="text-sm text-foreground">
             Comparing {count} metric{count === 1 ? "" : "s"}
           </span>
@@ -909,30 +1052,6 @@ function CompareMetricSelector({
             <X className="h-3.5 w-3.5" aria-hidden />
             Clear
           </button>
-        </div>
-      }
-    >
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-7">
-        <div className="flex flex-col gap-1.5">
-          <MetricGroupLabel>Primary</MetricGroupLabel>
-          <CompareCheckItem
-            name={primary}
-            checked={selected.includes(primary)}
-            onToggle={() => onToggle(primary)}
-            badge="Primary"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <MetricGroupLabel>Secondary</MetricGroupLabel>
-          {secondary.map((metric) => (
-            <CompareCheckItem
-              key={metric.name}
-              name={metric.name}
-              checked={selected.includes(metric.name)}
-              onToggle={() => onToggle(metric.name)}
-            />
-          ))}
         </div>
       </div>
     </MetricsNavShell>
@@ -1152,147 +1271,7 @@ function CompareTable({
 }
 
 // ---------------------------------------------------------------------------
-// Compare metrics — spider chart
-
-const SERIES_VARS = [
-  "--report-ctrl-fg",
-  "--report-v1-fg",
-  "--report-v2-fg",
-  "--report-brand",
-  "--report-green-deep",
-];
-const seriesColor = (i: number) => `hsl(var(${SERIES_VARS[i % SERIES_VARS.length]}))`;
-
-function SpiderChart({
-  campaign,
-  metrics,
-}: {
-  campaign: Campaign;
-  metrics: CompareMetric[];
-}) {
-  const variants = campaign.report.variants;
-
-  if (metrics.length < 3) {
-    return (
-      <div className="flex h-[360px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
-        Select at least 3 metrics to plot the spider chart.
-      </div>
-    );
-  }
-
-  const n = metrics.length;
-  const size = 360;
-  const cx = size / 2;
-  const cy = size / 2;
-  const R = 116;
-  const angle = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
-  const pt = (i: number, frac: number): readonly [number, number] => {
-    const a = angle(i);
-    return [cx + R * frac * Math.cos(a), cy + R * frac * Math.sin(a)];
-  };
-  const polyPoints = (fracs: number[]) =>
-    fracs.map((f, i) => pt(i, f).join(",")).join(" ");
-
-  // Per-axis conversion rate, normalised to the strongest variant on that axis.
-  const rates = metrics.map((m) =>
-    variants.map((variant, vi) => {
-      const s = metricRowStats(campaign, m.name, variant, vi);
-      const vis = variantVisitors(campaign, vi);
-      return vis > 0 ? (s.conversions / vis) * 100 : 0;
-    })
-  );
-  const axisMax = rates.map((r) => Math.max(...r, 0.0001));
-  const rings = [0.25, 0.5, 0.75, 1];
-
-  return (
-    <div className="flex flex-col items-center gap-6 py-8">
-      <svg
-        viewBox={`0 0 ${size} ${size}`}
-        width={size}
-        height={size}
-        className="max-w-full overflow-visible"
-      >
-        {rings.map((ring) => (
-          <polygon
-            key={ring}
-            points={polyPoints(metrics.map(() => ring))}
-            fill="none"
-            stroke="hsl(var(--border))"
-            strokeWidth={1}
-          />
-        ))}
-        {metrics.map((m, i) => {
-          const [x, y] = pt(i, 1);
-          const [lx, ly] = pt(i, 1.16);
-          const anchor = Math.abs(lx - cx) < 6 ? "middle" : lx > cx ? "start" : "end";
-          const label = m.name.length > 16 ? `${m.name.slice(0, 15)}…` : m.name;
-          return (
-            <g key={m.name}>
-              <line
-                x1={cx}
-                y1={cy}
-                x2={x}
-                y2={y}
-                stroke="hsl(var(--border))"
-                strokeWidth={1}
-              />
-              <text
-                x={lx}
-                y={ly}
-                textAnchor={anchor}
-                dominantBaseline="middle"
-                fontSize={11}
-                fill="hsl(var(--muted-foreground))"
-              >
-                {label}
-              </text>
-            </g>
-          );
-        })}
-        {variants.map((variant, vi) => {
-          const fracs = metrics.map((_, mi) => rates[mi][vi] / axisMax[mi]);
-          const color = seriesColor(vi);
-          return (
-            <g key={variant.id}>
-              <polygon
-                points={polyPoints(fracs)}
-                fill={color}
-                fillOpacity={0.1}
-                stroke={color}
-                strokeWidth={1.75}
-              />
-              {fracs.map((f, mi) => {
-                const [px, py] = pt(mi, f);
-                return <circle key={mi} cx={px} cy={py} r={2.5} fill={color} />;
-              })}
-            </g>
-          );
-        })}
-      </svg>
-
-      <div className="flex flex-wrap items-center justify-center gap-5">
-        {variants.map((variant, vi) => (
-          <span key={variant.id} className="flex items-center gap-1.5">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: seriesColor(vi) }}
-            />
-            <GraphBadge tone={badgeTone(vi)}>{variant.label}</GraphBadge>
-            <span className="text-sm text-foreground">{variant.name}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Compare metrics — card wrapper (Spider chart / Table)
-
-const COMPARE_TABS = [
-  { key: "spider" as const, label: "Spider chart", icon: Radar },
-  { key: "table" as const, label: "Table", icon: TableIcon },
-];
+// Compare metrics — card wrapper (table)
 
 function CompareView({
   campaign,
@@ -1305,7 +1284,6 @@ function CompareView({
   groupBy: GroupBy;
   onClear: () => void;
 }) {
-  const [tab, setTab] = useState<"spider" | "table">("table");
   const count = metrics.length;
 
   return (
@@ -1330,33 +1308,12 @@ function CompareView({
         </button>
       </div>
 
-      <div className="flex items-end gap-5 border-b border-border px-4">
-        {COMPARE_TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={cn(
-              "relative flex items-center gap-1.5 px-1 pb-2 pt-1 text-sm transition-colors",
-              tab === key
-                ? "-mb-px border-b-2 border-report-brand font-medium text-report-brand-fg"
-                : "text-foreground/70 hover:text-foreground"
-            )}
-          >
-            <Icon className="h-[18px] w-[18px]" aria-hidden />
-            {label}
-          </button>
-        ))}
-      </div>
-
       {count === 0 ? (
         <div className="flex h-[360px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
           Select one or more metrics from the left to compare.
         </div>
-      ) : tab === "table" ? (
-        <CompareTable campaign={campaign} metrics={metrics} groupBy={groupBy} />
       ) : (
-        <SpiderChart campaign={campaign} metrics={metrics} />
+        <CompareTable campaign={campaign} metrics={metrics} groupBy={groupBy} />
       )}
     </div>
   );
@@ -1370,15 +1327,11 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
   const [groupBy, setGroupBy] = useState<GroupBy>("variation");
 
   const secondaryMetrics = campaign.report.otherMetrics;
-  const defaultCompare = () => [
-    campaign.primaryMetric,
-    ...secondaryMetrics.slice(0, 4).map((m) => m.name),
-  ];
-  const [compareSelected, setCompareSelected] = useState<string[]>(defaultCompare);
+  const [compareSelected, setCompareSelected] = useState<string[]>([]);
   const [metricsNavCollapsed, setMetricsNavCollapsed] = useState(false);
 
   const enterCompare = () => {
-    setCompareSelected(defaultCompare());
+    setCompareSelected([]);
     setCompareMode(true);
   };
   const toggleCompare = (name: string) =>

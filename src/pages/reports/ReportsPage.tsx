@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { type ReactNode } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowUpLeft,
   ArrowUpRight,
@@ -617,14 +617,18 @@ function VariationComparison() {
         </div>
       </div>
 
-      <div className="flex items-start gap-5 overflow-x-auto pb-2">
-        <VariationCard variant={control} />
-        <span className="z-10 -mx-8 mt-[18px] flex h-[25px] shrink-0 items-center rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground/70 shadow-sm">
-          vs
-        </span>
-        {rest.map((variant) => (
-          <VariationCard key={variant.label} variant={variant} />
-        ))}
+      <div className="flex items-start gap-5">
+        <div className="sticky top-6 z-10 flex shrink-0 items-start">
+          <VariationCard variant={control} />
+          <span className="z-10 -mx-8 mt-[18px] flex h-[25px] shrink-0 translate-x-[26px] items-center rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground/70 shadow-sm">
+            vs
+          </span>
+        </div>
+        <div className="flex min-w-0 flex-1 items-start gap-5 overflow-x-auto overscroll-x-contain pb-2 pl-8">
+          {rest.map((variant) => (
+            <VariationCard key={variant.label} variant={variant} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -645,11 +649,29 @@ function ReportsOverview({ onViewFullStats }: { onViewFullStats: () => void }) {
 
 const TABS = ["Overview", "Results", "Behaviour", "Live hits", "Vitals"];
 const tabValue = (tab: string) => tab.toLowerCase().replace(/\s+/g, "-");
+const REPORT_TAB_VALUES = new Set(TABS.map(tabValue));
 
 export default function ReportsPage() {
   const { entityId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const campaigns = useVisibleCampaigns();
   const campaign = campaigns.find((c) => c.id === entityId);
+
+  const tabParam = searchParams.get("tab");
+  const activeTab =
+    tabParam && REPORT_TAB_VALUES.has(tabParam) ? tabParam : "overview";
+
+  const setActiveTab = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value === "overview") next.delete("tab");
+        else next.set("tab", value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   if (!campaign) {
     return (
@@ -666,8 +688,6 @@ export default function ReportsPage() {
       </div>
     );
   }
-
-  const [activeTab, setActiveTab] = useState("overview");
 
   return (
     <div className="flex min-h-full flex-col bg-background">
