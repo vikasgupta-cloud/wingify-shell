@@ -220,7 +220,7 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
           </div>
 
           <div className="flex items-center gap-6">
-            <Button className={cn(overviewRadius, "px-5")}>Rollout variation</Button>
+            <Button className="rounded-md px-5">Rollout variation</Button>
             <Button
               type="button"
               variant="link"

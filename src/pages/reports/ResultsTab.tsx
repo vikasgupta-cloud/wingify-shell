@@ -191,7 +191,7 @@ function MultiSelectFilterChip({
         <button
           type="button"
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60",
+            "inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm transition-colors hover:border-foreground/20 hover:bg-muted/50 data-[state=open]:border-foreground/25 data-[state=open]:bg-muted/50",
             value.length > 0 ? "text-foreground" : "text-foreground/80"
           )}
         >
@@ -266,7 +266,7 @@ function FilterBar({
   const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
 
   return (
-    <div className="flex flex-wrap items-center gap-2.5 rounded-md border border-border bg-background px-4 py-3">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 shadow-sm">
       <span className="mr-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
         <FunnelIcon className="h-3.5 w-3.5" />
         Filter by :
@@ -302,9 +302,11 @@ function FilterBar({
 
 function ConclusionBanner({ variantName }: { variantName: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-t-md border border-border bg-muted/40 px-4 py-3">
-      <Award className="h-4 w-4 shrink-0 text-decision-winner-fg" aria-hidden />
-      <p className="text-base font-medium text-foreground/80">
+    <div className="flex items-center gap-3 rounded-t-xl border border-border bg-muted/40 px-5 py-3.5">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-background shadow-sm">
+        <Award className="h-4 w-4 text-decision-winner-fg" aria-hidden />
+      </span>
+      <p className="text-[15px] font-medium leading-snug text-foreground/80">
         {variantName} is better or equivalent to baseline and the best choice as it gives the
         highest improvement
       </p>
@@ -317,7 +319,7 @@ function ConclusionBanner({ variantName }: { variantName: string }) {
 
 function MetricHeader({ metric, isPrimary }: { metric: string; isPrimary: boolean }) {
   return (
-    <div className="flex items-start justify-between px-4 py-3">
+    <div className="flex items-start justify-between px-5 py-4">
       <div className="flex items-center gap-3">
         <MousePointerClick className="mt-1 h-5 w-5 shrink-0 text-foreground/70" aria-hidden />
         <div className="flex items-center gap-1.5">
@@ -331,12 +333,20 @@ function MetricHeader({ metric, isPrimary }: { metric: string; isPrimary: boolea
           )}
         </div>
       </div>
-      <div className="flex items-center gap-3 rounded-md p-1.5">
-        <button type="button" className="text-foreground/70 hover:text-foreground" aria-label="Chart view">
-          <PieChart className="h-5 w-5" aria-hidden />
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+          aria-label="Chart view"
+        >
+          <PieChart className="h-[18px] w-[18px]" aria-hidden />
         </button>
-        <button type="button" className="text-foreground/70 hover:text-foreground" aria-label="Settings">
-          <Settings className="h-5 w-5" aria-hidden />
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+          aria-label="Settings"
+        >
+          <Settings className="h-[18px] w-[18px]" aria-hidden />
         </button>
       </div>
     </div>
@@ -350,7 +360,7 @@ const INNER_TABS = ["Raw data (visitors)", "Raw data (sessions)", "Statistics"];
 
 function InnerTabs() {
   return (
-    <div className="flex items-end gap-4 border-b border-border bg-muted/30 px-4 pt-2">
+    <div className="flex items-end gap-4 border-b border-border px-5 pt-1">
       <div className="flex flex-1 items-end gap-5">
         {INNER_TABS.map((tab, i) => (
           <button
@@ -442,7 +452,7 @@ function TableHeader() {
       </div>
 
       {/* Axis / threshold sub-head */}
-      <div className="grid items-stretch border-b border-border bg-muted/60 text-[10px] text-muted-foreground" style={GRID}>
+      <div className="grid items-stretch border-b border-border bg-muted/40 text-[10px] text-muted-foreground" style={GRID}>
         <div />
         <div />
         <div />
@@ -486,7 +496,7 @@ function ExpectedImprovementCell({ value }: { value: number | null }) {
         {/* value bar */}
         <div
           className={cn(
-            "absolute top-1/2 h-[15px] -translate-y-1/2 rounded-[1px]",
+            "absolute top-1/2 h-[15px] -translate-y-1/2 rounded-full",
             positive ? "bg-success-fg" : "bg-danger-fg"
           )}
           style={{ left: `${left}%`, width: `${Math.max(width, 1)}%` }}
@@ -523,11 +533,11 @@ function ProbabilityCell({ value }: { value: number | null }) {
           </span>
         )}
         {/* track */}
-        <div className="absolute inset-0 rounded-[2px] bg-muted" />
+        <div className="absolute inset-0 rounded-full bg-muted" />
         {/* fill */}
         <div
           className={cn(
-            "absolute inset-y-0 left-0 rounded-[2px]",
+            "absolute inset-y-0 left-0 rounded-full",
             isWinner ? "bg-success-fg" : "bg-muted-foreground/30"
           )}
           style={{ width: `${value}%` }}
@@ -573,7 +583,7 @@ function DataRow({
   const isControl = index === 0;
 
   return (
-    <div className="grid items-stretch" style={GRID}>
+    <div className="group grid items-stretch transition-colors hover:bg-muted/30" style={GRID}>
       <div className="flex items-center gap-2 border-b border-border py-3 pl-5 pr-4">
         <GraphBadge tone={tone}>{variant.label}</GraphBadge>
         <span className="text-sm font-medium text-foreground">{variant.name}</span>
@@ -583,10 +593,10 @@ function DataRow({
           </span>
         )}
       </div>
-      <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm text-foreground">
+      <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
         {formatNumber(conversions)}
       </div>
-      <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm text-foreground">
+      <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
         {formatNumber(visitors)}
       </div>
       <ExpectedImprovementCell value={isControl ? null : uplift} />
@@ -612,10 +622,10 @@ function TotalRow({ conversions, visitors }: { conversions: number; visitors: nu
         <GraphBadge tone="total">T</GraphBadge>
         <span className="text-sm font-medium text-foreground">Total</span>
       </div>
-      <div className={cn(cell, "justify-end pr-6 text-sm text-foreground")}>
+      <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
         {formatNumber(conversions)}
       </div>
-      <div className={cn(cell, "justify-end pr-6 text-sm text-foreground")}>
+      <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
         {formatNumber(visitors)}
       </div>
       <div className={cn(cell, "justify-center text-sm text-foreground/70")}>-</div>
@@ -637,7 +647,7 @@ function ResultsTable({ campaign, metricName }: { campaign: Campaign; metricName
 
   return (
     <div className="overflow-x-auto bg-background">
-      <div className="min-w-[900px] shadow-[0px_1px_2px_0px_rgba(65,70,81,0.05)]">
+      <div className="min-w-[900px]">
         <TableHeader />
         {rows.map((r) => (
           <DataRow
@@ -800,7 +810,7 @@ function LegendItem({ tone, label, days }: { tone: BadgeTone; label: string; day
 
 function GraphPanel({ metricName }: { metricName: string }) {
   return (
-    <div className="flex flex-col gap-6 rounded-b-md bg-background px-5 py-6">
+    <div className="flex flex-col gap-6 rounded-b-xl bg-background px-5 py-6">
       {/* Graph tabs */}
       <div className="flex items-end gap-5 border-b border-border">
         {GRAPH_TABS.map(({ label, icon: Icon }, i) => (
@@ -958,7 +968,7 @@ function MetricListItem({
       onClick={onClick}
       aria-current={active ? "true" : undefined}
       className={cn(
-        "flex w-full items-center gap-2 rounded px-3 py-2 text-left transition-colors",
+        "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors",
         active ? "bg-accent" : "hover:bg-muted/60"
       )}
     >
@@ -1002,7 +1012,7 @@ function MetricRailItem({
           aria-current={active ? "true" : undefined}
           aria-label={label}
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded transition-colors",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
             active
               ? "bg-accent text-foreground"
               : "text-foreground/70 hover:bg-muted/60 hover:text-foreground"
@@ -1175,7 +1185,7 @@ function CompareCheckItem({
   return (
     <label
       className={cn(
-        "flex w-full cursor-pointer items-center gap-2 rounded px-3 py-2 transition-colors",
+        "flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition-colors",
         checked ? "bg-accent" : "hover:bg-muted/60"
       )}
     >
@@ -1372,7 +1382,7 @@ function CompareTableHeader() {
       </div>
 
       <div
-        className="grid items-stretch border-b border-border bg-muted/60 text-[10px] text-muted-foreground"
+        className="grid items-stretch border-b border-border bg-muted/40 text-[10px] text-muted-foreground"
         style={COMPARE_GRID}
       >
         <div className="border-r border-border" />
@@ -1474,10 +1484,10 @@ function CompareTable({
                   <div className="flex items-center gap-2 border-b border-border px-4 py-3">
                     {row.rowLabel}
                   </div>
-                  <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm text-foreground">
+                  <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
                     {formatNumber(row.conversions)}
                   </div>
-                  <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm text-foreground">
+                  <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
                     {formatNumber(row.visitors)}
                   </div>
                   <ExpectedImprovementCell value={row.improvement} />
@@ -1509,8 +1519,8 @@ function CompareView({
   const count = metrics.length;
 
   return (
-    <div className="overflow-hidden rounded-md border border-border bg-background">
-      <div className="flex items-start justify-between px-4 py-3">
+    <div className="overflow-hidden rounded-xl border border-border bg-background shadow-sm">
+      <div className="flex items-start justify-between px-5 py-4">
         <div className="flex items-start gap-3">
           <Columns3 className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" aria-hidden />
           <div>
@@ -1633,9 +1643,9 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
           ) : (
             <>
               <FilterBar campaignId={campaign.id} />
-              <div>
+              <div className="rounded-xl shadow-sm">
                 <ConclusionBanner variantName={best.name} />
-                <div className="overflow-hidden rounded-b-md border border-border border-t-0 bg-background">
+                <div className="overflow-hidden rounded-b-xl border border-border border-t-0 bg-background">
                   <MetricHeader
                     metric={selectedMetric}
                     isPrimary={selectedMetric === campaign.primaryMetric}
