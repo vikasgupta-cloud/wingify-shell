@@ -7,6 +7,7 @@ import DetailShell from "../components/layout/DetailShell";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import WebExperimentation from "../pages/WebExperimentation";
 import ConfigPage from "../pages/config/ConfigPage";
+import ReportsPage from "../pages/reports/ReportsPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -57,7 +58,11 @@ for (const item of NAV) {
 // Reports view of the web-experiment detail surface — same shell, own URL.
 detailRoutes.push({
   path: "/web-experiment/c/:entityId/reports",
-  element: <DetailShell basePath="/web-experiment" />,
+  element: (
+    <DetailShell basePath="/web-experiment">
+      <ReportsPage />
+    </DetailShell>
+  ),
 });
 
 export const router = createBrowserRouter([
