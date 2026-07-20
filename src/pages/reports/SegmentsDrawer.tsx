@@ -1,15 +1,19 @@
 import {
   Fragment,
-  useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
+  ChevronDown,
+  Compass,
   Copy,
   HelpCircle,
+  Maximize2,
+  Minimize2,
   MinusCircle,
   MousePointerClick,
   Pencil,
@@ -22,6 +26,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -642,17 +651,9 @@ function CustomLogicBuilder({
   );
 }
 
-export default function SegmentsDrawer({
-  open,
-  onOpenChange,
-  value,
-  onChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  value: string[];
-  onChange: (next: string[]) => void;
-}) {
+// Shared picker state so the mini dropdown and full drawer stay in sync when
+// expanding / collapsing without losing the in-progress draft.
+function useSegmentsState(value: string[]) {
   const [draft, setDraft] = useState<string[]>(value);
   const [leftTab, setLeftTab] = useState<"all" | "custom">("all");
   const [category, setCategory] = useState<CategoryId>("all");
@@ -665,27 +666,23 @@ export default function SegmentsDrawer({
     Record<string, FilterBlock[]>
   >({});
 
-  // Re-seed the local draft whenever the drawer is (re)opened so an
-  // unconfirmed edit never leaks across sessions.
-  useEffect(() => {
-    if (open) {
-      setDraft(value);
-      setLeftTab("all");
-      setCategory("all");
-      setSearch("");
-      setFocused(value[0] ?? ALL_SEGMENTS[0]!.name);
-      setBlocks([newBlock()]);
-      setSavedCustoms({});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  const resetFromValue = (next: string[]) => {
+    setDraft(next);
+    setLeftTab("all");
+    setCategory("all");
+    setSearch("");
+    setFocused(next[0] ?? ALL_SEGMENTS[0]!.name);
+    setBlocks([newBlock()]);
+    setSavedCustoms({});
+  };
 
   const toggle = (name: string) =>
     setDraft((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
     );
 
-  const isCustom = (name: string) => name in savedCustoms || /^Custom \d+$/.test(name);
+  const isCustom = (name: string) =>
+    name in savedCustoms || /^Custom \d+$/.test(name);
 
   const saveSegment = () => {
     const used = Object.keys(savedCustoms).length;
@@ -713,81 +710,132 @@ export default function SegmentsDrawer({
   }, [category, search, leftTab]);
 
   const focusedSegment = findSegment(focused);
+
+  return {
+    draft,
+    setDraft,
+    leftTab,
+    setLeftTab,
+    category,
+    setCategory,
+    search,
+    setSearch,
+    focused,
+    setFocused,
+    blocks,
+    setBlocks,
+    toggle,
+    isCustom,
+    saveSegment,
+    editSegment,
+    visibleGroups,
+    focusedSegment,
+    resetFromValue,
+  };
+}
+
+type SegmentsState = ReturnType<typeof useSegmentsState>;
+
+// Shared chrome used by both the mega-dropdown and the full drawer so the two
+// views stay identical — only the shell (popover vs dialog) differs.
+function SegmentsPickerPanel({
+  seg,
+  onApply,
+  titleAs,
+  headerActions,
+}: {
+  seg: SegmentsState;
+  onApply: () => void;
+  titleAs: "h2" | "dialog";
+  headerActions: React.ReactNode;
+}) {
+  const {
+    draft,
+    setDraft,
+    leftTab,
+    setLeftTab,
+    category,
+    setCategory,
+    search,
+    setSearch,
+    focused,
+    setFocused,
+    blocks,
+    setBlocks,
+    toggle,
+    isCustom,
+    saveSegment,
+    editSegment,
+    visibleGroups,
+    focusedSegment,
+  } = seg;
   const hasResults = visibleGroups.length > 0;
 
+  const Title =
+    titleAs === "dialog" ? DialogPrimitive.Title : "h2";
+
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content
-          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[940px] flex-col bg-background shadow-2xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
-          aria-describedby={undefined}
-        >
-          {/* Header */}
-          <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-border px-4">
-            <DialogPrimitive.Title className="flex items-center gap-2.5 text-lg font-semibold text-foreground">
-              <Users className="h-5 w-5" aria-hidden />
-              Segments
-            </DialogPrimitive.Title>
-            <DialogPrimitive.Close
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" aria-hidden />
-            </DialogPrimitive.Close>
+    <div className="flex h-full min-h-0 flex-col bg-background">
+      {/* Header */}
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+        <Title className="flex items-center gap-2.5 text-base font-semibold text-foreground">
+          <Users className="h-5 w-5" aria-hidden />
+          Segments
+        </Title>
+        <div className="flex items-center gap-1">{headerActions}</div>
+      </div>
+
+      {/* Selected chips */}
+      <div className="flex min-h-[48px] shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+        <span className="mr-1 text-sm text-muted-foreground">Selected :</span>
+        {draft.length === 0 ? (
+          <span className="text-sm text-muted-foreground/70">None</span>
+        ) : (
+          draft.map((name) => (
+            <SelectedTag
+              key={name}
+              name={name}
+              onRemove={() => toggle(name)}
+              onEdit={isCustom(name) ? () => editSegment(name) : undefined}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="flex min-h-0 flex-1">
+        {/* Left rail */}
+        <div className="flex w-[180px] shrink-0 flex-col gap-1 border-r border-border p-2">
+          <div className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground">
+            <Sparkles className="h-4 w-4 text-muted-foreground" aria-hidden />
+            VWO AI
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
           </div>
+          <LeftTab
+            active={leftTab === "all"}
+            onClick={() => setLeftTab("all")}
+            label="All Segments"
+            count={ALL_SEGMENTS.length}
+          />
+          <LeftTab
+            active={leftTab === "custom"}
+            onClick={() => setLeftTab("custom")}
+            label="Custom Logic"
+          />
+        </div>
 
-          {/* Selected chips */}
-          <div className="flex min-h-[52px] shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2">
-            <span className="mr-1 text-sm text-muted-foreground">Selected :</span>
-            {draft.length === 0 ? (
-              <span className="text-sm text-muted-foreground/70">None</span>
-            ) : (
-              draft.map((name) => (
-                <SelectedTag
-                  key={name}
-                  name={name}
-                  onRemove={() => toggle(name)}
-                  onEdit={isCustom(name) ? () => editSegment(name) : undefined}
-                />
-              ))
-            )}
-          </div>
-
-          {/* Body */}
-          <div className="flex min-h-0 flex-1">
-            {/* Left rail */}
-            <div className="flex w-[200px] shrink-0 flex-col gap-1 border-r border-border p-2">
-              <div className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground">
-                <Sparkles className="h-4 w-4 text-muted-foreground" aria-hidden />
-                VWO AI
-                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-              </div>
-              <LeftTab
-                active={leftTab === "all"}
-                onClick={() => setLeftTab("all")}
-                label="All Segments"
-                count={ALL_SEGMENTS.length}
-              />
-              <LeftTab
-                active={leftTab === "custom"}
-                onClick={() => setLeftTab("custom")}
-                label="Custom Logic"
-              />
-            </div>
-
-            {/* Right pane */}
-            <div className="flex min-w-0 flex-1 flex-col">
-              {leftTab === "custom" ? (
-                <CustomLogicBuilder
-                  blocks={blocks}
-                  setBlocks={setBlocks}
-                  onSave={saveSegment}
-                />
-              ) : (
-                <>
+        {/* Right pane */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {leftTab === "custom" ? (
+            <CustomLogicBuilder
+              blocks={blocks}
+              setBlocks={setBlocks}
+              onSave={saveSegment}
+            />
+          ) : (
+            <>
               {/* Search + category pills */}
-              <div className="shrink-0 space-y-3 border-b border-border p-4">
+              <div className="shrink-0 space-y-2.5 border-b border-border p-3">
                 <div className="relative">
                   <Search
                     className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -797,10 +845,10 @@ export default function SegmentsDrawer({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search all segments"
-                    className="h-10 pl-9"
+                    className="h-9 pl-9"
                   />
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <CategoryPill
                     active={category === "all"}
                     onClick={() => setCategory("all")}
@@ -827,12 +875,11 @@ export default function SegmentsDrawer({
 
               {/* List + detail */}
               <div className="flex min-h-0 flex-1">
-                {/* Segment list */}
-                <div className="w-[320px] shrink-0 overflow-y-auto border-r border-border p-3">
+                <div className="w-[260px] shrink-0 overflow-y-auto border-r border-border p-2">
                   {hasResults ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {visibleGroups.map((g) => (
-                        <div key={g.id} className="space-y-1">
+                        <div key={g.id} className="space-y-0.5">
                           <p className="px-2.5 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             {g.section}
                           </p>
@@ -850,7 +897,7 @@ export default function SegmentsDrawer({
                       ))}
                     </div>
                   ) : (
-                    <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                    <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
                       {category === "mine"
                         ? "You haven't saved any segments yet."
                         : "No segments match your search."}
@@ -858,17 +905,16 @@ export default function SegmentsDrawer({
                   )}
                 </div>
 
-                {/* Detail pane */}
-                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-6">
+                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-4">
                   {focusedSegment ? (
                     <>
-                      <h3 className="text-lg font-semibold text-foreground">
+                      <h3 className="text-base font-semibold text-foreground">
                         {focusedSegment.name}
                       </h3>
-                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                         {focusedSegment.description}
                       </p>
-                      <div className="mt-auto flex items-center gap-1.5 pt-6 text-sm text-muted-foreground">
+                      <div className="mt-auto flex items-center gap-1.5 pt-4 text-sm text-muted-foreground">
                         <MousePointerClick className="h-4 w-4" aria-hidden />
                         Created by
                         <span className="font-medium text-foreground">VWO</span>
@@ -881,31 +927,188 @@ export default function SegmentsDrawer({
                   )}
                 </div>
               </div>
-                </>
-              )}
-            </div>
-          </div>
+            </>
+          )}
+        </div>
+      </div>
 
-          {/* Footer */}
-          <div className="flex h-[68px] shrink-0 items-center justify-end gap-3 border-t border-border px-5">
-            <Button
-              variant="ghost"
-              onClick={() => setDraft([])}
-              className="text-foreground"
-            >
-              Clear
-            </Button>
-            <Button
-              onClick={() => {
-                onChange(draft);
-                onOpenChange(false);
-              }}
-            >
-              Apply filters ({draft.length})
-            </Button>
-          </div>
+      {/* Footer */}
+      <div className="flex h-14 shrink-0 items-center justify-end gap-3 border-t border-border px-4">
+        <Button
+          variant="ghost"
+          onClick={() => setDraft([])}
+          className="text-foreground"
+        >
+          Clear
+        </Button>
+        <Button onClick={onApply}>Apply filters ({draft.length})</Button>
+      </div>
+    </div>
+  );
+}
+
+function SegmentsDrawer({
+  open,
+  seg,
+  onApply,
+  onClose,
+  onCollapse,
+}: {
+  open: boolean;
+  seg: SegmentsState;
+  onApply: () => void;
+  onClose: () => void;
+  onCollapse: () => void;
+}) {
+  return (
+    <DialogPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[940px] flex-col overflow-hidden bg-background shadow-2xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
+          aria-describedby={undefined}
+        >
+          <SegmentsPickerPanel
+            seg={seg}
+            onApply={onApply}
+            titleAs="dialog"
+            headerActions={
+              <>
+                <button
+                  type="button"
+                  onClick={onCollapse}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                  aria-label="Collapse to dropdown"
+                >
+                  <Minimize2 className="h-[18px] w-[18px]" aria-hidden />
+                </button>
+                <DialogPrimitive.Close
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </DialogPrimitive.Close>
+              </>
+            }
+          />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Public entry point — the filter chip that opens either the mini dropdown or
+// the full drawer, toggling between them via expand / collapse.
+
+export function SegmentsSelector({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [mode, setMode] = useState<"closed" | "mini" | "drawer">("closed");
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  // Skip the dismiss that fires when Popover/Dialog close during a deliberate
+  // expand (mini → drawer) or collapse (drawer → mini) transition.
+  const skipCloseRef = useRef(false);
+  const seg = useSegmentsState(value);
+
+  const summary =
+    value.length === 0
+      ? "Segments"
+      : value.length === 1
+        ? value[0]
+        : `${value[0]} +${value.length - 1}`;
+
+  const apply = () => {
+    onChange(seg.draft);
+    setMode("closed");
+  };
+
+  const dismiss = () => {
+    if (skipCloseRef.current) {
+      skipCloseRef.current = false;
+      return;
+    }
+    setMode("closed");
+  };
+
+  const openMini = () => {
+    if (modeRef.current === "closed") {
+      seg.resetFromValue(value);
+    }
+    setMode("mini");
+  };
+
+  const expand = () => {
+    skipCloseRef.current = true;
+    setMode("drawer");
+  };
+
+  const collapse = () => {
+    skipCloseRef.current = true;
+    setMode("mini");
+  };
+
+  return (
+    <>
+      <Popover
+        open={mode === "mini"}
+        onOpenChange={(next) => {
+          if (next) openMini();
+          else dismiss();
+        }}
+      >
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
+              value.length > 0 ? "text-foreground" : "text-foreground/80"
+            )}
+          >
+            <Compass className="h-3.5 w-3.5" aria-hidden />
+            <span className="max-w-[140px] truncate">{summary}</span>
+            <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="h-[min(520px,70vh)] w-[min(780px,calc(100vw-2rem))] overflow-hidden p-0"
+        >
+          <SegmentsPickerPanel
+            seg={seg}
+            onApply={apply}
+            titleAs="h2"
+            headerActions={
+              <button
+                type="button"
+                onClick={expand}
+                aria-label="Expand to full view"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              >
+                <Maximize2 className="h-[18px] w-[18px]" aria-hidden />
+              </button>
+            }
+          />
+        </PopoverContent>
+      </Popover>
+
+      <SegmentsDrawer
+        open={mode === "drawer"}
+        seg={seg}
+        onApply={apply}
+        onClose={dismiss}
+        onCollapse={collapse}
+      />
+    </>
   );
 }

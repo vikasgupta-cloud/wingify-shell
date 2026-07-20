@@ -4,7 +4,6 @@ import {
   CalendarRange,
   ChevronDown,
   Columns3,
-  Compass,
   HelpCircle,
   Layers,
   LayoutPanelTop,
@@ -50,7 +49,7 @@ import {
 } from "../../store/reportViews";
 import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
-import SegmentsDrawer from "./SegmentsDrawer";
+import { SegmentsSelector } from "./SegmentsDrawer";
 
 const WINNER_THRESHOLD = 95;
 
@@ -236,45 +235,6 @@ function MultiSelectFilterChip({
   );
 }
 
-function SegmentsFilterChip({
-  value,
-  onChange,
-}: {
-  value: string[];
-  onChange: (next: string[]) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const summary =
-    value.length === 0
-      ? "Segments"
-      : value.length === 1
-        ? value[0]
-        : `${value[0]} +${value.length - 1}`;
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={cn(
-          "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-          value.length > 0 ? "text-foreground" : "text-foreground/80"
-        )}
-      >
-        <Compass className="h-3.5 w-3.5" aria-hidden />
-        <span className="max-w-[140px] truncate">{summary}</span>
-        <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
-      </button>
-      <SegmentsDrawer
-        open={open}
-        onOpenChange={setOpen}
-        value={value}
-        onChange={onChange}
-      />
-    </>
-  );
-}
-
 function storedToDateRange(range: ReportDateRange): DateRange {
   return {
     id: range.id,
@@ -317,7 +277,7 @@ function FilterBar({
           updateDraft(campaignId, { dateRange: dateRangeToStored(range) })
         }
       />
-      <SegmentsFilterChip
+      <SegmentsSelector
         value={segments}
         onChange={(next) => updateDraft(campaignId, { segments: next })}
       />
@@ -440,68 +400,62 @@ function HeaderHelp() {
 function TableHeader() {
   return (
     <>
-      {/* Column titles */}
-      <div className="grid items-center bg-muted/30" style={GRID}>
-        <div className="flex items-center gap-1 py-2 pl-5 pr-4 pt-3">
+      {/* Column titles — top-aligned so every label shares one baseline */}
+      <div className="grid items-start bg-muted/30" style={GRID}>
+        <div className="flex items-center gap-1 px-5 pb-2 pt-3">
           <span className="text-xs font-semibold text-foreground/75">Variations</span>
         </div>
-        <div className="flex flex-col items-end py-2 pr-2 pt-3">
-          <span className="text-right text-xs font-semibold leading-[18px] text-foreground/75">
-            Unique
+        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+          <span className="text-right text-xs font-semibold text-foreground/75">
+            Unique conversions
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold leading-[18px] text-foreground/75">
-            conversions
-            <HeaderHelp />
-          </span>
+          <HeaderHelp />
         </div>
-        <div className="flex flex-col items-end py-2 pr-2 pt-3">
-          <span className="text-right text-xs font-semibold leading-[18px] text-foreground/75">
-            Total
+        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+          <span className="text-right text-xs font-semibold text-foreground/75">
+            Total visitors
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold leading-[18px] text-foreground/75">
-            visitors
-            <HeaderHelp />
-          </span>
+          <HeaderHelp />
         </div>
-        <div className="flex flex-col items-center py-2 pt-3">
-          <span className="text-center text-xs font-semibold leading-[18px] text-foreground/75">
-            Expected
+        <div className="flex items-center justify-center gap-1 px-2 pb-2 pt-3">
+          <span className="text-center text-xs font-semibold text-foreground/75">
+            Expected improvement(v)
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold leading-[18px] text-foreground/75">
-            improvement(v)
-            <HeaderHelp />
-          </span>
+          <HeaderHelp />
         </div>
-        <div className="flex flex-col justify-center gap-0.5 py-2 pl-5 pr-2 pt-3">
+        <div className="flex flex-col gap-0.5 px-5 pb-2 pt-3">
           <div className="flex items-center gap-1">
             <span className="text-xs font-semibold text-foreground/75">
               Probability of Better or Equivalent (v)
             </span>
             <HeaderHelp />
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
             MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
-            <Pencil className="h-3 w-3" aria-hidden />
+            <Pencil className="h-3 w-3 shrink-0" aria-hidden />
           </div>
         </div>
         <div />
       </div>
 
-      {/* Axis / threshold sub-head */}
-      <div className="grid items-stretch border-b border-border bg-muted/40 text-[10px] text-muted-foreground" style={GRID}>
-        <div />
-        <div />
-        <div />
-        <div className="flex items-center justify-between px-5 py-0.5">
+      {/* Axis / threshold sub-head — same grid, shared baseline */}
+      <div
+        className="grid items-center border-b border-border bg-muted/40 text-[10px] leading-none text-muted-foreground"
+        style={GRID}
+      >
+        <div className="h-5" />
+        <div className="h-5" />
+        <div className="h-5" />
+        <div className="flex h-5 items-center justify-between px-5">
           <span>-6%</span>
           <span>0%</span>
           <span>6%</span>
         </div>
-        <div className="flex items-center justify-end gap-1 pr-1">
+        <div className="flex h-5 items-center justify-end gap-1 pr-5">
           <span>Winner threshold: {WINNER_THRESHOLD}%</span>
           <HeaderHelp />
         </div>
-        <div />
+        <div className="h-5" />
       </div>
     </>
   );
@@ -1354,69 +1308,60 @@ function MetricLabel({ name, isPrimary }: { name: string; isPrimary: boolean }) 
 function CompareTableHeader() {
   return (
     <>
-      <div className="grid items-stretch bg-muted/30" style={COMPARE_GRID}>
-        <div className="flex items-center gap-1.5 border-r border-border py-2 pl-5 pr-4 pt-3">
+      <div className="grid items-start bg-muted/30" style={COMPARE_GRID}>
+        <div className="flex items-center gap-1.5 border-r border-border px-5 pb-2 pt-3">
           <span className="text-xs font-semibold text-foreground/75">Metric</span>
           <FunnelIcon className="h-3 w-3 text-muted-foreground" />
         </div>
-        <div className="flex items-center gap-1.5 py-2 pl-4 pr-4 pt-3">
+        <div className="flex items-center gap-1.5 px-4 pb-2 pt-3">
           <span className="text-xs font-semibold text-foreground/75">Variations</span>
           <FunnelIcon className="h-3 w-3 text-muted-foreground" />
         </div>
-        <div className="flex flex-col items-end py-2 pr-2 pt-3">
-          <span className="text-right text-xs font-semibold leading-[18px] text-foreground/75">
-            Unique
+        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+          <span className="text-right text-xs font-semibold text-foreground/75">
+            Unique conversions
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold leading-[18px] text-foreground/75">
-            conversions
-            <HeaderHelp />
-          </span>
+          <HeaderHelp />
         </div>
-        <div className="flex flex-col items-end py-2 pr-2 pt-3">
-          <span className="text-right text-xs font-semibold leading-[18px] text-foreground/75">
-            Total
+        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+          <span className="text-right text-xs font-semibold text-foreground/75">
+            Total visitors
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold leading-[18px] text-foreground/75">
-            visitors
-            <HeaderHelp />
-          </span>
+          <HeaderHelp />
         </div>
-        <div className="flex flex-col items-center py-2 pt-3">
-          <span className="text-center text-xs font-semibold leading-[18px] text-foreground/75">
-            Expected
+        <div className="flex items-center justify-center gap-1 px-2 pb-2 pt-3">
+          <span className="text-center text-xs font-semibold text-foreground/75">
+            Expected improvement(v)
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold leading-[18px] text-foreground/75">
-            improvement(v)
-            <HeaderHelp />
-          </span>
+          <HeaderHelp />
         </div>
-        <div className="flex flex-col justify-center gap-0.5 py-2 pl-5 pr-2 pt-3">
+        <div className="flex flex-col gap-0.5 px-5 pb-2 pt-3">
           <div className="flex items-center gap-1">
             <span className="text-xs font-semibold text-foreground/75">
               Probability of Better or Equivalent (v)
             </span>
             <HeaderHelp />
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
             MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
           </div>
         </div>
       </div>
 
       <div
-        className="grid items-stretch border-b border-border bg-muted/40 text-[10px] text-muted-foreground"
+        className="grid items-center border-b border-border bg-muted/40 text-[10px] leading-none text-muted-foreground"
         style={COMPARE_GRID}
       >
-        <div className="border-r border-border" />
-        <div />
-        <div />
-        <div />
-        <div className="flex items-center justify-between px-5 py-0.5">
+        <div className="h-5 border-r border-border" />
+        <div className="h-5" />
+        <div className="h-5" />
+        <div className="h-5" />
+        <div className="flex h-5 items-center justify-between px-5">
           <span>-6%</span>
           <span>0%</span>
           <span>6%</span>
         </div>
-        <div className="flex items-center justify-end gap-1 pr-1">
+        <div className="flex h-5 items-center justify-end gap-1 pr-5">
           <span>Winner threshold: {WINNER_THRESHOLD}%</span>
           <HeaderHelp />
         </div>
