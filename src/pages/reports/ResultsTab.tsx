@@ -33,6 +33,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   REPORT_DIMENSION_OPTIONS,
@@ -877,17 +883,25 @@ function MetricsNavShell({
   collapsed,
   onToggleCollapsed,
   children,
+  collapsedContent,
   footer,
 }: {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   children: ReactNode;
+  collapsedContent?: ReactNode;
   footer?: ReactNode;
 }) {
   if (collapsed) {
     return (
       <aside className={cn(metricsNavAsideClass, "w-11")}>
-        <div className="flex-1" />
+        {collapsedContent ? (
+          <div className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
+            {collapsedContent}
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
         <div className="flex justify-center border-t border-border p-3">
           <button
             type="button"
@@ -968,6 +982,44 @@ function MetricGroupLabel({ children }: { children: ReactNode }) {
   return <p className="text-sm font-medium text-muted-foreground">{children}</p>;
 }
 
+function MetricRailItem({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-current={active ? "true" : undefined}
+          aria-label={label}
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded transition-colors",
+            active
+              ? "bg-accent text-foreground"
+              : "text-foreground/70 hover:bg-muted/60 hover:text-foreground"
+          )}
+        >
+          {icon}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function MetricRailDivider() {
+  return <div className="my-1 h-px w-5 bg-border" />;
+}
+
 const metricsSidebarScrollClass =
   "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-7";
 const metricsSidebarPrimarySectionClass = "flex flex-col gap-1.5";
@@ -999,8 +1051,45 @@ function MetricSelector({
   const guardrails = others.slice(0, splitAt);
   const secondary = others.slice(splitAt);
 
+  const collapsedContent = (
+    <TooltipProvider delayDuration={200}>
+      <MetricRailItem
+        icon={cursorIcon}
+        label={campaign.primaryMetric}
+        active={selectedMetric === campaign.primaryMetric}
+        onClick={() => onSelectMetric(campaign.primaryMetric)}
+      />
+      <MetricRailDivider />
+      {guardrails.map((metric, i) => (
+        <MetricRailItem
+          key={metric.name}
+          icon={
+            i === 1 ? <LayoutPanelTop className="h-4 w-4" aria-hidden /> : cursorIcon
+          }
+          label={metric.name}
+          active={selectedMetric === metric.name}
+          onClick={() => onSelectMetric(metric.name)}
+        />
+      ))}
+      <MetricRailDivider />
+      {secondary.map((metric) => (
+        <MetricRailItem
+          key={metric.name}
+          icon={cursorIcon}
+          label={metric.name}
+          active={selectedMetric === metric.name}
+          onClick={() => onSelectMetric(metric.name)}
+        />
+      ))}
+    </TooltipProvider>
+  );
+
   return (
-    <MetricsNavShell collapsed={collapsed} onToggleCollapsed={onToggleCollapsed}>
+    <MetricsNavShell
+      collapsed={collapsed}
+      onToggleCollapsed={onToggleCollapsed}
+      collapsedContent={collapsedContent}
+    >
       <div className={metricsSidebarScrollClass}>
         {/* Primary Metric */}
         <div className={metricsSidebarPrimarySectionClass}>
