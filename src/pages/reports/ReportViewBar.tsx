@@ -160,7 +160,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                     <button
                       type="button"
                       onClick={() => setActiveView(campaignId, view.id)}
-                      className="flex items-center py-2 pl-3 pr-1"
+                      className="flex items-center py-2 pl-3 pr-1 text-sm"
                     >
                       {view.name}
                       {dirtyFor(view.id) && <DirtyDot />}

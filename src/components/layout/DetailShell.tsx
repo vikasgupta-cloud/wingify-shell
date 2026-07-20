@@ -21,7 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
-import { mainNavCrumbPath, resolveBreadcrumb } from "../../lib/nav";
+import { mainNavCrumbPath, RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,13 +69,16 @@ function IconRail({ basePath, entityId }: { basePath: string; entityId?: string 
 
   const railButton = (active: boolean) =>
     cn(
-      "flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+      "flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
       active && "bg-accent text-foreground"
     );
 
   return (
     <TooltipProvider delayDuration={200}>
-      <nav className="flex w-14 shrink-0 flex-col items-center gap-4 border-r border-border bg-background pt-4">
+      <nav
+        className="flex h-full shrink-0 flex-col items-center gap-3 border-r border-border bg-rail py-4"
+        style={{ width: RAIL_WIDTH }}
+      >
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -90,7 +93,7 @@ function IconRail({ basePath, entityId }: { basePath: string; entityId?: string 
           <TooltipContent side="right">Ask Wandz</TooltipContent>
         </Tooltip>
 
-        <div className="h-px w-6 bg-border" />
+        <div className="h-px w-10 bg-panel-border" aria-hidden />
 
         <Tooltip>
           <TooltipTrigger asChild>

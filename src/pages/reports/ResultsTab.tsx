@@ -42,7 +42,6 @@ import {
 import { cn } from "@/lib/utils";
 import {
   REPORT_DIMENSION_OPTIONS,
-  REPORT_SEGMENT_OPTIONS,
   fromYmd,
   toYmd,
   useReportActiveViewState,
@@ -924,7 +923,7 @@ function GraphPanel({ metricName }: { metricName: string }) {
 // Metric selector (left panel)
 
 const metricsNavAsideClass =
-  "sticky top-[var(--reports-tabs-height,0px)] z-10 flex h-[calc(100vh-3.5rem-var(--reports-tabs-height,0px))] shrink-0 self-start flex-col border-r border-border bg-background transition-[width] duration-200 motion-reduce:transition-none";
+  "sticky top-[var(--reports-tabs-height,0px)] z-10 flex h-[calc(100vh-3.5rem-var(--reports-tabs-height,0px))] shrink-0 self-start flex-col border-r border-panel-border bg-panel text-panel-foreground transition-[width] duration-200 motion-reduce:transition-none";
 
 function MetricsNavShell({
   collapsed,
@@ -941,7 +940,7 @@ function MetricsNavShell({
 }) {
   if (collapsed) {
     return (
-      <aside className={cn(metricsNavAsideClass, "w-11")}>
+      <aside className={cn(metricsNavAsideClass, "w-16")}>
         {collapsedContent ? (
           <div className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
             {collapsedContent}
@@ -949,14 +948,14 @@ function MetricsNavShell({
         ) : (
           <div className="flex-1" />
         )}
-        <div className="flex justify-center border-t border-border p-3">
+        <div className="flex justify-center border-t border-panel-border p-3">
           <button
             type="button"
             onClick={onToggleCollapsed}
-            className="text-muted-foreground hover:text-foreground"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Expand metrics panel"
           >
-            <PanelLeftOpen className="h-5 w-5" aria-hidden />
+            <PanelLeftOpen className="h-4 w-4" aria-hidden />
           </button>
         </div>
       </aside>
@@ -964,11 +963,11 @@ function MetricsNavShell({
   }
 
   return (
-    <aside className={cn(metricsNavAsideClass, "w-80")}>
+    <aside className={cn(metricsNavAsideClass, "w-[248px]")}>
       {children}
       <div
         className={cn(
-          "flex items-center gap-3 border-t border-border px-5 py-4",
+          "flex items-center gap-3 border-t border-panel-border px-5 py-4",
           footer ? "" : "justify-end"
         )}
       >
@@ -976,10 +975,10 @@ function MetricsNavShell({
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="shrink-0 text-muted-foreground hover:text-foreground"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Collapse metrics panel"
         >
-          <PanelLeftClose className="h-5 w-5" aria-hidden />
+          <PanelLeftClose className="h-3.5 w-3.5" aria-hidden />
         </button>
       </div>
     </aside>
@@ -1005,28 +1004,21 @@ function MetricListItem({
       onClick={onClick}
       aria-current={active ? "true" : undefined}
       className={cn(
-        "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors",
-        active ? "bg-accent" : "hover:bg-muted/60"
+        "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted",
+        active && "bg-accent font-medium text-accent-foreground"
       )}
     >
-      <span className={cn("shrink-0", active ? "text-foreground" : "text-foreground/70")}>
-        {icon}
-      </span>
-      <span
-        className={cn(
-          "min-w-0 flex-1 truncate text-sm",
-          active ? "font-medium text-foreground" : "text-foreground"
-        )}
-      >
-        {label}
-      </span>
+      <span className="shrink-0 text-foreground/70">{icon}</span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
       {trailing}
     </button>
   );
 }
 
 function MetricGroupLabel({ children }: { children: ReactNode }) {
-  return <p className="text-sm font-medium text-muted-foreground">{children}</p>;
+  return (
+    <p className="px-2 pb-1 text-sm font-semibold text-foreground">{children}</p>
+  );
 }
 
 function MetricRailItem({
@@ -1068,11 +1060,11 @@ function MetricRailDivider() {
 }
 
 const metricsSidebarScrollClass =
-  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-7";
-const metricsSidebarPrimarySectionClass = "flex flex-col gap-1.5";
-const metricsSidebarSectionClass = "flex flex-col gap-1";
+  "flex min-h-0 flex-1 flex-col overflow-y-auto py-6";
+const metricsSidebarPrimarySectionClass = "flex flex-col gap-1 px-3";
+const metricsSidebarSectionClass = "mt-3 flex flex-col gap-1 border-t border-panel-border px-3 pt-3";
 const metricsSidebarActionStripClass =
-  "mt-2 flex min-h-[44px] items-center border-t border-border pt-3";
+  "mt-3 flex min-h-[44px] items-center border-t border-panel-border px-3 pt-3";
 
 const cursorIcon = <MousePointerClick className="h-4 w-4" aria-hidden />;
 
@@ -1222,8 +1214,8 @@ function CompareCheckItem({
   return (
     <label
       className={cn(
-        "flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition-colors",
-        checked ? "bg-accent" : "hover:bg-muted/60"
+        "flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+        checked && "bg-accent font-medium text-accent-foreground"
       )}
     >
       <span className="flex h-4 w-4 shrink-0 items-center justify-center">
@@ -1233,14 +1225,7 @@ function CompareCheckItem({
           className="h-4 w-4 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
         />
       </span>
-      <span
-        className={cn(
-          "min-w-0 flex-1 truncate text-sm",
-          checked ? "font-medium text-foreground" : "text-foreground"
-        )}
-      >
-        {name}
-      </span>
+      <span className="min-w-0 flex-1 truncate">{name}</span>
       {badge && (
         <span className="shrink-0 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground">
           {badge}

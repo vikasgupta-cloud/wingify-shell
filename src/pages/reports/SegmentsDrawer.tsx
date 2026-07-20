@@ -1,8 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
+  Copy,
   HelpCircle,
+  MinusCircle,
   MousePointerClick,
+  Pencil,
+  Plus,
   Search,
   Sparkles,
   Users,
@@ -11,6 +22,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -135,6 +153,70 @@ function findSegment(name: string): Segment | undefined {
 }
 
 // ---------------------------------------------------------------------------
+// Custom Logic — query builder model
+
+const ATTRIBUTE_OPTIONS = [
+  "Landing page URL",
+  "Query Parameter",
+  "Operating system",
+  "Browser",
+  "Device type",
+  "Country",
+  "Traffic source",
+  "Cookie",
+] as const;
+
+const OPERATOR_OPTIONS = [
+  { value: "eq-ci", label: "= ci" },
+  { value: "neq-ci", label: "≠ ci" },
+  { value: "contains", label: "contains" },
+  { value: "not-contains", label: "does not contain" },
+  { value: "starts", label: "starts with" },
+  { value: "ends", label: "ends with" },
+] as const;
+
+const CONNECTORS = ["And", "Or"] as const;
+type Connector = (typeof CONNECTORS)[number];
+
+type Condition = {
+  id: string;
+  connector: Connector; // connector to the previous condition (ignored on first)
+  attribute: string;
+  operator: string;
+  value: string;
+};
+type FilterBlock = {
+  id: string;
+  connector: Connector; // connector to the previous block (ignored on first)
+  conditions: Condition[];
+};
+
+let uidCounter = 0;
+const uid = () => `q${++uidCounter}`;
+
+function newCondition(): Condition {
+  return {
+    id: uid(),
+    connector: "And",
+    attribute: ATTRIBUTE_OPTIONS[0],
+    operator: OPERATOR_OPTIONS[0].value,
+    value: "",
+  };
+}
+
+function newBlock(): FilterBlock {
+  return { id: uid(), connector: "And", conditions: [newCondition()] };
+}
+
+function cloneBlock(block: FilterBlock): FilterBlock {
+  return {
+    id: uid(),
+    connector: block.connector,
+    conditions: block.conditions.map((c) => ({ ...c, id: uid() })),
+  };
+}
+
+// ---------------------------------------------------------------------------
 
 type CategoryId = "all" | "mine" | (string & {});
 
@@ -163,10 +245,28 @@ function CategoryPill({
   );
 }
 
-function SelectedTag({ name, onRemove }: { name: string; onRemove: () => void }) {
+function SelectedTag({
+  name,
+  onRemove,
+  onEdit,
+}: {
+  name: string;
+  onRemove: () => void;
+  onEdit?: () => void;
+}) {
   return (
-    <span className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-border bg-background pl-2.5 pr-1.5 text-sm text-foreground">
+    <span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-border bg-background pl-2.5 pr-1.5 text-sm text-foreground">
       <span className="max-w-[160px] truncate">{name}</span>
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${name}`}
+          className="flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Pencil className="h-3 w-3" aria-hidden />
+        </button>
+      )}
       <button
         type="button"
         onClick={onRemove}
@@ -256,6 +356,292 @@ function LeftTab({
   );
 }
 
+function ConnectorSelect({
+  value,
+  onChange,
+}: {
+  value: Connector;
+  onChange: (v: Connector) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as Connector)}>
+      <SelectTrigger className="h-8 w-[76px] gap-1 text-sm">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {CONNECTORS.map((c) => (
+          <SelectItem key={c} value={c}>
+            {c}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+// The square brackets that flank each condition. Drawn with borders (left/right
+// vertical bar + short top & bottom caps) rather than a full box, matching the
+// design's grouping-bracket look.
+function ConditionBracket({ side }: { side: "left" | "right" }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "w-2.5 shrink-0 self-stretch border-border",
+        side === "left"
+          ? "rounded-l-md border-y border-l"
+          : "rounded-r-md border-y border-r"
+      )}
+    />
+  );
+}
+
+function ConditionItem({
+  condition,
+  first,
+  canRemove,
+  onChange,
+  onRemove,
+  onDuplicate,
+}: {
+  condition: Condition;
+  first: boolean;
+  canRemove: boolean;
+  onChange: (next: Condition) => void;
+  onRemove: () => void;
+  onDuplicate: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {!first && (
+        <ConnectorSelect
+          value={condition.connector}
+          onChange={(connector) => onChange({ ...condition, connector })}
+        />
+      )}
+      <div className="flex items-stretch gap-2">
+        <ConditionBracket side="left" />
+        <div className="flex-1 space-y-2 py-2">
+          <p className="text-xs text-muted-foreground">where</p>
+          <div className="flex items-center gap-2">
+            <Select
+              value={condition.attribute}
+              onValueChange={(attribute) => onChange({ ...condition, attribute })}
+            >
+              <SelectTrigger className="h-9 w-[210px] shrink-0 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ATTRIBUTE_OPTIONS.map((a) => (
+                  <SelectItem key={a} value={a}>
+                    {a}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={condition.operator}
+              onValueChange={(operator) => onChange({ ...condition, operator })}
+            >
+              <SelectTrigger className="h-9 w-[84px] shrink-0 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {OPERATOR_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              value={condition.value}
+              onChange={(e) => onChange({ ...condition, value: e.target.value })}
+              placeholder="Enter a value"
+              className="h-9 min-w-0 flex-1"
+            />
+          </div>
+        </div>
+        <ConditionBracket side="right" />
+        <div className="flex flex-col justify-center gap-1">
+          <button
+            type="button"
+            onClick={onRemove}
+            disabled={!canRemove}
+            aria-label="Remove condition"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          >
+            <MinusCircle className="h-4 w-4" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={onDuplicate}
+            aria-label="Duplicate condition"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          >
+            <Copy className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FilterBlockGroup({
+  block,
+  canRemove,
+  onChangeCondition,
+  onAddCondition,
+  onRemoveCondition,
+  onDuplicateCondition,
+}: {
+  block: FilterBlock;
+  canRemove: boolean;
+  onChangeCondition: (id: string, next: Condition) => void;
+  onAddCondition: () => void;
+  onRemoveCondition: (id: string) => void;
+  onDuplicateCondition: (id: string) => void;
+}) {
+  return (
+    <div>
+      <div className="space-y-3">
+        {block.conditions.map((condition, i) => (
+          <ConditionItem
+            key={condition.id}
+            condition={condition}
+            first={i === 0}
+            canRemove={canRemove}
+            onChange={(next) => onChangeCondition(condition.id, next)}
+            onRemove={() => onRemoveCondition(condition.id)}
+            onDuplicate={() => onDuplicateCondition(condition.id)}
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onAddCondition}
+        className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+      >
+        <Plus className="h-4 w-4" aria-hidden />
+        Add another condition
+      </button>
+    </div>
+  );
+}
+
+function CustomLogicBuilder({
+  blocks,
+  setBlocks,
+  onSave,
+}: {
+  blocks: FilterBlock[];
+  setBlocks: Dispatch<SetStateAction<FilterBlock[]>>;
+  onSave: () => void;
+}) {
+  const totalConditions = blocks.reduce((n, b) => n + b.conditions.length, 0);
+
+  const changeCondition = (blockId: string, condId: string, next: Condition) =>
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.id === blockId
+          ? { ...b, conditions: b.conditions.map((c) => (c.id === condId ? next : c)) }
+          : b
+      )
+    );
+
+  const addCondition = (blockId: string) =>
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.id === blockId
+          ? { ...b, conditions: [...b.conditions, newCondition()] }
+          : b
+      )
+    );
+
+  const duplicateCondition = (blockId: string, condId: string) =>
+    setBlocks((prev) =>
+      prev.map((b) => {
+        if (b.id !== blockId) return b;
+        const idx = b.conditions.findIndex((c) => c.id === condId);
+        if (idx < 0) return b;
+        const copy = { ...b.conditions[idx]!, id: uid() };
+        return {
+          ...b,
+          conditions: [
+            ...b.conditions.slice(0, idx + 1),
+            copy,
+            ...b.conditions.slice(idx + 1),
+          ],
+        };
+      })
+    );
+
+  // Removing the last condition in a block drops the block; never leave the
+  // builder empty.
+  const removeCondition = (blockId: string, condId: string) =>
+    setBlocks((prev) => {
+      const next = prev
+        .map((b) =>
+          b.id === blockId
+            ? { ...b, conditions: b.conditions.filter((c) => c.id !== condId) }
+            : b
+        )
+        .filter((b) => b.conditions.length > 0);
+      return next.length ? next : [newBlock()];
+    });
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
+        <p className="text-sm font-medium text-foreground">All visitors…</p>
+
+        {blocks.map((block, bi) => (
+          <Fragment key={block.id}>
+            {bi > 0 && (
+              <ConnectorSelect
+                value={block.connector}
+                onChange={(connector) =>
+                  setBlocks((prev) =>
+                    prev.map((b) => (b.id === block.id ? { ...b, connector } : b))
+                  )
+                }
+              />
+            )}
+            <FilterBlockGroup
+              block={block}
+              canRemove={totalConditions > 1}
+              onChangeCondition={(condId, next) =>
+                changeCondition(block.id, condId, next)
+              }
+              onAddCondition={() => addCondition(block.id)}
+              onRemoveCondition={(condId) => removeCondition(block.id, condId)}
+              onDuplicateCondition={(condId) =>
+                duplicateCondition(block.id, condId)
+              }
+            />
+          </Fragment>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-border px-6 py-3">
+        <button
+          type="button"
+          onClick={onSave}
+          className="text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+        >
+          Save Segment
+        </button>
+        <Button
+          variant="outline"
+          onClick={() => setBlocks((prev) => [...prev, newBlock()])}
+        >
+          Add another filter
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function SegmentsDrawer({
   open,
   onOpenChange,
@@ -274,6 +660,10 @@ export default function SegmentsDrawer({
   const [focused, setFocused] = useState<string>(
     value[0] ?? ALL_SEGMENTS[0]!.name
   );
+  const [blocks, setBlocks] = useState<FilterBlock[]>([newBlock()]);
+  const [savedCustoms, setSavedCustoms] = useState<
+    Record<string, FilterBlock[]>
+  >({});
 
   // Re-seed the local draft whenever the drawer is (re)opened so an
   // unconfirmed edit never leaks across sessions.
@@ -284,6 +674,8 @@ export default function SegmentsDrawer({
       setCategory("all");
       setSearch("");
       setFocused(value[0] ?? ALL_SEGMENTS[0]!.name);
+      setBlocks([newBlock()]);
+      setSavedCustoms({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -292,6 +684,22 @@ export default function SegmentsDrawer({
     setDraft((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
     );
+
+  const isCustom = (name: string) => name in savedCustoms || /^Custom \d+$/.test(name);
+
+  const saveSegment = () => {
+    const used = Object.keys(savedCustoms).length;
+    const name = `Custom ${used + 1}`;
+    setSavedCustoms((prev) => ({ ...prev, [name]: blocks }));
+    setDraft((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setBlocks([newBlock()]);
+  };
+
+  const editSegment = (name: string) => {
+    const saved = savedCustoms[name];
+    if (saved) setBlocks(saved.map((b) => cloneBlock(b)));
+    setLeftTab("custom");
+  };
 
   const visibleGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -336,7 +744,12 @@ export default function SegmentsDrawer({
               <span className="text-sm text-muted-foreground/70">None</span>
             ) : (
               draft.map((name) => (
-                <SelectedTag key={name} name={name} onRemove={() => toggle(name)} />
+                <SelectedTag
+                  key={name}
+                  name={name}
+                  onRemove={() => toggle(name)}
+                  onEdit={isCustom(name) ? () => editSegment(name) : undefined}
+                />
               ))
             )}
           </div>
@@ -365,6 +778,14 @@ export default function SegmentsDrawer({
 
             {/* Right pane */}
             <div className="flex min-w-0 flex-1 flex-col">
+              {leftTab === "custom" ? (
+                <CustomLogicBuilder
+                  blocks={blocks}
+                  setBlocks={setBlocks}
+                  onSave={saveSegment}
+                />
+              ) : (
+                <>
               {/* Search + category pills */}
               <div className="shrink-0 space-y-3 border-b border-border p-4">
                 <div className="relative">
@@ -430,11 +851,9 @@ export default function SegmentsDrawer({
                     </div>
                   ) : (
                     <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                      {leftTab === "custom"
-                        ? "Build a segment with custom logic."
-                        : category === "mine"
-                          ? "You haven't saved any segments yet."
-                          : "No segments match your search."}
+                      {category === "mine"
+                        ? "You haven't saved any segments yet."
+                        : "No segments match your search."}
                     </div>
                   )}
                 </div>
@@ -462,6 +881,8 @@ export default function SegmentsDrawer({
                   )}
                 </div>
               </div>
+                </>
+              )}
             </div>
           </div>
 

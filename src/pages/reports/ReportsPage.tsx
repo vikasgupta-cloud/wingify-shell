@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode } from "react";
+import { type CSSProperties, type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowUpLeft,
@@ -162,7 +162,7 @@ const REPORT = {
 // ---------------------------------------------------------------------------
 
 /** Sticky report tab bar height — Results metrics nav stacks below it. */
-const reportsTabsStickyHeight = "3.25rem";
+const reportsTabsStickyHeightFallback = "3.25rem";
 
 function LinkButton({ children }: { children: ReactNode }) {
   return (
@@ -620,6 +620,8 @@ export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const campaigns = useVisibleCampaigns();
   const campaign = campaigns.find((c) => c.id === entityId);
+  const tabsBarRef = useRef<HTMLDivElement>(null);
+  const [tabsBarHeight, setTabsBarHeight] = useState(reportsTabsStickyHeightFallback);
 
   const tabParam = searchParams.get("tab");
   const activeTab =
@@ -636,6 +638,16 @@ export default function ReportsPage() {
       { replace: true }
     );
   };
+
+  useLayoutEffect(() => {
+    const el = tabsBarRef.current;
+    if (!el) return;
+    const sync = () => setTabsBarHeight(`${el.getBoundingClientRect().height}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [campaign?.id, activeTab]);
 
   if (!campaign) {
     return (
@@ -656,14 +668,17 @@ export default function ReportsPage() {
   return (
     <div
       className="flex min-h-full flex-col bg-canvas"
-      style={{ "--reports-tabs-height": reportsTabsStickyHeight } as CSSProperties}
+      style={{ "--reports-tabs-height": tabsBarHeight } as CSSProperties}
     >
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="flex min-h-full flex-col"
       >
-        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-12 pt-1.5">
+        <div
+          ref={tabsBarRef}
+          className="sticky top-0 z-20 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
+        >
           <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
             {TABS.map((tab) => (
               <TabsTrigger
@@ -676,7 +691,7 @@ export default function ReportsPage() {
             ))}
           </TabsList>
 
-          <div className="flex items-center gap-2 pb-1.5">
+          <div className="flex items-center gap-2 pb-2.5">
             <span className="text-sm text-muted-foreground">
               Last updated {REPORT.lastUpdated}
             </span>
