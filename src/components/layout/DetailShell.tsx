@@ -317,7 +317,7 @@ function KebabMenu({ campaign }: { campaign: Campaign }) {
 
 const EDGE_OPEN_DELAY_MS = 240;
 const OVERLAY_CLOSE_GRACE_MS = 250;
-/** Must match the duration-[180ms] classes on the overlay scrim and panel. */
+/** Must match the [transition-duration:180ms] classes on the overlay scrim and panel. */
 const OVERLAY_ANIM_MS = 180;
 
 type DetailShellProps = {
@@ -605,14 +605,14 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           >
             <div
               className={cn(
-                "absolute inset-0 bg-foreground transition-opacity duration-[180ms] ease-out",
+                "absolute inset-0 bg-foreground transition-opacity [transition-duration:180ms] ease-out",
                 navShown ? "opacity-20" : "opacity-0"
               )}
               onClick={() => setNavOpen(false)}
             />
             <div
               className={cn(
-                "absolute inset-y-0 left-0 flex bg-background shadow-xl transition-transform duration-[180ms] ease-out motion-reduce:transition-none",
+                "absolute inset-y-0 left-0 flex bg-background shadow-xl transition-transform [transition-duration:180ms] ease-out motion-reduce:transition-none",
                 navShown ? "translate-x-0" : "-translate-x-full"
               )}
               onMouseEnter={cancelScheduledClose}
