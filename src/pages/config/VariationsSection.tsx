@@ -872,8 +872,9 @@ export default function VariationsSection({ id }: { id: string }) {
 
   return (
     <section>
-      {/* Heading row. */}
-      <div className="mb-6 flex items-center justify-between">
+      {/* Heading row. Hidden in the guided view, where the step header owns the
+          title and the Workflow Mode CTA (see ConfigPage). */}
+      <div data-section-heading className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <h2 className="text-lg font-semibold text-foreground">Target and Variation</h2>
           <AskWandzButton

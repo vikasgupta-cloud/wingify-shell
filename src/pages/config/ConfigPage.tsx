@@ -125,6 +125,7 @@ export default function ConfigPage() {
   const campaigns = useVisibleCampaigns();
   const campaign = campaigns.find((c) => c.id === id);
   const ensureConfig = useConfigStore((s) => s.ensureConfig);
+  const openWorkflow = useConfigStore((s) => s.openWorkflow);
   const workflowOpen = useConfigStore((s) => s.workflowOpen[id] ?? false);
   const dockState = useConfigStore((s) => s.dockState);
   const viewMode = useConfigStore((s) => s.viewMode);
@@ -264,8 +265,24 @@ export default function ConfigPage() {
             className="flex min-h-[calc(100vh-8.5rem)] flex-col duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
           >
             <div className="flex flex-1 flex-col justify-center">
-              <GuidedStepHeader section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]} />
-              <div className="[&_h2+button]:hidden [&_h2]:hidden">
+              <GuidedStepHeader
+                section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]}
+                action={
+                  activeStepId === "variations" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openWorkflow(id)}
+                    >
+                      Workflow Mode
+                    </Button>
+                  ) : undefined
+                }
+              />
+              {/* In guided the step title lives in GuidedStepHeader, so each
+                  section's own heading row (h2 + its inline actions) is hidden. */}
+              <div className="[&_[data-section-heading]]:hidden [&_h2+button]:hidden [&_h2]:hidden">
                 <SectionBody sectionId={activeStepId} id={id} guided />
               </div>
             </div>
