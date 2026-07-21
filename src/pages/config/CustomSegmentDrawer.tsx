@@ -314,6 +314,8 @@ export default function CustomSegmentDrawer({
   ]);
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
+  // Ids of conditions flagged (on Apply/Save) for a missing value.
+  const [valueErrorIds, setValueErrorIds] = useState<Set<string>>(new Set());
 
   // Seed the builder each time the drawer opens: from the campaign's applied
   // custom segment when there is one, otherwise a single fresh condition.
@@ -327,6 +329,7 @@ export default function CustomSegmentDrawer({
     );
     setName(existing && existing.label !== "Custom segment" ? existing.label : "");
     setNameError(null);
+    setValueErrorIds(new Set());
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Every existing segment name (Standard + My Segments + session-saved),
@@ -341,11 +344,24 @@ export default function CustomSegmentDrawer({
     return set;
   }, [savedSegments]);
 
-  const updateCondition = (id: string, patch: Partial<SegmentCondition>) =>
-    setConditions((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  // Clears a condition's flagged value error (used when its inputs change).
+  const clearValueError = (id: string) =>
+    setValueErrorIds((s) => {
+      if (!s.has(id)) return s;
+      const next = new Set(s);
+      next.delete(id);
+      return next;
+    });
 
-  const removeCondition = (id: string) =>
+  const updateCondition = (id: string, patch: Partial<SegmentCondition>) => {
+    setConditions((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+    clearValueError(id);
+  };
+
+  const removeCondition = (id: string) => {
     setConditions((cs) => cs.filter((c) => c.id !== id));
+    clearValueError(id);
+  };
 
   const duplicateCondition = (id: string) =>
     setConditions((cs) => {
@@ -362,19 +378,41 @@ export default function CustomSegmentDrawer({
   const clear = () => {
     setConditions([makeCondition()]);
     setNameError(null);
+    setValueErrorIds(new Set());
+  };
+
+  // A condition needs a value unless its operator is valueless (e.g. "is set").
+  const conditionMissingValue = (c: SegmentCondition) => {
+    const attr = findAttribute(c.attribute);
+    const op = attr ? findOperator(attr, c.operator) : undefined;
+    if (op?.valueless) return false;
+    return String(c.value ?? "").trim() === "";
+  };
+
+  // Shared gate for Apply and Save: a name is required and every condition must
+  // have a value. Flags the offending fields and returns whether it passed.
+  const validate = () => {
+    const trimmed = name.trim();
+    let ok = true;
+    if (!trimmed) {
+      setNameError("Enter a segment name");
+      ok = false;
+    }
+    const missing = conditions.filter(conditionMissingValue).map((c) => c.id);
+    setValueErrorIds(new Set(missing));
+    if (missing.length > 0) ok = false;
+    return ok;
   };
 
   const apply = () => {
-    applyCustomSegment(campaignId, makeCustomSegment(conditions, name));
+    if (!validate()) return;
+    applyCustomSegment(campaignId, makeCustomSegment(conditions, name.trim()));
     onOpenChange(false);
   };
 
   const save = () => {
+    if (!validate()) return;
     const trimmed = name.trim();
-    if (!trimmed) {
-      setNameError("Enter a segment name");
-      return;
-    }
     if (existingNames.has(trimmed.toLowerCase())) {
       setNameError("A segment with this name already exists");
       return;
@@ -455,6 +493,12 @@ export default function CustomSegmentDrawer({
                   onRemove={() => removeCondition(c.id)}
                   onDuplicate={() => duplicateCondition(c.id)}
                 />
+                {valueErrorIds.has(c.id) && (
+                  <p className="flex items-center gap-1 text-sm text-foreground">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Select a value for this condition
+                  </p>
+                )}
               </div>
             ))}
           </div>
