@@ -7,6 +7,7 @@ import {
   MousePointerClick,
   RefreshCw,
   Trophy,
+  X,
 } from "lucide-react";
 import { hasReport, type CampaignStatus } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VitalsGlyph } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
 import { ReportDataProvider, useReportData } from "./reportDataContext";
 import ResultsTab from "./ResultsTab";
@@ -582,10 +584,62 @@ function VariationComparison({ overview }: { overview: OverviewData }) {
   );
 }
 
-function ReportsOverview({ onViewFullStats }: { onViewFullStats: () => void }) {
+function VitalsBreachSection({ onViewDetails }: { onViewDetails: () => void }) {
+  const { campaign } = useReportData();
+  if (campaign.vitals !== "unhealthy") return null;
+
+  return (
+    <Card
+      className={cn(
+        overviewRadius,
+        "border-border bg-background shadow-none"
+      )}
+    >
+      <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/50 text-vitals-unhealthy">
+            <VitalsGlyph size={18} className="text-current" title="Vitals unhealthy" />
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-vitals-unhealthy text-background">
+              <X className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
+            </span>
+          </span>
+          <div className="min-w-0 space-y-1.5">
+            <p className="text-sm font-semibold text-foreground">
+              Experiment vitals breach
+            </p>
+            <p className="text-sm font-medium leading-snug text-vitals-unhealthy">
+              Fault in experiment configuration as Metric was changed in a running
+              campaign.
+            </p>
+            <p className="text-sm leading-5 text-muted-foreground">
+              We recommend you flush data in this campaign for reliable results.
+            </p>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="shrink-0"
+          onClick={onViewDetails}
+        >
+          View details
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function ReportsOverview({
+  onViewFullStats,
+  onViewVitalsDetails,
+}: {
+  onViewFullStats: () => void;
+  onViewVitalsDetails: () => void;
+}) {
   const overview = useOverviewData();
   return (
     <div className="mx-auto max-w-[1384px] space-y-10 px-12 pb-12 pt-8">
+      <VitalsBreachSection onViewDetails={onViewVitalsDetails} />
       <div className="grid gap-4 lg:grid-cols-3">
         <DecisionBanner overview={overview} onViewFullStats={onViewFullStats} />
         <RevenueImpactCard overview={overview} />
@@ -649,7 +703,10 @@ function ReportsChrome({
         </div>
 
         <TabsContent value="overview" className="mt-0 flex-1 focus-visible:outline-none">
-          <ReportsOverview onViewFullStats={() => setActiveTab("results")} />
+          <ReportsOverview
+            onViewFullStats={() => setActiveTab("results")}
+            onViewVitalsDetails={() => setActiveTab("vitals")}
+          />
         </TabsContent>
         <TabsContent value="results" className="mt-0 flex-1 focus-visible:outline-none">
           <ResultsTab
