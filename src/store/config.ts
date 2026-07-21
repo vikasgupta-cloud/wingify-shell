@@ -4,7 +4,28 @@ import type { CustomSegmentDef } from "../config/segments";
 import type { SectionId } from "../config/configSections";
 
 // NOTE: Session-only by design. This store is NOT persisted — a reload wipes
-// every campaign's config and its saved snapshot.
+// every campaign's config and its saved snapshot. The one exception is the
+// dock/undock preference below, which is persisted on its own to localStorage
+// so the chosen layout survives reloads.
+
+const DOCK_PREF_KEY = "wingify:config:dockState";
+
+// Default to "docked". Only an explicit prior "undocked" choice overrides it.
+function readDockPref(): "docked" | "undocked" {
+  try {
+    return localStorage.getItem(DOCK_PREF_KEY) === "undocked" ? "undocked" : "docked";
+  } catch {
+    return "docked";
+  }
+}
+
+function writeDockPref(state: "docked" | "undocked") {
+  try {
+    localStorage.setItem(DOCK_PREF_KEY, state);
+  } catch {
+    /* ignore write failures (private mode, quota) */
+  }
+}
 
 export type UrlPredicate =
   | "URL matches"
@@ -283,8 +304,11 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: true } })),
   closeWorkflow: (id) =>
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: false } })),
-  dockState: "undocked",
-  setDockState: (state) => set({ dockState: state }),
+  dockState: readDockPref(),
+  setDockState: (state) => {
+    writeDockPref(state);
+    set({ dockState: state });
+  },
   viewMode: "scroll",
   setViewMode: (mode) => set({ viewMode: mode }),
   activeStepId: "main",

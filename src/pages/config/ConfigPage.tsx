@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import {
+  ChevronLeft,
+  ChevronRight,
   Columns2,
   Files,
   GitBranch,
@@ -8,10 +10,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type { CampaignType } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
 import { useConfigStore } from "../../store/config";
-import { SECTIONS } from "../../config/configSections";
+import { SECTIONS, type SectionId } from "../../config/configSections";
 import MainInformation from "./MainInformation";
 import PagesSection from "./PagesSection";
 import VariationsSection from "./VariationsSection";
@@ -65,6 +68,42 @@ function SectionBody({ sectionId, id }: { sectionId: string; id: string }) {
   }
 }
 
+// Guided-only footer: step-to-step navigation matching the design's
+// "Prev" / "Save and Next" controls. Prev is disabled on the first step and
+// Next on the last, so the pair never advances past the ends.
+function StepNav({
+  activeStepId,
+  onGo,
+}: {
+  activeStepId: SectionId;
+  onGo: (id: SectionId) => void;
+}) {
+  const order = SECTIONS.map((s) => s.id);
+  const idx = Math.max(0, order.indexOf(activeStepId));
+  const isFirst = idx === 0;
+  const isLast = idx === order.length - 1;
+  return (
+    <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
+      <Button
+        variant="outline"
+        disabled={isFirst}
+        onClick={() => onGo(order[idx - 1])}
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Prev
+      </Button>
+      <Button
+        variant="outline"
+        disabled={isLast}
+        onClick={() => onGo(order[idx + 1])}
+      >
+        Save and Next
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 export default function ConfigPage() {
   const { entityId } = useParams();
   const id = entityId ?? "";
@@ -75,12 +114,20 @@ export default function ConfigPage() {
   const dockState = useConfigStore((s) => s.dockState);
   const viewMode = useConfigStore((s) => s.viewMode);
   const activeStepId = useConfigStore((s) => s.activeStepId);
+  const setActiveStepId = useConfigStore((s) => s.setActiveStepId);
   const wandzOpen = useWandzStore((s) => s.open);
   const wasWorkflowOpen = useRef(false);
 
   useEffect(() => {
     if (campaign) ensureConfig(campaign.id, campaign.name);
   }, [campaign, ensureConfig]);
+
+  // Always land on the first step when the campaign changes. activeStepId is
+  // session-global (not per-campaign), so without this a new or freshly-opened
+  // campaign would inherit whatever step the previous one was left on.
+  useEffect(() => {
+    setActiveStepId("main");
+  }, [id, setActiveStepId]);
 
   // On closing Workflow Mode, return the reader to the variations section.
   // Defer to the next frame so the freshly-mounted section list has laid out.
@@ -158,6 +205,11 @@ export default function ConfigPage() {
 
   return (
     <div className="min-h-full bg-canvas">
+      {/* When docked, the DotNav is a fixed 16rem (w-64) sidebar that overlays
+          the left gutter. Reserve that width here so the centred content column
+          (and the Wandz panel) never slide under it and never force a
+          horizontal scroll. */}
+      <div className={cn(dockState === "docked" && "pl-64")}>
       {/* Content column + the Wandz panel sit side by side; the panel pushes the
           content, which stays capped at 860px. DotNav floats in the left canvas
           gutter, anchored to the content column, and does not overlap either. */}
@@ -194,12 +246,15 @@ export default function ConfigPage() {
           // shows once, in the guided header.
           <div
             key={activeStepId}
-            className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
+            className="flex min-h-[calc(100vh-8.5rem)] flex-col duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
           >
-            <GuidedStepHeader section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]} />
-            <div className="[&_h2+button]:hidden [&_h2]:hidden">
-              <SectionBody sectionId={activeStepId} id={id} />
+            <div className="flex flex-1 flex-col justify-center">
+              <GuidedStepHeader section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]} />
+              <div className="[&_h2+button]:hidden [&_h2]:hidden">
+                <SectionBody sectionId={activeStepId} id={id} />
+              </div>
             </div>
+            <StepNav activeStepId={activeStepId} onGo={setActiveStepId} />
           </div>
         ) : (
           <div className="mt-10 flex flex-col gap-10">
@@ -226,6 +281,7 @@ export default function ConfigPage() {
 
         {/* Mutual exclusion keeps Quick view and Wandz from both rendering. */}
         {wandzOpen && <WandzPanel />}
+      </div>
       </div>
     </div>
   );
