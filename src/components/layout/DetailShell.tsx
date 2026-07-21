@@ -73,7 +73,7 @@ function IconRail({ basePath, entityId }: { basePath: string; entityId?: string 
 
   const railButton = (active: boolean) =>
     cn(
-      "flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+      "flex h-9 w-9 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted",
       active && "bg-accent text-foreground"
     );
 

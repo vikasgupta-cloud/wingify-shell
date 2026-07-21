@@ -3,12 +3,16 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   REPORT_PRESET_TABS,
   type ReportPresetId,
@@ -122,10 +126,24 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
     REPORT_PRESET_TABS.length
   );
   const [moreOpen, setMoreOpen] = useState(false);
+  const moreCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const moreMeasureRef = useRef<HTMLSpanElement>(null);
+
+  const openMore = () => {
+    if (moreCloseTimer.current) {
+      clearTimeout(moreCloseTimer.current);
+      moreCloseTimer.current = null;
+    }
+    setMoreOpen(true);
+  };
+
+  const scheduleCloseMore = () => {
+    if (moreCloseTimer.current) clearTimeout(moreCloseTimer.current);
+    moreCloseTimer.current = setTimeout(() => setMoreOpen(false), 120);
+  };
 
   const dirtyForViewKey = (key: string) => Boolean(columnDrafts?.[key]);
 
@@ -180,7 +198,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
       const children = Array.from(measureRow.children) as HTMLElement[];
       // Last child is the More measure span.
       const tabEls = children.slice(0, -1);
-      const widths = tabEls.map((el) => el.getBoundingClientRect().width);
+      const widths = tabEls.map((el) => el.offsetWidth);
 
       if (widths.length === 0) {
         setVisibleCount(0);
@@ -196,7 +214,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
         return;
       }
 
-      const budget = available - moreWidth - TAB_GAP_PX;
+      const budget = Math.max(0, available - moreWidth - TAB_GAP_PX);
       let used = 0;
       let count = 0;
       for (let i = 0; i < widths.length; i++) {
@@ -205,14 +223,16 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
         used = next;
         count += 1;
       }
-      setVisibleCount(Math.max(1, count));
+      setVisibleCount(Math.max(1, Math.min(count, widths.length - 1)));
     };
 
     const ro = new ResizeObserver(sync);
     ro.observe(container);
-    ro.observe(measureRow);
     sync();
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      if (moreCloseTimer.current) clearTimeout(moreCloseTimer.current);
+    };
   }, [items, renamingId, renameValue]);
 
   const visibleItems = items.slice(0, visibleCount);
@@ -222,7 +242,6 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const renamingInOverflow =
     renamingId !== null &&
     overflowItems.some((item) => item.kind === "custom" && item.id === renamingId);
-  const moreVisible = moreOpen || renamingInOverflow;
 
   const renderCustomTab = (
     item: Extract<TabItem, { kind: "custom" }>,
@@ -355,127 +374,15 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
       ? renderPresetTab(item, opts)
       : renderCustomTab(item, opts);
 
-  let moreMenu: ReactNode = null;
-  if (showMore) {
-    moreMenu = (
-      <div
-        className="relative shrink-0"
-        onMouseEnter={() => setMoreOpen(true)}
-        onMouseLeave={() => {
-          if (!renamingInOverflow) setMoreOpen(false);
-        }}
-      >
-        <button
-          type="button"
-          className={cn(
-            "relative px-1 pb-2 text-sm transition-colors",
-            moreActive
-              ? activeTabClass
-              : "text-foreground/70 hover:text-foreground"
-          )}
-        >
-          More
-        </button>
-        <div
-          className={cn(
-            "absolute left-0 top-full z-50 pt-1 transition-opacity",
-            moreVisible
-              ? "pointer-events-auto visible opacity-100"
-              : "pointer-events-none invisible opacity-0"
-          )}
-        >
-          <div className="min-w-[200px] rounded-md border border-border bg-popover py-1 shadow-lg">
-            {overflowItems.map((item) => {
-              const active = isItemActive(item);
-              if (item.kind === "preset") {
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setActivePreset(campaignId, item.id)}
-                    className={cn(
-                      "relative flex w-full items-center px-3 py-2 text-left text-sm transition-colors hover:bg-accent",
-                      active
-                        ? "font-medium text-foreground"
-                        : "text-foreground/80"
-                    )}
-                  >
-                    {item.label}
-                    {active && dirtyForViewKey(item.key) ? (
-                      <span
-                        aria-hidden
-                        className="ml-2 h-1.5 w-1.5 rounded-full bg-muted-foreground"
-                      />
-                    ) : null}
-                  </button>
-                );
-              }
-              if (renamingId === item.view.id) {
-                return (
-                  <div key={item.key} className="px-3 py-1.5">
-                    <input
-                      autoFocus
-                      value={renameValue}
-                      onFocus={(e) => e.currentTarget.select()}
-                      onChange={(e) => setRenameValue(e.target.value)}
-                      onBlur={commitRename}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") commitRename();
-                        if (e.key === "Escape") setRenamingId(null);
-                      }}
-                      className="w-full border-0 bg-transparent p-0 text-sm text-foreground outline-none"
-                    />
-                  </div>
-                );
-              }
-              return (
-                <div
-                  key={item.key}
-                  className="group flex items-center gap-1 px-1 hover:bg-accent"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActiveCustomView(campaignId, item.id)}
-                    className={cn(
-                      "relative min-w-0 flex-1 truncate px-2 py-2 text-left text-sm",
-                      active
-                        ? "font-medium text-foreground"
-                        : "text-foreground/80"
-                    )}
-                  >
-                    {item.label}
-                    {active && dirtyForViewKey(item.id) ? (
-                      <span
-                        aria-hidden
-                        className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground align-middle"
-                      />
-                    ) : null}
-                  </button>
-                  <CustomViewMenu
-                    view={item.view}
-                    active
-                    onRename={() => startRename(item.view.id, item.view.name)}
-                    onDelete={() => setDeleteId(item.view.id)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="mb-0 flex min-h-[36px] items-end justify-between gap-4 border-b border-border">
-        <div ref={containerRef} className="relative min-w-0 flex-1">
+        <div ref={containerRef} className="relative min-w-0 flex-1 overflow-visible">
           {/* Offscreen measure row — same tab chrome, used only for widths */}
           <div
             ref={measureRef}
             aria-hidden
-            className="pointer-events-none absolute flex items-end gap-5 opacity-0"
-            style={{ left: -9999, top: 0 }}
+            className="pointer-events-none invisible absolute left-0 top-0 flex w-max items-end gap-5"
           >
             {items.map((item) => renderTab(item, { measuring: true }))}
             <span ref={moreMeasureRef} className="shrink-0 px-1 pb-2 text-sm">
@@ -483,9 +390,132 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
             </span>
           </div>
 
-          <div className="flex min-w-0 items-end gap-5 overflow-hidden">
+          <div className="flex min-w-0 items-end gap-5 overflow-visible">
             {visibleItems.map((item) => renderTab(item))}
-            {moreMenu}
+            {showMore ? (
+              <Popover
+                open={moreOpen || renamingInOverflow}
+                onOpenChange={(open) => {
+                  if (!open && renamingInOverflow) return;
+                  setMoreOpen(open);
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    onMouseEnter={openMore}
+                    onMouseLeave={scheduleCloseMore}
+                    className={cn(
+                      "relative shrink-0 px-1 pb-2 text-sm transition-colors",
+                      moreActive
+                        ? activeTabClass
+                        : "text-foreground/70 hover:text-foreground"
+                    )}
+                  >
+                    More
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  side="bottom"
+                  sideOffset={4}
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                  onMouseEnter={openMore}
+                  onMouseLeave={() => {
+                    if (!renamingInOverflow) scheduleCloseMore();
+                  }}
+                  className="w-auto min-w-[200px] p-1"
+                >
+                  {overflowItems.map((item) => {
+                    const active = isItemActive(item);
+                    if (item.kind === "preset") {
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => {
+                            setActivePreset(campaignId, item.id);
+                            setMoreOpen(false);
+                          }}
+                          className={cn(
+                            "relative flex w-full items-center rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent",
+                            active
+                              ? "font-medium text-foreground"
+                              : "text-foreground/80"
+                          )}
+                        >
+                          {item.label}
+                          {active && dirtyForViewKey(item.key) ? (
+                            <span
+                              aria-hidden
+                              className="ml-2 h-1.5 w-1.5 rounded-full bg-muted-foreground"
+                            />
+                          ) : null}
+                        </button>
+                      );
+                    }
+                    if (renamingId === item.view.id) {
+                      return (
+                        <div key={item.key} className="px-3 py-1.5">
+                          <input
+                            autoFocus
+                            value={renameValue}
+                            onFocus={(e) => e.currentTarget.select()}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onBlur={commitRename}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") commitRename();
+                              if (e.key === "Escape") {
+                                setRenamingId(null);
+                                setMoreOpen(false);
+                              }
+                            }}
+                            className="w-full border-0 bg-transparent p-0 text-sm text-foreground outline-none"
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div
+                        key={item.key}
+                        className="group flex items-center gap-1 rounded-sm hover:bg-accent"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveCustomView(campaignId, item.id);
+                            setMoreOpen(false);
+                          }}
+                          className={cn(
+                            "relative min-w-0 flex-1 truncate px-3 py-2 text-left text-sm",
+                            active
+                              ? "font-medium text-foreground"
+                              : "text-foreground/80"
+                          )}
+                        >
+                          {item.label}
+                          {active && dirtyForViewKey(item.id) ? (
+                            <span
+                              aria-hidden
+                              className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground align-middle"
+                            />
+                          ) : null}
+                        </button>
+                        <CustomViewMenu
+                          view={item.view}
+                          active
+                          onRename={() =>
+                            startRename(item.view.id, item.view.name)
+                          }
+                          onDelete={() => setDeleteId(item.view.id)}
+                        />
+                      </div>
+                    );
+                  })}
+                </PopoverContent>
+              </Popover>
+            ) : null}
           </div>
         </div>
         <div className="flex h-9 min-w-[11.5rem] shrink-0 items-center justify-end self-end">

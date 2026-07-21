@@ -18,6 +18,16 @@ import { cn } from "@/lib/utils";
 import ResultsTab from "./ResultsTab";
 import VitalsTab from "./VitalsTab";
 import vwoMark from "./vwo-mark.svg";
+import { campaignReportDateRange } from "./reportCampaignDefaults";
+import {
+  bestVariantIndex,
+  defaultReportFilters,
+  formatConfidence,
+  formatConversionRate,
+  formatNumber,
+  formatUplift,
+  metricRowStats,
+} from "./reportMetrics";
 
 // ---------------------------------------------------------------------------
 // Reference model — the "Homepage Hero CTA Test" overview exactly as designed
@@ -55,6 +65,10 @@ type OverviewData = {
   revenue: {
     best: { label: string; name: string };
     control: { label: string; name: string };
+    projectedImpact: number;
+    perVisitor: number;
+    transactionRateLift: number;
+    aovLift: number;
   };
   hypothesis: { expect: string; address: string };
   comparison: {
@@ -181,29 +195,29 @@ function mergeComparisonVariant(
   live: Variant | undefined,
   campaign: Campaign,
   index: number,
-  liveCount: number
+  filters: ReturnType<typeof defaultReportFilters>,
+  winnerIndex: number
 ): ReportVariant {
   if (!live) return showcase;
-  const visitors = Math.max(1, Math.floor(campaign.visitors / liveCount));
-  const conversions = Math.max(1, Math.round((visitors * live.convRate) / 100));
-  const uplift = live.uplift;
+  const stats = metricRowStats(
+    campaign,
+    campaign.primaryMetric,
+    live,
+    index,
+    filters
+  );
   return {
     ...showcase,
     label: live.label,
     name: live.name,
     isControl: index === 0,
-    isWinner: live.isBest,
-    rank: live.isBest ? 1 : index === 0 ? null : index,
-    conversions,
-    ctaRate: `${live.convRate.toFixed(2)}%`,
-    visitors: visitors.toLocaleString("en-US"),
-    confidence: live.confidence ? `${live.confidence}%` : "—",
-    upliftLabel:
-      index === 0
-        ? "Baseline"
-        : uplift === null
-          ? "—"
-          : `${uplift > 0 ? "+" : ""}${Math.round(uplift)}%`,
+    isWinner: index === winnerIndex,
+    rank: index === winnerIndex ? 1 : index === 0 ? null : index,
+    conversions: stats.conversions,
+    ctaRate: formatConversionRate(stats.conversionRate),
+    visitors: formatNumber(stats.visitors),
+    confidence: formatConfidence(stats.confidence),
+    upliftLabel: index === 0 ? "Baseline" : formatUplift(stats.uplift),
   };
 }
 
@@ -216,17 +230,33 @@ function formatReportDate(iso: string) {
 }
 
 function buildOverviewFromCampaign(campaign: Campaign): OverviewData {
+  const filters = defaultReportFilters(campaignReportDateRange(campaign));
   const variants = campaign.report.variants;
-  const best =
-    variants.find((v) => v.isBest) ??
-    [...variants]
-      .filter((v) => v.confidence !== null)
-      .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0] ??
-    variants[variants.length - 1]!;
+  const bestIdx = bestVariantIndex(campaign, campaign.primaryMetric, filters);
+  const best = variants[bestIdx]!;
   const control = variants[0]!;
-
-  const upliftVsControl = best.uplift ?? campaign.expectedImprovement;
-  const projected = Math.round(campaign.uniqueConversions * Math.max(1.8, upliftVsControl / 10));
+  const bestStats = metricRowStats(
+    campaign,
+    campaign.primaryMetric,
+    best,
+    bestIdx,
+    filters
+  );
+  const controlStats = metricRowStats(
+    campaign,
+    campaign.primaryMetric,
+    control,
+    0,
+    filters
+  );
+  const upliftVsControl = bestStats.uplift ?? 0;
+  const projected = Math.round(
+    bestStats.conversions * Math.max(1.8, Math.abs(upliftVsControl) / 10)
+  );
+  const perVisitor =
+    bestStats.visitors > 0 ? projected / bestStats.visitors : 0;
+  const transactionRateLift =
+    bestStats.conversionRate - controlStats.conversionRate;
 
   return {
     lastUpdated: formatReportDate(campaign.lastUpdated),
@@ -234,12 +264,12 @@ function buildOverviewFromCampaign(campaign: Campaign): OverviewData {
     body: `Roll it out to all traffic and monitor ${campaign.primaryMetric.toLowerCase()} for two weeks.`,
     stats: [
       {
-        value: `${best.convRate.toFixed(2)}%`,
+        value: formatConversionRate(bestStats.conversionRate),
         label: campaign.primaryMetric,
         accent: true,
       },
       {
-        value: best.confidence ? `${best.confidence}%` : "—",
+        value: formatConfidence(bestStats.confidence),
         label: "Confidence",
         accent: false,
       },
@@ -252,6 +282,10 @@ function buildOverviewFromCampaign(campaign: Campaign): OverviewData {
     revenue: {
       best: { label: best.label, name: best.name },
       control: { label: control.label, name: control.name },
+      projectedImpact: projected,
+      perVisitor,
+      transactionRateLift,
+      aovLift: Number((1.2 + Math.abs(upliftVsControl) / 50).toFixed(2)),
     },
     hypothesis: {
       expect: campaign.hypothesis,
@@ -266,7 +300,8 @@ function buildOverviewFromCampaign(campaign: Campaign): OverviewData {
           variants[index],
           campaign,
           index,
-          variants.length
+          filters,
+          bestIdx
         )
       ),
     },
@@ -403,15 +438,17 @@ function RevenueImpactCard({ overview }: { overview: OverviewData }) {
 
       <RevenueRow
         label="Projected impact"
-        pct={93}
+        pct={Math.min(100, Math.max(12, overview.revenue.projectedImpact / 40))}
         barClass="bg-foreground/80"
         value={
           <>
             <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
-              +$2,482
+              +${overview.revenue.projectedImpact.toLocaleString("en-US")}
             </span>
             <span className="ml-0.5 text-sm text-muted-foreground">/ month</span>
-            <span className="ml-1.5 text-sm font-medium text-foreground">($0.48</span>
+            <span className="ml-1.5 text-sm font-medium text-foreground">
+              (${overview.revenue.perVisitor.toFixed(2)}
+            </span>
             <span className="ml-0.5 text-sm text-muted-foreground">/ visitor</span>
             <span className="ml-0.5 text-sm font-medium text-foreground">)</span>
             <ArrowUpRight className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
@@ -420,12 +457,16 @@ function RevenueImpactCard({ overview }: { overview: OverviewData }) {
       />
       <RevenueRow
         label="Transaction rate"
-        pct={50.5}
+        pct={Math.min(
+          100,
+          Math.max(12, Math.abs(overview.revenue.transactionRateLift) * 20)
+        )}
         barClass="bg-muted-foreground"
         value={
           <>
             <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
-              +1.40%
+              {overview.revenue.transactionRateLift >= 0 ? "+" : ""}
+              {overview.revenue.transactionRateLift.toFixed(2)}%
             </span>
             <ArrowUpRight className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
           </>
@@ -433,12 +474,12 @@ function RevenueImpactCard({ overview }: { overview: OverviewData }) {
       />
       <RevenueRow
         label="Average order value"
-        pct={75}
+        pct={Math.min(100, Math.max(12, overview.revenue.aovLift * 20))}
         barClass="bg-foreground/50"
         value={
           <>
             <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
-              +$3.20
+              +${overview.revenue.aovLift.toFixed(2)}
             </span>
             <span className="ml-1 text-sm text-muted-foreground">/ order</span>
             <ArrowUpLeft className="ml-1 h-3.5 w-3.5 self-center text-success-fg" aria-hidden />
@@ -803,7 +844,10 @@ export default function ReportsPage() {
 
   return (
     <div
-      className="flex min-h-full flex-col bg-canvas"
+      className={cn(
+        "flex min-h-full flex-col",
+        activeTab === "vitals" ? "bg-background" : "bg-canvas"
+      )}
       style={{ "--reports-tabs-height": tabsBarHeight } as CSSProperties}
     >
       <Tabs
@@ -813,7 +857,7 @@ export default function ReportsPage() {
       >
         <div
           ref={tabsBarRef}
-          className="sticky top-0 z-20 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
+          className="sticky top-0 z-40 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
         >
           <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
             {TABS.map((tab) => (
@@ -857,7 +901,7 @@ export default function ReportsPage() {
             Live hits coming soon.
           </div>
         </TabsContent>
-        <TabsContent value="vitals" className="mt-0 flex-1 focus-visible:outline-none">
+        <TabsContent value="vitals" className="mt-0 flex-1 bg-background focus-visible:outline-none">
           <VitalsTab key={campaign.id} campaign={campaign} />
         </TabsContent>
       </Tabs>

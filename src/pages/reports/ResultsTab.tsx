@@ -64,6 +64,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import learningIcon from "@/assets/icons/learning.png";
 import {
   REPORT_DIMENSION_OPTIONS,
   REPORT_PRESET_IDS,
@@ -95,9 +96,16 @@ import {
 import { SegmentsSelector } from "./SegmentsDrawer";
 import {
   filterMetricSeedSuffix,
-  reportVisitorScale,
   type ReportFilterContext,
 } from "./reportFilters";
+import {
+  bestVariantIndex,
+  formatNumber,
+  hashMetricSeed,
+  metricRowStats,
+  variantVisitors,
+  type ReportDataMode,
+} from "./reportMetrics";
 
 const WINNER_THRESHOLD = 95;
 
@@ -156,7 +164,7 @@ function buildResultsGrid(columns: ResultsTableColumnId[]) {
 
 function stickyVariationsCellClass(showEdgeShadow: boolean) {
   return cn(
-    "sticky left-0 z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-muted/50",
+    "sticky left-0 z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
     showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
   );
 }
@@ -175,7 +183,7 @@ function stickyVariationsHeaderClass(showEdgeShadow: boolean) {
 
 function stickyActionsCellClass(showEdgeShadow: boolean) {
   return cn(
-    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] overflow-hidden border-l border-border bg-background group-hover:bg-muted/50",
+    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] overflow-hidden border-l border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
     showEdgeShadow && "shadow-[-6px_0_12px_-8px_hsl(var(--border))]"
   );
 }
@@ -234,90 +242,6 @@ const RESULTS_CHART_H: Record<ResultsRowDensity, string> = {
   default: "h-[68px]",
   comfortable: "h-[84px]",
 };
-
-const formatNumber = (n: number) => n.toLocaleString("en-US");
-
-function variantVisitors(
-  campaign: Campaign,
-  index: number,
-  filters: ReportFilterContext,
-  mode: "visitors" | "sessions" = "visitors"
-): number {
-  const scale = reportVisitorScale(filters);
-  const total = Math.max(1, Math.round(campaign.visitors * scale));
-  const count = campaign.report.variants.length;
-  const base = Math.floor(total / count);
-  const remainder = total - base * count;
-  const visitors = base + (index < remainder ? 1 : 0);
-  return mode === "sessions" ? Math.max(1, Math.round(visitors * 1.32)) : visitors;
-}
-
-function variantConversions(variant: Variant, visitors: number): number {
-  return Math.max(1, Math.round((visitors * variant.convRate) / 100));
-}
-
-function hashMetricSeed(key: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < key.length; i++) {
-    h ^= key.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-/** Per-metric dummy stats — primary uses campaign data; others are seeded by name. */
-function metricRowStats(
-  campaign: Campaign,
-  metricName: string,
-  variant: Variant,
-  index: number,
-  filters: ReportFilterContext,
-  dataMode: "visitors" | "sessions" = "visitors"
-): { uplift: number | null; confidence: number | null; conversions: number } {
-  const visitors = variantVisitors(campaign, index, filters, dataMode);
-  const suffix = filterMetricSeedSuffix(filters);
-  if (metricName === campaign.primaryMetric) {
-    const uplift =
-      variant.uplift === null
-        ? null
-        : Number((variant.uplift * reportVisitorScale(filters)).toFixed(1));
-    const confidence =
-      variant.confidence === null
-        ? null
-        : Math.min(
-            99,
-            Math.max(
-              1,
-              Math.round(variant.confidence * (0.85 + reportVisitorScale(filters) * 0.15))
-            )
-          );
-    return {
-      uplift,
-      confidence,
-      conversions: variantConversions(variant, visitors),
-    };
-  }
-  const seed = hashMetricSeed(
-    `${campaign.id}:${metricName}:${variant.id}:${suffix}:${dataMode}`
-  );
-  const rng = (min: number, max: number) => min + (seed % (max - min + 1));
-  const controlRate = rng(15, 120) / 10;
-  if (index === 0) {
-    return {
-      uplift: null,
-      confidence: null,
-      conversions: Math.max(1, Math.round((visitors * controlRate) / 100)),
-    };
-  }
-  const uplift = Number(((rng(-80, 280) - 100) / 10).toFixed(1));
-  const confidence = rng(42, 98);
-  const convRate = controlRate * (1 + uplift / 100);
-  return {
-    uplift,
-    confidence,
-    conversions: Math.max(1, Math.round((visitors * convRate) / 100)),
-  };
-}
 
 type BadgeTone = "ctrl" | "v1" | "v2" | "total";
 
@@ -690,6 +614,7 @@ function SettingsHelp({ label }: { label: string }) {
         <TooltipTrigger asChild>
           <button
             type="button"
+            tabIndex={-1}
             className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
             aria-label={label}
           >
@@ -1007,7 +932,7 @@ function StatisticalConfigurationDialog({
                 </h3>
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted/60"
                   aria-label="Edit campaign specific"
                   onClick={() => {
                     // UI-only mock: editing flows are out of scope for this modal.
@@ -1044,7 +969,7 @@ function StatisticalConfigurationDialog({
                 </h3>
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted/60"
                   aria-label="Edit metric specific"
                   onClick={() => {
                     // UI-only mock: editing flows are out of scope for this modal.
@@ -1142,7 +1067,7 @@ function MetricHeader({
     <div className="flex items-center justify-between gap-6">
       <div className="flex min-w-0 items-center gap-3">
         <MousePointerClick
-          className="h-6 w-6 shrink-0 text-foreground/70"
+          className="h-6 w-6 shrink-0 text-foreground"
           aria-hidden
         />
         <div className="flex min-w-0 flex-wrap items-center gap-2.5">
@@ -1168,7 +1093,7 @@ function MetricHeader({
             <button
               type="button"
               onClick={onOpenChartView}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
               aria-label="Statistical configuration"
             >
               <PieChart className="h-[18px] w-[18px]" aria-hidden />
@@ -1184,7 +1109,7 @@ function MetricHeader({
             <button
               type="button"
               onClick={onOpenLearnings}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
               aria-label="Campaign learnings"
             >
               <LearningIcon className="h-[18px] w-[18px]" />
@@ -1199,7 +1124,7 @@ function MetricHeader({
             <button
               type="button"
               onClick={() => downloadCsvSummary(metric)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
               aria-label="Download CSV Summary"
             >
               <Download className="h-[18px] w-[18px]" aria-hidden />
@@ -1212,7 +1137,7 @@ function MetricHeader({
         <button
           type="button"
           onClick={onOpenSettings}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
           aria-label="Settings"
         >
           <Settings className="h-[18px] w-[18px]" aria-hidden />
@@ -1234,38 +1159,20 @@ function MetricHeader({
 
 function LearningIcon({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
+    <span
       aria-hidden
-    >
-      <path
-        d="M4.5 4.75h6.25c.69 0 1.25.56 1.25 1.25v10.5H5.75c-.69 0-1.25-.56-1.25-1.25V4.75Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M19.5 4.75h-6.25c-.69 0-1.25.56-1.25 1.25v10.5h6.25c.69 0 1.25-.56 1.25-1.25V4.75Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 4.75v11.75"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 18.25 9.75 20.5h4.5L12 18.25Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
+      className={cn("inline-block shrink-0 bg-current", className)}
+      style={{
+        maskImage: `url(${learningIcon})`,
+        WebkitMaskImage: `url(${learningIcon})`,
+        maskSize: "contain",
+        WebkitMaskSize: "contain",
+        maskRepeat: "no-repeat",
+        WebkitMaskRepeat: "no-repeat",
+        maskPosition: "center",
+        WebkitMaskPosition: "center",
+      }}
+    />
   );
 }
 
@@ -1371,7 +1278,10 @@ function LearningsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[720px] gap-0 overflow-hidden p-0">
+      <DialogContent
+        className="max-w-[720px] gap-0 overflow-hidden p-0"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader className="px-8 pb-2 pt-7">
           <DialogTitle className="text-xl font-semibold text-foreground">
             Share your campaign learnings
@@ -1382,7 +1292,7 @@ function LearningsDialog({
         </DialogHeader>
 
         <div className="space-y-8 px-8 py-5">
-          <section className="space-y-6 rounded-xl bg-muted/40 px-5 py-5">
+          <section className="space-y-6 rounded-xl bg-canvas px-5 py-5">
             <div className="flex items-center gap-1.5">
               <h3 className="text-base font-semibold text-foreground">
                 Overall campaign assessment
@@ -1565,7 +1475,7 @@ function ExperimentVitalsPopover({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
               aria-label="Experiment vitals"
             >
               <VitalsGlyph size={18} className="text-current" />
@@ -1613,7 +1523,7 @@ function ExperimentVitalsPopover({
           {VITAL_ITEMS.map(({ id, label, icon: Icon, help, alert }) => (
             <li key={id}>
               <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted/50 text-foreground/70">
+                <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted/50 text-foreground">
                   <Icon className="h-4 w-4" aria-hidden />
                   {alert ? (
                     <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-vitals-unhealthy text-background">
@@ -2308,6 +2218,7 @@ function ResultsMetricCell({
   isControl,
   conversions,
   visitors,
+  conversionRate,
   uplift,
   confidence,
   revenuePerVisitorValue,
@@ -2317,6 +2228,7 @@ function ResultsMetricCell({
   isControl: boolean;
   conversions: number;
   visitors: number;
+  conversionRate: number;
   uplift: number | null;
   confidence: number | null;
   revenuePerVisitorValue: number;
@@ -2324,7 +2236,7 @@ function ResultsMetricCell({
 }) {
   const metricCell = cn(
     resultsTableMetricCellClass,
-    "overflow-hidden bg-background group-hover:bg-muted/50"
+    "overflow-hidden bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]"
   );
   const pad = RESULTS_ROW_PAD[rowDensity];
   switch (columnId) {
@@ -2371,7 +2283,6 @@ function ResultsMetricCell({
         </div>
       );
     case "conversion-rate": {
-      const rate = visitors > 0 ? (conversions / visitors) * 100 : 0;
       return (
         <div
           className={cn(
@@ -2380,7 +2291,7 @@ function ResultsMetricCell({
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
-          {rate.toFixed(2)}%
+          {conversionRate.toFixed(2)}%
         </div>
       );
     }
@@ -2415,7 +2326,8 @@ function ResultsTotalMetricCell({
   const cell = cn(
     resultsTableMetricCellClass,
     RESULTS_ROW_PAD[rowDensity],
-    "flex items-center border-b border-border bg-muted/50 group-hover:bg-muted/50"
+    "flex items-center border-b border-border",
+    STICKY_HEADER_BG
   );
   switch (columnId) {
     case "unique-conversions":
@@ -2471,7 +2383,7 @@ function RowActionsCell({
       className={cn(
         stickyActionsCellClass(edgeShadows.right),
         RESULTS_ROW_PAD[rowDensity],
-        "flex items-center justify-center border-b border-border bg-background group-hover:bg-muted/50",
+        "flex items-center justify-center border-b border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
         className
       )}
     >
@@ -2516,11 +2428,11 @@ function ExpectedImprovementCell({
   return (
     <div
       className={cn(
-        "relative flex items-center border-b border-border px-5",
+        "relative flex items-center overflow-hidden border-b border-border px-5",
         heightClass
       )}
     >
-      <div className="relative h-full flex-1">
+      <div className="relative h-full flex-1 overflow-hidden">
         {/* median range band */}
         <div className="absolute inset-y-0 left-1/2 w-[35px] -translate-x-1/2 rounded-md bg-muted/50" />
         {/* 0% centre line */}
@@ -2538,7 +2450,6 @@ function ExpectedImprovementCell({
           className="absolute top-[calc(50%-24px)] -translate-x-1/2 whitespace-nowrap text-xs text-foreground/70"
           style={{ left: `${end}%` }}
         >
-          {positive ? "" : ""}
           {value.toFixed(1)}%
         </span>
       </div>
@@ -2571,7 +2482,7 @@ function ProbabilityCell({
   return (
     <div
       className={cn(
-        "relative flex items-center border-b border-border px-5",
+        "relative flex items-center overflow-hidden border-b border-border px-5",
         heightClass
       )}
     >
@@ -2635,7 +2546,7 @@ function DataRow({
   rowDensity: ResultsRowDensity;
 }) {
   const visitors = variantVisitors(campaign, index, filters, dataMode);
-  const { uplift, confidence, conversions } = metricRowStats(
+  const { uplift, confidence, conversions, conversionRate } = metricRowStats(
     campaign,
     metricName,
     variant,
@@ -2657,13 +2568,15 @@ function DataRow({
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
           RESULTS_ROW_PAD[rowDensity],
-          "flex items-center gap-2.5 border-b border-border pl-6 pr-4"
+          "flex min-w-0 items-center gap-2 border-b border-border pl-6 pr-3"
         )}
       >
         <GraphBadge tone={tone}>{variant.label}</GraphBadge>
-        <span className="text-sm font-medium text-foreground">{variant.name}</span>
+        <span className="min-w-0 truncate text-sm font-medium text-foreground">
+          {variant.name}
+        </span>
         {isControl && (
-          <span className="rounded-full bg-muted px-2 text-xs font-medium text-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2 text-xs font-medium text-foreground">
             Baseline
           </span>
         )}
@@ -2675,6 +2588,7 @@ function DataRow({
           isControl={isControl}
           conversions={conversions}
           visitors={visitors}
+          conversionRate={conversionRate}
           uplift={uplift}
           confidence={confidence}
           revenuePerVisitorValue={rpv}
@@ -2700,7 +2614,8 @@ function TotalRow({
   rowDensity: ResultsRowDensity;
 }) {
   const cell = cn(
-    "flex items-center border-b border-border bg-muted/50",
+    "flex items-center border-b border-border",
+    STICKY_HEADER_BG,
     RESULTS_ROW_PAD[rowDensity]
   );
   const gridStyle = buildResultsGrid(columns);
@@ -2710,11 +2625,13 @@ function TotalRow({
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
           cell,
-          "gap-2.5 pl-6 pr-4 group-hover:bg-muted/50"
+          "min-w-0 gap-2.5 pl-6 pr-4"
         )}
       >
         <GraphBadge tone="total">T</GraphBadge>
-        <span className="text-sm font-semibold text-foreground">Total</span>
+        <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+          Total
+        </span>
       </div>
       {columns.map((columnId) => (
         <ResultsTotalMetricCell
@@ -2729,7 +2646,8 @@ function TotalRow({
         className={cn(
           stickyActionsCellClass(edgeShadows.right),
           RESULTS_ROW_PAD[rowDensity],
-          "flex items-center justify-center border-b border-border bg-muted/50 group-hover:bg-muted/50"
+          "flex items-center justify-center border-b border-border",
+          STICKY_HEADER_BG
         )}
       />
     </div>
@@ -2798,7 +2716,7 @@ function ResultsTable({
     <div
       ref={scrollRef}
       onScroll={syncEdgeShadows}
-      className="overflow-x-auto bg-background [scrollbar-gutter:stable]"
+      className="isolate overflow-x-auto bg-background [scrollbar-gutter:stable]"
     >
       <div style={{ minWidth }}>
         <TableHeader
@@ -2876,10 +2794,6 @@ function graphTabIndexFromDefault(defaultGraph: ResultsGraphDefault): number {
   return idx >= 0 ? idx : 0;
 }
 
-const Y_AXIS = ["1.00%", "0.90%", "0.80%", "0.70%", "0.60%"];
-
-const CHART_Y_MIN = 0.6;
-const CHART_Y_MAX = 1.0;
 const CHART_PLOT_H = 172;
 const CHART_PLOT_W = 100;
 const CHART_MARKER_X = 62;
@@ -2896,8 +2810,9 @@ const CHART_RANGE_FILL: Record<Exclude<BadgeTone, "total">, string> = {
   v2: "hsl(var(--foreground) / 0.14)",
 };
 
-function chartY(value: number): number {
-  const t = (value - CHART_Y_MIN) / (CHART_Y_MAX - CHART_Y_MIN);
+function chartY(value: number, yMin: number, yMax: number): number {
+  const span = Math.max(0.0001, yMax - yMin);
+  const t = (value - yMin) / span;
   return (1 - t) * CHART_PLOT_H;
 }
 
@@ -2918,62 +2833,113 @@ const GRAPH_DROPDOWN_ITEM_CLASS =
 const GRAPH_DROPDOWN_ITEM_ACTIVE_CLASS =
   "bg-muted font-medium text-foreground hover:bg-muted";
 
+const SERIES_INDEX: Record<ChartSeriesKey, number> = {
+  ctrl: 0,
+  v1: 1,
+  v2: 2,
+};
+
+/** Endpoint value for a graph series — same numbers as the results table. */
+function graphSeriesEndpoint(
+  campaign: Campaign,
+  tableMetric: string,
+  graphMetric: GraphMetricOption,
+  seriesKey: ChartSeriesKey,
+  filters: ReportFilterContext
+): number {
+  const index = SERIES_INDEX[seriesKey];
+  const variant =
+    campaign.report.variants[index] ??
+    campaign.report.variants[campaign.report.variants.length - 1]!;
+  const mode: ReportDataMode =
+    graphMetric === "Sessions" || graphMetric === "Total Conversions (s)"
+      ? "sessions"
+      : "visitors";
+  const stats = metricRowStats(
+    campaign,
+    tableMetric,
+    variant,
+    Math.min(index, campaign.report.variants.length - 1),
+    filters,
+    mode
+  );
+  switch (graphMetric) {
+    case "Conversions (v)":
+    case "Total Conversions (s)":
+      return stats.conversions;
+    case "Visitors":
+    case "Sessions":
+      return stats.visitors;
+    case "Conversion Rate (v)":
+    default:
+      return stats.conversionRate;
+  }
+}
+
 function chartSeriesValues(
-  metricName: string,
+  endpoint: number,
+  metricKey: string,
   seriesKey: string,
   filters: ReportFilterContext,
   interval: ChartInterval,
   pointCount: number
 ): number[] {
   const seed = hashMetricSeed(
-    `${metricName}:date-range:${seriesKey}:${filterMetricSeedSuffix(filters)}:${interval}`
+    `${metricKey}:date-range:${seriesKey}:${filterMetricSeedSuffix(filters)}:${interval}`
   );
-  const scale = reportVisitorScale(filters);
-  const base = seriesKey === "ctrl" ? 0.66 : seriesKey === "v1" ? 0.68 : 0.7;
-  const endBias =
-    (seriesKey === "ctrl" ? 0.06 : seriesKey === "v1" ? 0.27 : 0.11) * scale;
-  const cumulativeBoost = interval === "Cumulative" ? 0.08 : 0;
+  const start = endpoint * (interval === "Cumulative" ? 0.55 : 0.72);
   const values: number[] = [];
   for (let i = 0; i < pointCount; i++) {
-    const t = i / (pointCount - 1);
-    const wave = (((seed >> (i % 12)) & 7) - 3.5) * 0.004;
-    const v = base + endBias * t + cumulativeBoost * t + wave;
-    values.push(Math.min(CHART_Y_MAX - 0.005, Math.max(CHART_Y_MIN + 0.005, v)));
+    const t = i / Math.max(1, pointCount - 1);
+    const wave = (((seed >> (i % 12)) & 7) - 3.5) * endpoint * 0.008;
+    values.push(Math.max(0, start + (endpoint - start) * t + wave));
   }
+  // Pin the last point to the table value so the chart matches the table.
+  if (values.length > 0) values[values.length - 1] = endpoint;
   return values;
 }
 
 /** Half-width of CI band at each point — wider early, tighter as data accumulates. */
 function chartSeriesRangeHalf(
-  metricName: string,
+  endpoint: number,
+  metricKey: string,
   seriesKey: string,
   filters: ReportFilterContext,
   interval: ChartInterval,
   pointCount: number
 ): number[] {
   const seed = hashMetricSeed(
-    `${metricName}:date-range-band:${seriesKey}:${filterMetricSeedSuffix(filters)}:${interval}`
+    `${metricKey}:date-range-band:${seriesKey}:${filterMetricSeedSuffix(filters)}:${interval}`
   );
   const halves: number[] = [];
   for (let i = 0; i < pointCount; i++) {
-    const t = i / (pointCount - 1);
-    const jitter = (((seed >> (i % 8)) & 3) + 1) * 0.002;
-    halves.push(0.055 * (1 - t * 0.55) + jitter);
+    const t = i / Math.max(1, pointCount - 1);
+    const jitter = (((seed >> (i % 8)) & 3) + 1) * endpoint * 0.004;
+    halves.push(endpoint * 0.08 * (1 - t * 0.55) + jitter);
   }
   return halves;
 }
 
-function chartLinePath(values: number[]): string {
+function chartLinePath(
+  values: number[],
+  yMin: number,
+  yMax: number
+): string {
   return values
     .map((v, i) => {
       const x = (i / (values.length - 1)) * CHART_PLOT_W;
-      const y = chartY(v);
+      const y = chartY(v, yMin, yMax);
       return `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
     })
     .join(" ");
 }
 
-function chartRangeBandPath(values: number[], halves: number[]): string {
+function chartRangeBandPath(
+  values: number[],
+  halves: number[],
+  yMin: number,
+  yMax: number
+): string {
   const n = values.length;
   if (n < 2) return "";
   const upper: string[] = [];
@@ -2982,111 +2948,162 @@ function chartRangeBandPath(values: number[], halves: number[]): string {
     const x = (i / (n - 1)) * CHART_PLOT_W;
     const half = halves[i] ?? 0.04;
     const v = values[i]!;
-    const yTop = chartY(Math.min(CHART_Y_MAX, v + half));
-    const yBot = chartY(Math.max(CHART_Y_MIN, v - half));
+    const yTop = chartY(Math.min(yMax, v + half), yMin, yMax);
+    const yBot = chartY(Math.max(yMin, v - half), yMin, yMax);
     upper.push(`${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${yTop.toFixed(2)}`);
     lower.push(`L ${x.toFixed(2)} ${yBot.toFixed(2)}`);
   }
   return `${upper.join(" ")} ${lower.reverse().join(" ")} Z`;
 }
 
+function formatChartAxisValue(value: number, graphMetric: GraphMetricOption): string {
+  if (
+    graphMetric === "Conversion Rate (v)"
+  ) {
+    return `${value.toFixed(2)}%`;
+  }
+  if (value >= 1000) return formatNumber(Math.round(value));
+  return String(Math.round(value));
+}
+
 function DateRangeLineChart({
-  metricName,
+  campaign,
+  tableMetric,
+  graphMetric,
   filters,
   interval,
   visible,
   showRanges,
 }: {
-  metricName: string;
+  campaign: Campaign;
+  tableMetric: string;
+  graphMetric: GraphMetricOption;
   filters: ReportFilterContext;
   interval: ChartInterval;
   visible: Record<ChartSeriesKey, boolean>;
   showRanges: boolean;
 }) {
   const pointCount = 13;
-  const series: { key: ChartSeriesKey; values: number[]; halves: number[] }[] = (
-    [
-      {
-        key: "ctrl" as const,
-        values: chartSeriesValues(metricName, "ctrl", filters, interval, pointCount),
-        halves: chartSeriesRangeHalf(metricName, "ctrl", filters, interval, pointCount),
-      },
-      {
-        key: "v1" as const,
-        values: chartSeriesValues(metricName, "v1", filters, interval, pointCount),
-        halves: chartSeriesRangeHalf(metricName, "v1", filters, interval, pointCount),
-      },
-      {
-        key: "v2" as const,
-        values: chartSeriesValues(metricName, "v2", filters, interval, pointCount),
-        halves: chartSeriesRangeHalf(metricName, "v2", filters, interval, pointCount),
-      },
-    ] as const
-  ).filter((s) => visible[s.key]);
+  const keys = (["ctrl", "v1", "v2"] as const).filter((k) => visible[k]);
+  const series = keys.map((key) => {
+    const endpoint = graphSeriesEndpoint(
+      campaign,
+      tableMetric,
+      graphMetric,
+      key,
+      filters
+    );
+    return {
+      key,
+      endpoint,
+      values: chartSeriesValues(
+        endpoint,
+        `${tableMetric}:${graphMetric}`,
+        key,
+        filters,
+        interval,
+        pointCount
+      ),
+      halves: chartSeriesRangeHalf(
+        endpoint,
+        `${tableMetric}:${graphMetric}`,
+        key,
+        filters,
+        interval,
+        pointCount
+      ),
+    };
+  });
+
+  const allValues = series.flatMap((s) =>
+    s.values.flatMap((v, i) => [v, v + (s.halves[i] ?? 0), v - (s.halves[i] ?? 0)])
+  );
+  const rawMin = allValues.length ? Math.min(...allValues) : 0;
+  const rawMax = allValues.length ? Math.max(...allValues) : 1;
+  const pad = Math.max((rawMax - rawMin) * 0.12, rawMax * 0.04, 0.05);
+  const yMin = Math.max(0, rawMin - pad);
+  const yMax = rawMax + pad;
+  const yTicks = [yMax, yMin + (yMax - yMin) * 0.75, yMin + (yMax - yMin) * 0.5, yMin + (yMax - yMin) * 0.25, yMin];
+
   const markerIndex = Math.round((CHART_MARKER_X / CHART_PLOT_W) * (pointCount - 1));
 
   return (
-    <>
-      <svg
-        className="pointer-events-none absolute inset-x-0 top-1.5 h-[172px] w-full"
-        viewBox={`0 0 ${CHART_PLOT_W} ${CHART_PLOT_H}`}
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <line
-          x1={CHART_MARKER_X}
-          x2={CHART_MARKER_X}
-          y1={0}
-          y2={CHART_PLOT_H}
-          stroke="hsl(var(--border))"
-          strokeWidth={1}
-          vectorEffect="non-scaling-stroke"
-          strokeDasharray="4 4"
-        />
-        {showRanges &&
-          series.map(({ key, values, halves }) => (
+    <div className="flex gap-6">
+      <div className="flex flex-col justify-between py-2 text-right text-xs font-medium tabular-nums text-muted-foreground">
+        {yTicks.map((v, i) => (
+          <span key={i}>{formatChartAxisValue(v, graphMetric)}</span>
+        ))}
+      </div>
+      <div className="relative min-w-0 flex-1">
+        <div
+          className="flex flex-col justify-between py-2"
+          style={{ height: CHART_PLOT_H }}
+        >
+          {yTicks.map((_, i) => (
+            <div key={i} className="h-px w-full bg-border/80" />
+          ))}
+        </div>
+        <svg
+          className="pointer-events-none absolute inset-x-0 top-1.5 h-[172px] w-full"
+          viewBox={`0 0 ${CHART_PLOT_W} ${CHART_PLOT_H}`}
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <line
+            x1={CHART_MARKER_X}
+            x2={CHART_MARKER_X}
+            y1={0}
+            y2={CHART_PLOT_H}
+            stroke="hsl(var(--border))"
+            strokeWidth={1}
+            vectorEffect="non-scaling-stroke"
+            strokeDasharray="4 4"
+          />
+          {showRanges &&
+            series.map(({ key, values, halves }) => (
+              <path
+                key={`${key}-range`}
+                d={chartRangeBandPath(values, halves, yMin, yMax)}
+                fill={CHART_RANGE_FILL[key]}
+                stroke="none"
+              />
+            ))}
+          {series.map(({ key, values }) => (
             <path
-              key={`${key}-range`}
-              d={chartRangeBandPath(values, halves)}
-              fill={CHART_RANGE_FILL[key]}
-              stroke="none"
+              key={key}
+              d={chartLinePath(values, yMin, yMax)}
+              fill="none"
+              stroke={CHART_STROKE[key]}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
             />
           ))}
-        {series.map(({ key, values }) => (
-          <path
-            key={key}
-            d={chartLinePath(values)}
-            fill="none"
-            stroke={CHART_STROKE[key]}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
-        ))}
-      </svg>
-      <div
-        className="pointer-events-none absolute inset-x-0 top-1.5 h-[172px]"
-        aria-hidden
-      >
-        {series.map(({ key, values }) => {
-          const y = chartY(values[markerIndex] ?? values[values.length - 1]!);
-          const topPct = (y / CHART_PLOT_H) * 100;
-          return (
-            <span
-              key={`${key}-marker`}
-              className={cn(
-                "absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                key === "ctrl" && "bg-muted-foreground",
-                key === "v1" && "bg-foreground/45",
-                key === "v2" && "bg-foreground"
-              )}
-              style={{ left: `${CHART_MARKER_X}%`, top: `${topPct}%` }}
-            />
-          );
-        })}
+        </svg>
+        <div
+          className="pointer-events-none absolute inset-x-0 top-1.5 h-[172px]"
+          aria-hidden
+        >
+          {series.map(({ key, values }) => {
+            const v = values[markerIndex] ?? values[values.length - 1]!;
+            return (
+              <span
+                key={key}
+                className="absolute text-[10px] font-medium tabular-nums text-foreground"
+                style={{
+                  left: `${CHART_MARKER_X}%`,
+                  top: chartY(v, yMin, yMax),
+                  transform: "translate(-50%, -120%)",
+                }}
+              >
+                {formatChartAxisValue(v, graphMetric)}
+              </span>
+            );
+          })}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -3219,17 +3236,23 @@ function ExpectedConversionRateChart({
     1,
     filters
   );
-  const ctrlMean = Math.min(34, Math.max(14, 18 + (ctrlStats.conversions % 90) / 20));
-  const v1Mean = Math.min(34, Math.max(16, ctrlMean + 3.5 + (v1Stats.uplift ?? 4) / 10));
-  const std = 2.35;
-  const xMin = 12;
-  const xMax = 36;
+  const ctrlMean = ctrlStats.conversionRate;
+  const v1Mean = v1Stats.conversionRate;
+  const pad = Math.max(2, Math.abs(v1Mean - ctrlMean) * 0.75 + 1.5);
+  const xMin = Math.max(0, Math.min(ctrlMean, v1Mean) - pad);
+  const xMax = Math.max(ctrlMean, v1Mean) + pad;
+  const std = Math.max(0.6, (xMax - xMin) / 10);
   const yMax =
     Math.max(
       gaussianPdf(ctrlMean, ctrlMean, std),
       gaussianPdf(v1Mean, v1Mean, std)
     ) * 1.12;
-  const xTicks = [12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36];
+  const tickStep = xMax - xMin > 20 ? 4 : xMax - xMin > 10 ? 2 : 1;
+  const xTicks: number[] = [];
+  for (let t = Math.ceil(xMin); t <= Math.floor(xMax); t += tickStep) {
+    xTicks.push(t);
+  }
+  if (xTicks.length === 0) xTicks.push(Math.round(xMin), Math.round(xMax));
   const series = [
     visible.ctrl
       ? {
@@ -3409,10 +3432,10 @@ function ExpectedImprovementChart({
 }) {
   const v1 = campaign.report.variants[1] ?? campaign.report.variants[0]!;
   const stats = metricRowStats(campaign, metricName, v1, 1, filters);
-  const mean = Math.max(4, Math.min(40, 12 + (stats.uplift ?? 8)));
-  const std = 7.2;
-  const xMin = -15;
-  const xMax = 45;
+  const mean = stats.uplift ?? 0;
+  const std = Math.max(3, Math.abs(mean) * 0.35 + 4);
+  const xMin = Math.min(-15, mean - std * 3);
+  const xMax = Math.max(15, mean + std * 3);
   const yMax = gaussianPdf(mean, mean, std) * 1.15;
   const path = densityCurvePath(
     mean,
@@ -3435,7 +3458,15 @@ function ExpectedImprovementChart({
   const zeroX = ((0 - xMin) / (xMax - xMin)) * 100;
   const ropeLeft = ((-1.5 - xMin) / (xMax - xMin)) * 100;
   const ropeRight = ((1.5 - xMin) / (xMax - xMin)) * 100;
-  const xTicks = [-15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45];
+  const tickStep = xMax - xMin > 40 ? 10 : 5;
+  const xTicks: number[] = [];
+  for (
+    let t = Math.ceil(xMin / tickStep) * tickStep;
+    t <= Math.floor(xMax / tickStep) * tickStep;
+    t += tickStep
+  ) {
+    xTicks.push(t);
+  }
 
   return (
     <div className="space-y-5">
@@ -3754,33 +3785,20 @@ function GraphPanel({
 
       <div className="mt-6 rounded-xl border border-border bg-background p-6">
         {activeTabId === "date-range" ? (
-          <div className="flex gap-6">
-            <div className="flex flex-col justify-between py-2 text-right text-xs font-medium tabular-nums text-muted-foreground">
-              {Y_AXIS.map((v) => (
-                <span key={v}>{v}</span>
+          <div className="space-y-2">
+            <DateRangeLineChart
+              campaign={campaign}
+              tableMetric={metricName}
+              graphMetric={graphMetric}
+              filters={filters}
+              interval={interval}
+              visible={visible}
+              showRanges={showRanges}
+            />
+            <div className="flex justify-between pl-14 pr-2 text-xs tabular-nums text-muted-foreground">
+              {xLabels.map((d) => (
+                <span key={d}>{d}</span>
               ))}
-            </div>
-            <div className="relative min-w-0 flex-1">
-              <div
-                className="flex flex-col justify-between py-2"
-                style={{ height: CHART_PLOT_H }}
-              >
-                {Y_AXIS.map((v) => (
-                  <div key={v} className="h-px w-full bg-border/80" />
-                ))}
-              </div>
-              <DateRangeLineChart
-                metricName={graphMetric}
-                filters={filters}
-                interval={interval}
-                visible={visible}
-                showRanges={showRanges}
-              />
-              <div className="mt-2 flex justify-between px-12 text-xs tabular-nums text-muted-foreground">
-                {xLabels.map((d) => (
-                  <span key={d}>{d}</span>
-                ))}
-              </div>
             </div>
           </div>
         ) : activeTabId === "expected-conversion-rate" ? (
@@ -4069,7 +4087,7 @@ function MetricRailItem({
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
             active
               ? "bg-accent text-foreground"
-              : "text-foreground/70 hover:bg-muted/60 hover:text-foreground"
+              : "text-foreground hover:bg-muted/60"
           )}
         >
           {icon}
@@ -4437,7 +4455,8 @@ function buildGroups(
   campaign: Campaign,
   metrics: CompareMetric[],
   groupBy: GroupBy,
-  filters: ReportFilterContext
+  filters: ReportFilterContext,
+  dataMode: ReportDataMode = "visitors"
 ): CompareGroup[] {
   const variants = campaign.report.variants;
 
@@ -4446,12 +4465,12 @@ function buildGroups(
       key: variant.id,
       label: <VariantLabel variant={variant} index={vi} />,
       rows: metrics.map((m) => {
-        const s = metricRowStats(campaign, m.name, variant, vi, filters);
+        const s = metricRowStats(campaign, m.name, variant, vi, filters, dataMode);
         return {
           key: m.name,
           rowLabel: <MetricLabel name={m.name} isPrimary={m.isPrimary} />,
           conversions: s.conversions,
-          visitors: variantVisitors(campaign, vi, filters),
+          visitors: s.visitors,
           improvement: s.uplift,
           probability: s.confidence,
         };
@@ -4463,12 +4482,12 @@ function buildGroups(
     key: m.name,
     label: <MetricLabel name={m.name} isPrimary={m.isPrimary} />,
     rows: variants.map((variant, vi) => {
-      const s = metricRowStats(campaign, m.name, variant, vi, filters);
+      const s = metricRowStats(campaign, m.name, variant, vi, filters, dataMode);
       return {
         key: variant.id,
         rowLabel: <VariantLabel variant={variant} index={vi} />,
         conversions: s.conversions,
-        visitors: variantVisitors(campaign, vi, filters),
+        visitors: s.visitors,
         improvement: s.uplift,
         probability: s.confidence,
       };
@@ -4481,13 +4500,15 @@ function CompareTable({
   metrics,
   groupBy,
   filters,
+  dataMode = "visitors",
 }: {
   campaign: Campaign;
   metrics: CompareMetric[];
   groupBy: GroupBy;
   filters: ReportFilterContext;
+  dataMode?: ReportDataMode;
 }) {
-  const groups = buildGroups(campaign, metrics, groupBy, filters);
+  const groups = buildGroups(campaign, metrics, groupBy, filters, dataMode);
 
   return (
     <div className="overflow-x-auto bg-background">
@@ -4539,12 +4560,14 @@ function CompareView({
   metrics,
   groupBy,
   filters,
+  dataMode = "visitors",
   onClear,
 }: {
   campaign: Campaign;
   metrics: CompareMetric[];
   groupBy: GroupBy;
   filters: ReportFilterContext;
+  dataMode?: ReportDataMode;
   onClear: () => void;
 }) {
   const count = metrics.length;
@@ -4589,6 +4612,7 @@ function CompareView({
           metrics={metrics}
           groupBy={groupBy}
           filters={filters}
+          dataMode={dataMode}
         />
       )}
     </div>
@@ -4686,11 +4710,9 @@ export default function ResultsTab({
 
   const variants = campaign.report.variants;
   const best =
-    variants.find((v) => v.isBest) ??
-    [...variants]
-      .filter((v) => v.confidence !== null)
-      .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0] ??
-    variants[variants.length - 1];
+    variants[
+      bestVariantIndex(campaign, selectedMetric, filters, dataMode)
+    ] ?? variants[variants.length - 1]!;
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -4754,6 +4776,7 @@ export default function ResultsTab({
                 metrics={orderedCompareMetrics}
                 groupBy={groupBy}
                 filters={filters}
+                dataMode={dataMode}
                 onClear={() => setCompareMode(false)}
               />
             </>

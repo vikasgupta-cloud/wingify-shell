@@ -267,7 +267,7 @@ export default function VitalsTab({ campaign }: { campaign: Campaign }) {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="min-h-full bg-background">
+      <div className="min-h-full flex-1 bg-background">
         <div className="mx-auto max-w-[920px] space-y-8 px-12 pb-16 pt-10">
         <header className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -299,7 +299,7 @@ export default function VitalsTab({ campaign }: { campaign: Campaign }) {
                 aria-label={tab.label}
                 aria-current={selected ? "page" : undefined}
                 className={cn(
-                  "relative flex h-12 w-14 items-center justify-center text-muted-foreground transition-colors hover:text-foreground",
+                  "relative flex h-12 w-14 items-center justify-center text-foreground transition-colors hover:text-foreground",
                   selected && "text-foreground"
                 )}
               >
