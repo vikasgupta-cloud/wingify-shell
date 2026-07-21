@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, type RefObject, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowUpLeft,
@@ -8,32 +8,21 @@ import {
   RefreshCw,
   Trophy,
 } from "lucide-react";
-import { hasReport, type Campaign, type CampaignStatus, type Variant } from "../../data/campaigns";
+import { hasReport, type CampaignStatus } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { ReportDataProvider, useReportData } from "./reportDataContext";
 import ResultsTab from "./ResultsTab";
 import VitalsTab from "./VitalsTab";
 import vwoMark from "./vwo-mark.svg";
-import { campaignReportDateRange } from "./reportCampaignDefaults";
-import {
-  bestVariantIndex,
-  defaultReportFilters,
-  formatConfidence,
-  formatConversionRate,
-  formatNumber,
-  formatUplift,
-  metricRowStats,
-} from "./reportMetrics";
 
 // ---------------------------------------------------------------------------
-// Reference model — the "Homepage Hero CTA Test" overview exactly as designed
-// in Figma (node 2422:34944). The reports overview is a design showcase, so the
-// copy and numbers below are the canonical sample content rather than being
-// derived from the selected campaign.
+// Overview UI — numbers always come from ReportDataProvider (one reactive source).
+// PREVIEW_HERO only supplies marketing copy for variation preview cards.
 
 type BadgeTone = "green" | "blue" | "purple" | "neutral";
 
@@ -106,206 +95,47 @@ const PREVIEW_HERO = [
   },
 ];
 
-/** Overview comparison carousel — full variation set (Figma); metrics merge from campaign report. */
-const OVERVIEW_COMPARISON_VARIANTS: ReportVariant[] = [
-  {
-    label: "C",
-    name: "Control",
-    rank: null,
-    tone: "neutral",
-    isControl: true,
-    isWinner: false,
-    headline: PREVIEW_HERO[0]!.headline,
-    sub: PREVIEW_HERO[0]!.sub,
-    cta: PREVIEW_HERO[0]!.cta,
-    conversions: 4,
-    ctaRate: "0.40%",
-    visitors: "1,002",
-    confidence: "—",
-    upliftLabel: "Baseline",
-  },
-  {
-    label: "V1",
-    name: "Variation 1",
-    rank: 1,
-    tone: "green",
-    isControl: false,
-    isWinner: true,
-    headline: PREVIEW_HERO[1]!.headline,
-    sub: PREVIEW_HERO[1]!.sub,
-    cta: PREVIEW_HERO[1]!.cta,
-    conversions: 10,
-    ctaRate: "0.96%",
-    visitors: "1,041",
-    confidence: "95%",
-    upliftLabel: "+140%",
-  },
-  {
-    label: "V2",
-    name: "Variation 2",
-    rank: 2,
-    tone: "purple",
-    isControl: false,
-    isWinner: false,
-    headline: PREVIEW_HERO[2]!.headline,
-    sub: PREVIEW_HERO[2]!.sub,
-    cta: PREVIEW_HERO[2]!.cta,
-    conversions: 8,
-    ctaRate: "0.79%",
-    visitors: "1,017",
-    confidence: "88%",
-    upliftLabel: "+98%",
-  },
-  {
-    label: "V3",
-    name: "Variation 3",
-    rank: 3,
-    tone: "blue",
-    isControl: false,
-    isWinner: false,
-    headline: PREVIEW_HERO[3]!.headline,
-    sub: PREVIEW_HERO[3]!.sub,
-    cta: PREVIEW_HERO[3]!.cta,
-    conversions: 7,
-    ctaRate: "0.68%",
-    visitors: "1,033",
-    confidence: "78%",
-    upliftLabel: "+70%",
-  },
-  {
-    label: "V4",
-    name: "Variation 4",
-    rank: 4,
-    tone: "purple",
-    isControl: false,
-    isWinner: false,
-    headline: PREVIEW_HERO[4]!.headline,
-    sub: PREVIEW_HERO[4]!.sub,
-    cta: PREVIEW_HERO[4]!.cta,
-    conversions: 5,
-    ctaRate: "0.47%",
-    visitors: "1,071",
-    confidence: "52%",
-    upliftLabel: "+18%",
-  },
-];
+const VARIANT_TONES: BadgeTone[] = ["neutral", "green", "purple", "blue", "purple"];
 
-function mergeComparisonVariant(
-  showcase: ReportVariant,
-  live: Variant | undefined,
-  campaign: Campaign,
-  index: number,
-  filters: ReturnType<typeof defaultReportFilters>,
-  winnerIndex: number
-): ReportVariant {
-  if (!live) return showcase;
-  const stats = metricRowStats(
-    campaign,
-    campaign.primaryMetric,
-    live,
-    index,
-    filters
-  );
-  return {
-    ...showcase,
-    label: live.label,
-    name: live.name,
-    isControl: index === 0,
-    isWinner: index === winnerIndex,
-    rank: index === winnerIndex ? 1 : index === 0 ? null : index,
-    conversions: stats.conversions,
-    ctaRate: formatConversionRate(stats.conversionRate),
-    visitors: formatNumber(stats.visitors),
-    confidence: formatConfidence(stats.confidence),
-    upliftLabel: index === 0 ? "Baseline" : formatUplift(stats.uplift),
-  };
-}
-
-function formatReportDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function buildOverviewFromCampaign(campaign: Campaign): OverviewData {
-  const filters = defaultReportFilters(campaignReportDateRange(campaign));
-  const variants = campaign.report.variants;
-  const bestIdx = bestVariantIndex(campaign, campaign.primaryMetric, filters);
-  const best = variants[bestIdx]!;
-  const control = variants[0]!;
-  const bestStats = metricRowStats(
-    campaign,
-    campaign.primaryMetric,
-    best,
-    bestIdx,
-    filters
-  );
-  const controlStats = metricRowStats(
-    campaign,
-    campaign.primaryMetric,
-    control,
-    0,
-    filters
-  );
-  const upliftVsControl = bestStats.uplift ?? 0;
-  const projected = Math.round(
-    bestStats.conversions * Math.max(1.8, Math.abs(upliftVsControl) / 10)
-  );
-  const perVisitor =
-    bestStats.visitors > 0 ? projected / bestStats.visitors : 0;
-  const transactionRateLift =
-    bestStats.conversionRate - controlStats.conversionRate;
-
-  return {
-    lastUpdated: formatReportDate(campaign.lastUpdated),
-    headline: `${best.name} is your best choice`,
-    body: `Roll it out to all traffic and monitor ${campaign.primaryMetric.toLowerCase()} for two weeks.`,
-    stats: [
-      {
-        value: formatConversionRate(bestStats.conversionRate),
-        label: campaign.primaryMetric,
-        accent: true,
+function useOverviewData(): OverviewData {
+  const { campaign, overview } = useReportData();
+  return useMemo(() => {
+    const variants: ReportVariant[] = overview.comparison.rows.map((row, index) => {
+      const hero = PREVIEW_HERO[index % PREVIEW_HERO.length]!;
+      return {
+        label: row.label,
+        name: row.name,
+        rank: row.rank,
+        tone: VARIANT_TONES[index % VARIANT_TONES.length]!,
+        isControl: row.isControl,
+        isWinner: row.isWinner,
+        headline: hero.headline,
+        sub: hero.sub,
+        cta: hero.cta,
+        conversions: row.conversions,
+        ctaRate: row.ctaRate,
+        visitors: row.visitors,
+        confidence: row.confidence,
+        upliftLabel: row.upliftLabel,
+      };
+    });
+    return {
+      lastUpdated: overview.lastUpdated,
+      headline: overview.headline,
+      body: overview.body,
+      stats: overview.stats,
+      revenue: overview.revenue,
+      hypothesis: {
+        expect: campaign.hypothesis,
+        address: campaign.addresses,
       },
-      {
-        value: formatConfidence(bestStats.confidence),
-        label: "Confidence",
-        accent: false,
+      comparison: {
+        heading: overview.comparison.heading,
+        metric: overview.comparison.metric,
+        variants,
       },
-      {
-        value: `+$${projected.toLocaleString("en-US")}`,
-        label: "Projected impact",
-        accent: false,
-      },
-    ],
-    revenue: {
-      best: { label: best.label, name: best.name },
-      control: { label: control.label, name: control.name },
-      projectedImpact: projected,
-      perVisitor,
-      transactionRateLift,
-      aovLift: Number((1.2 + Math.abs(upliftVsControl) / 50).toFixed(2)),
-    },
-    hypothesis: {
-      expect: campaign.hypothesis,
-      address: campaign.addresses,
-    },
-    comparison: {
-      heading: `${best.name} leads on ${campaign.primaryMetric.toLowerCase()} vs. ${control.name}`,
-      metric: campaign.primaryMetric,
-      variants: OVERVIEW_COMPARISON_VARIANTS.map((showcase, index) =>
-        mergeComparisonVariant(
-          showcase,
-          variants[index],
-          campaign,
-          index,
-          filters,
-          bestIdx
-        )
-      ),
-    },
-  };
+    };
+  }, [campaign.hypothesis, campaign.addresses, overview]);
 }
 
 // ---------------------------------------------------------------------------
@@ -752,14 +582,8 @@ function VariationComparison({ overview }: { overview: OverviewData }) {
   );
 }
 
-function ReportsOverview({
-  campaign,
-  onViewFullStats,
-}: {
-  campaign: Campaign;
-  onViewFullStats: () => void;
-}) {
-  const overview = useMemo(() => buildOverviewFromCampaign(campaign), [campaign]);
+function ReportsOverview({ onViewFullStats }: { onViewFullStats: () => void }) {
+  const overview = useOverviewData();
   return (
     <div className="mx-auto max-w-[1384px] space-y-10 px-12 pb-12 pt-8">
       <div className="grid gap-4 lg:grid-cols-3">
@@ -768,6 +592,86 @@ function ReportsOverview({
       </div>
       <HypothesisSection overview={overview} />
       <VariationComparison overview={overview} />
+    </div>
+  );
+}
+
+function ReportsChrome({
+  activeTab,
+  setActiveTab,
+  tabsBarRef,
+  tabsBarHeight,
+}: {
+  activeTab: string;
+  setActiveTab: (value: string) => void;
+  tabsBarRef: RefObject<HTMLDivElement | null>;
+  tabsBarHeight: string;
+}) {
+  const { campaign, overview } = useReportData();
+
+  return (
+    <div
+      className={cn(
+        "flex min-h-full flex-col",
+        activeTab === "vitals" ? "bg-background" : "bg-canvas"
+      )}
+      style={{ "--reports-tabs-height": tabsBarHeight } as CSSProperties}
+    >
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex min-h-full flex-col"
+      >
+        <div
+          ref={tabsBarRef}
+          className="sticky top-0 z-40 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
+        >
+          <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
+            {TABS.map((tab) => (
+              <TabsTrigger
+                key={tab}
+                value={tabValue(tab)}
+                className="relative rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:scale-x-0 after:bg-foreground after:transition-transform data-[state=active]:after:scale-x-100"
+              >
+                {tab}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <div className="flex items-center gap-2 pb-2.5">
+            <span className="text-sm text-muted-foreground">
+              Last updated {overview.lastUpdated}
+            </span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Refresh report">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <TabsContent value="overview" className="mt-0 flex-1 focus-visible:outline-none">
+          <ReportsOverview onViewFullStats={() => setActiveTab("results")} />
+        </TabsContent>
+        <TabsContent value="results" className="mt-0 flex-1 focus-visible:outline-none">
+          <ResultsTab
+            key={campaign.id}
+            campaign={campaign}
+            onNavigateToVitals={() => setActiveTab("vitals")}
+          />
+        </TabsContent>
+        <TabsContent value="behaviour" className="mt-0 flex-1 focus-visible:outline-none">
+          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+            Behaviour coming soon.
+          </div>
+        </TabsContent>
+        <TabsContent value="live-hits" className="mt-0 flex-1 focus-visible:outline-none">
+          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+            Live hits coming soon.
+          </div>
+        </TabsContent>
+        <TabsContent value="vitals" className="mt-0 flex-1 bg-background focus-visible:outline-none">
+          <VitalsTab key={campaign.id} campaign={campaign} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -811,11 +715,6 @@ export default function ReportsPage() {
     );
   };
 
-  const overviewMeta = useMemo(
-    () => (campaign ? buildOverviewFromCampaign(campaign) : null),
-    [campaign]
-  );
-
   useLayoutEffect(() => {
     const el = tabsBarRef.current;
     if (!el) return;
@@ -843,68 +742,13 @@ export default function ReportsPage() {
   }
 
   return (
-    <div
-      className={cn(
-        "flex min-h-full flex-col",
-        activeTab === "vitals" ? "bg-background" : "bg-canvas"
-      )}
-      style={{ "--reports-tabs-height": tabsBarHeight } as CSSProperties}
-    >
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="flex min-h-full flex-col"
-      >
-        <div
-          ref={tabsBarRef}
-          className="sticky top-0 z-40 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
-        >
-          <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
-            {TABS.map((tab) => (
-              <TabsTrigger
-                key={tab}
-                value={tabValue(tab)}
-                className="relative rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:scale-x-0 after:bg-foreground after:transition-transform data-[state=active]:after:scale-x-100"
-              >
-                {tab}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <div className="flex items-center gap-2 pb-2.5">
-            <span className="text-sm text-muted-foreground">
-              Last updated {overviewMeta?.lastUpdated ?? "—"}
-            </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Refresh report">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <TabsContent value="overview" className="mt-0 flex-1 focus-visible:outline-none">
-          <ReportsOverview campaign={campaign} onViewFullStats={() => setActiveTab("results")} />
-        </TabsContent>
-        <TabsContent value="results" className="mt-0 flex-1 focus-visible:outline-none">
-          <ResultsTab
-            key={campaign.id}
-            campaign={campaign}
-            onNavigateToVitals={() => setActiveTab("vitals")}
-          />
-        </TabsContent>
-        <TabsContent value="behaviour" className="mt-0 flex-1 focus-visible:outline-none">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Behaviour coming soon.
-          </div>
-        </TabsContent>
-        <TabsContent value="live-hits" className="mt-0 flex-1 focus-visible:outline-none">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Live hits coming soon.
-          </div>
-        </TabsContent>
-        <TabsContent value="vitals" className="mt-0 flex-1 bg-background focus-visible:outline-none">
-          <VitalsTab key={campaign.id} campaign={campaign} />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <ReportDataProvider campaign={campaign}>
+      <ReportsChrome
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        tabsBarRef={tabsBarRef}
+        tabsBarHeight={tabsBarHeight}
+      />
+    </ReportDataProvider>
   );
 }

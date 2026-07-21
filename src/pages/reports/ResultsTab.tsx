@@ -82,7 +82,6 @@ import {
 } from "../../store/reportViews";
 import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
-import { campaignReportDateRange } from "./reportCampaignDefaults";
 import {
   DEFAULT_REPORT_VIEW_SETTINGS,
   type ReportViewSettings,
@@ -94,16 +93,12 @@ import {
   DEFAULT_RESULTS_TABLE_COLUMNS,
 } from "./reportViewTypes";
 import { SegmentsSelector } from "./SegmentsDrawer";
+import { filterMetricSeedSuffix, type ReportFilterContext } from "./reportFilters";
+import { useReportData } from "./reportDataContext";
 import {
-  filterMetricSeedSuffix,
-  type ReportFilterContext,
-} from "./reportFilters";
-import {
-  bestVariantIndex,
   formatNumber,
   hashMetricSeed,
-  metricRowStats,
-  variantVisitors,
+  type MetricRowStats,
   type ReportDataMode,
 } from "./reportMetrics";
 
@@ -2545,14 +2540,10 @@ function DataRow({
   edgeShadows: StickyEdgeShadows;
   rowDensity: ResultsRowDensity;
 }) {
-  const visitors = variantVisitors(campaign, index, filters, dataMode);
-  const { uplift, confidence, conversions, conversionRate } = metricRowStats(
-    campaign,
+  const { statsFor } = useReportData();
+  const { uplift, confidence, conversions, conversionRate, visitors } = statsFor(
     metricName,
-    variant,
-    index,
-    filters,
-    dataMode
+    index
   );
   const tone = badgeTone(index);
   const isControl = index === 0;
@@ -2675,21 +2666,34 @@ function ResultsTable({
   rowDensity: ResultsRowDensity;
   onRowDensityChange: (next: ResultsRowDensity) => void;
 }) {
+  const { statsFor, rows: selectedRows, selectedMetric, totals } =
+    useReportData();
   const variants = campaign.report.variants;
-  const rows = variants.map((variant, index) => {
-    const visitors = variantVisitors(campaign, index, filters, dataMode);
-    const { conversions } = metricRowStats(
-      campaign,
-      metricName,
-      variant,
-      index,
-      filters,
-      dataMode
-    );
-    return { variant, index, visitors, conversions };
-  });
-  const totalConversions = rows.reduce((sum, r) => sum + r.conversions, 0);
-  const totalVisitors = rows.reduce((sum, r) => sum + r.visitors, 0);
+  const rows =
+    metricName === selectedMetric
+      ? selectedRows.map(({ variant, index, stats }) => ({
+          variant,
+          index,
+          visitors: stats.visitors,
+          conversions: stats.conversions,
+        }))
+      : variants.map((variant, index) => {
+          const stats = statsFor(metricName, index);
+          return {
+            variant,
+            index,
+            visitors: stats.visitors,
+            conversions: stats.conversions,
+          };
+        });
+  const totalConversions =
+    metricName === selectedMetric
+      ? totals.conversions
+      : rows.reduce((sum, r) => sum + r.conversions, 0);
+  const totalVisitors =
+    metricName === selectedMetric
+      ? totals.visitors
+      : rows.reduce((sum, r) => sum + r.visitors, 0);
   const minWidth = resultsTableMinWidth(columns);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [edgeShadows, setEdgeShadows] =
@@ -2845,24 +2849,11 @@ function graphSeriesEndpoint(
   tableMetric: string,
   graphMetric: GraphMetricOption,
   seriesKey: ChartSeriesKey,
-  filters: ReportFilterContext
+  statsFor: (metricName: string, variantIndex: number) => MetricRowStats
 ): number {
   const index = SERIES_INDEX[seriesKey];
-  const variant =
-    campaign.report.variants[index] ??
-    campaign.report.variants[campaign.report.variants.length - 1]!;
-  const mode: ReportDataMode =
-    graphMetric === "Sessions" || graphMetric === "Total Conversions (s)"
-      ? "sessions"
-      : "visitors";
-  const stats = metricRowStats(
-    campaign,
-    tableMetric,
-    variant,
-    Math.min(index, campaign.report.variants.length - 1),
-    filters,
-    mode
-  );
+  const variantIndex = Math.min(index, campaign.report.variants.length - 1);
+  const stats = statsFor(tableMetric, variantIndex);
   switch (graphMetric) {
     case "Conversions (v)":
     case "Total Conversions (s)":
@@ -2983,6 +2974,7 @@ function DateRangeLineChart({
   visible: Record<ChartSeriesKey, boolean>;
   showRanges: boolean;
 }) {
+  const { statsFor } = useReportData();
   const pointCount = 13;
   const keys = (["ctrl", "v1", "v2"] as const).filter((k) => visible[k]);
   const series = keys.map((key) => {
@@ -2991,7 +2983,7 @@ function DateRangeLineChart({
       tableMetric,
       graphMetric,
       key,
-      filters
+      statsFor
     );
     return {
       key,
@@ -3222,20 +3214,9 @@ function ExpectedConversionRateChart({
   visible: { ctrl: boolean; v1: boolean };
   onVisibleChange: (key: "ctrl" | "v1", next: boolean) => void;
 }) {
-  const ctrlStats = metricRowStats(
-    campaign,
-    metricName,
-    campaign.report.variants[0]!,
-    0,
-    filters
-  );
-  const v1Stats = metricRowStats(
-    campaign,
-    metricName,
-    campaign.report.variants[1] ?? campaign.report.variants[0]!,
-    1,
-    filters
-  );
+  const { statsFor } = useReportData();
+  const ctrlStats = statsFor(metricName, 0);
+  const v1Stats = statsFor(metricName, 1);
   const ctrlMean = ctrlStats.conversionRate;
   const v1Mean = v1Stats.conversionRate;
   const pad = Math.max(2, Math.abs(v1Mean - ctrlMean) * 0.75 + 1.5);
@@ -3430,8 +3411,8 @@ function ExpectedImprovementChart({
   visible: boolean;
   onVisibleChange: (next: boolean) => void;
 }) {
-  const v1 = campaign.report.variants[1] ?? campaign.report.variants[0]!;
-  const stats = metricRowStats(campaign, metricName, v1, 1, filters);
+  const { statsFor } = useReportData();
+  const stats = statsFor(metricName, 1);
   const mean = stats.uplift ?? 0;
   const std = Math.max(3, Math.abs(mean) * 0.35 + 4);
   const xMin = Math.min(-15, mean - std * 3);
@@ -4455,8 +4436,7 @@ function buildGroups(
   campaign: Campaign,
   metrics: CompareMetric[],
   groupBy: GroupBy,
-  filters: ReportFilterContext,
-  dataMode: ReportDataMode = "visitors"
+  statsFor: (metricName: string, variantIndex: number) => MetricRowStats
 ): CompareGroup[] {
   const variants = campaign.report.variants;
 
@@ -4465,7 +4445,7 @@ function buildGroups(
       key: variant.id,
       label: <VariantLabel variant={variant} index={vi} />,
       rows: metrics.map((m) => {
-        const s = metricRowStats(campaign, m.name, variant, vi, filters, dataMode);
+        const s = statsFor(m.name, vi);
         return {
           key: m.name,
           rowLabel: <MetricLabel name={m.name} isPrimary={m.isPrimary} />,
@@ -4482,7 +4462,7 @@ function buildGroups(
     key: m.name,
     label: <MetricLabel name={m.name} isPrimary={m.isPrimary} />,
     rows: variants.map((variant, vi) => {
-      const s = metricRowStats(campaign, m.name, variant, vi, filters, dataMode);
+      const s = statsFor(m.name, vi);
       return {
         key: variant.id,
         rowLabel: <VariantLabel variant={variant} index={vi} />,
@@ -4508,7 +4488,8 @@ function CompareTable({
   filters: ReportFilterContext;
   dataMode?: ReportDataMode;
 }) {
-  const groups = buildGroups(campaign, metrics, groupBy, filters, dataMode);
+  const { statsFor } = useReportData();
+  const groups = buildGroups(campaign, metrics, groupBy, statsFor);
 
   return (
     <div className="overflow-x-auto bg-background">
@@ -4628,21 +4609,8 @@ export default function ResultsTab({
   campaign: Campaign;
   onNavigateToVitals: () => void;
 }) {
-  const initCampaign = useReportViewsStore((s) => s.initCampaign);
-
-  useLayoutEffect(() => {
-    initCampaign(campaign.id, {
-      primaryMetric: campaign.primaryMetric,
-      dateRange: campaignReportDateRange(campaign),
-    });
-  }, [
-    campaign.id,
-    campaign.primaryMetric,
-    campaign.startedOn,
-    campaign.createdOn,
-    campaign.lastUpdated,
-    initCampaign,
-  ]);
+  const reportData = useReportData();
+  const { filters, dataMode, best } = reportData;
 
   const [selectedMetric, setSelectedMetric] = useReportSelectedMetric(
     campaign.id,
@@ -4673,17 +4641,7 @@ export default function ResultsTab({
     setResultsTableColumnsDraft(campaign.id, next);
   const setResultsRowDensity = (next: ResultsRowDensity) =>
     setResultsRowDensityDraft(campaign.id, next);
-  const filters: ReportFilterContext = useMemo(
-    () => ({
-      segments: viewState.segments,
-      dimensions: viewState.dimensions,
-      dateRange: viewState.dateRange,
-    }),
-    [viewState.segments, viewState.dimensions, viewState.dateRange]
-  );
   const isStatisticsPreset = activePresetId === REPORT_PRESET_IDS.statistics;
-  const dataMode: "visitors" | "sessions" =
-    activePresetId === REPORT_PRESET_IDS.sessions ? "sessions" : "visitors";
 
   const others = campaign.report.otherMetrics;
   const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
@@ -4707,12 +4665,6 @@ export default function ResultsTab({
   const orderedCompareMetrics = allMetrics.filter((m) =>
     compareSelected.includes(m.name)
   );
-
-  const variants = campaign.report.variants;
-  const best =
-    variants[
-      bestVariantIndex(campaign, selectedMetric, filters, dataMode)
-    ] ?? variants[variants.length - 1]!;
 
   return (
     <TooltipProvider delayDuration={200}>
