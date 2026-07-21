@@ -1026,7 +1026,7 @@ export function SegmentsSelector({
       ? "Segments"
       : value.length === 1
         ? value[0]
-        : `${value[0]} +${value.length - 1}`;
+        : `Segments(${value.length})`;
 
   const apply = () => {
     onChange(seg.draft);
@@ -1072,7 +1072,9 @@ export function SegmentsSelector({
             type="button"
             className={cn(
               "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-              value.length > 0 ? "text-foreground" : "text-foreground/80"
+              value.length > 0
+                ? "border-foreground/30 bg-accent/40 text-foreground"
+                : "text-foreground/80"
             )}
           >
             <Compass className="h-3.5 w-3.5" aria-hidden />

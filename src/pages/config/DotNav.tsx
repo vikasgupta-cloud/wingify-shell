@@ -177,17 +177,13 @@ export default function DotNav({ id }: { id: string }) {
     </TooltipProvider>
   );
 
-  // DOCKED: a flat, full-height sidebar flush against the right edge of the
-  // config icon rail. Fixed to the viewport (left-14 = rail width, top-14 =
-  // header height, bottom-0) so it shares the rail's top edge, spans the full
-  // page height, and stays OUT of flow — it never pushes or narrows the content,
-  // it simply fills the empty left gutter. No shadow / rounded / gap: a single
-  // right-edge border reads as a menu slid out from the pencil (Configure) icon.
+  // DOCKED: full-height sidebar in the content flow (same chrome as Reports
+  // metrics nav). Sticky top-0 — main already sits below the detail header.
   if (dockState === "docked") {
     return (
       <aside
         className={cn(
-          "fixed left-14 top-14 bottom-0 z-30 flex w-64 flex-col border-r border-panel-border bg-panel",
+          "sticky top-0 z-30 flex h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col border-r border-panel-border bg-panel text-panel-foreground",
           "duration-150 ease-out animate-in slide-in-from-left-2 motion-reduce:animate-none"
         )}
       >
@@ -269,7 +265,7 @@ export default function DotNav({ id }: { id: string }) {
           onMouseEnter={open}
           onMouseLeave={scheduleClose}
           className={cn(
-            "z-40 flex max-h-[var(--radix-popover-content-available-height)] w-56 flex-col p-1.5",
+            "z-40 flex max-h-[var(--radix-popover-content-available-height)] w-56 flex-col border border-panel-border bg-panel p-1.5 text-panel-foreground shadow-md",
             "motion-reduce:animate-none"
           )}
         >

@@ -65,6 +65,65 @@ function SectionBody({ sectionId, id }: { sectionId: string; id: string }) {
   }
 }
 
+function ConfigPageBody({
+  id,
+  campaign,
+  viewMode,
+  activeStepId,
+  TypeIcon,
+}: {
+  id: string;
+  campaign: { name: string };
+  viewMode: "scroll" | "guided";
+  activeStepId: string;
+  TypeIcon: LucideIcon;
+}) {
+  return (
+    <>
+      {viewMode === "scroll" && (
+        <div className="flex items-center gap-3">
+          <TypeIcon className="h-6 w-6 text-foreground" aria-hidden />
+          <h1 className="text-2xl font-semibold text-foreground">{campaign.name}</h1>
+        </div>
+      )}
+
+      {viewMode === "guided" ? (
+        <div
+          key={activeStepId}
+          className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
+        >
+          <GuidedStepHeader
+            section={
+              SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]
+            }
+          />
+          <div className="[&_h2+button]:hidden [&_h2]:hidden">
+            <SectionBody sectionId={activeStepId} id={id} />
+          </div>
+        </div>
+      ) : (
+        <div className="mt-10 flex flex-col gap-10">
+          {SECTIONS.map((section, i) => {
+            const isCollapsible = section.id === "additional" || section.id === "qa";
+            return (
+              <div
+                key={section.id}
+                id={isCollapsible ? undefined : `section-${section.id}`}
+                className={cn(
+                  !isCollapsible && "scroll-mt-20",
+                  i > 0 && "border-t border-border pt-10"
+                )}
+              >
+                <SectionBody sectionId={section.id} id={id} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function ConfigPage() {
   const { entityId } = useParams();
   const id = entityId ?? "";
@@ -158,75 +217,49 @@ export default function ConfigPage() {
 
   return (
     <div className="min-h-full bg-canvas">
-      {/* Content column + the Wandz panel sit side by side; the panel pushes the
-          content, which stays capped at 860px. DotNav floats in the left canvas
-          gutter, anchored to the content column, and does not overlap either. */}
-      <div
-        className={cn(
-          "mx-auto flex w-full items-start gap-6 px-6 py-10",
-          wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
-        )}
-      >
-        {/* Docked: DotNav is a flex sibling, so it pushes the content right. */}
-        {dockState === "docked" && <DotNav id={id} />}
-        <div className="relative min-w-0 max-w-[860px] flex-1">
-        {/* Undocked: DotNav floats in the left gutter of the content column. */}
-        {dockState === "undocked" && <DotNav id={id} />}
-        {/* Bespoke page header — product-type icon + name only (ID is in the
-            breadcrumb). Suppressed in guided, where the title lives in the
-            step header and the name is already in the breadcrumb. */}
-        {viewMode === "scroll" && (
-          <div className="flex items-center gap-3">
-            <TypeIcon className="h-6 w-6 text-foreground" aria-hidden />
-            <h1 className="text-2xl font-semibold text-foreground">{campaign.name}</h1>
-          </div>
-        )}
-
-        {viewMode === "guided" ? (
-          // GUIDED: one focused step, using the SAME content column width as
-          // Scroll. Re-keyed on activeStepId so a 200ms fade/slide plays on each
-          // swap (disabled under prefers-reduced-motion). The composed step
-          // (header + body) is vertically centred within the height below the
-          // global header when it's shorter than that space (justify-center over
-          // a min-height); a taller step grows past the min-height, so it
-          // top-aligns and scrolls in <main> — never clipped. The step body's
-          // own h2 heading (+ its Ask-Wandz sparkle) is hidden so the title
-          // shows once, in the guided header.
-          <div
-            key={activeStepId}
-            className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
-          >
-            <GuidedStepHeader section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]} />
-            <div className="[&_h2+button]:hidden [&_h2]:hidden">
-              <SectionBody sectionId={activeStepId} id={id} />
+      {dockState === "docked" ? (
+        <div className="flex w-full items-stretch">
+          <DotNav id={id} />
+          <div className="min-w-0 flex-1 px-6 py-10">
+            <div
+              className={cn(
+                "mx-auto flex w-full items-start gap-6",
+                wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
+              )}
+            >
+              <div className="relative min-w-0 max-w-[860px] flex-1">
+                <ConfigPageBody
+                  id={id}
+                  campaign={campaign}
+                  viewMode={viewMode}
+                  activeStepId={activeStepId}
+                  TypeIcon={TypeIcon}
+                />
+              </div>
+              {wandzOpen && <WandzPanel />}
             </div>
           </div>
-        ) : (
-          <div className="mt-10 flex flex-col gap-10">
-            {SECTIONS.map((section, i) => {
-              // Collapsible sections own their own `section-<id>` anchor, so the
-              // spacing wrapper here must not also set the id (no duplicates).
-              const isCollapsible = section.id === "additional" || section.id === "qa";
-              return (
-                <div
-                  key={section.id}
-                  id={isCollapsible ? undefined : `section-${section.id}`}
-                  className={cn(
-                    !isCollapsible && "scroll-mt-20",
-                    i > 0 && "border-t border-border pt-10"
-                  )}
-                >
-                  <SectionBody sectionId={section.id} id={id} />
-                </div>
-              );
-            })}
-          </div>
-        )}
         </div>
-
-        {/* Mutual exclusion keeps Quick view and Wandz from both rendering. */}
-        {wandzOpen && <WandzPanel />}
-      </div>
+      ) : (
+        <div
+          className={cn(
+            "mx-auto flex w-full items-start gap-6 px-6 py-10",
+            wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
+          )}
+        >
+          <div className="relative min-w-0 max-w-[860px] flex-1">
+            <DotNav id={id} />
+            <ConfigPageBody
+              id={id}
+              campaign={campaign}
+              viewMode={viewMode}
+              activeStepId={activeStepId}
+              TypeIcon={TypeIcon}
+            />
+          </div>
+          {wandzOpen && <WandzPanel />}
+        </div>
+      )}
     </div>
   );
 }

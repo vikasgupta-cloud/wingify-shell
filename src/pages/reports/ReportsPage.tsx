@@ -1,16 +1,14 @@
-import { type CSSProperties, type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowUpLeft,
   ArrowUpRight,
-  ChevronDown,
   Info,
   MousePointerClick,
   RefreshCw,
   Trophy,
-  Users,
 } from "lucide-react";
-import { hasReport } from "../../data/campaigns";
+import { hasReport, type Campaign, type CampaignStatus, type Variant } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,7 +16,6 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import ResultsTab from "./ResultsTab";
-import DateRangeDropdown from "./DateRangeDropdown";
 import vwoMark from "./vwo-mark.svg";
 
 // ---------------------------------------------------------------------------
@@ -49,115 +46,231 @@ type ReportVariant = {
 /** Overview surfaces share listing-page corner radius. */
 const overviewRadius = "rounded-lg";
 
-const REPORT = {
-  lastUpdated: "Jun 2, 2026",
-  status: "Experiment complete · 21 days",
-  runTime: "Run time: May 12 – Jun 2, 2026 · Conclusion reached 2 days early",
-  headline: "Variation 1 is your best choice",
-  body: "Roll it out to all traffic and monitor conversions for two weeks.",
-  stats: [
-    { value: "0.96%", label: "Conversion rate", accent: true },
-    { value: "96%", label: "Confidence", accent: false },
-    { value: "+$2,482", label: "Projected impact", accent: false },
-  ],
+type OverviewData = {
+  lastUpdated: string;
+  headline: string;
+  body: string;
+  stats: { value: string; label: string; accent: boolean }[];
   revenue: {
-    best: { label: "V1", name: "Variation 1" },
-    control: { label: "C", name: "Control" },
-  },
-  hypothesis: {
-    expect:
-      "replacing the generic hero message-only experience with explicit, role-aligned CTAs will help qualified visitors (government and enterprise buyers) self-identify and start high-intent conversations, increasing qualified inbound leads.",
-    address:
-      "Increase qualified inbound leads for solutions across Defence, Aerospace, and Cyber & Digital.",
-  },
+    best: { label: string; name: string };
+    control: { label: string; name: string };
+  };
+  hypothesis: { expect: string; address: string };
   comparison: {
-    heading: 'Variation 1 increased “Start free” CTA clicks by 140% vs. Control',
-    metric: "CTA click rate",
-    audience: "All visitors",
-    variants: [
-      {
-        label: "C",
-        name: "Control",
-        rank: null,
-        tone: "neutral",
-        isControl: true,
-        isWinner: false,
-        headline: "Make every customer experience count",
-        sub: "Build, test, and ship digital experiences your customers choose.",
-        cta: "Start free trial",
-        conversions: 4,
-        ctaRate: "0.40%",
-        visitors: "1,002",
-        confidence: "—",
-        upliftLabel: "Baseline",
-      },
-      {
-        label: "V1",
-        name: "Variation 1",
-        rank: 1,
-        tone: "green",
-        isControl: false,
-        isWinner: true,
-        headline: "Start testing in 30 seconds",
-        sub: "Launch your first experiment today—no complex setup required.",
-        cta: "Start testing free",
-        conversions: 10,
-        ctaRate: "0.96%",
-        visitors: "1,041",
-        confidence: "95%",
-        upliftLabel: "+140%",
-      },
-      {
-        label: "V2",
-        name: "Variation 2",
-        rank: 2,
-        tone: "purple",
-        isControl: false,
-        isWinner: false,
-        headline: "Test ideas. Prove impact. Grow.",
-        sub: "Move from intuition to evidence with one connected testing workspace.",
-        cta: "Create your first test",
-        conversions: 8,
-        ctaRate: "0.79%",
-        visitors: "1,017",
-        confidence: "88%",
-        upliftLabel: "+98%",
-      },
-      {
-        label: "V3",
-        name: "Variation 3",
-        rank: 3,
-        tone: "blue",
-        isControl: false,
-        isWinner: false,
-        headline: "Turn every visit into insight",
-        sub: "Run experiments that reveal what your audience really wants.",
-        cta: "Explore the platform",
-        conversions: 7,
-        ctaRate: "0.68%",
-        visitors: "1,033",
-        confidence: "78%",
-        upliftLabel: "+70%",
-      },
-      {
-        label: "V4",
-        name: "Variation 4",
-        rank: 4,
-        tone: "purple",
-        isControl: false,
-        isWinner: false,
-        headline: "Build experiences people choose",
-        sub: "Learn what works, understand why, and turn insight into growth.",
-        cta: "See how it works",
-        conversions: 5,
-        ctaRate: "0.47%",
-        visitors: "1,071",
-        confidence: "52%",
-        upliftLabel: "+18%",
-      },
-    ] as ReportVariant[],
-  },
+    heading: string;
+    metric: string;
+    variants: ReportVariant[];
+  };
 };
+
+const PREVIEW_HERO = [
+  {
+    headline: "Make every customer experience count",
+    sub: "Build, test, and ship digital experiences your customers choose.",
+    cta: "Start free trial",
+  },
+  {
+    headline: "Start testing in 30 seconds",
+    sub: "Launch your first experiment today—no complex setup required.",
+    cta: "Start testing free",
+  },
+  {
+    headline: "Test ideas. Prove impact. Grow.",
+    sub: "Move from intuition to evidence with one connected testing workspace.",
+    cta: "Create your first test",
+  },
+  {
+    headline: "Turn every visit into insight",
+    sub: "Run experiments that reveal what your audience really wants.",
+    cta: "Explore the platform",
+  },
+  {
+    headline: "Build experiences people choose",
+    sub: "Learn what works, understand why, and turn insight into growth.",
+    cta: "See how it works",
+  },
+];
+
+/** Overview comparison carousel — full variation set (Figma); metrics merge from campaign report. */
+const OVERVIEW_COMPARISON_VARIANTS: ReportVariant[] = [
+  {
+    label: "C",
+    name: "Control",
+    rank: null,
+    tone: "neutral",
+    isControl: true,
+    isWinner: false,
+    headline: PREVIEW_HERO[0]!.headline,
+    sub: PREVIEW_HERO[0]!.sub,
+    cta: PREVIEW_HERO[0]!.cta,
+    conversions: 4,
+    ctaRate: "0.40%",
+    visitors: "1,002",
+    confidence: "—",
+    upliftLabel: "Baseline",
+  },
+  {
+    label: "V1",
+    name: "Variation 1",
+    rank: 1,
+    tone: "green",
+    isControl: false,
+    isWinner: true,
+    headline: PREVIEW_HERO[1]!.headline,
+    sub: PREVIEW_HERO[1]!.sub,
+    cta: PREVIEW_HERO[1]!.cta,
+    conversions: 10,
+    ctaRate: "0.96%",
+    visitors: "1,041",
+    confidence: "95%",
+    upliftLabel: "+140%",
+  },
+  {
+    label: "V2",
+    name: "Variation 2",
+    rank: 2,
+    tone: "purple",
+    isControl: false,
+    isWinner: false,
+    headline: PREVIEW_HERO[2]!.headline,
+    sub: PREVIEW_HERO[2]!.sub,
+    cta: PREVIEW_HERO[2]!.cta,
+    conversions: 8,
+    ctaRate: "0.79%",
+    visitors: "1,017",
+    confidence: "88%",
+    upliftLabel: "+98%",
+  },
+  {
+    label: "V3",
+    name: "Variation 3",
+    rank: 3,
+    tone: "blue",
+    isControl: false,
+    isWinner: false,
+    headline: PREVIEW_HERO[3]!.headline,
+    sub: PREVIEW_HERO[3]!.sub,
+    cta: PREVIEW_HERO[3]!.cta,
+    conversions: 7,
+    ctaRate: "0.68%",
+    visitors: "1,033",
+    confidence: "78%",
+    upliftLabel: "+70%",
+  },
+  {
+    label: "V4",
+    name: "Variation 4",
+    rank: 4,
+    tone: "purple",
+    isControl: false,
+    isWinner: false,
+    headline: PREVIEW_HERO[4]!.headline,
+    sub: PREVIEW_HERO[4]!.sub,
+    cta: PREVIEW_HERO[4]!.cta,
+    conversions: 5,
+    ctaRate: "0.47%",
+    visitors: "1,071",
+    confidence: "52%",
+    upliftLabel: "+18%",
+  },
+];
+
+function mergeComparisonVariant(
+  showcase: ReportVariant,
+  live: Variant | undefined,
+  campaign: Campaign,
+  index: number,
+  liveCount: number
+): ReportVariant {
+  if (!live) return showcase;
+  const visitors = Math.max(1, Math.floor(campaign.visitors / liveCount));
+  const conversions = Math.max(1, Math.round((visitors * live.convRate) / 100));
+  const uplift = live.uplift;
+  return {
+    ...showcase,
+    label: live.label,
+    name: live.name,
+    isControl: index === 0,
+    isWinner: live.isBest,
+    rank: live.isBest ? 1 : index === 0 ? null : index,
+    conversions,
+    ctaRate: `${live.convRate.toFixed(2)}%`,
+    visitors: visitors.toLocaleString("en-US"),
+    confidence: live.confidence ? `${live.confidence}%` : "—",
+    upliftLabel:
+      index === 0
+        ? "Baseline"
+        : uplift === null
+          ? "—"
+          : `${uplift > 0 ? "+" : ""}${Math.round(uplift)}%`,
+  };
+}
+
+function formatReportDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function buildOverviewFromCampaign(campaign: Campaign): OverviewData {
+  const variants = campaign.report.variants;
+  const best =
+    variants.find((v) => v.isBest) ??
+    [...variants]
+      .filter((v) => v.confidence !== null)
+      .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0] ??
+    variants[variants.length - 1]!;
+  const control = variants[0]!;
+
+  const upliftVsControl = best.uplift ?? campaign.expectedImprovement;
+  const projected = Math.round(campaign.uniqueConversions * Math.max(1.8, upliftVsControl / 10));
+
+  return {
+    lastUpdated: formatReportDate(campaign.lastUpdated),
+    headline: `${best.name} is your best choice`,
+    body: `Roll it out to all traffic and monitor ${campaign.primaryMetric.toLowerCase()} for two weeks.`,
+    stats: [
+      {
+        value: `${best.convRate.toFixed(2)}%`,
+        label: campaign.primaryMetric,
+        accent: true,
+      },
+      {
+        value: best.confidence ? `${best.confidence}%` : "—",
+        label: "Confidence",
+        accent: false,
+      },
+      {
+        value: `+$${projected.toLocaleString("en-US")}`,
+        label: "Projected impact",
+        accent: false,
+      },
+    ],
+    revenue: {
+      best: { label: best.label, name: best.name },
+      control: { label: control.label, name: control.name },
+    },
+    hypothesis: {
+      expect: campaign.hypothesis,
+      address: campaign.addresses,
+    },
+    comparison: {
+      heading: `${best.name} leads on ${campaign.primaryMetric.toLowerCase()} vs. ${control.name}`,
+      metric: campaign.primaryMetric,
+      variants: OVERVIEW_COMPARISON_VARIANTS.map((showcase, index) =>
+        mergeComparisonVariant(
+          showcase,
+          variants[index],
+          campaign,
+          index,
+          variants.length
+        )
+      ),
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 
@@ -172,7 +285,13 @@ function LinkButton({ children }: { children: ReactNode }) {
   );
 }
 
-function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
+function DecisionBanner({
+  overview,
+  onViewFullStats,
+}: {
+  overview: OverviewData;
+  onViewFullStats: () => void;
+}) {
   return (
     <Card
       className={cn(
@@ -181,25 +300,18 @@ function DecisionBanner({ onViewFullStats }: { onViewFullStats: () => void }) {
       )}
     >
       <div className="flex h-full flex-col gap-6 px-8 py-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-status-ended-bg px-2.5 py-1 text-xs font-medium text-status-ended-fg">
-            {REPORT.status}
-          </span>
-          <p className="text-sm text-muted-foreground">{REPORT.runTime}</p>
-        </div>
-
         <div className="space-y-3">
           <h3 className="text-2xl font-semibold tracking-tight text-foreground">
-            {REPORT.headline}
+            {overview.headline}
           </h3>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            {REPORT.body}
+            {overview.body}
           </p>
         </div>
 
         <div className="mt-auto space-y-6">
           <div className="flex flex-wrap items-center gap-6">
-            {REPORT.stats.map((stat, i) => (
+            {overview.stats.map((stat, i) => (
               <div key={stat.label} className="flex items-center gap-6">
                 {i > 0 && (
                   <Separator orientation="vertical" className="h-10 bg-border" />
@@ -270,20 +382,20 @@ function RevenueRow({
   );
 }
 
-function RevenueImpactCard() {
+function RevenueImpactCard({ overview }: { overview: OverviewData }) {
   return (
     <Card className={cn(overviewRadius, "flex flex-col gap-6 border-border bg-background p-6 shadow-none")}>
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-sm font-semibold text-foreground">Revenue Impact</p>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5 text-foreground">
-            <GraphChip>{REPORT.revenue.best.label}</GraphChip>
-            {REPORT.revenue.best.name}
+            <GraphChip>{overview.revenue.best.label}</GraphChip>
+            {overview.revenue.best.name}
           </span>
           <span>vs</span>
           <span className="flex items-center gap-1.5 text-foreground">
-            <GraphChip>{REPORT.revenue.control.label}</GraphChip>
-            {REPORT.revenue.control.name}
+            <GraphChip>{overview.revenue.control.label}</GraphChip>
+            {overview.revenue.control.name}
           </span>
         </div>
       </div>
@@ -336,7 +448,7 @@ function RevenueImpactCard() {
   );
 }
 
-function HypothesisSection() {
+function HypothesisSection({ overview }: { overview: OverviewData }) {
   return (
     <section className="space-y-4">
       <h2 className="text-sm font-medium text-muted-foreground">
@@ -346,8 +458,8 @@ function HypothesisSection() {
         <div className="space-y-4 p-6">
           <p className="text-sm font-semibold text-foreground">Hypothesis</p>
           <div className="max-w-6xl space-y-3 text-sm leading-6 text-muted-foreground">
-            <p>I expect that {REPORT.hypothesis.expect}</p>
-            <p>Will address: {REPORT.hypothesis.address}</p>
+            <p>I expect that {overview.hypothesis.expect}</p>
+            <p>Will address: {overview.hypothesis.address}</p>
           </div>
           <LinkButton>View details</LinkButton>
         </div>
@@ -487,7 +599,13 @@ function VariantChip({ children }: { children: ReactNode }) {
   );
 }
 
-function VariationCard({ variant }: { variant: ReportVariant }) {
+function VariationCard({
+  variant,
+  metricLabel,
+}: {
+  variant: ReportVariant;
+  metricLabel: string;
+}) {
   const { isControl, isWinner } = variant;
 
   return (
@@ -540,7 +658,7 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
 
       <div className="grid grid-cols-3 gap-3 pt-2.5">
         <div>
-          <p className="text-xs text-muted-foreground">{REPORT.comparison.metric}</p>
+          <p className="text-xs text-muted-foreground">{metricLabel}</p>
           <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
             {variant.ctaRate}
           </p>
@@ -562,35 +680,29 @@ function VariationCard({ variant }: { variant: ReportVariant }) {
   );
 }
 
-function VariationComparison() {
-  const [control, ...rest] = REPORT.comparison.variants;
+function VariationComparison({ overview }: { overview: OverviewData }) {
+  const [control, ...rest] = overview.comparison.variants;
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h3 className="max-w-2xl text-sm font-semibold text-foreground">
-          {REPORT.comparison.heading}
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          <DateRangeDropdown variant="outline" />
-          <Button variant="outline" size="sm" className="h-[34px] gap-2 rounded-md font-normal">
-            <Users className="h-[15px] w-[15px]" aria-hidden />
-            {REPORT.comparison.audience}
-            <ChevronDown className="h-[13px] w-[13px] opacity-60" aria-hidden />
-          </Button>
-        </div>
-      </div>
+      <h3 className="max-w-2xl text-sm font-semibold text-foreground">
+        {overview.comparison.heading}
+      </h3>
 
       <div className="flex items-start gap-5">
         <div className="sticky top-6 z-10 flex shrink-0 items-start">
-          <VariationCard variant={control} />
+          <VariationCard variant={control} metricLabel={overview.comparison.metric} />
           <span className="z-10 -mx-8 mt-[18px] flex h-[25px] shrink-0 translate-x-[26px] items-center rounded-md border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground shadow-sm">
             vs
           </span>
         </div>
         <div className="flex min-w-0 flex-1 items-start gap-5 overflow-x-auto overscroll-x-contain pb-2 pl-8">
           {rest.map((variant) => (
-            <VariationCard key={variant.label} variant={variant} />
+            <VariationCard
+              key={variant.label}
+              variant={variant}
+              metricLabel={overview.comparison.metric}
+            />
           ))}
         </div>
       </div>
@@ -598,15 +710,22 @@ function VariationComparison() {
   );
 }
 
-function ReportsOverview({ onViewFullStats }: { onViewFullStats: () => void }) {
+function ReportsOverview({
+  campaign,
+  onViewFullStats,
+}: {
+  campaign: Campaign;
+  onViewFullStats: () => void;
+}) {
+  const overview = useMemo(() => buildOverviewFromCampaign(campaign), [campaign]);
   return (
     <div className="mx-auto max-w-[1384px] space-y-10 px-12 pb-12 pt-8">
       <div className="grid gap-4 lg:grid-cols-3">
-        <DecisionBanner onViewFullStats={onViewFullStats} />
-        <RevenueImpactCard />
+        <DecisionBanner overview={overview} onViewFullStats={onViewFullStats} />
+        <RevenueImpactCard overview={overview} />
       </div>
-      <HypothesisSection />
-      <VariationComparison />
+      <HypothesisSection overview={overview} />
+      <VariationComparison overview={overview} />
     </div>
   );
 }
@@ -614,6 +733,16 @@ function ReportsOverview({ onViewFullStats }: { onViewFullStats: () => void }) {
 const TABS = ["Overview", "Results", "Behaviour", "Live hits", "Vitals"];
 const tabValue = (tab: string) => tab.toLowerCase().replace(/\s+/g, "-");
 const REPORT_TAB_VALUES = new Set(TABS.map(tabValue));
+
+const OVERVIEW_DEFAULT_STATUSES: CampaignStatus[] = [
+  "Paused",
+  "In Analysis",
+  "Ended",
+];
+
+function defaultReportTab(status: CampaignStatus): string {
+  return OVERVIEW_DEFAULT_STATUSES.includes(status) ? "overview" : "results";
+}
 
 export default function ReportsPage() {
   const { entityId } = useParams();
@@ -623,21 +752,27 @@ export default function ReportsPage() {
   const tabsBarRef = useRef<HTMLDivElement>(null);
   const [tabsBarHeight, setTabsBarHeight] = useState(reportsTabsStickyHeightFallback);
 
+  const defaultTab = campaign ? defaultReportTab(campaign.status) : "overview";
   const tabParam = searchParams.get("tab");
   const activeTab =
-    tabParam && REPORT_TAB_VALUES.has(tabParam) ? tabParam : "overview";
+    tabParam && REPORT_TAB_VALUES.has(tabParam) ? tabParam : defaultTab;
 
   const setActiveTab = (value: string) => {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (value === "overview") next.delete("tab");
+        if (value === defaultTab) next.delete("tab");
         else next.set("tab", value);
         return next;
       },
       { replace: true }
     );
   };
+
+  const overviewMeta = useMemo(
+    () => (campaign ? buildOverviewFromCampaign(campaign) : null),
+    [campaign]
+  );
 
   useLayoutEffect(() => {
     const el = tabsBarRef.current;
@@ -693,7 +828,7 @@ export default function ReportsPage() {
 
           <div className="flex items-center gap-2 pb-2.5">
             <span className="text-sm text-muted-foreground">
-              Last updated {REPORT.lastUpdated}
+              Last updated {overviewMeta?.lastUpdated ?? "—"}
             </span>
             <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Refresh report">
               <RefreshCw className="h-4 w-4" />
@@ -702,7 +837,7 @@ export default function ReportsPage() {
         </div>
 
         <TabsContent value="overview" className="mt-0 flex-1 focus-visible:outline-none">
-          <ReportsOverview onViewFullStats={() => setActiveTab("results")} />
+          <ReportsOverview campaign={campaign} onViewFullStats={() => setActiveTab("results")} />
         </TabsContent>
         <TabsContent value="results" className="mt-0 flex-1 focus-visible:outline-none">
           <ResultsTab campaign={campaign} />

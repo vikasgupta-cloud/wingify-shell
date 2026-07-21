@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Award,
   CalendarRange,
@@ -13,6 +13,7 @@ import {
   PanelLeftOpen,
   Pencil,
   PieChart,
+  Star,
   Settings,
   TrendingUp,
   X,
@@ -21,10 +22,19 @@ import type { Campaign, Variant } from "../../data/campaigns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -45,11 +55,18 @@ import {
   toYmd,
   useReportActiveViewState,
   useReportViewsStore,
+  useIsReportViewDirty,
   type ReportDateRange,
 } from "../../store/reportViews";
 import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
+import ReportViewSaveActions from "./ReportViewSaveActions";
 import { SegmentsSelector } from "./SegmentsDrawer";
+import {
+  filterMetricSeedSuffix,
+  reportVisitorScale,
+  type ReportFilterContext,
+} from "./reportFilters";
 
 const WINNER_THRESHOLD = 95;
 
@@ -62,12 +79,19 @@ const GRID = {
 
 const formatNumber = (n: number) => n.toLocaleString("en-US");
 
-function variantVisitors(campaign: Campaign, index: number): number {
-  const total = campaign.visitors;
+function variantVisitors(
+  campaign: Campaign,
+  index: number,
+  filters: ReportFilterContext,
+  mode: "visitors" | "sessions" = "visitors"
+): number {
+  const scale = reportVisitorScale(filters);
+  const total = Math.max(1, Math.round(campaign.visitors * scale));
   const count = campaign.report.variants.length;
   const base = Math.floor(total / count);
   const remainder = total - base * count;
-  return base + (index < remainder ? 1 : 0);
+  const visitors = base + (index < remainder ? 1 : 0);
+  return mode === "sessions" ? Math.max(1, Math.round(visitors * 1.32)) : visitors;
 }
 
 function variantConversions(variant: Variant, visitors: number): number {
@@ -88,17 +112,36 @@ function metricRowStats(
   campaign: Campaign,
   metricName: string,
   variant: Variant,
-  index: number
+  index: number,
+  filters: ReportFilterContext,
+  dataMode: "visitors" | "sessions" = "visitors"
 ): { uplift: number | null; confidence: number | null; conversions: number } {
-  const visitors = variantVisitors(campaign, index);
+  const visitors = variantVisitors(campaign, index, filters, dataMode);
+  const suffix = filterMetricSeedSuffix(filters);
   if (metricName === campaign.primaryMetric) {
+    const uplift =
+      variant.uplift === null
+        ? null
+        : Number((variant.uplift * reportVisitorScale(filters)).toFixed(1));
+    const confidence =
+      variant.confidence === null
+        ? null
+        : Math.min(
+            99,
+            Math.max(
+              1,
+              Math.round(variant.confidence * (0.85 + reportVisitorScale(filters) * 0.15))
+            )
+          );
     return {
-      uplift: variant.uplift,
-      confidence: variant.confidence,
+      uplift,
+      confidence,
       conversions: variantConversions(variant, visitors),
     };
   }
-  const seed = hashMetricSeed(`${campaign.id}:${metricName}:${variant.id}`);
+  const seed = hashMetricSeed(
+    `${campaign.id}:${metricName}:${variant.id}:${suffix}:${dataMode}`
+  );
   const rng = (min: number, max: number) => min + (seed % (max - min + 1));
   const controlRate = rng(15, 120) / 10;
   if (index === 0) {
@@ -144,6 +187,7 @@ function GraphBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }
 
 const activeTabClass =
   "-mb-px border-b-2 border-foreground font-medium text-foreground";
+const MAX_VISITOR_DIMENSIONS = 2;
 
 // ---------------------------------------------------------------------------
 // Filter bar
@@ -162,23 +206,27 @@ function MultiSelectFilterChip({
   options,
   value,
   onChange,
+  maxSelections,
 }: {
   icon: ReactNode;
   label: string;
   options: readonly string[];
   value: string[];
   onChange: (next: string[]) => void;
+  maxSelections?: number;
 }) {
   const summary =
     value.length === 0
       ? label
       : value.length === 1
         ? value[0]
-        : `${value[0]} +${value.length - 1}`;
+        : `${label}(${value.length})`;
 
   const toggle = (option: string) => {
+    const isSelected = value.includes(option);
+    if (!isSelected && maxSelections !== undefined && value.length >= maxSelections) return;
     onChange(
-      value.includes(option)
+      isSelected
         ? value.filter((v) => v !== option)
         : [...value, option]
     );
@@ -203,20 +251,35 @@ function MultiSelectFilterChip({
         <div className="max-h-[240px] space-y-0.5 overflow-y-auto">
           {options.map((option) => {
             const checked = value.includes(option);
+            const blocked =
+              !checked &&
+              maxSelections !== undefined &&
+              value.length >= maxSelections;
             return (
               <label
                 key={option}
-                className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent"
+                className={cn(
+                  "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors",
+                  blocked
+                    ? "cursor-not-allowed text-muted-foreground/60"
+                    : "cursor-pointer hover:bg-accent"
+                )}
               >
                 <Checkbox
                   checked={checked}
                   onCheckedChange={() => toggle(option)}
+                  disabled={blocked}
                 />
                 <span className="truncate">{option}</span>
               </label>
             );
           })}
         </div>
+        {maxSelections !== undefined && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            You can select up to {maxSelections} dimensions.
+          </p>
+        )}
         {value.length > 0 && (
           <div className="mt-2 border-t border-border pt-2">
             <Button
@@ -263,32 +326,148 @@ function FilterBar({
   const { dateRange, segments, dimensions } =
     useReportActiveViewState(campaignId);
   const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
+  const isDirty = useIsReportViewDirty(campaignId);
+  const showTrailing = Boolean(right) || isDirty;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <span className="mr-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-        <FunnelIcon className="h-3.5 w-3.5" />
-        Filter by :
-      </span>
-      <DateRangeDropdown
-        variant="filter"
-        value={storedToDateRange(dateRange)}
-        onChange={(range) =>
-          updateDraft(campaignId, { dateRange: dateRangeToStored(range) })
-        }
-      />
-      <SegmentsSelector
-        value={segments}
-        onChange={(next) => updateDraft(campaignId, { segments: next })}
-      />
-      <MultiSelectFilterChip
-        icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
-        label="Dimensions"
-        options={REPORT_DIMENSION_OPTIONS}
-        value={dimensions}
-        onChange={(next) => updateDraft(campaignId, { dimensions: next })}
-      />
-      {right && <div className="ml-auto flex items-center gap-2">{right}</div>}
+    <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="mr-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <FunnelIcon className="h-3.5 w-3.5" />
+          Filter by :
+        </span>
+        <DateRangeDropdown
+          variant="filter"
+          value={storedToDateRange(dateRange)}
+          onChange={(range) =>
+            updateDraft(campaignId, { dateRange: dateRangeToStored(range) })
+          }
+        />
+        <SegmentsSelector
+          value={segments}
+          onChange={(next) => updateDraft(campaignId, { segments: next })}
+        />
+        <MultiSelectFilterChip
+          icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
+          label="Dimensions"
+          options={REPORT_DIMENSION_OPTIONS}
+          value={dimensions}
+          onChange={(next) => updateDraft(campaignId, { dimensions: next })}
+          maxSelections={MAX_VISITOR_DIMENSIONS}
+        />
+      </div>
+      {showTrailing && (
+        <div className="flex shrink-0 items-center gap-2 self-center">
+          {right}
+          <ReportViewSaveActions campaignId={campaignId} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AppliedSegmentChip({
+  name,
+  onRemove,
+}: {
+  name: string;
+  onRemove: () => void;
+}) {
+  const isCustom = /^Custom \d+$/.test(name);
+  return (
+    <span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-border bg-background pl-2.5 pr-1.5 text-sm text-foreground">
+      <span className="max-w-[160px] truncate">{name}</span>
+      {isCustom && (
+        <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${name}`}
+        className="flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden />
+      </button>
+    </span>
+  );
+}
+
+function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
+  const { segments } = useReportActiveViewState(campaignId);
+  const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
+  if (segments.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-2.5">
+      <span className="mr-1 text-sm text-muted-foreground">Segments :</span>
+      {segments.map((name) => (
+        <AppliedSegmentChip
+          key={name}
+          name={name}
+          onRemove={() =>
+            updateDraft(campaignId, {
+              segments: segments.filter((s) => s !== name),
+            })
+          }
+        />
+      ))}
+      <button
+        type="button"
+        onClick={() => updateDraft(campaignId, { segments: [] })}
+        className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden />
+        Clear All
+      </button>
+    </div>
+  );
+}
+
+function AppliedDimensionsRow({ campaignId }: { campaignId: string }) {
+  const { dimensions } = useReportActiveViewState(campaignId);
+  const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
+  if (dimensions.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-2.5">
+      <span className="mr-1 text-sm text-muted-foreground">Dimensions :</span>
+      {dimensions.map((name) => (
+        <AppliedSegmentChip
+          key={name}
+          name={name}
+          onRemove={() =>
+            updateDraft(campaignId, {
+              dimensions: dimensions.filter((d) => d !== name),
+            })
+          }
+        />
+      ))}
+      <button
+        type="button"
+        onClick={() => updateDraft(campaignId, { dimensions: [] })}
+        className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden />
+        Clear All
+      </button>
+    </div>
+  );
+}
+
+function ResultsFilterPanel({
+  campaignId,
+  right,
+}: {
+  campaignId: string;
+  right?: ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-background">
+      <div className="px-4 py-3">
+        <FilterBar campaignId={campaignId} right={right} />
+      </div>
+      <AppliedSegmentsRow campaignId={campaignId} />
+      <AppliedDimensionsRow campaignId={campaignId} />
     </div>
   );
 }
@@ -298,8 +477,8 @@ function FilterBar({
 
 function ConclusionBanner({ variantName }: { variantName: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-t-lg border border-border bg-muted/40 px-5 py-3.5">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-background">
+    <div className="flex items-center gap-3 rounded-t-lg border border-report-green-border bg-report-green-tint px-5 py-3.5">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-report-green-border bg-report-green-badge">
         <Award className="h-4 w-4 text-decision-winner-fg" aria-hidden />
       </span>
       <p className="text-sm font-medium leading-snug text-foreground">
@@ -311,9 +490,477 @@ function ConclusionBanner({ variantName }: { variantName: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// View settings dialog
+
+type ResultsLayout = "table-first" | "graphs-first";
+type ResultsGraphDefault = "date-range" | "expected-improvement";
+
+type ReportViewSettings = {
+  layout: ResultsLayout;
+  defaultGraph: ResultsGraphDefault;
+  showExpectedConversionRateRange: boolean;
+  showExpectedImprovementRange: boolean;
+  showTotalRow: boolean;
+  showDisabledVariationRows: boolean;
+};
+
+const DEFAULT_REPORT_VIEW_SETTINGS: ReportViewSettings = {
+  layout: "table-first",
+  defaultGraph: "date-range",
+  showExpectedConversionRateRange: true,
+  showExpectedImprovementRange: true,
+  showTotalRow: true,
+  showDisabledVariationRows: true,
+};
+
+function SettingsHelp({ label }: { label: string }) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={label}
+          >
+            <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function LayoutOptionCard({
+  value,
+  selected,
+  title,
+  linesFirst,
+}: {
+  value: ResultsLayout;
+  selected: boolean;
+  title: string;
+  linesFirst: boolean;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex cursor-pointer flex-col gap-3 rounded-lg border p-3 transition-colors",
+        selected
+          ? "border-report-brand shadow-[inset_0_0_0_1px_hsl(var(--report-brand))]"
+          : "border-border bg-muted/20 hover:border-muted-foreground/30"
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <RadioGroupItem value={value} />
+        <span className="text-sm font-medium text-foreground">{title}</span>
+      </div>
+      <div className="rounded-md border border-report-brand/35 bg-background p-2.5">
+        <div className="space-y-2">
+          <div className="grid grid-cols-5 gap-1.5">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <span
+                key={index}
+                className={cn(
+                  "h-2 rounded-sm",
+                  index % 3 === 0 ? "bg-report-purple-bg" : "bg-muted"
+                )}
+              />
+            ))}
+          </div>
+          <div className="rounded-md bg-report-purple-bg/60 px-2 py-2">
+            <svg viewBox="0 0 120 48" className="h-12 w-full">
+              <path
+                d={
+                  linesFirst
+                    ? "M4 36 L22 26 L38 32 L58 18 L78 22 L102 10"
+                    : "M4 30 L22 34 L40 22 L58 26 L78 18 L102 12"
+                }
+                fill="none"
+                stroke="hsl(var(--report-brand))"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d={
+                  linesFirst
+                    ? "M4 24 L22 34 L40 28 L58 32 L78 24 L102 16"
+                    : "M4 36 L22 24 L40 34 L58 20 L78 28 L102 22"
+                }
+                fill="none"
+                stroke="hsl(var(--report-purple-border))"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </label>
+  );
+}
+
+function ViewSettingsDialog({
+  open,
+  onOpenChange,
+  settings,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  settings: ReportViewSettings;
+  onSave: (settings: ReportViewSettings) => void;
+}) {
+  const [draft, setDraft] = useState(settings);
+
+  useEffect(() => {
+    if (open) setDraft(settings);
+  }, [open, settings]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[1006px] gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-10 py-6">
+          <DialogTitle className="text-[18px] font-semibold text-foreground">
+            View Settings
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Configure the results report layout, graph, and table display options.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-12 px-10 py-8 md:grid-cols-[1.05fr_1fr]">
+          <section className="space-y-8">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-[13px] font-semibold text-foreground">Layout options</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Report layout</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Select a layout order based on your preference
+                  </p>
+                </div>
+                <RadioGroup
+                  value={draft.layout}
+                  onValueChange={(value) =>
+                    setDraft((prev) => ({ ...prev, layout: value as ResultsLayout }))
+                  }
+                  className="grid grid-cols-2 gap-3"
+                >
+                  <LayoutOptionCard
+                    value="table-first"
+                    selected={draft.layout === "table-first"}
+                    title="Table first"
+                    linesFirst={false}
+                  />
+                  <LayoutOptionCard
+                    value="graphs-first"
+                    selected={draft.layout === "graphs-first"}
+                    title="Graphs first"
+                    linesFirst={true}
+                  />
+                </RadioGroup>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">Default graph</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Select the graph you want to see first on the report
+                </p>
+              </div>
+              <RadioGroup
+                value={draft.defaultGraph}
+                onValueChange={(value) =>
+                  setDraft((prev) => ({ ...prev, defaultGraph: value as ResultsGraphDefault }))
+                }
+                className="gap-4"
+              >
+                <label className="flex cursor-pointer items-center gap-3">
+                  <RadioGroupItem value="date-range" />
+                  <span className="text-sm text-foreground">Date Range</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <RadioGroupItem value="expected-improvement" />
+                  <span className="text-sm text-foreground">Expected Improvement</span>
+                </label>
+                <label className="flex cursor-not-allowed items-center gap-3 opacity-45">
+                  <RadioGroupItem value="expected-conversion-rate" disabled />
+                  <span className="text-sm text-foreground">Expected Conversion Rate</span>
+                </label>
+                <label className="flex cursor-not-allowed items-center gap-3 opacity-45">
+                  <RadioGroupItem value="funnel-graph" disabled />
+                  <span className="text-sm text-foreground">Funnel Graph</span>
+                </label>
+              </RadioGroup>
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-[13px] font-semibold text-foreground">Table options</h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-foreground">Bayesian ranges</p>
+                    <SettingsHelp label="Choose which rows display Bayesian ranges." />
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Select table items for which you want to see Bayesian ranges along with
+                    absolute numbers
+                  </p>
+                </div>
+                <label className="flex items-center gap-3">
+                  <Checkbox
+                    checked={draft.showExpectedConversionRateRange}
+                    onCheckedChange={(checked) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        showExpectedConversionRateRange: checked === true,
+                      }))
+                    }
+                  />
+                  <span className="text-sm text-foreground">Expected Conversion Rate</span>
+                </label>
+                <label className="flex items-center gap-3">
+                  <Checkbox
+                    checked={draft.showExpectedImprovementRange}
+                    onCheckedChange={(checked) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        showExpectedImprovementRange: checked === true,
+                      }))
+                    }
+                  />
+                  <span className="text-sm text-foreground">Expected Improvement</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Other options</p>
+              <label className="flex items-center gap-3">
+                <Checkbox
+                  checked={draft.showTotalRow}
+                  onCheckedChange={(checked) =>
+                    setDraft((prev) => ({ ...prev, showTotalRow: checked === true }))
+                  }
+                />
+                <span className="flex items-center gap-1.5 text-sm text-foreground">
+                  Show 'total' row
+                  <SettingsHelp label="Show the aggregate totals row at the bottom of the table." />
+                </span>
+              </label>
+              <label className="flex items-center gap-3">
+                <Checkbox
+                  checked={draft.showDisabledVariationRows}
+                  onCheckedChange={(checked) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      showDisabledVariationRows: checked === true,
+                    }))
+                  }
+                />
+                <span className="text-sm text-foreground">
+                  Show rows for disabled variations
+                </span>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <DialogFooter className="border-t border-border px-10 py-5 sm:justify-between sm:space-x-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setDraft(DEFAULT_REPORT_VIEW_SETTINGS)}
+          >
+            Restore Defaults
+          </Button>
+          <div className="flex items-center justify-end gap-3">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-report-brand text-report-brand hover:bg-report-brand-tint hover:text-report-brand-fg"
+              onClick={() => {
+                onSave(draft);
+                onOpenChange(false);
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Statistical configuration dialog
+
+function StatisticalConfigurationDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[760px] border-0 bg-transparent p-0 shadow-none sm:rounded-lg [&>button]:hidden">
+        <div className="rounded-xl border border-border bg-background p-8 shadow-sm">
+          <div className="space-y-3">
+            <h2 className="text-[34px] font-semibold leading-tight tracking-tight text-foreground">
+              Statistical Configuration
+            </h2>
+            <p className="text-base leading-6 text-muted-foreground">
+              These are advanced statistical adjustments used to fine tune your
+              experiment.
+            </p>
+          </div>
+
+          <div className="mt-8 space-y-8">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-semibold text-foreground">
+                  Campaign Specific
+                </h3>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+                  aria-label="Edit campaign specific"
+                  onClick={() => {
+                    // UI-only mock: editing flows are out of scope for this modal.
+                  }}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                </button>
+              </div>
+
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between gap-6">
+                  <span className="text-base text-foreground/80">
+                    Testing approach
+                  </span>
+                  <span className="flex items-center gap-3 text-base text-foreground">
+                    <span className="text-muted-foreground">•</span> Sequential
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-6">
+                  <span className="text-base text-foreground/80">
+                    Multiple Testing Correction
+                  </span>
+                  <span className="flex items-center gap-3 text-base text-foreground">
+                    <span className="text-muted-foreground">•</span> None
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-semibold text-foreground">
+                  Metric Specific
+                </h3>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+                  aria-label="Edit metric specific"
+                  onClick={() => {
+                    // UI-only mock: editing flows are out of scope for this modal.
+                  }}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                </button>
+              </div>
+
+              <div className="rounded-lg border border-border bg-muted/20 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-md border border-report-blue-border bg-report-blue-bg px-3 py-1 text-sm font-semibold text-report-blue-fg">
+                    <Star className="h-4 w-4" aria-hidden />
+                    M4
+                  </span>
+                  <span className="text-base font-medium text-foreground">
+                    Page Visit To Live-Session-Recording
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                <div className="flex items-baseline justify-between gap-6">
+                  <span className="text-base text-foreground/80">
+                    Testing Objective
+                  </span>
+                  <span className="text-base font-medium text-foreground">
+                    <span className="mr-3 text-muted-foreground">•</span> Better
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-6">
+                  <span className="text-base text-foreground/80">
+                    Minimum Detectable Effect (MDE)
+                  </span>
+                  <span className="text-base font-medium text-foreground">
+                    <span className="mr-3 text-muted-foreground">•</span> ±5% of
+                    baseline average
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-6">
+                  <span className="text-base text-foreground/80">
+                    Region of Practical Equivalence (ROPE)
+                  </span>
+                  <span className="text-base font-medium text-foreground">
+                    <span className="mr-3 text-muted-foreground">•</span> ±1%
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-6">
+                  <span className="text-base text-foreground/80">
+                    Statistical Power (1 - β)
+                  </span>
+                  <span className="text-base font-medium text-foreground">
+                    <span className="mr-3 text-muted-foreground">•</span> 80%
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-6">
+                  <span className="text-base text-foreground/80">
+                    False Positive Rate (α)
+                  </span>
+                  <span className="text-base font-medium text-foreground">
+                    <span className="mr-3 text-muted-foreground">•</span> 10%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Metric header
 
-function MetricHeader({ metric, isPrimary }: { metric: string; isPrimary: boolean }) {
+function MetricHeader({
+  metric,
+  isPrimary,
+  onOpenChartView,
+  onOpenSettings,
+}: {
+  metric: string;
+  isPrimary: boolean;
+  onOpenChartView: () => void;
+  onOpenSettings: () => void;
+}) {
   return (
     <div className="flex items-start justify-between px-5 py-4">
       <div className="flex items-center gap-3">
@@ -332,6 +979,7 @@ function MetricHeader({ metric, isPrimary }: { metric: string; isPrimary: boolea
       <div className="flex items-center gap-1">
         <button
           type="button"
+          onClick={onOpenChartView}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
           aria-label="Chart view"
         >
@@ -339,6 +987,7 @@ function MetricHeader({ metric, isPrimary }: { metric: string; isPrimary: boolea
         </button>
         <button
           type="button"
+          onClick={onOpenSettings}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
           aria-label="Settings"
         >
@@ -352,19 +1001,27 @@ function MetricHeader({ metric, isPrimary }: { metric: string; isPrimary: boolea
 // ---------------------------------------------------------------------------
 // Inner tabs
 
-const INNER_TABS = ["Raw data (visitors)", "Raw data (sessions)", "Statistics"];
+const INNER_TABS = ["Raw data (visitors)", "Raw data (sessions)", "Statistics"] as const;
+type InnerDataTab = (typeof INNER_TABS)[number];
 
-function InnerTabs() {
+function InnerTabs({
+  active,
+  onChange,
+}: {
+  active: InnerDataTab;
+  onChange: (tab: InnerDataTab) => void;
+}) {
   return (
     <div className="flex items-end gap-4 border-b border-border px-5 pt-1">
       <div className="flex flex-1 items-end gap-5">
-        {INNER_TABS.map((tab, i) => (
+        {INNER_TABS.map((tab) => (
           <button
             key={tab}
             type="button"
+            onClick={() => onChange(tab)}
             className={cn(
               "relative px-1 pb-2 text-sm transition-colors",
-              i === 0
+              active === tab
                 ? activeTabClass
                 : "text-foreground/70 hover:text-foreground"
             )}
@@ -397,6 +1054,45 @@ function HeaderHelp() {
   );
 }
 
+function ExpectedConversionRateHelp() {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="What is expected conversion rate"
+          >
+            <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="center"
+          sideOffset={10}
+          className="relative max-w-[640px] overflow-visible rounded-xl border border-border bg-background px-8 py-7 text-left text-foreground shadow-xl"
+        >
+          <span
+            className="absolute -bottom-2 left-10 h-4 w-4 rotate-45 border-b border-r border-border bg-background"
+            aria-hidden
+          />
+          <div className="space-y-3">
+            <p className="text-[18px] font-semibold leading-tight text-foreground">
+              Expected Conversion Rate
+            </p>
+            <p className="text-[14px] leading-6 text-foreground/80">
+              This is the median conversion rate you can expect from the
+              variation. The 'best case' and 'worst case' conversion rates
+              represent the expected interval of the conversion rate.
+            </p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function TableHeader() {
   return (
     <>
@@ -409,7 +1105,7 @@ function TableHeader() {
           <span className="text-right text-xs font-semibold text-foreground/75">
             Unique conversions
           </span>
-          <HeaderHelp />
+          <ExpectedConversionRateHelp />
         </div>
         <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
           <span className="text-right text-xs font-semibold text-foreground/75">
@@ -486,7 +1182,7 @@ function ExpectedImprovementCell({ value }: { value: number | null }) {
         {/* value bar */}
         <div
           className={cn(
-            "absolute top-1/2 h-[15px] -translate-y-1/2 rounded-full",
+            "absolute top-1/2 h-[15px] -translate-y-1/2",
             positive ? "bg-success-fg" : "bg-danger-fg"
           )}
           style={{ left: `${left}%`, width: `${Math.max(width, 1)}%` }}
@@ -523,11 +1219,11 @@ function ProbabilityCell({ value }: { value: number | null }) {
           </span>
         )}
         {/* track */}
-        <div className="absolute inset-0 rounded-full bg-muted" />
+        <div className="absolute inset-0 bg-muted" />
         {/* fill */}
         <div
           className={cn(
-            "absolute inset-y-0 left-0 rounded-full",
+            "absolute inset-y-0 left-0",
             isWinner ? "bg-success-fg" : "bg-muted-foreground/30"
           )}
           style={{ width: `${value}%` }}
@@ -556,18 +1252,24 @@ function DataRow({
   variant,
   index,
   metricName,
+  filters,
+  dataMode,
 }: {
   campaign: Campaign;
   variant: Variant;
   index: number;
   metricName: string;
+  filters: ReportFilterContext;
+  dataMode: "visitors" | "sessions";
 }) {
-  const visitors = variantVisitors(campaign, index);
+  const visitors = variantVisitors(campaign, index, filters, dataMode);
   const { uplift, confidence, conversions } = metricRowStats(
     campaign,
     metricName,
     variant,
-    index
+    index,
+    filters,
+    dataMode
   );
   const tone = badgeTone(index);
   const isControl = index === 0;
@@ -625,11 +1327,30 @@ function TotalRow({ conversions, visitors }: { conversions: number; visitors: nu
   );
 }
 
-function ResultsTable({ campaign, metricName }: { campaign: Campaign; metricName: string }) {
+function ResultsTable({
+  campaign,
+  metricName,
+  filters,
+  dataMode,
+  showTotalRow,
+}: {
+  campaign: Campaign;
+  metricName: string;
+  filters: ReportFilterContext;
+  dataMode: "visitors" | "sessions";
+  showTotalRow: boolean;
+}) {
   const variants = campaign.report.variants;
   const rows = variants.map((variant, index) => {
-    const visitors = variantVisitors(campaign, index);
-    const { conversions } = metricRowStats(campaign, metricName, variant, index);
+    const visitors = variantVisitors(campaign, index, filters, dataMode);
+    const { conversions } = metricRowStats(
+      campaign,
+      metricName,
+      variant,
+      index,
+      filters,
+      dataMode
+    );
     return { variant, index, visitors, conversions };
   });
   const totalConversions = rows.reduce((sum, r) => sum + r.conversions, 0);
@@ -646,9 +1367,13 @@ function ResultsTable({ campaign, metricName }: { campaign: Campaign; metricName
             variant={r.variant}
             index={r.index}
             metricName={metricName}
+            filters={filters}
+            dataMode={dataMode}
           />
         ))}
-        <TotalRow conversions={totalConversions} visitors={totalVisitors} />
+        {showTotalRow ? (
+          <TotalRow conversions={totalConversions} visitors={totalVisitors} />
+        ) : null}
       </div>
     </div>
   );
@@ -663,13 +1388,11 @@ const GRAPH_TABS = [
 ];
 
 const Y_AXIS = ["1.00%", "0.90%", "0.80%", "0.70%", "0.60%"];
-const X_AXIS = ["Oct 25", "Nov 25", "Dec 25", "Jan 26"];
 
 const CHART_Y_MIN = 0.6;
 const CHART_Y_MAX = 1.0;
 const CHART_PLOT_H = 172;
 const CHART_PLOT_W = 100;
-const CHART_POINT_COUNT = 13;
 const CHART_MARKER_X = 62;
 
 const CHART_STROKE: Record<Exclude<BadgeTone, "total">, string> = {
@@ -683,13 +1406,26 @@ function chartY(value: number): number {
   return (1 - t) * CHART_PLOT_H;
 }
 
-function chartSeriesValues(metricName: string, seriesKey: string): number[] {
-  const seed = hashMetricSeed(`${metricName}:date-range:${seriesKey}`);
+type ChartSeriesKey = Exclude<BadgeTone, "total">;
+type ChartInterval = "Daily" | "Weekly";
+
+function chartSeriesValues(
+  metricName: string,
+  seriesKey: string,
+  filters: ReportFilterContext,
+  interval: ChartInterval,
+  pointCount: number
+): number[] {
+  const seed = hashMetricSeed(
+    `${metricName}:date-range:${seriesKey}:${filterMetricSeedSuffix(filters)}:${interval}`
+  );
+  const scale = reportVisitorScale(filters);
   const base = seriesKey === "ctrl" ? 0.66 : seriesKey === "v1" ? 0.68 : 0.7;
-  const endBias = seriesKey === "ctrl" ? 0.06 : seriesKey === "v1" ? 0.27 : 0.11;
+  const endBias =
+    (seriesKey === "ctrl" ? 0.06 : seriesKey === "v1" ? 0.27 : 0.11) * scale;
   const values: number[] = [];
-  for (let i = 0; i < CHART_POINT_COUNT; i++) {
-    const t = i / (CHART_POINT_COUNT - 1);
+  for (let i = 0; i < pointCount; i++) {
+    const t = i / (pointCount - 1);
     const wave = (((seed >> (i % 12)) & 7) - 3.5) * 0.004;
     const v = base + endBias * t + wave;
     values.push(Math.min(CHART_Y_MAX - 0.005, Math.max(CHART_Y_MIN + 0.005, v)));
@@ -707,13 +1443,26 @@ function chartLinePath(values: number[]): string {
     .join(" ");
 }
 
-function DateRangeLineChart({ metricName }: { metricName: string }) {
-  const series: { key: Exclude<BadgeTone, "total">; values: number[] }[] = [
-    { key: "ctrl", values: chartSeriesValues(metricName, "ctrl") },
-    { key: "v1", values: chartSeriesValues(metricName, "v1") },
-    { key: "v2", values: chartSeriesValues(metricName, "v2") },
-  ];
-  const markerIndex = Math.round((CHART_MARKER_X / CHART_PLOT_W) * (CHART_POINT_COUNT - 1));
+function DateRangeLineChart({
+  metricName,
+  filters,
+  interval,
+  visible,
+}: {
+  metricName: string;
+  filters: ReportFilterContext;
+  interval: ChartInterval;
+  visible: Record<ChartSeriesKey, boolean>;
+}) {
+  const pointCount = interval === "Daily" ? 13 : 7;
+  const series: { key: ChartSeriesKey; values: number[] }[] = (
+    [
+      { key: "ctrl" as const, values: chartSeriesValues(metricName, "ctrl", filters, interval, pointCount) },
+      { key: "v1" as const, values: chartSeriesValues(metricName, "v1", filters, interval, pointCount) },
+      { key: "v2" as const, values: chartSeriesValues(metricName, "v2", filters, interval, pointCount) },
+    ] as const
+  ).filter((s) => visible[s.key]);
+  const markerIndex = Math.round((CHART_MARKER_X / CHART_PLOT_W) * (pointCount - 1));
 
   return (
     <>
@@ -771,23 +1520,103 @@ function DateRangeLineChart({ metricName }: { metricName: string }) {
   );
 }
 
-function ChartDropdown({ label }: { label: string }) {
+function ExpectedImprovementChart({
+  campaign,
+  metricName,
+  filters,
+}: {
+  campaign: Campaign;
+  metricName: string;
+  filters: ReportFilterContext;
+}) {
+  const variants = campaign.report.variants.slice(0, 3);
+  const uplifts = variants.map((v, i) => {
+    const s = metricRowStats(campaign, metricName, v, i, filters);
+    return s.uplift ?? 0;
+  });
+  const max = Math.max(6, ...uplifts.map((u) => Math.abs(u)));
+
   return (
-    <button
-      type="button"
-      className="inline-flex items-center gap-1.5 px-1 text-sm font-medium text-foreground"
-    >
-      {label}
-      <ChevronDown className="h-4 w-4 opacity-70" aria-hidden />
-    </button>
+    <div className="flex h-[172px] items-end justify-around gap-4 px-8 pt-6">
+      {variants.map((v, i) => {
+        const uplift = uplifts[i] ?? 0;
+        const h = Math.max(8, (Math.abs(uplift) / max) * 120);
+        const positive = uplift >= 0;
+        return (
+          <div key={v.id} className="flex flex-col items-center gap-2">
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {uplift === 0 ? "—" : `${positive ? "+" : ""}${uplift.toFixed(1)}%`}
+            </span>
+            <div
+              className={cn(
+                "w-10",
+                positive ? "bg-success-fg" : "bg-danger-fg"
+              )}
+              style={{ height: h }}
+            />
+            <GraphBadge tone={badgeTone(i)}>{v.label}</GraphBadge>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
-function LegendItem({ tone, label, days }: { tone: BadgeTone; label: string; days: string }) {
+function IntervalDropdown({
+  value,
+  onChange,
+}: {
+  value: ChartInterval;
+  onChange: (v: ChartInterval) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 px-1 text-sm font-medium text-foreground"
+        >
+          {value}
+          <ChevronDown className="h-4 w-4 opacity-70" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-36 p-1">
+        {(["Daily", "Weekly"] as const).map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            className={cn(
+              "flex w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent",
+              value === opt && "bg-accent font-medium"
+            )}
+          >
+            {opt}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function LegendItem({
+  tone,
+  label,
+  days,
+  checked,
+  onCheckedChange,
+}: {
+  tone: BadgeTone;
+  label: string;
+  days: string;
+  checked: boolean;
+  onCheckedChange: (next: boolean) => void;
+}) {
   return (
     <label className="flex cursor-pointer items-center gap-2">
       <Checkbox
-        defaultChecked
+        checked={checked}
+        onCheckedChange={(v) => onCheckedChange(v === true)}
         className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
       />
       <span className="flex items-center gap-1.5">
@@ -798,18 +1627,48 @@ function LegendItem({ tone, label, days }: { tone: BadgeTone; label: string; day
   );
 }
 
-function GraphPanel({ metricName }: { metricName: string }) {
+function GraphPanel({
+  campaign,
+  metricName,
+  filters,
+  defaultGraph,
+}: {
+  campaign: Campaign;
+  metricName: string;
+  filters: ReportFilterContext;
+  defaultGraph: ResultsGraphDefault;
+}) {
+  const [graphTab, setGraphTab] = useState(
+    defaultGraph === "expected-improvement" ? 1 : 0
+  );
+  const [interval, setInterval] = useState<ChartInterval>("Daily");
+  const [showRanges, setShowRanges] = useState(false);
+  const [visible, setVisible] = useState<Record<ChartSeriesKey, boolean>>({
+    ctrl: true,
+    v1: true,
+    v2: true,
+  });
+
+  useEffect(() => {
+    setGraphTab(defaultGraph === "expected-improvement" ? 1 : 0);
+  }, [defaultGraph]);
+
+  const xLabels =
+    interval === "Daily"
+      ? ["Oct 25", "Nov 25", "Dec 25", "Jan 26"]
+      : ["Week 1", "Week 2", "Week 3", "Week 4"];
+
   return (
     <div className="flex flex-col gap-6 rounded-b-lg bg-background px-5 py-6">
-      {/* Graph tabs */}
       <div className="flex items-end gap-5 border-b border-border">
         {GRAPH_TABS.map(({ label, icon: Icon }, i) => (
           <button
             key={label}
             type="button"
+            onClick={() => setGraphTab(i)}
             className={cn(
               "relative flex items-center gap-1.5 px-1 pb-2 text-sm transition-colors",
-              i === 0
+              graphTab === i
                 ? activeTabClass
                 : "text-foreground/70 hover:text-foreground"
             )}
@@ -821,53 +1680,92 @@ function GraphPanel({ metricName }: { metricName: string }) {
         ))}
       </div>
 
-      {/* Controls */}
       <div className="flex items-center justify-between py-1">
         <div className="flex items-center gap-3">
-          <ChartDropdown label={metricName} />
-          <ChartDropdown label="Daily" />
+          <span className="px-1 text-sm font-medium text-foreground">{metricName}</span>
+          <IntervalDropdown value={interval} onChange={setInterval} />
         </div>
-        <label className="flex cursor-pointer items-center gap-1.5">
-          <Checkbox className="h-4 w-4 rounded-[2px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary" />
-          <span className="flex items-center gap-1 text-sm font-medium text-foreground">
-            Show ranges
-            <HelpCircle className="h-3.5 w-3.5 opacity-60" aria-hidden />
-          </span>
-        </label>
+        {graphTab === 0 && (
+          <label className="flex cursor-pointer items-center gap-1.5">
+            <Checkbox
+              checked={showRanges}
+              onCheckedChange={(v) => setShowRanges(v === true)}
+              className="h-4 w-4 rounded-[2px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+            />
+            <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+              Show ranges
+              <HelpCircle className="h-3.5 w-3.5 opacity-60" aria-hidden />
+            </span>
+          </label>
+        )}
       </div>
 
-      {/* Chart */}
       <div className="flex flex-col gap-4">
-        <div className="flex gap-5">
-          {/* Y axis */}
-          <div className="flex flex-col justify-between py-1.5 text-right text-xs font-medium text-foreground/70">
-            {Y_AXIS.map((v) => (
-              <span key={v}>{v}</span>
-            ))}
-          </div>
-          {/* Plot */}
-          <div className="relative flex-1">
-            <div className="flex flex-col justify-between py-1.5" style={{ height: CHART_PLOT_H }}>
+        {graphTab === 0 ? (
+          <div className="flex gap-5">
+            <div className="flex flex-col justify-between py-1.5 text-right text-xs font-medium text-foreground/70">
               {Y_AXIS.map((v) => (
-                <div key={v} className="h-px w-full bg-border" />
+                <span key={v}>{v}</span>
               ))}
             </div>
-            <DateRangeLineChart metricName={metricName} />
-            {/* X axis */}
-            <div className="mt-1.5 flex justify-between px-12 text-xs text-foreground/70">
-              {X_AXIS.map((d) => (
-                <span key={d}>{d}</span>
-              ))}
+            <div className="relative flex-1">
+              <div className="flex flex-col justify-between py-1.5" style={{ height: CHART_PLOT_H }}>
+                {Y_AXIS.map((v) => (
+                  <div key={v} className="h-px w-full bg-border" />
+                ))}
+              </div>
+              {showRanges && (
+                <div
+                  className="pointer-events-none absolute inset-x-[12%] top-1.5 h-[172px] rounded-md bg-muted/30"
+                  aria-hidden
+                />
+              )}
+              <DateRangeLineChart
+                metricName={metricName}
+                filters={filters}
+                interval={interval}
+                visible={visible}
+              />
+              <div className="mt-1.5 flex justify-between px-12 text-xs text-foreground/70">
+                {xLabels.map((d) => (
+                  <span key={d}>{d}</span>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <ExpectedImprovementChart
+            campaign={campaign}
+            metricName={metricName}
+            filters={filters}
+          />
+        )}
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-5 pt-2">
-          <LegendItem tone="ctrl" label="C" days="30 Days" />
-          <LegendItem tone="v1" label="V1" days="14 Days" />
-          <LegendItem tone="v2" label="V2" days="7 Days" />
-        </div>
+        {graphTab === 0 && (
+          <div className="flex flex-wrap items-center gap-5 pt-2">
+            <LegendItem
+              tone="ctrl"
+              label="C"
+              days="30 Days"
+              checked={visible.ctrl}
+              onCheckedChange={(next) => setVisible((v) => ({ ...v, ctrl: next }))}
+            />
+            <LegendItem
+              tone="v1"
+              label="V1"
+              days="14 Days"
+              checked={visible.v1}
+              onCheckedChange={(next) => setVisible((v) => ({ ...v, v1: next }))}
+            />
+            <LegendItem
+              tone="v2"
+              label="V2"
+              days="7 Days"
+              checked={visible.v2}
+              onCheckedChange={(next) => setVisible((v) => ({ ...v, v2: next }))}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -958,13 +1856,19 @@ function MetricListItem({
       onClick={onClick}
       aria-current={active ? "true" : undefined}
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted",
-        active && "bg-accent font-medium text-accent-foreground"
+        "flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-foreground transition-colors hover:bg-muted",
+        active && "bg-accent text-accent-foreground"
       )}
     >
       <span className="shrink-0 text-foreground/70">{icon}</span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {trailing}
+      <span
+        className={cn("min-w-0 flex-1 truncate", active && "font-medium")}
+      >
+        {label}
+      </span>
+      {trailing ? (
+        <span className="flex h-5 shrink-0 items-center">{trailing}</span>
+      ) : null}
     </button>
   );
 }
@@ -1093,11 +1997,15 @@ function MetricSelector({
             active={selectedMetric === campaign.primaryMetric}
             onClick={() => onSelectMetric(campaign.primaryMetric)}
             trailing={
-              selectedMetric === campaign.primaryMetric ? (
-                <span className="shrink-0 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground">
-                  Primary
-                </span>
-              ) : undefined
+              <span
+                className={cn(
+                  "rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground",
+                  selectedMetric !== campaign.primaryMetric && "invisible"
+                )}
+                aria-hidden={selectedMetric !== campaign.primaryMetric}
+              >
+                Primary
+              </span>
             }
           />
         </div>
@@ -1206,7 +2114,6 @@ function CompareMetricSelector({
 }) {
   const others = campaign.report.otherMetrics;
   const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
-  const guardrails = others.slice(0, splitAt);
   const secondary = others.slice(splitAt);
   const primary = campaign.primaryMetric;
   const count = selected.length;
@@ -1222,18 +2129,6 @@ function CompareMetricSelector({
             onToggle={() => onToggle(primary)}
             badge={selected.includes(primary) ? "Primary" : undefined}
           />
-        </div>
-
-        <div className={metricsSidebarSectionClass}>
-          <MetricGroupLabel>Guardrails</MetricGroupLabel>
-          {guardrails.map((metric) => (
-            <CompareCheckItem
-              key={metric.name}
-              name={metric.name}
-              checked={selected.includes(metric.name)}
-              onToggle={() => onToggle(metric.name)}
-            />
-          ))}
         </div>
 
         <div className={metricsSidebarSectionClass}>
@@ -1321,7 +2216,7 @@ function CompareTableHeader() {
           <span className="text-right text-xs font-semibold text-foreground/75">
             Unique conversions
           </span>
-          <HeaderHelp />
+          <ExpectedConversionRateHelp />
         </div>
         <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
           <span className="text-right text-xs font-semibold text-foreground/75">
@@ -1383,7 +2278,8 @@ type CompareGroup = { key: string; label: ReactNode; rows: CompareCell[] };
 function buildGroups(
   campaign: Campaign,
   metrics: CompareMetric[],
-  groupBy: GroupBy
+  groupBy: GroupBy,
+  filters: ReportFilterContext
 ): CompareGroup[] {
   const variants = campaign.report.variants;
 
@@ -1392,12 +2288,12 @@ function buildGroups(
       key: variant.id,
       label: <VariantLabel variant={variant} index={vi} />,
       rows: metrics.map((m) => {
-        const s = metricRowStats(campaign, m.name, variant, vi);
+        const s = metricRowStats(campaign, m.name, variant, vi, filters);
         return {
           key: m.name,
           rowLabel: <MetricLabel name={m.name} isPrimary={m.isPrimary} />,
           conversions: s.conversions,
-          visitors: variantVisitors(campaign, vi),
+          visitors: variantVisitors(campaign, vi, filters),
           improvement: s.uplift,
           probability: s.confidence,
         };
@@ -1409,12 +2305,12 @@ function buildGroups(
     key: m.name,
     label: <MetricLabel name={m.name} isPrimary={m.isPrimary} />,
     rows: variants.map((variant, vi) => {
-      const s = metricRowStats(campaign, m.name, variant, vi);
+      const s = metricRowStats(campaign, m.name, variant, vi, filters);
       return {
         key: variant.id,
         rowLabel: <VariantLabel variant={variant} index={vi} />,
         conversions: s.conversions,
-        visitors: variantVisitors(campaign, vi),
+        visitors: variantVisitors(campaign, vi, filters),
         improvement: s.uplift,
         probability: s.confidence,
       };
@@ -1426,12 +2322,14 @@ function CompareTable({
   campaign,
   metrics,
   groupBy,
+  filters,
 }: {
   campaign: Campaign;
   metrics: CompareMetric[];
   groupBy: GroupBy;
+  filters: ReportFilterContext;
 }) {
-  const groups = buildGroups(campaign, metrics, groupBy);
+  const groups = buildGroups(campaign, metrics, groupBy, filters);
 
   return (
     <div className="overflow-x-auto bg-background">
@@ -1476,11 +2374,13 @@ function CompareView({
   campaign,
   metrics,
   groupBy,
+  filters,
   onClear,
 }: {
   campaign: Campaign;
   metrics: CompareMetric[];
   groupBy: GroupBy;
+  filters: ReportFilterContext;
   onClear: () => void;
 }) {
   const count = metrics.length;
@@ -1508,11 +2408,24 @@ function CompareView({
       </div>
 
       {count === 0 ? (
-        <div className="flex h-[360px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
-          Select one or more metrics from the left to compare.
+        <div className="flex h-[360px] flex-col items-center justify-center gap-4 px-6 text-center">
+          <div className="flex h-28 w-28 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40">
+            <Columns3 className="h-12 w-12 text-muted-foreground/50" aria-hidden />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">No metrics selected</p>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Select one or more metrics from the left to compare.
+            </p>
+          </div>
         </div>
       ) : (
-        <CompareTable campaign={campaign} metrics={metrics} groupBy={groupBy} />
+        <CompareTable
+          campaign={campaign}
+          metrics={metrics}
+          groupBy={groupBy}
+          filters={filters}
+        />
       )}
     </div>
   );
@@ -1524,8 +2437,26 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
   const [selectedMetric, setSelectedMetric] = useState(campaign.primaryMetric);
   const [compareMode, setCompareMode] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("variation");
+  const [innerTab, setInnerTab] = useState<InnerDataTab>(INNER_TABS[0]);
+  const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
+  const [viewSettings, setViewSettings] = useState(DEFAULT_REPORT_VIEW_SETTINGS);
+  const [statConfigOpen, setStatConfigOpen] = useState(false);
 
-  const secondaryMetrics = campaign.report.otherMetrics;
+  const viewState = useReportActiveViewState(campaign.id);
+  const filters: ReportFilterContext = useMemo(
+    () => ({
+      segments: viewState.segments,
+      dimensions: viewState.dimensions,
+      dateRange: viewState.dateRange,
+    }),
+    [viewState.segments, viewState.dimensions, viewState.dateRange]
+  );
+  const dataMode: "visitors" | "sessions" =
+    innerTab === "Raw data (sessions)" ? "sessions" : "visitors";
+
+  const others = campaign.report.otherMetrics;
+  const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
+  const compareableMetrics = others.slice(splitAt);
   const [compareSelected, setCompareSelected] = useState<string[]>([]);
   const [metricsNavCollapsed, setMetricsNavCollapsed] = useState(false);
 
@@ -1541,7 +2472,7 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
   // Canonical order: primary first, then secondary metrics in list order.
   const allMetrics: CompareMetric[] = [
     { name: campaign.primaryMetric, isPrimary: true },
-    ...secondaryMetrics.map((m) => ({ name: m.name, isPrimary: false })),
+    ...compareableMetrics.map((m) => ({ name: m.name, isPrimary: false })),
   ];
   const orderedCompareMetrics = allMetrics.filter((m) =>
     compareSelected.includes(m.name)
@@ -1578,10 +2509,20 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1120px] space-y-4 px-12 py-8">
+          <ViewSettingsDialog
+            open={viewSettingsOpen}
+            onOpenChange={setViewSettingsOpen}
+            settings={viewSettings}
+            onSave={setViewSettings}
+          />
+          <StatisticalConfigurationDialog
+            open={statConfigOpen}
+            onOpenChange={setStatConfigOpen}
+          />
           <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
             <>
-              <FilterBar
+              <ResultsFilterPanel
                 campaignId={campaign.id}
                 right={
                   <>
@@ -1602,22 +2543,60 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
                 campaign={campaign}
                 metrics={orderedCompareMetrics}
                 groupBy={groupBy}
+                filters={filters}
                 onClear={() => setCompareMode(false)}
               />
             </>
           ) : (
             <>
-              <FilterBar campaignId={campaign.id} />
+              <ResultsFilterPanel campaignId={campaign.id} />
               <div>
                 <ConclusionBanner variantName={best.name} />
                 <div className="overflow-hidden rounded-b-lg border border-border border-t-0 bg-background">
                   <MetricHeader
                     metric={selectedMetric}
                     isPrimary={selectedMetric === campaign.primaryMetric}
+                    onOpenChartView={() => setStatConfigOpen(true)}
+                    onOpenSettings={() => setViewSettingsOpen(true)}
                   />
-                  <InnerTabs />
-                  <ResultsTable campaign={campaign} metricName={selectedMetric} />
-                  <GraphPanel metricName={selectedMetric} />
+                  <InnerTabs active={innerTab} onChange={setInnerTab} />
+                  {innerTab !== "Statistics" ? viewSettings.layout === "graphs-first" ? (
+                    <>
+                      <GraphPanel
+                        campaign={campaign}
+                        metricName={selectedMetric}
+                        filters={filters}
+                        defaultGraph={viewSettings.defaultGraph}
+                      />
+                      <ResultsTable
+                        campaign={campaign}
+                        metricName={selectedMetric}
+                        filters={filters}
+                        dataMode={dataMode}
+                        showTotalRow={viewSettings.showTotalRow}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <ResultsTable
+                        campaign={campaign}
+                        metricName={selectedMetric}
+                        filters={filters}
+                        dataMode={dataMode}
+                        showTotalRow={viewSettings.showTotalRow}
+                      />
+                      <GraphPanel
+                        campaign={campaign}
+                        metricName={selectedMetric}
+                        filters={filters}
+                        defaultGraph={viewSettings.defaultGraph}
+                      />
+                    </>
+                  ) : (
+                    <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                      Summary statistics for {selectedMetric} with current filters.
+                    </div>
+                  )}
                 </div>
               </div>
             </>

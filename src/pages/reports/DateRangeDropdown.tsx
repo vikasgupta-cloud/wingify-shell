@@ -68,13 +68,29 @@ function formatDayLabel(d: Date) {
   return `${MONTHS[d.getUTCMonth()]} ${day}, ${d.getUTCFullYear()}`;
 }
 
+/** Sidebar order for quick ranges (Custom is rendered separately). */
+const PRESET_ORDER = [
+  "today",
+  "yesterday",
+  "last-7",
+  "last-14",
+  "last-30",
+  "campaign",
+] as const;
+
 /** Dummy presets — client-side only, no calendar API. */
 export const DEFAULT_DATE_RANGE_PRESETS: DateRange[] = [
   {
-    id: "campaign",
-    label: "Campaign duration",
-    from: utc(2026, 4, 9),
+    id: "today",
+    label: "Today",
+    from: utc(2026, 5, 1),
     to: utc(2026, 5, 1),
+  },
+  {
+    id: "yesterday",
+    label: "Yesterday",
+    from: utc(2026, 4, 30),
+    to: utc(2026, 4, 30),
   },
   {
     id: "last-7",
@@ -95,16 +111,10 @@ export const DEFAULT_DATE_RANGE_PRESETS: DateRange[] = [
     to: utc(2026, 5, 1),
   },
   {
-    id: "today",
-    label: "Today",
-    from: utc(2026, 5, 1),
+    id: "campaign",
+    label: "Campaign duration",
+    from: utc(2026, 4, 9),
     to: utc(2026, 5, 1),
-  },
-  {
-    id: "yesterday",
-    label: "Yesterday",
-    from: utc(2026, 4, 30),
-    to: utc(2026, 4, 30),
   },
 ];
 
@@ -118,6 +128,21 @@ function matchPreset(
       (p) => sameUtcDay(p.from, from) && sameUtcDay(p.to, to)
     ) ?? null
   );
+}
+
+function orderPresets(presets: DateRange[]): DateRange[] {
+  const byId = new Map(presets.map((p) => [p.id, p]));
+  const ordered: DateRange[] = [];
+  for (const id of PRESET_ORDER) {
+    const preset = byId.get(id);
+    if (preset) ordered.push(preset);
+  }
+  for (const preset of presets) {
+    if (!PRESET_ORDER.includes(preset.id as (typeof PRESET_ORDER)[number])) {
+      ordered.push(preset);
+    }
+  }
+  return ordered;
 }
 
 function toDraftRange(range: DateRange): DayPickerRange {
@@ -147,6 +172,7 @@ export default function DateRangeDropdown({
     () => presets.find((p) => p.id === defaultPresetId) ?? presets[0],
     [presets, defaultPresetId]
   );
+  const sidebarPresets = useMemo(() => orderPresets(presets), [presets]);
   const [open, setOpen] = useState(false);
   const [uncontrolled, setUncontrolled] = useState<DateRange>(initial);
   const selected = value ?? uncontrolled;
@@ -177,6 +203,7 @@ export default function DateRangeDropdown({
       ? fromPickerDay(draft.from)
       : null;
   const canApply = draftFrom !== null && draftTo !== null;
+  const isCustomMode = draftPresetId === CUSTOM_RANGE_ID;
 
   const applyDraft = () => {
     if (!draftFrom || !draftTo) return;
@@ -195,9 +222,12 @@ export default function DateRangeDropdown({
   };
 
   const selectPreset = (preset: DateRange) => {
-    setDraft(toDraftRange(preset));
-    setDraftPresetId(preset.id);
-    setMonth(toPickerDay(preset.to));
+    commit(preset);
+    setOpen(false);
+  };
+
+  const enterCustomMode = () => {
+    setDraftPresetId(CUSTOM_RANGE_ID);
   };
 
   const onCalendarSelect = (range: DayPickerRange | undefined) => {
@@ -267,8 +297,8 @@ export default function DateRangeDropdown({
               aria-label="Date range presets"
               className="flex flex-row gap-0.5 overflow-x-auto p-1.5 sm:flex-col sm:overflow-visible"
             >
-              {presets.map((preset) => {
-                const active = draftPresetId === preset.id;
+              {sidebarPresets.map((preset) => {
+                const active = !isCustomMode && draftPresetId === preset.id;
                 return (
                   <li key={preset.id} className="shrink-0 sm:shrink">
                     <button
@@ -290,13 +320,12 @@ export default function DateRangeDropdown({
                 <button
                   type="button"
                   role="option"
-                  aria-selected={draftPresetId === CUSTOM_RANGE_ID}
+                  aria-selected={isCustomMode}
                   className={cn(
                     "w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                    draftPresetId === CUSTOM_RANGE_ID &&
-                      "bg-accent font-medium text-foreground"
+                    isCustomMode && "bg-accent font-medium text-foreground"
                   )}
-                  onClick={() => setDraftPresetId(CUSTOM_RANGE_ID)}
+                  onClick={enterCustomMode}
                 >
                   Custom
                 </button>
@@ -332,23 +361,25 @@ export default function DateRangeDropdown({
 
             <Separator />
 
-            <div className="flex items-center justify-end gap-2 px-3 py-2.5">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                disabled={!canApply}
-                onClick={applyDraft}
-                className="rounded-md px-5 shadow"
-              >
-                Apply
-              </Button>
-            </div>
+            {isCustomMode && (
+              <div className="flex items-center justify-end gap-2 px-3 py-2.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!canApply}
+                  onClick={applyDraft}
+                  className="rounded-md px-5 shadow"
+                >
+                  Apply
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </PopoverContent>
