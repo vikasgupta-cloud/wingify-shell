@@ -68,6 +68,23 @@
   border-color: hsl(var(--border));
 }
 
+/* Force autofilled fields to use the app's own background instead of the
+   browser's default (dark on OS dark-mode, which paints inputs black). The
+   inset box-shadow overrides the UA autofill fill across the whole project. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+  box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+  -webkit-text-fill-color: hsl(var(--foreground));
+  caret-color: hsl(var(--foreground));
+  /* Delay the autofill background swap far beyond any session. */
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 body {
   margin: 0;
   font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,

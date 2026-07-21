@@ -1,19 +1,57 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Clock, Info } from "lucide-react";
-import type { Campaign } from "../../data/campaigns";
+import type { Campaign, CampaignStatus } from "../../data/campaigns";
 import { BLOCKED_NOTICE, STATUS_WORKFLOW } from "../../config/statusWorkflow";
 import { useRowsStore } from "../../store/rows";
 import { cn } from "../../lib/utils";
+import { Button } from "./button";
 import StatusBadge from "./StatusBadge";
 
+// Status color (the -fg token) applied to the trigger's text, chevron, and
+// border while its background stays white/transparent like the Save button.
+const STATUS_TRIGGER: Record<CampaignStatus, string> = {
+  Draft: "text-status-draft-fg border-status-draft-fg",
+  "In QA": "text-status-qa-fg border-status-qa-fg",
+  "Ready to launch": "text-status-ready-fg border-status-ready-fg",
+  Running: "text-status-running-fg border-status-running-fg",
+  "In Analysis": "text-status-analysis-fg border-status-analysis-fg",
+  Paused: "text-status-paused-fg border-status-paused-fg",
+  Ended: "text-status-ended-fg border-status-ended-fg",
+};
+
 // Standalone: this menu can be reused in the level-2 detail top bar later.
-export default function StatusMenu({ campaign }: { campaign: Campaign }) {
+// `triggerVariant` defaults to the colored pill (table rows + Kanban cards);
+// the config header opts into the button look via triggerVariant="button".
+export default function StatusMenu({
+  campaign,
+  triggerVariant = "badge",
+}: {
+  campaign: Campaign;
+  triggerVariant?: "badge" | "button";
+}) {
   const setStatus = useRowsStore((s) => s.setStatus);
   const transitions = STATUS_WORKFLOW[campaign.status];
   const notice = BLOCKED_NOTICE[campaign.status];
 
-  // Ended (no transitions): plain, non-interactive badge with no chevron.
+  // Ended (no transitions): non-interactive, no chevron, no dropdown.
   if (transitions.length === 0) {
+    // Header: a static, disabled button-shaped control matching the Save
+    // button minus the chevron; tinted with the current status color.
+    if (triggerVariant === "button") {
+      return (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled
+          aria-label={`Status ${campaign.status}`}
+          className={cn("disabled:opacity-100", STATUS_TRIGGER[campaign.status])}
+        >
+          {campaign.status}
+        </Button>
+      );
+    }
+    // Default (table + Kanban): plain colored pill.
     return <StatusBadge status={campaign.status} />;
   }
 
@@ -22,16 +60,33 @@ export default function StatusMenu({ campaign }: { campaign: Campaign }) {
   return (
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          onClick={stop}
-          aria-label={`Change status from ${campaign.status}`}
-          className="group inline-flex outline-none"
-        >
-          <StatusBadge status={campaign.status} className="gap-1">
+        {triggerVariant === "button" ? (
+          // Button look — matches the Save button (outline, size sm), tinted
+          // with the current status color on text, chevron, and border.
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={stop}
+            aria-label={`Change status from ${campaign.status}`}
+            className={cn("group", STATUS_TRIGGER[campaign.status])}
+          >
+            {campaign.status}
             <ChevronDown className="h-3 w-3 opacity-70 transition-transform duration-150 group-data-[state=open]:rotate-180" />
-          </StatusBadge>
-        </button>
+          </Button>
+        ) : (
+          // Default: the original colored pill used by table rows + Kanban.
+          <button
+            type="button"
+            onClick={stop}
+            aria-label={`Change status from ${campaign.status}`}
+            className="group inline-flex outline-none"
+          >
+            <StatusBadge status={campaign.status} className="gap-1">
+              <ChevronDown className="h-3 w-3 opacity-70 transition-transform duration-150 group-data-[state=open]:rotate-180" />
+            </StatusBadge>
+          </button>
+        )}
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { IP_SUBJECTS, IP_OPERATORS } from "../config/configOptions";
+import type { CustomSegmentDef } from "../config/segments";
 
 // NOTE: Session-only by design. This store is NOT persisted — a reload wipes
 // every campaign's config and its saved snapshot.
@@ -13,8 +14,33 @@ export type UrlPredicate =
   | "URL matches regex"
   | "Page group is";
 
-export type PageRule = { id: string; predicate: UrlPredicate; value: string };
+export type UrlSettings = {
+  ignoreQueryString: boolean;
+  ignoreFragment: boolean;
+  caseInsensitive: boolean;
+};
+export type PageRule = {
+  id: string;
+  predicate: UrlPredicate;
+  value: string;
+  settings: UrlSettings;
+};
 export type PageGroup = { id: string; kind: "include" | "exclude"; rules: PageRule[] };
+
+// URL matching defaults applied to every new rule. Surfaced to the user as
+// "Some URL settings have been applied by default." in the UI.
+export const DEFAULT_URL_SETTINGS: UrlSettings = {
+  ignoreQueryString: true,
+  ignoreFragment: true,
+  caseInsensitive: true,
+};
+
+const newRule = (): PageRule => ({
+  id: uid("rule"),
+  predicate: "URL matches",
+  value: "",
+  settings: { ...DEFAULT_URL_SETTINGS },
+});
 
 export type SmartStats = {
   statsModel: string;
@@ -36,28 +62,43 @@ export type QaConfig = {
   previewUrl: string;
   debugUrl: string;
 };
+export type RedirectMatchType = "matches" | "contains" | "starts" | "ends";
+
 export type ConfigVariation = {
   id: string;
   label: string;
   name: string;
   split: number;
-  redirectUrl?: string;
   locked?: boolean;
   modifications: number;
+  type: "editor" | "redirect";
+  // Redirect-only fields (present, defaulted, when type === "redirect").
+  redirectMatchType?: RedirectMatchType;
+  redirectUrl?: string;
+  redirectExcludeQuery?: boolean;
+  redirectExcludeFragments?: boolean;
 };
 
 export type CampaignConfig = {
   name: string;
   labels: string[];
   hypothesis: string | null;
+  // Id of the selected canned hypothesis (see src/data/hypotheses.ts); null
+  // when none is chosen. `hypothesis` mirrors its title so the section
+  // completion check (isSectionComplete "main") keeps working.
+  hypothesisId: string | null;
   pageGroups: PageGroup[];
   trafficAllocation: number;
   segment: string;
+  // The applied-but-not-necessarily-saved custom segment for this campaign.
+  // null when a standard / my-segment is selected. When set, `segment` holds
+  // its generated label.
+  customSegment: CustomSegmentDef | null;
   trigger: string;
   frequency: string;
   editorUrl: string;
   editorView: "desktop" | "mobile" | "tablet";
-  variationSplitEnabled: boolean;
+  editWith: "visual" | "code";
   variations: ConfigVariation[];
   splitMode: "Manual" | "Equal" | "Auto";
   successMetric: string | null;
@@ -79,22 +120,31 @@ export function defaultConfig(name: string): CampaignConfig {
     name,
     labels: [],
     hypothesis: null,
+    hypothesisId: null,
     pageGroups: [
       {
         id: uid("pg"),
         kind: "include",
-        rules: [{ id: uid("rule"), predicate: "URL matches", value: "" }],
+        rules: [newRule()],
       },
     ],
     trafficAllocation: 100,
     segment: "All Traffic",
+    customSegment: null,
     trigger: "Page Viewed",
-    frequency: "",
+    frequency: "Always",
     editorUrl: "",
     editorView: "desktop",
-    variationSplitEnabled: false,
+    editWith: "visual",
     variations: [
-      { id: "control", label: "C", name: "Control", split: 100, modifications: 0 },
+      {
+        id: "control",
+        label: "C",
+        name: "Control",
+        split: 100,
+        modifications: 0,
+        type: "editor",
+      },
     ],
     splitMode: "Equal",
     successMetric: null,
@@ -161,6 +211,27 @@ type ConfigState = {
   workflowOpen: Record<string /* campaignId */, boolean>;
   openWorkflow: (id: string) => void;
   closeWorkflow: (id: string) => void;
+  // NOTE: view state only — how the config step navigator (DotNav) is shown.
+  // 'undocked' = hover-dots flyout; 'docked' = persistent left panel. Session-
+  // only (this store is not persisted) and outside CampaignConfig so it never
+  // marks the config dirty.
+  dockState: "docked" | "undocked";
+  setDockState: (state: "docked" | "undocked") => void;
+  // NOTE: session-only view state — how the config surface renders its steps.
+  // 'scroll' = all steps in one vertical scroll (default); 'guided' = one step
+  // at a time, navigated via the DotNav. Outside CampaignConfig so it never
+  // marks the config dirty. `activeStepId` is the step shown in Guided and the
+  // step the DotNav highlights; defaults to the first step (Main Information).
+  viewMode: "scroll" | "guided";
+  setViewMode: (mode: "scroll" | "guided") => void;
+  activeStepId: string;
+  setActiveStepId: (stepId: string) => void;
+  // NOTE: session-only view state — ids of connected third-party integrations.
+  // Deliberately OUTSIDE CampaignConfig so connecting/disconnecting never marks
+  // the config dirty (not part of the saved snapshot comparison).
+  connectedIntegrations: string[];
+  connectIntegration: (integrationId: string) => void;
+  disconnectIntegration: (integrationId: string) => void;
   ensureConfig: (id: string, name: string) => void;
   patch: (id: string, partial: Partial<CampaignConfig>) => void;
   save: (id: string) => void;
@@ -172,9 +243,23 @@ type ConfigState = {
     ruleId: string,
     patch: Partial<PageRule>
   ) => void;
-  addIncludeGroup: (campaignId: string) => void;
   addExcludeGroup: (campaignId: string) => void;
+  // Pick a standard / my-segment by label; clears any applied custom segment.
+  selectSegment: (campaignId: string, label: string) => void;
+  // Apply a custom segment built in the drawer; sets segment label + def.
+  applyCustomSegment: (campaignId: string, def: CustomSegmentDef) => void;
   addVariation: (campaignId: string, kind: "blank" | "duplicate") => void;
+  // Adds a typed variation (editor / redirect) and returns its new id so the
+  // caller can open it in the right initial editing state.
+  addTypedVariation: (
+    campaignId: string,
+    type: "editor" | "redirect"
+  ) => string | undefined;
+  updateVariation: (
+    campaignId: string,
+    variationId: string,
+    patch: Partial<ConfigVariation>
+  ) => void;
   removeVariation: (campaignId: string, variationId: string) => void;
   renameVariation: (campaignId: string, variationId: string, name: string) => void;
   setSplit: (campaignId: string, variationId: string, split: number) => void;
@@ -197,6 +282,25 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: true } })),
   closeWorkflow: (id) =>
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: false } })),
+  dockState: "undocked",
+  setDockState: (state) => set({ dockState: state }),
+  viewMode: "scroll",
+  setViewMode: (mode) => set({ viewMode: mode }),
+  activeStepId: "main",
+  setActiveStepId: (stepId) => set({ activeStepId: stepId }),
+  connectedIntegrations: [],
+  connectIntegration: (integrationId) =>
+    set((s) =>
+      s.connectedIntegrations.includes(integrationId)
+        ? s
+        : { connectedIntegrations: [...s.connectedIntegrations, integrationId] }
+    ),
+  disconnectIntegration: (integrationId) =>
+    set((s) => ({
+      connectedIntegrations: s.connectedIntegrations.filter(
+        (i) => i !== integrationId
+      ),
+    })),
   ensureConfig: (id, name) => {
     if (get().configs[id]) return;
     const seed = defaultConfig(name);
@@ -224,10 +328,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       g.id === groupId
         ? {
             ...g,
-            rules: [
-              ...g.rules,
-              { id: uid("rule"), predicate: "URL matches" as UrlPredicate, value: "" },
-            ],
+            rules: [...g.rules, newRule()],
           }
         : g
     );
@@ -269,32 +370,21 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     );
     get().patch(campaignId, { pageGroups });
   },
-  addIncludeGroup: (campaignId) => {
-    const current = get().configs[campaignId];
-    if (!current) return;
-    const pageGroups: PageGroup[] = [
-      ...current.pageGroups,
-      {
-        id: uid("pg"),
-        kind: "include",
-        rules: [{ id: uid("rule"), predicate: "URL matches", value: "" }],
-      },
-    ];
-    get().patch(campaignId, { pageGroups });
-  },
   addExcludeGroup: (campaignId) => {
     const current = get().configs[campaignId];
     if (!current) return;
     if (current.pageGroups.some((g) => g.kind === "exclude")) return;
     const pageGroups: PageGroup[] = [
       ...current.pageGroups,
-      {
-        id: uid("pg"),
-        kind: "exclude",
-        rules: [{ id: uid("rule"), predicate: "URL matches", value: "" }],
-      },
+      { id: uid("pg"), kind: "exclude", rules: [newRule()] },
     ];
     get().patch(campaignId, { pageGroups });
+  },
+  selectSegment: (campaignId, label) => {
+    get().patch(campaignId, { segment: label, customSegment: null });
+  },
+  applyCustomSegment: (campaignId, def) => {
+    get().patch(campaignId, { segment: def.label, customSegment: def });
   },
   addVariation: (campaignId, kind) => {
     const current = get().configs[campaignId];
@@ -307,8 +397,48 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       name: `Variation ${n}`,
       split: 0,
       modifications: kind === "duplicate" ? last.modifications : 0,
+      type: "editor",
     };
     const variations = rebalance([...current.variations, variation]);
+    get().patch(campaignId, { variations });
+  },
+  addTypedVariation: (campaignId, type) => {
+    const current = get().configs[campaignId];
+    if (!current) return undefined;
+    const n = current.variations.filter((v) => v.id !== "control").length + 1;
+    const id = crypto.randomUUID();
+    const variation: ConfigVariation =
+      type === "redirect"
+        ? {
+            id,
+            label: `V${n}`,
+            name: `Variation ${n}`,
+            split: 0,
+            modifications: 0,
+            type: "redirect",
+            redirectMatchType: "matches",
+            redirectUrl: "",
+            redirectExcludeQuery: false,
+            redirectExcludeFragments: false,
+          }
+        : {
+            id,
+            label: `V${n}`,
+            name: `Variation ${n}`,
+            split: 0,
+            modifications: 0,
+            type: "editor",
+          };
+    const variations = rebalance([...current.variations, variation]);
+    get().patch(campaignId, { variations });
+    return id;
+  },
+  updateVariation: (campaignId, variationId, patch) => {
+    const current = get().configs[campaignId];
+    if (!current) return;
+    const variations = current.variations.map((v) =>
+      v.id === variationId ? { ...v, ...patch } : v
+    );
     get().patch(campaignId, { variations });
   },
   removeVariation: (campaignId, variationId) => {

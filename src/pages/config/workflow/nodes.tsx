@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../../store/config";
-import { SEGMENTS, TRIGGERS, FREQUENCIES } from "../../../config/configOptions";
+import { TRIGGERS, FREQUENCIES } from "../../../config/configOptions";
+import { ALL_SEGMENT_LABELS } from "../../../config/segments";
 
 type NodeData = { campaignId: string; variationId?: string };
 
@@ -111,7 +112,7 @@ function TargetNode({ data, selected }: NodeProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {SEGMENTS.map((o) => (
+            {ALL_SEGMENT_LABELS.map((o) => (
               <SelectItem key={o} value={o}>
                 {o}
               </SelectItem>
