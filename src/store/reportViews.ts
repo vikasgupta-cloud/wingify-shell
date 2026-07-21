@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useCallback, useMemo } from "react";
 import {
   DEFAULT_REPORT_VIEW_SETTINGS,
   REPORT_PRESET_IDS,
   sanitizeResultsTableColumns,
   type ReportPresetId,
   type ReportViewSettings,
+  type ResultsTableColumnId,
 } from "../pages/reports/reportViewTypes";
 
 /** Serializable date range for persistence (YYYY-MM-DD). */
@@ -24,7 +26,7 @@ export type ReportViewState = {
   viewSettings: ReportViewSettings;
 };
 
-export type { ReportViewSettings, ReportPresetId };
+export type { ReportViewSettings, ReportPresetId, ResultsTableColumnId };
 export {
   DEFAULT_REPORT_VIEW_SETTINGS,
   REPORT_PRESET_IDS,
@@ -156,6 +158,19 @@ type CampaignSlice = {
   presets: Record<ReportPresetId, ReportViewState>;
 };
 
+function columnsEqual(
+  a: ResultsTableColumnId[],
+  b: ResultsTableColumnId[]
+): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((id, i) => id === b[i]);
+}
+
+type ColumnDraftsByCampaign = Record<
+  string,
+  Partial<Record<ReportPresetId, ResultsTableColumnId[]>>
+>;
+
 const DEFAULT_PRESETS = createDefaultPresets();
 
 /** Read-only fallback — stable reference for selectors (never mutate). */
@@ -200,6 +215,8 @@ type SaveHint = {
 type ReportViewsState = {
   byCampaign: Record<string, CampaignSlice>;
   uiByCampaign: Record<string, CampaignReportUi>;
+  /** Session-only column drafts — not persisted. */
+  columnDraftsByCampaign: ColumnDraftsByCampaign;
   /** Transient UI feedback — not persisted. */
   lastSaveHint: SaveHint | null;
   initCampaign: (
@@ -211,6 +228,12 @@ type ReportViewsState = {
     campaignId: string,
     patch: Partial<ReportViewState>
   ) => void;
+  setResultsTableColumnsDraft: (
+    campaignId: string,
+    columns: ResultsTableColumnId[]
+  ) => void;
+  saveResultsTableColumnsDraft: (campaignId: string) => void;
+  discardResultsTableColumnsDraft: (campaignId: string) => void;
   setSelectedMetric: (campaignId: string, metric: string) => void;
   setMetricsNavCollapsed: (campaignId: string, collapsed: boolean) => void;
   clearSaveHint: () => void;
@@ -290,6 +313,7 @@ export const useReportViewsStore = create<ReportViewsState>()(
       return {
         byCampaign: {},
         uiByCampaign: {},
+        columnDraftsByCampaign: {},
         lastSaveHint: null,
 
         initCampaign: (campaignId, seed) =>
@@ -341,6 +365,86 @@ export const useReportViewsStore = create<ReportViewsState>()(
           });
           set({
             lastSaveHint: { presetId, at: Date.now() },
+          });
+        },
+
+        setResultsTableColumnsDraft: (campaignId, columns) => {
+          const nextCols = sanitizeResultsTableColumns(columns);
+          const current = slice(campaignId);
+          const id = current.activePresetId;
+          const saved = sanitizeResultsTableColumns(
+            mergePresetPartial(current.presets[id]).viewSettings.resultsTableColumns
+          );
+          set((s) => {
+            const campaignDrafts = { ...(s.columnDraftsByCampaign[campaignId] ?? {}) };
+            if (columnsEqual(nextCols, saved)) {
+              delete campaignDrafts[id];
+            } else {
+              campaignDrafts[id] = nextCols;
+            }
+            const nextDrafts = { ...s.columnDraftsByCampaign };
+            if (Object.keys(campaignDrafts).length === 0) {
+              delete nextDrafts[campaignId];
+            } else {
+              nextDrafts[campaignId] = campaignDrafts;
+            }
+            return {
+              columnDraftsByCampaign: nextDrafts,
+              lastSaveHint: null,
+            };
+          });
+        },
+
+        saveResultsTableColumnsDraft: (campaignId) => {
+          const current = slice(campaignId);
+          const id = current.activePresetId;
+          const draft = get().columnDraftsByCampaign[campaignId]?.[id];
+          if (!draft) return;
+          const columns = sanitizeResultsTableColumns(draft);
+          patchSlice(campaignId, (prev) => {
+            const presetId = prev.activePresetId;
+            const preset = mergePresetPartial(prev.presets[presetId]);
+            return {
+              ...prev,
+              presets: {
+                ...prev.presets,
+                [presetId]: applyPresetPatch(preset, {
+                  viewSettings: { resultsTableColumns: columns },
+                }),
+              },
+            };
+          });
+          set((s) => {
+            const campaignDrafts = { ...(s.columnDraftsByCampaign[campaignId] ?? {}) };
+            delete campaignDrafts[id];
+            const nextDrafts = { ...s.columnDraftsByCampaign };
+            if (Object.keys(campaignDrafts).length === 0) {
+              delete nextDrafts[campaignId];
+            } else {
+              nextDrafts[campaignId] = campaignDrafts;
+            }
+            return {
+              columnDraftsByCampaign: nextDrafts,
+              lastSaveHint: { presetId: id, at: Date.now() },
+            };
+          });
+        },
+
+        discardResultsTableColumnsDraft: (campaignId) => {
+          const id = slice(campaignId).activePresetId;
+          set((s) => {
+            const campaignDrafts = { ...(s.columnDraftsByCampaign[campaignId] ?? {}) };
+            delete campaignDrafts[id];
+            const nextDrafts = { ...s.columnDraftsByCampaign };
+            if (Object.keys(campaignDrafts).length === 0) {
+              delete nextDrafts[campaignId];
+            } else {
+              nextDrafts[campaignId] = campaignDrafts;
+            }
+            return {
+              columnDraftsByCampaign: nextDrafts,
+              lastSaveHint: null,
+            };
           });
         },
 
@@ -400,10 +504,15 @@ export const useReportViewsStore = create<ReportViewsState>()(
 );
 
 export function useReportCampaignSlice(campaignId: string): CampaignSlice {
-  return useReportViewsStore((s) => {
-    const raw = s.byCampaign[campaignId];
-    return raw ? normalizeSlice(raw) : cloneCampaignSlice(EMPTY_SLICE);
-  });
+  // Select the stored slice by stable reference — normalizing inside the
+  // selector would return a fresh object every call and, since Zustand v5 uses
+  // Object.is, spin an infinite render loop. Normalize in a memo keyed on the
+  // raw slice instead.
+  const raw = useReportViewsStore((s) => s.byCampaign[campaignId]);
+  return useMemo(
+    () => (raw ? normalizeSlice(raw) : cloneCampaignSlice(EMPTY_SLICE)),
+    [raw]
+  );
 }
 
 function selectActivePresetState(
@@ -421,7 +530,9 @@ export function useActiveReportPresetState(campaignId: string): ReportViewState 
     (s: ReportViewsState) => selectActivePresetState(campaignId, s),
     [campaignId]
   );
-  return useReportViewsStore(selector, (a, b) => a === b);
+  // Selector returns a stable stored reference, so Zustand v5's default Object.is
+  // equality is correct here (the removed second-arg comparator was a no-op in v5).
+  return useReportViewsStore(selector);
 }
 
 /** @deprecated Use useActiveReportPresetState */
@@ -435,6 +546,44 @@ export function useActiveReportPresetId(campaignId: string): ReportPresetId {
       const sl = s.byCampaign[campaignId];
       if (!sl) return REPORT_PRESET_IDS.visitors;
       return activePresetFromSlice(sl);
+    },
+    [campaignId]
+  );
+  return useReportViewsStore(selector);
+}
+
+export function useActiveResultsTableColumns(
+  campaignId: string
+): ResultsTableColumnId[] {
+  const selector = useCallback(
+    (s: ReportViewsState) => {
+      const state = selectActivePresetState(campaignId, s);
+      const presetId = (() => {
+        const sl = s.byCampaign[campaignId];
+        if (!sl) return REPORT_PRESET_IDS.visitors;
+        return activePresetFromSlice(sl);
+      })();
+      const draft = s.columnDraftsByCampaign[campaignId]?.[presetId];
+      if (draft) return sanitizeResultsTableColumns(draft);
+      return sanitizeResultsTableColumns(
+        state.viewSettings.resultsTableColumns
+      );
+    },
+    [campaignId]
+  );
+  // Zustand v5 ignores the second equality-fn argument, so this selector — which
+  // returns a fresh array every call — must dedupe via useShallow to avoid an
+  // infinite render loop.
+  return useReportViewsStore(useShallow(selector));
+}
+
+export function useIsReportViewDirty(campaignId: string): boolean {
+  const selector = useCallback(
+    (s: ReportViewsState) => {
+      const sl = s.byCampaign[campaignId];
+      if (!sl) return false;
+      const presetId = activePresetFromSlice(sl);
+      return Boolean(s.columnDraftsByCampaign[campaignId]?.[presetId]);
     },
     [campaignId]
   );

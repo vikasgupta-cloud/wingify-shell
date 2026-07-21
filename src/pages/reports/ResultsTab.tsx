@@ -70,6 +70,7 @@ import {
   toYmd,
   useActiveReportPresetId,
   useActiveReportPresetState,
+  useActiveResultsTableColumns,
   useReportMetricsNavCollapsed,
   useReportSelectedMetric,
   useReportViewsStore,
@@ -85,7 +86,6 @@ import {
   type ResultsGraphDefault,
   type ResultsTableColumnId,
   RESULTS_TABLE_COLUMN_IDS,
-  sanitizeResultsTableColumns,
 } from "./reportViewTypes";
 import { SegmentsSelector } from "./SegmentsDrawer";
 import {
@@ -293,8 +293,6 @@ function GraphBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }
   );
 }
 
-const activeTabClass =
-  "-mb-px border-b-2 border-foreground font-medium text-foreground";
 const MAX_VISITOR_DIMENSIONS = 2;
 
 const filterPanelRowClass = "flex items-start gap-x-1";
@@ -2339,7 +2337,7 @@ function RowActionsCell({
 function ExpectedImprovementCell({ value }: { value: number | null }) {
   if (value === null) {
     return (
-      <div className="flex h-[60px] items-center justify-center border-b border-border">
+      <div className="flex h-[68px] items-center justify-center border-b border-border">
         <span className="text-xs text-foreground/70">-</span>
       </div>
     );
@@ -2351,16 +2349,16 @@ function ExpectedImprovementCell({ value }: { value: number | null }) {
   const width = Math.abs(end - 50);
 
   return (
-    <div className="relative flex h-[60px] items-center border-b border-border px-5">
+    <div className="relative flex h-[68px] items-center border-b border-border px-5">
       <div className="relative h-full flex-1">
         {/* median range band */}
-        <div className="absolute inset-y-0 left-1/2 w-[35px] -translate-x-1/2 bg-muted/50" />
+        <div className="absolute inset-y-0 left-1/2 w-[35px] -translate-x-1/2 rounded-md bg-muted/50" />
         {/* 0% centre line */}
         <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border" />
         {/* value bar */}
         <div
           className={cn(
-            "absolute top-1/2 h-[15px] -translate-y-1/2",
+            "absolute top-1/2 h-[15px] -translate-y-1/2 rounded-[3px]",
             positive ? "bg-success-fg" : "bg-danger-fg"
           )}
           style={{ left: `${left}%`, width: `${Math.max(width, 1)}%` }}
@@ -2382,14 +2380,14 @@ function ExpectedImprovementCell({ value }: { value: number | null }) {
 function ProbabilityCell({ value }: { value: number | null }) {
   if (value === null) {
     return (
-      <div className="flex h-[60px] items-center border-b border-border px-5">
+      <div className="flex h-[68px] items-center border-b border-border px-5">
         <span className="text-sm font-medium text-foreground/70">-</span>
       </div>
     );
   }
   const isWinner = value >= WINNER_THRESHOLD;
   return (
-    <div className="relative flex h-[60px] items-center border-b border-border px-5">
+    <div className="relative flex h-[68px] items-center border-b border-border px-5">
       <div className="relative h-[15px] w-full">
         {isWinner && (
           <span className="absolute -top-[18px] left-0 whitespace-nowrap text-xs font-medium text-success-fg">
@@ -2397,11 +2395,11 @@ function ProbabilityCell({ value }: { value: number | null }) {
           </span>
         )}
         {/* track */}
-        <div className="absolute inset-0 bg-muted" />
+        <div className="absolute inset-0 rounded-full bg-muted" />
         {/* fill */}
         <div
           className={cn(
-            "absolute inset-y-0 left-0",
+            "absolute inset-y-0 left-0 rounded-full",
             isWinner ? "bg-success-fg" : "bg-muted-foreground/30"
           )}
           style={{ width: `${value}%` }}
@@ -2417,7 +2415,7 @@ function ProbabilityCell({ value }: { value: number | null }) {
         </span>
         {/* winner-threshold divider spanning the row */}
         <div
-          className="absolute top-[-22px] h-[60px] border-r border-dashed border-border"
+          className="absolute top-[-26px] h-[68px] border-r border-dashed border-border"
           style={{ left: `${WINNER_THRESHOLD}%` }}
         />
       </div>
@@ -2466,7 +2464,7 @@ function DataRow({
       <div
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
-          "flex items-center gap-2.5 border-b border-border py-4 pl-6 pr-4"
+          "flex items-center gap-2.5 border-b border-border py-5 pl-6 pr-4"
         )}
       >
         <GraphBadge tone={tone}>{variant.label}</GraphBadge>
@@ -2923,14 +2921,16 @@ function GraphPanel({
       : ["Week 1", "Week 2", "Week 3", "Week 4"];
 
   return (
-    <div className="border-t border-border px-8 py-8">
-      <div className="flex flex-wrap items-end gap-x-8 gap-y-3 border-b border-border pb-3">
+    <div className="px-8 pb-8 pt-6">
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-1 border-b border-border">
         {GRAPH_TABS.map(({ label, icon: Icon, helpTitle, helpBody, helpAria }, i) => (
           <div
             key={label}
             className={cn(
-              "relative flex items-center gap-1.5 px-0.5 pb-2",
-              graphTab === i && activeTabClass
+              "relative -mb-px flex items-center gap-1.5 border-b-2 border-transparent px-0.5 pb-2.5",
+              graphTab === i
+                ? "border-foreground font-medium text-foreground"
+                : "text-muted-foreground"
             )}
           >
             <button
@@ -3868,14 +3868,13 @@ export default function ResultsTab({
   const viewState = useActiveReportPresetState(campaign.id);
   const viewSettings =
     viewState.viewSettings ?? DEFAULT_REPORT_VIEW_SETTINGS;
-  const resultsTableColumns = sanitizeResultsTableColumns(
-    viewSettings.resultsTableColumns
-  );
+  const resultsTableColumns = useActiveResultsTableColumns(campaign.id);
   const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
+  const setResultsTableColumnsDraft = useReportViewsStore(
+    (s) => s.setResultsTableColumnsDraft
+  );
   const setResultsTableColumns = (next: ResultsTableColumnId[]) =>
-    updateActivePreset(campaign.id, {
-      viewSettings: { resultsTableColumns: next },
-    });
+    setResultsTableColumnsDraft(campaign.id, next);
   const filters: ReportFilterContext = useMemo(
     () => ({
       segments: viewState.segments,
@@ -3947,9 +3946,10 @@ export default function ResultsTab({
             open={viewSettingsOpen}
             onOpenChange={setViewSettingsOpen}
             settings={viewSettings}
-            onSave={(next) =>
-              updateActivePreset(campaign.id, { viewSettings: next })
-            }
+            onSave={(next) => {
+              const { resultsTableColumns: _columns, ...rest } = next;
+              updateActivePreset(campaign.id, { viewSettings: rest });
+            }}
           />
           <StatisticalConfigurationDialog
             open={statConfigOpen}

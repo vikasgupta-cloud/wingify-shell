@@ -2,9 +2,11 @@ import {
   REPORT_PRESET_TABS,
   type ReportPresetId,
   useActiveReportPresetId,
+  useIsReportViewDirty,
   useReportViewsStore,
 } from "../../store/reportViews";
 import { cn } from "../../lib/utils";
+import ReportViewSaveActions from "./ReportViewSaveActions";
 import ReportViewSavedHint from "./ReportViewSavedHint";
 
 const activeTabClass =
@@ -13,6 +15,7 @@ const activeTabClass =
 export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const activePresetId = useActiveReportPresetId(campaignId);
   const setActivePreset = useReportViewsStore((s) => s.setActivePreset);
+  const isDirty = useIsReportViewDirty(campaignId);
 
   return (
     <div className="mb-3 flex min-h-[36px] items-end justify-between gap-4 border-b border-border">
@@ -33,7 +36,9 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
           </button>
         ))}
       </div>
-      <ReportViewSavedHint />
+      <div className="flex shrink-0 items-center self-end">
+        {isDirty ? <ReportViewSaveActions campaignId={campaignId} /> : <ReportViewSavedHint />}
+      </div>
     </div>
   );
 }
