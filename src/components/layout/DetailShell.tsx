@@ -572,14 +572,20 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 </Popover.Content>
               </Popover.Portal>
             </Popover.Root>
+
+            {/* View toggle sits beside the campaign name; config-surface only,
+                hidden on Reports. */}
+            {campaign && !pathname.endsWith("/reports") && (
+              <div className="ml-1 shrink-0">
+                <ViewToggle />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
             the list pages only. Status + kebab need a real campaign. */}
         <div className="flex shrink-0 items-center gap-2">
-          {/* View toggle is a config-surface control — hidden on Reports. */}
-          {campaign && !pathname.endsWith("/reports") && <ViewToggle />}
           <SaveButton entityId={entityId} />
           {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
           {campaign && <KebabMenu campaign={campaign} />}

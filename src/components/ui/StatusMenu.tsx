@@ -7,16 +7,19 @@ import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import StatusBadge from "./StatusBadge";
 
-// Status color (the -fg token) applied to the trigger's text, chevron, and
-// border while its background stays white/transparent like the Save button.
+// Status color applied as a SOLID fill on the trigger — this is the page's
+// primary CTA, so it reads as a filled button (status -fg as background, white
+// text) rather than an outline.
 const STATUS_TRIGGER: Record<CampaignStatus, string> = {
-  Draft: "text-status-draft-fg border-status-draft-fg",
-  "In QA": "text-status-qa-fg border-status-qa-fg",
-  "Ready to launch": "text-status-ready-fg border-status-ready-fg",
-  Running: "text-status-running-fg border-status-running-fg",
-  "In Analysis": "text-status-analysis-fg border-status-analysis-fg",
-  Paused: "text-status-paused-fg border-status-paused-fg",
-  Ended: "text-status-ended-fg border-status-ended-fg",
+  Draft: "border-transparent bg-status-draft-fg text-white hover:bg-status-draft-fg/90",
+  "In QA": "border-transparent bg-status-qa-fg text-white hover:bg-status-qa-fg/90",
+  "Ready to launch":
+    "border-transparent bg-status-ready-fg text-white hover:bg-status-ready-fg/90",
+  Running: "border-transparent bg-status-running-fg text-white hover:bg-status-running-fg/90",
+  "In Analysis":
+    "border-transparent bg-status-analysis-fg text-white hover:bg-status-analysis-fg/90",
+  Paused: "border-transparent bg-status-paused-fg text-white hover:bg-status-paused-fg/90",
+  Ended: "border-transparent bg-status-ended-fg text-white hover:bg-status-ended-fg/90",
 };
 
 // Standalone: this menu can be reused in the level-2 detail top bar later.
@@ -35,8 +38,8 @@ export default function StatusMenu({
 
   // Ended (no transitions): non-interactive, no chevron, no dropdown.
   if (transitions.length === 0) {
-    // Header: a static, disabled button-shaped control matching the Save
-    // button minus the chevron; tinted with the current status color.
+    // Header: a static, disabled filled control (no chevron), solid-tinted
+    // with the current status color.
     if (triggerVariant === "button") {
       return (
         <Button
@@ -61,8 +64,8 @@ export default function StatusMenu({
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
         {triggerVariant === "button" ? (
-          // Button look — matches the Save button (outline, size sm), tinted
-          // with the current status color on text, chevron, and border.
+          // Filled button look (size sm) — solid status color background with
+          // white text + chevron; the page's primary CTA.
           <Button
             type="button"
             variant="outline"
