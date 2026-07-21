@@ -8,20 +8,35 @@ import type { SectionId } from "../config/configSections";
 // dock/undock preference below, which is persisted on its own to localStorage
 // so the chosen layout survives reloads.
 
-const DOCK_PREF_KEY = "wingify:config:dockState";
+type DockState = "docked" | "undocked";
+type ViewMode = "scroll" | "guided";
+type DockPrefs = Record<ViewMode, DockState>;
 
-// Default to "docked". Only an explicit prior "undocked" choice overrides it.
-function readDockPref(): "docked" | "undocked" {
+const DOCK_PREF_KEY = "wingify:config:dockPrefs";
+
+// The dock preference is remembered per view mode, each with its own default:
+// the guided (step-by-step) view docks the step nav, the long-scroll view
+// leaves it as the floating undocked dots. A stored value for a mode overrides
+// only that mode's default.
+const DOCK_DEFAULTS: DockPrefs = { scroll: "undocked", guided: "docked" };
+
+function readDockPrefs(): DockPrefs {
   try {
-    return localStorage.getItem(DOCK_PREF_KEY) === "undocked" ? "undocked" : "docked";
+    const raw = localStorage.getItem(DOCK_PREF_KEY);
+    if (!raw) return { ...DOCK_DEFAULTS };
+    const parsed = JSON.parse(raw) as Partial<DockPrefs>;
+    return {
+      scroll: parsed.scroll === "docked" ? "docked" : parsed.scroll === "undocked" ? "undocked" : DOCK_DEFAULTS.scroll,
+      guided: parsed.guided === "docked" ? "docked" : parsed.guided === "undocked" ? "undocked" : DOCK_DEFAULTS.guided,
+    };
   } catch {
-    return "docked";
+    return { ...DOCK_DEFAULTS };
   }
 }
 
-function writeDockPref(state: "docked" | "undocked") {
+function writeDockPrefs(prefs: DockPrefs) {
   try {
-    localStorage.setItem(DOCK_PREF_KEY, state);
+    localStorage.setItem(DOCK_PREF_KEY, JSON.stringify(prefs));
   } catch {
     /* ignore write failures (private mode, quota) */
   }
@@ -234,11 +249,13 @@ type ConfigState = {
   openWorkflow: (id: string) => void;
   closeWorkflow: (id: string) => void;
   // NOTE: view state only — how the config step navigator (DotNav) is shown.
-  // 'undocked' = hover-dots flyout; 'docked' = persistent left panel. Session-
-  // only (this store is not persisted) and outside CampaignConfig so it never
-  // marks the config dirty.
-  dockState: "docked" | "undocked";
-  setDockState: (state: "docked" | "undocked") => void;
+  // 'undocked' = hover-dots flyout; 'docked' = persistent left panel. Tracked
+  // per view mode (`dockPrefs`) and persisted to localStorage; `dockState` is
+  // the effective value for the current `viewMode`. Outside CampaignConfig so
+  // it never marks the config dirty.
+  dockState: DockState;
+  dockPrefs: DockPrefs;
+  setDockState: (state: DockState) => void;
   // NOTE: session-only view state — how the config surface renders its steps.
   // 'scroll' = all steps in one vertical scroll (default); 'guided' = one step
   // at a time, navigated via the DotNav. Outside CampaignConfig so it never
@@ -304,13 +321,19 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: true } })),
   closeWorkflow: (id) =>
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: false } })),
-  dockState: readDockPref(),
-  setDockState: (state) => {
-    writeDockPref(state);
-    set({ dockState: state });
-  },
+  dockPrefs: readDockPrefs(),
+  // Initial viewMode is "scroll", so the effective dock state starts from the
+  // scroll-view preference.
+  dockState: readDockPrefs().scroll,
+  setDockState: (state) =>
+    set((s) => {
+      const dockPrefs = { ...s.dockPrefs, [s.viewMode]: state };
+      writeDockPrefs(dockPrefs);
+      return { dockState: state, dockPrefs };
+    }),
   viewMode: "scroll",
-  setViewMode: (mode) => set({ viewMode: mode }),
+  // Switching view mode re-applies that mode's remembered dock preference.
+  setViewMode: (mode) => set((s) => ({ viewMode: mode, dockState: s.dockPrefs[mode] })),
   activeStepId: "main",
   setActiveStepId: (stepId) => set({ activeStepId: stepId }),
   connectedIntegrations: [],

@@ -39,7 +39,15 @@ const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
 // The body for a single step section. Shared by Scroll (all sections) and
 // Guided (one section) so the two views always render identical content — the
 // same config store, the same components (Workflow Mode included).
-function SectionBody({ sectionId, id }: { sectionId: string; id: string }) {
+function SectionBody({
+  sectionId,
+  id,
+  guided,
+}: {
+  sectionId: string;
+  id: string;
+  guided?: boolean;
+}) {
   switch (sectionId) {
     case "main":
       return <MainInformation id={id} />;
@@ -51,14 +59,21 @@ function SectionBody({ sectionId, id }: { sectionId: string; id: string }) {
       return <MetricsSection id={id} />;
     case "integrations":
       return <IntegrationsSection id={id} />;
+    // The two optional sections are accordions only in the long-scroll view. In
+    // the guided view each is its own step (the step header already names it),
+    // so the content renders directly — expanded, no collapsible wrapper.
     case "additional":
-      return (
+      return guided ? (
+        <AdditionalSettings id={id} />
+      ) : (
         <CollapsibleSection id="additional" title="Additional Settings" optional>
           <AdditionalSettings id={id} />
         </CollapsibleSection>
       );
     case "qa":
-      return (
+      return guided ? (
+        <QaAssistant id={id} />
+      ) : (
         <CollapsibleSection id="qa" title="QA Assistant" optional>
           <QaAssistant id={id} />
         </CollapsibleSection>
@@ -97,7 +112,7 @@ function StepNav({
         disabled={isLast}
         onClick={() => onGo(order[idx + 1])}
       >
-        Save and Next
+        Next
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
@@ -251,7 +266,7 @@ export default function ConfigPage() {
             <div className="flex flex-1 flex-col justify-center">
               <GuidedStepHeader section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]} />
               <div className="[&_h2+button]:hidden [&_h2]:hidden">
-                <SectionBody sectionId={activeStepId} id={id} />
+                <SectionBody sectionId={activeStepId} id={id} guided />
               </div>
             </div>
             <StepNav activeStepId={activeStepId} onGo={setActiveStepId} />
