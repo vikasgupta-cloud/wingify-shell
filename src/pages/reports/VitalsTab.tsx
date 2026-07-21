@@ -267,7 +267,8 @@ export default function VitalsTab({ campaign }: { campaign: Campaign }) {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="mx-auto max-w-[920px] space-y-8 px-12 pb-16 pt-10">
+      <div className="min-h-full bg-background">
+        <div className="mx-auto max-w-[920px] space-y-8 px-12 pb-16 pt-10">
         <header className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Report: Experiment Vitals
@@ -350,6 +351,7 @@ export default function VitalsTab({ campaign }: { campaign: Campaign }) {
             <VitalStatus vitalId={active.id} campaign={campaign} />
           </div>
         </section>
+        </div>
       </div>
     </TooltipProvider>
   );
