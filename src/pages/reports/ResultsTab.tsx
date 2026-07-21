@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Award,
   CalendarClock,
@@ -9,6 +9,7 @@ import {
   Construction,
   Download,
   FlaskConical,
+  GripVertical,
   Heart,
   HelpCircle,
   Layers,
@@ -81,6 +82,9 @@ import {
   type ReportViewSettings,
   type ResultsLayout,
   type ResultsGraphDefault,
+  type ResultsTableColumnId,
+  RESULTS_TABLE_COLUMN_IDS,
+  sanitizeResultsTableColumns,
 } from "./reportViewTypes";
 import { SegmentsSelector } from "./SegmentsDrawer";
 import {
@@ -91,12 +95,88 @@ import {
 
 const WINNER_THRESHOLD = 95;
 
-// Column template shared by the header, sub-head and every data row so the
-// whole table stays aligned.
-const GRID = {
-  gridTemplateColumns:
-    "minmax(220px,1.6fr) 110px 120px minmax(190px,1.2fr) minmax(300px,1.5fr) 40px",
-} as const;
+const RESULTS_TABLE_COLUMN_META: Record<
+  ResultsTableColumnId,
+  { label: string; gridWidth: string; minWidthPx: number }
+> = {
+  "unique-conversions": {
+    label: "Unique conversions",
+    gridWidth: "minmax(152px, 1fr)",
+    minWidthPx: 152,
+  },
+  "total-visitors": {
+    label: "Total visitors",
+    gridWidth: "minmax(132px, 1fr)",
+    minWidthPx: 132,
+  },
+  "expected-improvement": {
+    label: "Expected improvement(v)",
+    gridWidth: "minmax(200px, 1.2fr)",
+    minWidthPx: 200,
+  },
+  probability: {
+    label: "Probability of Better or Equivalent (v)",
+    gridWidth: "minmax(320px, 1.5fr)",
+    minWidthPx: 320,
+  },
+  "conversion-rate": {
+    label: "Conversion rate",
+    gridWidth: "minmax(148px, 1fr)",
+    minWidthPx: 148,
+  },
+  "revenue-per-visitor": {
+    label: "Revenue per visitor",
+    gridWidth: "minmax(184px, 1fr)",
+    minWidthPx: 184,
+  },
+};
+
+function resultsTableMinWidth(columns: ResultsTableColumnId[]) {
+  const metrics = columns.reduce(
+    (sum, id) => sum + RESULTS_TABLE_COLUMN_META[id].minWidthPx,
+    0
+  );
+  return 220 + metrics + 40;
+}
+
+function buildResultsGrid(columns: ResultsTableColumnId[]) {
+  const widths = columns
+    .map((id) => RESULTS_TABLE_COLUMN_META[id].gridWidth)
+    .join(" ");
+  return {
+    gridTemplateColumns: `220px ${widths} 40px`,
+  } as const;
+}
+
+function stickyVariationsCellClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky left-0 z-30 min-w-[220px] max-w-[220px] border-r border-border bg-background group-hover:bg-muted",
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+  );
+}
+
+function stickyActionsCellClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] border-l border-border bg-background group-hover:bg-muted",
+    showEdgeShadow && "shadow-[-6px_0_12px_-8px_hsl(var(--border))]"
+  );
+}
+
+type StickyEdgeShadows = { left: boolean; right: boolean };
+
+const NO_STICKY_EDGE_SHADOWS: StickyEdgeShadows = { left: false, right: false };
+
+function measureStickyEdgeShadows(el: HTMLDivElement): StickyEdgeShadows {
+  const { scrollLeft, scrollWidth, clientWidth } = el;
+  const canScroll = scrollWidth > clientWidth + 1;
+  if (!canScroll) return NO_STICKY_EDGE_SHADOWS;
+  return {
+    left: scrollLeft > 1,
+    right: scrollLeft + clientWidth < scrollWidth - 1,
+  };
+}
+
+const resultsTableMetricCellClass = "relative z-0 min-w-0";
 
 const formatNumber = (n: number) => n.toLocaleString("en-US");
 
@@ -1028,14 +1108,16 @@ function MetricHeader({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <button
+        <Button
           type="button"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-report-brand bg-background px-2.5 text-sm font-medium text-report-brand-fg transition-colors hover:bg-report-brand-tint"
-          aria-label="AI campaign summary"
+          variant="outline"
+          size="sm"
+          className="h-9 gap-1.5 rounded-md font-medium"
+          aria-label="Campaign summary"
         >
           <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          Summary ready
-        </button>
+          Campaign summary
+        </Button>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -1766,67 +1848,456 @@ function WinnerThresholdHelp() {
   );
 }
 
-function TableHeader() {
+function ResultsTableColumnHelp({ columnId }: { columnId: ResultsTableColumnId }) {
+  switch (columnId) {
+    case "unique-conversions":
+      return <UniqueConversionsHelp />;
+    case "total-visitors":
+      return <TotalVisitorsHelp />;
+    case "expected-improvement":
+      return <ExpectedImprovementHelp />;
+    case "probability":
+      return <ProbabilityBetterOrEquivalentHelp />;
+    case "conversion-rate":
+      return (
+        <TableColumnHelp
+          title="Conversion rate"
+          ariaLabel="What is conversion rate"
+          body="Unique conversions divided by total visitors for the variation, expressed as a percentage for the selected metric and date range."
+        />
+      );
+    case "revenue-per-visitor":
+      return (
+        <TableColumnHelp
+          title="Revenue per visitor"
+          ariaLabel="What is revenue per visitor"
+          body="Average revenue attributed to each visitor in the variation for the selected metric window. Useful when the success metric is tied to monetary value."
+        />
+      );
+    default:
+      return null;
+  }
+}
+
+function reorderResultsColumns(
+  columns: ResultsTableColumnId[],
+  from: number,
+  to: number
+): ResultsTableColumnId[] {
+  if (
+    from < 0 ||
+    to < 0 ||
+    from >= columns.length ||
+    to >= columns.length ||
+    from === to
+  ) {
+    return columns;
+  }
+  const next = [...columns];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
+function ReportResultsColumnConfig({
+  columns,
+  onColumnsChange,
+}: {
+  columns: ResultsTableColumnId[];
+  onColumnsChange: (next: ResultsTableColumnId[]) => void;
+}) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const hidden = RESULTS_TABLE_COLUMN_IDS.filter((id) => !columns.includes(id));
+
+  const endDrag = () => {
+    setDragIndex(null);
+    setDropIndex(null);
+  };
+
+  const toggleColumn = (id: ResultsTableColumnId) => {
+    if (columns.includes(id)) {
+      if (columns.length <= 1) return;
+      onColumnsChange(columns.filter((c) => c !== id));
+      return;
+    }
+    onColumnsChange([...columns, id]);
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          aria-label="Configure table columns"
+        >
+          <Columns3 className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[300px] p-3">
+        <p className="text-xs font-medium text-muted-foreground">Table columns</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Drag to reorder. Add optional metrics from the list below.
+        </p>
+        <ul className="mt-3 space-y-1">
+          {columns.map((id, index) => (
+            <li
+              key={id}
+              draggable
+              onDragStart={() => setDragIndex(index)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDropIndex(index);
+              }}
+              onDragLeave={() => setDropIndex(null)}
+              onDrop={() => {
+                if (dragIndex !== null && dropIndex !== null) {
+                  onColumnsChange(reorderResultsColumns(columns, dragIndex, dropIndex));
+                }
+                endDrag();
+              }}
+              onDragEnd={endDrag}
+              className={cn(
+                "flex items-center gap-2 rounded-md border border-transparent px-2 py-1.5",
+                dragIndex === index && "opacity-50",
+                dropIndex === index && dragIndex !== null && "border-border bg-muted/40"
+              )}
+            >
+              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing" />
+              <Checkbox
+                checked
+                onCheckedChange={() => toggleColumn(id)}
+                className="h-3.5 w-3.5"
+              />
+              <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                {RESULTS_TABLE_COLUMN_META[id].label}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {hidden.length > 0 ? (
+          <>
+            <div className="my-2 h-px bg-border" />
+            <p className="text-xs font-medium text-muted-foreground">Add columns</p>
+            <ul className="mt-2 space-y-1">
+              {hidden.map((id) => (
+                <li key={id}>
+                  <button
+                    type="button"
+                    onClick={() => toggleColumn(id)}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-muted/50"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                    {RESULTS_TABLE_COLUMN_META[id].label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function TableHeader({
+  columns,
+  onColumnsChange,
+  edgeShadows,
+}: {
+  columns: ResultsTableColumnId[];
+  onColumnsChange: (next: ResultsTableColumnId[]) => void;
+  edgeShadows: StickyEdgeShadows;
+}) {
+  const gridStyle = buildResultsGrid(columns);
+
   return (
     <>
-      {/* Column titles — top-aligned so every label shares one baseline */}
-      <div className="grid items-start bg-muted/30" style={GRID}>
-        <div className="flex items-center gap-1 px-6 pb-2.5 pt-4">
+      <div className="grid items-start bg-muted" style={gridStyle}>
+        <div
+          className={cn(
+            stickyVariationsCellClass(edgeShadows.left),
+            "flex items-center justify-between gap-2 bg-muted px-6 pb-2.5 pt-4 group-hover:bg-muted"
+          )}
+        >
           <span className="text-xs font-semibold text-foreground/75">Variations</span>
+          <ReportResultsColumnConfig
+            columns={columns}
+            onColumnsChange={onColumnsChange}
+          />
         </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
-          <span className="text-right text-xs font-semibold text-foreground/75">
-            Unique conversions
-          </span>
-          <UniqueConversionsHelp />
-        </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
-          <span className="text-right text-xs font-semibold text-foreground/75">
-            Total visitors
-          </span>
-          <TotalVisitorsHelp />
-        </div>
-        <div className="flex items-center justify-center gap-1 px-2 pb-2.5 pt-4">
-          <span className="text-center text-xs font-semibold text-foreground/75">
-            Expected improvement(v)
-          </span>
-          <ExpectedImprovementHelp />
-        </div>
-        <div className="flex flex-col gap-0.5 px-6 pb-2.5 pt-4">
-          <div className="flex items-center gap-1">
-            <span className="text-xs font-semibold text-foreground/75">
-              Probability of Better or Equivalent (v)
-            </span>
-            <ProbabilityBetterOrEquivalentHelp />
-          </div>
-          <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
-            MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
-            <Pencil className="h-3 w-3 shrink-0" aria-hidden />
-          </div>
-        </div>
-        <div />
+        {columns.map((id) => {
+          const meta = RESULTS_TABLE_COLUMN_META[id];
+          const alignCenter = id === "expected-improvement";
+          const isProbability = id === "probability";
+          return (
+            <div
+              key={id}
+              className={cn(
+                resultsTableMetricCellClass,
+                "overflow-hidden bg-muted px-2 pb-2.5 pt-4",
+                isProbability && "flex flex-col gap-0.5 px-4"
+              )}
+            >
+              <div
+                className={cn(
+                  "flex min-w-0 items-start gap-1 overflow-hidden",
+                  alignCenter && "justify-center",
+                  !alignCenter && !isProbability && "justify-end",
+                  isProbability && "justify-start"
+                )}
+              >
+                <span
+                  className={cn(
+                    "min-w-0 text-xs font-semibold leading-snug text-foreground/75",
+                    alignCenter && "text-center",
+                    !alignCenter && !isProbability && "text-right",
+                    isProbability ? "line-clamp-2" : "truncate"
+                  )}
+                >
+                  {meta.label}
+                </span>
+                <span className="shrink-0">
+                  <ResultsTableColumnHelp columnId={id} />
+                </span>
+              </div>
+              {isProbability ? (
+                <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
+                  MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
+                  <Pencil className="h-3 w-3 shrink-0" aria-hidden />
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+        <div
+          className={cn(
+            stickyActionsCellClass(edgeShadows.right),
+            "h-full min-h-[52px] bg-muted group-hover:bg-muted"
+          )}
+        />
       </div>
 
-      {/* Axis / threshold sub-head — same grid, shared baseline */}
       <div
-        className="grid items-center border-b border-border bg-muted/40 text-[10px] leading-none text-muted-foreground"
-        style={GRID}
+        className="grid items-center border-b border-border bg-muted text-[10px] leading-none text-muted-foreground"
+        style={gridStyle}
       >
-        <div className="h-5" />
-        <div className="h-5" />
-        <div className="h-5" />
-        <div className="flex h-5 items-center justify-between px-5">
-          <span>-6%</span>
-          <span>0%</span>
-          <span>6%</span>
-        </div>
-        <div className="flex h-5 items-center justify-end gap-1 pr-5">
-          <span>Winner threshold: {WINNER_THRESHOLD}%</span>
-          <WinnerThresholdHelp />
-        </div>
-        <div className="h-5" />
+        <div className={cn(stickyVariationsCellClass(edgeShadows.left), "h-5 bg-muted group-hover:bg-muted")} />
+        {columns.map((id) => {
+          if (id === "expected-improvement") {
+            return (
+              <div
+                key={id}
+                className={cn(
+                  resultsTableMetricCellClass,
+                  "flex h-5 items-center justify-between bg-muted px-5"
+                )}
+              >
+                <span>-6%</span>
+                <span>0%</span>
+                <span>6%</span>
+              </div>
+            );
+          }
+          if (id === "probability") {
+            return (
+              <div
+                key={id}
+                className={cn(
+                  resultsTableMetricCellClass,
+                  "flex h-5 items-center justify-end gap-1 bg-muted pr-5"
+                )}
+              >
+                <span>Winner threshold: {WINNER_THRESHOLD}%</span>
+                <WinnerThresholdHelp />
+              </div>
+            );
+          }
+          return <div key={id} className={cn(resultsTableMetricCellClass, "h-5 bg-muted")} />;
+        })}
+        <div className={cn(stickyActionsCellClass(edgeShadows.right), "h-5 bg-muted group-hover:bg-muted")} />
       </div>
     </>
+  );
+}
+
+function revenuePerVisitor(
+  campaign: Campaign,
+  metricName: string,
+  variant: Variant,
+  index: number,
+  filters: ReportFilterContext
+): number {
+  const seed = hashMetricSeed(
+    `${campaign.id}:${metricName}:${variant.id}:rpv:${filterMetricSeedSuffix(filters)}`
+  );
+  const base = 1.2 + (seed % 400) / 100;
+  const lift = index === 0 ? 0 : ((seed >> 8) % 120) / 100;
+  return base + lift;
+}
+
+function ResultsMetricCell({
+  columnId,
+  isControl,
+  conversions,
+  visitors,
+  uplift,
+  confidence,
+  revenuePerVisitorValue,
+}: {
+  columnId: ResultsTableColumnId;
+  isControl: boolean;
+  conversions: number;
+  visitors: number;
+  uplift: number | null;
+  confidence: number | null;
+  revenuePerVisitorValue: number;
+}) {
+  const metricCell = cn(
+    resultsTableMetricCellClass,
+    "overflow-hidden bg-background group-hover:bg-muted"
+  );
+  switch (columnId) {
+    case "unique-conversions":
+      return (
+        <div
+          className={cn(
+            metricCell,
+            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
+          )}
+        >
+          {formatNumber(conversions)}
+        </div>
+      );
+    case "total-visitors":
+      return (
+        <div
+          className={cn(
+            metricCell,
+            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
+          )}
+        >
+          {formatNumber(visitors)}
+        </div>
+      );
+    case "expected-improvement":
+      return (
+        <div className={metricCell}>
+          <ExpectedImprovementCell value={isControl ? null : uplift} />
+        </div>
+      );
+    case "probability":
+      return (
+        <div className={metricCell}>
+          <ProbabilityCell value={isControl ? null : confidence} />
+        </div>
+      );
+    case "conversion-rate": {
+      const rate = visitors > 0 ? (conversions / visitors) * 100 : 0;
+      return (
+        <div
+          className={cn(
+            metricCell,
+            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
+          )}
+        >
+          {rate.toFixed(2)}%
+        </div>
+      );
+    }
+    case "revenue-per-visitor":
+      return (
+        <div
+          className={cn(
+            metricCell,
+            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
+          )}
+        >
+          ${revenuePerVisitorValue.toFixed(2)}
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
+function ResultsTotalMetricCell({
+  columnId,
+  conversions,
+  visitors,
+}: {
+  columnId: ResultsTableColumnId;
+  conversions: number;
+  visitors: number;
+}) {
+  const cell = cn(
+    resultsTableMetricCellClass,
+    "flex items-center border-t border-border bg-background py-6 group-hover:bg-muted"
+  );
+  switch (columnId) {
+    case "unique-conversions":
+      return (
+        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
+          {formatNumber(conversions)}
+        </div>
+      );
+    case "total-visitors":
+      return (
+        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
+          {formatNumber(visitors)}
+        </div>
+      );
+    case "expected-improvement":
+      return (
+        <div className={cn(cell, "justify-center text-sm text-foreground/70")}>-</div>
+      );
+    case "probability":
+      return (
+        <div className={cn(cell, "pl-5 text-sm text-foreground/70")}>-</div>
+      );
+    case "conversion-rate": {
+      const rate = visitors > 0 ? (conversions / visitors) * 100 : 0;
+      return (
+        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
+          {rate.toFixed(2)}%
+        </div>
+      );
+    }
+    case "revenue-per-visitor":
+      return (
+        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
+          —
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
+function RowActionsCell({
+  className,
+  edgeShadows,
+}: {
+  className?: string;
+  edgeShadows: StickyEdgeShadows;
+}) {
+  return (
+    <div
+      className={cn(
+        stickyActionsCellClass(edgeShadows.right),
+        "flex items-center justify-center border-b border-border bg-background group-hover:bg-muted",
+        className
+      )}
+    >
+      <button
+        type="button"
+        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60"
+        aria-label="Row actions"
+      >
+        <MoreVertical className="h-4 w-4" aria-hidden />
+      </button>
+    </div>
   );
 }
 
@@ -1927,6 +2398,8 @@ function DataRow({
   metricName,
   filters,
   dataMode,
+  columns,
+  edgeShadows,
 }: {
   campaign: Campaign;
   variant: Variant;
@@ -1934,6 +2407,8 @@ function DataRow({
   metricName: string;
   filters: ReportFilterContext;
   dataMode: "visitors" | "sessions";
+  columns: ResultsTableColumnId[];
+  edgeShadows: StickyEdgeShadows;
 }) {
   const visitors = variantVisitors(campaign, index, filters, dataMode);
   const { uplift, confidence, conversions } = metricRowStats(
@@ -1946,10 +2421,20 @@ function DataRow({
   );
   const tone = badgeTone(index);
   const isControl = index === 0;
+  const gridStyle = buildResultsGrid(columns);
+  const rpv = revenuePerVisitor(campaign, metricName, variant, index, filters);
 
   return (
-    <div className="group grid items-stretch transition-colors hover:bg-muted/30" style={GRID}>
-      <div className="flex items-center gap-2 border-b border-border py-3.5 pl-6 pr-4">
+    <div
+      className="group grid items-stretch transition-colors"
+      style={gridStyle}
+    >
+      <div
+        className={cn(
+          stickyVariationsCellClass(edgeShadows.left),
+          "flex items-center gap-2 border-b border-border py-3.5 pl-6 pr-4"
+        )}
+      >
         <GraphBadge tone={tone}>{variant.label}</GraphBadge>
         <span className="text-sm font-medium text-foreground">{variant.name}</span>
         {isControl && (
@@ -1958,44 +2443,56 @@ function DataRow({
           </span>
         )}
       </div>
-      <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
-        {formatNumber(conversions)}
-      </div>
-      <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
-        {formatNumber(visitors)}
-      </div>
-      <ExpectedImprovementCell value={isControl ? null : uplift} />
-      <ProbabilityCell value={isControl ? null : confidence} />
-      <div className="flex items-center justify-center border-b border-border">
-        <button
-          type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60"
-          aria-label="Row actions"
-        >
-          <MoreVertical className="h-4 w-4" aria-hidden />
-        </button>
-      </div>
+      {columns.map((columnId) => (
+        <ResultsMetricCell
+          key={columnId}
+          columnId={columnId}
+          isControl={isControl}
+          conversions={conversions}
+          visitors={visitors}
+          uplift={uplift}
+          confidence={confidence}
+          revenuePerVisitorValue={rpv}
+        />
+      ))}
+      <RowActionsCell edgeShadows={edgeShadows} />
     </div>
   );
 }
 
-function TotalRow({ conversions, visitors }: { conversions: number; visitors: number }) {
+function TotalRow({
+  conversions,
+  visitors,
+  columns,
+  edgeShadows,
+}: {
+  conversions: number;
+  visitors: number;
+  columns: ResultsTableColumnId[];
+  edgeShadows: StickyEdgeShadows;
+}) {
   const cell = "flex items-center border-t border-border py-6";
+  const gridStyle = buildResultsGrid(columns);
   return (
-    <div className="grid items-stretch" style={GRID}>
-      <div className={cn(cell, "gap-2 pl-6 pr-4")}>
+    <div className="group grid items-stretch" style={gridStyle}>
+      <div className={cn(stickyVariationsCellClass(edgeShadows.left), cell, "gap-2 pl-6 pr-4")}>
         <GraphBadge tone="total">T</GraphBadge>
         <span className="text-sm font-medium text-foreground">Total</span>
       </div>
-      <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
-        {formatNumber(conversions)}
-      </div>
-      <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
-        {formatNumber(visitors)}
-      </div>
-      <div className={cn(cell, "justify-center text-sm text-foreground/70")}>-</div>
-      <div className={cn(cell, "pl-5 text-sm text-foreground/70")}>-</div>
-      <div className={cn(cell, "justify-center")} />
+      {columns.map((columnId) => (
+        <ResultsTotalMetricCell
+          key={columnId}
+          columnId={columnId}
+          conversions={conversions}
+          visitors={visitors}
+        />
+      ))}
+      <div
+        className={cn(
+          stickyActionsCellClass(edgeShadows.right),
+          "flex items-center justify-center border-t border-border bg-background py-6 group-hover:bg-muted"
+        )}
+      />
     </div>
   );
 }
@@ -2006,12 +2503,16 @@ function ResultsTable({
   filters,
   dataMode,
   showTotalRow,
+  columns,
+  onColumnsChange,
 }: {
   campaign: Campaign;
   metricName: string;
   filters: ReportFilterContext;
   dataMode: "visitors" | "sessions";
   showTotalRow: boolean;
+  columns: ResultsTableColumnId[];
+  onColumnsChange: (next: ResultsTableColumnId[]) => void;
 }) {
   const variants = campaign.report.variants;
   const rows = variants.map((variant, index) => {
@@ -2028,11 +2529,40 @@ function ResultsTable({
   });
   const totalConversions = rows.reduce((sum, r) => sum + r.conversions, 0);
   const totalVisitors = rows.reduce((sum, r) => sum + r.visitors, 0);
+  const minWidth = resultsTableMinWidth(columns);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [edgeShadows, setEdgeShadows] =
+    useState<StickyEdgeShadows>(NO_STICKY_EDGE_SHADOWS);
+
+  const syncEdgeShadows = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setEdgeShadows(measureStickyEdgeShadows(el));
+  }, []);
+
+  useLayoutEffect(() => {
+    syncEdgeShadows();
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(syncEdgeShadows);
+    ro.observe(el);
+    const inner = el.firstElementChild;
+    if (inner) ro.observe(inner);
+    return () => ro.disconnect();
+  }, [syncEdgeShadows, columns, showTotalRow, metricName, campaign.id]);
 
   return (
-    <div className="overflow-x-auto bg-background">
-      <div className="min-w-[900px]">
-        <TableHeader />
+    <div
+      ref={scrollRef}
+      onScroll={syncEdgeShadows}
+      className="overflow-x-auto bg-background"
+    >
+      <div style={{ minWidth }}>
+        <TableHeader
+          columns={columns}
+          onColumnsChange={onColumnsChange}
+          edgeShadows={edgeShadows}
+        />
         {rows.map((r) => (
           <DataRow
             key={`${metricName}-${r.variant.id}`}
@@ -2042,10 +2572,17 @@ function ResultsTable({
             metricName={metricName}
             filters={filters}
             dataMode={dataMode}
+            columns={columns}
+            edgeShadows={edgeShadows}
           />
         ))}
         {showTotalRow ? (
-          <TotalRow conversions={totalConversions} visitors={totalVisitors} />
+          <TotalRow
+            conversions={totalConversions}
+            visitors={totalVisitors}
+            columns={columns}
+            edgeShadows={edgeShadows}
+          />
         ) : null}
       </div>
     </div>
@@ -3287,7 +3824,14 @@ export default function ResultsTab({
   const viewState = useActiveReportPresetState(campaign.id);
   const viewSettings =
     viewState.viewSettings ?? DEFAULT_REPORT_VIEW_SETTINGS;
+  const resultsTableColumns = sanitizeResultsTableColumns(
+    viewSettings.resultsTableColumns
+  );
   const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
+  const setResultsTableColumns = (next: ResultsTableColumnId[]) =>
+    updateActivePreset(campaign.id, {
+      viewSettings: { resultsTableColumns: next },
+    });
   const filters: ReportFilterContext = useMemo(
     () => ({
       segments: viewState.segments,
@@ -3426,6 +3970,8 @@ export default function ResultsTab({
                         filters={filters}
                         dataMode={dataMode}
                         showTotalRow={viewSettings.showTotalRow}
+                        columns={resultsTableColumns}
+                        onColumnsChange={setResultsTableColumns}
                       />
                     </>
                   ) : (
@@ -3436,6 +3982,8 @@ export default function ResultsTab({
                         filters={filters}
                         dataMode={dataMode}
                         showTotalRow={viewSettings.showTotalRow}
+                        columns={resultsTableColumns}
+                        onColumnsChange={setResultsTableColumns}
                       />
                       <GraphPanel
                         campaign={campaign}

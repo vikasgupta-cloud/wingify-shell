@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import {
   DEFAULT_REPORT_VIEW_SETTINGS,
   REPORT_PRESET_IDS,
+  sanitizeResultsTableColumns,
   type ReportPresetId,
   type ReportViewSettings,
 } from "../pages/reports/reportViewTypes";
@@ -94,6 +95,10 @@ function mergePresetPartial(p: Partial<ReportViewState> | undefined): ReportView
       ...(p.viewSettings && typeof p.viewSettings === "object"
         ? p.viewSettings
         : {}),
+      resultsTableColumns: sanitizeResultsTableColumns(
+        p.viewSettings?.resultsTableColumns,
+        base.viewSettings.resultsTableColumns
+      ),
     },
   };
 }
