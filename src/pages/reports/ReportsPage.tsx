@@ -840,7 +840,11 @@ export default function ReportsPage() {
           <ReportsOverview campaign={campaign} onViewFullStats={() => setActiveTab("results")} />
         </TabsContent>
         <TabsContent value="results" className="mt-0 flex-1 focus-visible:outline-none">
-          <ResultsTab campaign={campaign} />
+          <ResultsTab
+            key={campaign.id}
+            campaign={campaign}
+            onNavigateToVitals={() => setActiveTab("vitals")}
+          />
         </TabsContent>
         {TABS.slice(2).map((tab) => (
           <TabsContent

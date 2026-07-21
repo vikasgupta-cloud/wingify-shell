@@ -1,21 +1,32 @@
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Award,
+  CalendarClock,
   CalendarRange,
   ChevronDown,
   Columns3,
+  Compass,
+  Construction,
+  Download,
+  FlaskConical,
+  Heart,
   HelpCircle,
   Layers,
   LayoutPanelTop,
+  LineChart,
   MousePointerClick,
   MoreVertical,
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
   PieChart,
+  Plus,
+  Sparkles,
   Star,
   Settings,
   TrendingUp,
+  Wrench,
+  ChevronRight,
   X,
 } from "lucide-react";
 import type { Campaign, Variant } from "../../data/campaigns";
@@ -51,16 +62,26 @@ import {
 import { cn } from "@/lib/utils";
 import {
   REPORT_DIMENSION_OPTIONS,
+  REPORT_PRESET_IDS,
+  REPORT_BASE_FILTERS,
   fromYmd,
   toYmd,
-  useReportActiveViewState,
+  useActiveReportPresetId,
+  useActiveReportPresetState,
+  useReportMetricsNavCollapsed,
+  useReportSelectedMetric,
   useReportViewsStore,
-  useIsReportViewDirty,
   type ReportDateRange,
 } from "../../store/reportViews";
 import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
-import ReportViewSaveActions from "./ReportViewSaveActions";
+import { campaignReportDateRange } from "./reportCampaignDefaults";
+import {
+  DEFAULT_REPORT_VIEW_SETTINGS,
+  type ReportViewSettings,
+  type ResultsLayout,
+  type ResultsGraphDefault,
+} from "./reportViewTypes";
 import { SegmentsSelector } from "./SegmentsDrawer";
 import {
   filterMetricSeedSuffix,
@@ -189,6 +210,13 @@ const activeTabClass =
   "-mb-px border-b-2 border-foreground font-medium text-foreground";
 const MAX_VISITOR_DIMENSIONS = 2;
 
+const filterPanelRowClass = "flex items-start gap-x-1";
+const filterPanelLabelClass =
+  "flex w-[6.75rem] shrink-0 items-center gap-1.5 pt-1 text-sm text-muted-foreground";
+const filterPanelChipsClass =
+  "flex min-w-0 flex-1 flex-wrap items-center gap-2";
+const filterPanelInsetClass = "px-5 py-3.5";
+
 // ---------------------------------------------------------------------------
 // Filter bar
 
@@ -299,11 +327,15 @@ function MultiSelectFilterChip({
 }
 
 function storedToDateRange(range: ReportDateRange): DateRange {
+  const from =
+    typeof range.from === "string" ? range.from : REPORT_BASE_FILTERS.dateRange.from;
+  const to =
+    typeof range.to === "string" ? range.to : REPORT_BASE_FILTERS.dateRange.to;
   return {
-    id: range.id,
-    label: range.label,
-    from: fromYmd(range.from),
-    to: fromYmd(range.to),
+    id: range.id ?? REPORT_BASE_FILTERS.dateRange.id,
+    label: range.label ?? REPORT_BASE_FILTERS.dateRange.label,
+    from: fromYmd(from),
+    to: fromYmd(to),
   };
 }
 
@@ -324,42 +356,44 @@ function FilterBar({
   right?: ReactNode;
 }) {
   const { dateRange, segments, dimensions } =
-    useReportActiveViewState(campaignId);
-  const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
-  const isDirty = useIsReportViewDirty(campaignId);
-  const showTrailing = Boolean(right) || isDirty;
+    useActiveReportPresetState(campaignId);
+  const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
+  const showTrailing = Boolean(right);
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="mr-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-          <FunnelIcon className="h-3.5 w-3.5" />
-          Filter by :
-        </span>
+    <div className={filterPanelRowClass}>
+      <span className={filterPanelLabelClass}>
+        <FunnelIcon className="h-3.5 w-3.5 shrink-0" />
+        Filter by :
+      </span>
+      <div className={filterPanelChipsClass}>
         <DateRangeDropdown
           variant="filter"
           value={storedToDateRange(dateRange)}
           onChange={(range) =>
-            updateDraft(campaignId, { dateRange: dateRangeToStored(range) })
+            updateActivePreset(campaignId, {
+              dateRange: dateRangeToStored(range),
+            })
           }
         />
         <SegmentsSelector
           value={segments}
-          onChange={(next) => updateDraft(campaignId, { segments: next })}
+          onChange={(next) => updateActivePreset(campaignId, { segments: next })}
         />
         <MultiSelectFilterChip
           icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
           label="Dimensions"
           options={REPORT_DIMENSION_OPTIONS}
           value={dimensions}
-          onChange={(next) => updateDraft(campaignId, { dimensions: next })}
+          onChange={(next) =>
+            updateActivePreset(campaignId, { dimensions: next })
+          }
           maxSelections={MAX_VISITOR_DIMENSIONS}
         />
       </div>
       {showTrailing && (
         <div className="flex shrink-0 items-center gap-2 self-center">
           {right}
-          <ReportViewSaveActions campaignId={campaignId} />
         </div>
       )}
     </div>
@@ -393,28 +427,39 @@ function AppliedSegmentChip({
 }
 
 function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
-  const { segments } = useReportActiveViewState(campaignId);
-  const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
+  const { segments } = useActiveReportPresetState(campaignId);
+  const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
   if (segments.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-2.5">
-      <span className="mr-1 text-sm text-muted-foreground">Segments :</span>
-      {segments.map((name) => (
-        <AppliedSegmentChip
-          key={name}
-          name={name}
-          onRemove={() =>
-            updateDraft(campaignId, {
-              segments: segments.filter((s) => s !== name),
-            })
-          }
-        />
-      ))}
+    <div
+      className={cn(
+        filterPanelRowClass,
+        "border-t border-border",
+        filterPanelInsetClass
+      )}
+    >
+      <span className={filterPanelLabelClass}>
+        <Compass className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        Segments :
+      </span>
+      <div className={filterPanelChipsClass}>
+        {segments.map((name) => (
+          <AppliedSegmentChip
+            key={name}
+            name={name}
+            onRemove={() =>
+              updateActivePreset(campaignId, {
+                segments: segments.filter((s) => s !== name),
+              })
+            }
+          />
+        ))}
+      </div>
       <button
         type="button"
-        onClick={() => updateDraft(campaignId, { segments: [] })}
-        className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
+        onClick={() => updateActivePreset(campaignId, { segments: [] })}
+        className="inline-flex shrink-0 items-center gap-1 self-center pt-1 text-sm font-medium text-foreground hover:underline"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
         Clear All
@@ -424,28 +469,39 @@ function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
 }
 
 function AppliedDimensionsRow({ campaignId }: { campaignId: string }) {
-  const { dimensions } = useReportActiveViewState(campaignId);
-  const updateDraft = useReportViewsStore((s) => s.updateActiveViewDraft);
+  const { dimensions } = useActiveReportPresetState(campaignId);
+  const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
   if (dimensions.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-2.5">
-      <span className="mr-1 text-sm text-muted-foreground">Dimensions :</span>
-      {dimensions.map((name) => (
-        <AppliedSegmentChip
-          key={name}
-          name={name}
-          onRemove={() =>
-            updateDraft(campaignId, {
-              dimensions: dimensions.filter((d) => d !== name),
-            })
-          }
-        />
-      ))}
+    <div
+      className={cn(
+        filterPanelRowClass,
+        "border-t border-border",
+        filterPanelInsetClass
+      )}
+    >
+      <span className={filterPanelLabelClass}>
+        <Layers className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        Dimensions :
+      </span>
+      <div className={filterPanelChipsClass}>
+        {dimensions.map((name) => (
+          <AppliedSegmentChip
+            key={name}
+            name={name}
+            onRemove={() =>
+              updateActivePreset(campaignId, {
+                dimensions: dimensions.filter((d) => d !== name),
+              })
+            }
+          />
+        ))}
+      </div>
       <button
         type="button"
-        onClick={() => updateDraft(campaignId, { dimensions: [] })}
-        className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
+        onClick={() => updateActivePreset(campaignId, { dimensions: [] })}
+        className="inline-flex shrink-0 items-center gap-1 self-center pt-1 text-sm font-medium text-foreground hover:underline"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
         Clear All
@@ -463,7 +519,7 @@ function ResultsFilterPanel({
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background">
-      <div className="px-4 py-3">
+      <div className={filterPanelInsetClass}>
         <FilterBar campaignId={campaignId} right={right} />
       </div>
       <AppliedSegmentsRow campaignId={campaignId} />
@@ -477,7 +533,7 @@ function ResultsFilterPanel({
 
 function ConclusionBanner({ variantName }: { variantName: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-t-lg border border-report-green-border bg-report-green-tint px-5 py-3.5">
+    <div className="flex items-center gap-3 rounded-t-lg border border-report-green-border bg-report-green-tint px-6 py-4">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-report-green-border bg-report-green-badge">
         <Award className="h-4 w-4 text-decision-winner-fg" aria-hidden />
       </span>
@@ -491,27 +547,6 @@ function ConclusionBanner({ variantName }: { variantName: string }) {
 
 // ---------------------------------------------------------------------------
 // View settings dialog
-
-type ResultsLayout = "table-first" | "graphs-first";
-type ResultsGraphDefault = "date-range" | "expected-improvement";
-
-type ReportViewSettings = {
-  layout: ResultsLayout;
-  defaultGraph: ResultsGraphDefault;
-  showExpectedConversionRateRange: boolean;
-  showExpectedImprovementRange: boolean;
-  showTotalRow: boolean;
-  showDisabledVariationRows: boolean;
-};
-
-const DEFAULT_REPORT_VIEW_SETTINGS: ReportViewSettings = {
-  layout: "table-first",
-  defaultGraph: "date-range",
-  showExpectedConversionRateRange: true,
-  showExpectedImprovementRange: true,
-  showTotalRow: true,
-  showDisabledVariationRows: true,
-};
 
 function SettingsHelp({ label }: { label: string }) {
   return (
@@ -955,40 +990,102 @@ function MetricHeader({
   isPrimary,
   onOpenChartView,
   onOpenSettings,
+  onOpenLearnings,
+  onViewVitalsDetails,
 }: {
   metric: string;
   isPrimary: boolean;
   onOpenChartView: () => void;
   onOpenSettings: () => void;
+  onOpenLearnings: () => void;
+  onViewVitalsDetails: () => void;
 }) {
+  const metricTitleClass =
+    "border-b border-dashed border-muted-foreground text-2xl font-semibold leading-tight tracking-tight text-foreground";
+
   return (
-    <div className="flex items-start justify-between px-5 py-4">
-      <div className="flex items-center gap-3">
-        <MousePointerClick className="mt-1 h-5 w-5 shrink-0 text-foreground/70" aria-hidden />
-        <div className="flex items-center gap-1.5">
-          <span className="border-b border-dashed border-muted-foreground pb-0.5 text-base font-medium text-foreground">
-            {metric}
-          </span>
+    <div className="flex items-center justify-between gap-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <MousePointerClick
+          className="h-6 w-6 shrink-0 text-foreground/70"
+          aria-hidden
+        />
+        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+          {metric === "Conversion rate" ? (
+            <MetricDefinitionTooltip side="bottom">
+              <button type="button" className={metricTitleClass}>
+                {metric}
+              </button>
+            </MetricDefinitionTooltip>
+          ) : (
+            <span className={metricTitleClass}>{metric}</span>
+          )}
           {isPrimary && (
-            <span className="inline-flex items-center rounded border border-border bg-background px-1.5 py-px text-xs font-medium text-foreground/70">
+            <span className="inline-flex items-center rounded border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground/70">
               Primary
             </span>
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
-          onClick={onOpenChartView}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
-          aria-label="Chart view"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-report-brand bg-background px-2.5 text-sm font-medium text-report-brand-fg transition-colors hover:bg-report-brand-tint"
+          aria-label="AI campaign summary"
         >
-          <PieChart className="h-[18px] w-[18px]" aria-hidden />
+          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          Summary ready
         </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onOpenChartView}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              aria-label="Statistical configuration"
+            >
+              <PieChart className="h-[18px] w-[18px]" aria-hidden />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={8}>
+            Statistical Configuration
+          </TooltipContent>
+        </Tooltip>
+        <ExperimentVitalsPopover onViewDetails={onViewVitalsDetails} />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onOpenLearnings}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              aria-label="Campaign learnings"
+            >
+              <LearningIcon className="h-[18px] w-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={8}>
+            Learnings
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => downloadCsvSummary(metric)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              aria-label="Download CSV Summary"
+            >
+              <Download className="h-[18px] w-[18px]" aria-hidden />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={8}>
+            Download CSV Summary
+          </TooltipContent>
+        </Tooltip>
         <button
           type="button"
           onClick={onOpenSettings}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
           aria-label="Settings"
         >
           <Settings className="h-[18px] w-[18px]" aria-hidden />
@@ -998,46 +1095,577 @@ function MetricHeader({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Inner tabs
+function LearningIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden
+    >
+      <path
+        d="M4.5 4.75h6.25c.69 0 1.25.56 1.25 1.25v10.5H5.75c-.69 0-1.25-.56-1.25-1.25V4.75Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19.5 4.75h-6.25c-.69 0-1.25.56-1.25 1.25v10.5h6.25c.69 0 1.25-.56 1.25-1.25V4.75Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 4.75v11.75"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 18.25 9.75 20.5h4.5L12 18.25Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
-const INNER_TABS = ["Raw data (visitors)", "Raw data (sessions)", "Statistics"] as const;
-type InnerDataTab = (typeof INNER_TABS)[number];
+function downloadCsvSummary(metricName: string) {
+  const slug = metricName.toLowerCase().replace(/\s+/g, "-");
+  const csv = [
+    "Metric,Exported At",
+    `"${metricName.replace(/"/g, '""')}","${new Date().toISOString()}"`,
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${slug}-summary.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
-function InnerTabs({
-  active,
+const IMPACT_OPTIONS = ["Positive", "Neutral", "Negative", "Inconclusive"] as const;
+const OUTCOME_OPTIONS = [
+  "Surprising",
+  "Expected",
+  "Undefined",
+  "Biased",
+  "Push further",
+  "No impact",
+] as const;
+
+type ImpactOption = (typeof IMPACT_OPTIONS)[number];
+type OutcomeOption = (typeof OUTCOME_OPTIONS)[number];
+
+function SegmentedChoiceGroup<T extends string>({
+  options,
+  value,
   onChange,
+  ariaLabel,
 }: {
-  active: InnerDataTab;
-  onChange: (tab: InnerDataTab) => void;
+  options: readonly T[];
+  value: T | null;
+  onChange: (next: T) => void;
+  ariaLabel: string;
 }) {
   return (
-    <div className="flex items-end gap-4 border-b border-border px-5 pt-1">
-      <div className="flex flex-1 items-end gap-5">
-        {INNER_TABS.map((tab) => (
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      className="inline-flex flex-wrap overflow-hidden rounded-md border border-border"
+    >
+      {options.map((option, index) => {
+        const selected = value === option;
+        return (
           <button
-            key={tab}
+            key={option}
             type="button"
-            onClick={() => onChange(tab)}
+            onClick={() => onChange(option)}
             className={cn(
-              "relative px-1 pb-2 text-sm transition-colors",
-              active === tab
-                ? activeTabClass
-                : "text-foreground/70 hover:text-foreground"
+              "px-3.5 py-2 text-sm transition-colors",
+              index > 0 && "border-l border-border",
+              selected
+                ? "bg-muted font-medium text-foreground"
+                : "bg-background text-foreground/80 hover:bg-muted/50 hover:text-foreground"
             )}
           >
-            {tab}
+            {option}
           </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        className="mb-2 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/50"
-        aria-label="Edit"
-        disabled
+        );
+      })}
+    </div>
+  );
+}
+
+function LearningsDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [impact, setImpact] = useState<ImpactOption | null>(null);
+  const [outcome, setOutcome] = useState<OutcomeOption | null>(null);
+  const [notes, setNotes] = useState<string[]>([]);
+  const [draftNote, setDraftNote] = useState("");
+  const [addingNote, setAddingNote] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setImpact(null);
+    setOutcome(null);
+    setNotes([]);
+    setDraftNote("");
+    setAddingNote(false);
+  }, [open]);
+
+  const canSave = impact !== null || outcome !== null || notes.length > 0;
+
+  const commitNote = () => {
+    const trimmed = draftNote.trim();
+    if (!trimmed) return;
+    setNotes((prev) => [...prev, trimmed]);
+    setDraftNote("");
+    setAddingNote(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[720px] gap-0 overflow-hidden p-0">
+        <DialogHeader className="px-8 pb-2 pt-7">
+          <DialogTitle className="text-xl font-semibold text-foreground">
+            Share your campaign learnings
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Capture overall campaign assessment and learning notes.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-8 px-8 py-5">
+          <section className="space-y-6 rounded-xl bg-muted/40 px-5 py-5">
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-base font-semibold text-foreground">
+                Overall campaign assessment
+              </h3>
+              <SettingsHelp label="Summarize how this campaign performed overall." />
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm text-foreground">
+                What is the overall impact of the campaign?
+              </p>
+              <SegmentedChoiceGroup
+                options={IMPACT_OPTIONS}
+                value={impact}
+                onChange={setImpact}
+                ariaLabel="Overall impact"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm text-foreground">
+                How would you describe the outcome overall?
+              </p>
+              <SegmentedChoiceGroup
+                options={OUTCOME_OPTIONS}
+                value={outcome}
+                onChange={setOutcome}
+                ariaLabel="Overall outcome"
+              />
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-base font-semibold text-foreground">
+                  Log a learning note
+                </h3>
+                <SettingsHelp label="Capture qualitative notes and insights from this campaign." />
+              </div>
+              <button
+                type="button"
+                onClick={() => setAddingNote(true)}
+                className="inline-flex items-center gap-1 text-sm font-medium text-report-brand-fg transition-colors hover:text-report-brand"
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                Add learning note
+              </button>
+            </div>
+
+            {addingNote ? (
+              <div className="space-y-3 rounded-lg border border-border bg-background p-4">
+                <textarea
+                  value={draftNote}
+                  onChange={(e) => setDraftNote(e.target.value)}
+                  placeholder="Write your learning note…"
+                  rows={3}
+                  className="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDraftNote("");
+                      setAddingNote(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-report-brand text-report-brand-fg hover:bg-report-brand-tint hover:text-report-brand-fg"
+                    disabled={!draftNote.trim()}
+                    onClick={commitNote}
+                  >
+                    Add note
+                  </Button>
+                </div>
+              </div>
+            ) : notes.length === 0 ? (
+              <div className="flex min-h-[88px] items-center justify-center">
+                <p className="text-sm text-muted-foreground">
+                  You have not added any learnings yet.
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {notes.map((note, index) => (
+                  <li
+                    key={`${note}-${index}`}
+                    className="rounded-lg border border-border bg-muted/20 px-4 py-3 text-sm text-foreground"
+                  >
+                    {note}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <DialogFooter className="border-t border-border px-8 py-4 sm:justify-end">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="border-report-brand text-report-brand-fg hover:bg-report-brand-tint hover:text-report-brand-fg disabled:border-border disabled:text-muted-foreground"
+            disabled={!canSave}
+            onClick={() => onOpenChange(false)}
+          >
+            Save learning
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const VITAL_ITEMS = [
+  {
+    id: "data-tracking",
+    label: "Data Tracking",
+    icon: LineChart,
+    help: "Confirms that visitor and event data is being collected as expected.",
+  },
+  {
+    id: "conversion-tracking",
+    label: "Conversion Tracking",
+    icon: Download,
+    help: "Checks that conversion events for your metrics are firing correctly.",
+  },
+  {
+    id: "minimum-runtime",
+    label: "Minimum Runtime Alert",
+    icon: CalendarClock,
+    help: "Warns if the campaign has not run long enough for reliable decisions.",
+  },
+  {
+    id: "guardrails",
+    label: "Guardrails",
+    icon: Construction,
+    help: "Monitors protection metrics so regressions are caught early.",
+  },
+  {
+    id: "experimentation-conduct",
+    label: "Experimentation Conduct",
+    icon: FlaskConical,
+    help: "Flags configuration changes that can invalidate running experiment data.",
+    alert: true,
+  },
+] as const;
+
+function ExperimentVitalsPopover({
+  onViewDetails,
+}: {
+  onViewDetails: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const goToVitals = () => {
+    setOpen(false);
+    onViewDetails();
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+              aria-label="Experiment vitals"
+            >
+              <Heart className="h-[18px] w-[18px]" aria-hidden />
+              <span className="absolute right-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-vitals-unhealthy px-0.5 text-[9px] font-semibold leading-none text-background">
+                1
+              </span>
+            </button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={8}>
+          Experiment Vitals
+        </TooltipContent>
+      </Tooltip>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-[min(100vw-2rem,420px)] rounded-xl border border-border p-0 shadow-xl"
       >
-        <Pencil className="h-4 w-4" aria-hidden />
-      </button>
+        <div className="space-y-3 border-b border-border px-5 pb-4 pt-5">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-base font-semibold text-foreground">
+              Experiment Vitals
+            </h3>
+            <button
+              type="button"
+              onClick={goToVitals}
+              className="shrink-0 text-sm font-medium text-report-brand-fg transition-colors hover:text-report-brand"
+            >
+              View Details
+            </button>
+          </div>
+          <p className="text-sm leading-5 text-muted-foreground">
+            These vitals serve as checks and balances to maintain the integrity
+            of the campaign.{" "}
+            <button
+              type="button"
+              className="font-medium text-report-brand-fg transition-colors hover:text-report-brand"
+            >
+              Learn more
+            </button>
+          </p>
+        </div>
+
+        <ul className="px-2 py-2">
+          {VITAL_ITEMS.map(({ id, label, icon: Icon, help, alert }) => (
+            <li key={id}>
+              <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
+                <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted/50 text-foreground/70">
+                  <Icon className="h-4 w-4" aria-hidden />
+                  {alert ? (
+                    <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-vitals-unhealthy text-background">
+                      <X className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
+                    </span>
+                  ) : null}
+                </span>
+                <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
+                  {label}
+                </span>
+                <SettingsHelp label={help} />
+              </div>
+              {alert ? (
+                <div className="mx-3 mb-2 space-y-3 rounded-lg border border-border bg-muted/20 px-4 py-3">
+                  <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    Recommendation
+                  </span>
+                  <p className="text-sm font-semibold leading-snug text-vitals-unhealthy">
+                    Fault in experiment configuration as Metric was changed in a
+                    running campaign.
+                  </p>
+                  <p className="text-sm leading-5 text-muted-foreground">
+                    We recommend you to flush data in this campaign for reliable
+                    results.{" "}
+                    <button
+                      type="button"
+                      onClick={goToVitals}
+                      className="font-medium text-report-brand-fg transition-colors hover:text-report-brand"
+                    >
+                      View details →
+                    </button>
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button type="button" variant="outline" size="sm">
+                      Flush Data
+                    </Button>
+                    <Button type="button" variant="outline" size="sm">
+                      Ignore
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function StatisticsEmptyIllustration({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 240 140"
+      className={className}
+      aria-hidden
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <line
+        x1="36"
+        y1="108"
+        x2="204"
+        y2="108"
+        stroke="currentColor"
+        strokeOpacity={0.2}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="36"
+        y1="32"
+        x2="36"
+        y2="108"
+        stroke="currentColor"
+        strokeOpacity={0.12}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="36"
+        y1="52"
+        x2="204"
+        y2="52"
+        stroke="currentColor"
+        strokeOpacity={0.08}
+        strokeWidth="1"
+      />
+      <line
+        x1="36"
+        y1="72"
+        x2="204"
+        y2="72"
+        stroke="currentColor"
+        strokeOpacity={0.08}
+        strokeWidth="1"
+      />
+      <line
+        x1="36"
+        y1="92"
+        x2="204"
+        y2="92"
+        stroke="currentColor"
+        strokeOpacity={0.08}
+        strokeWidth="1"
+      />
+      <rect
+        x="52"
+        y="74"
+        width="22"
+        height="34"
+        rx="4"
+        fill="currentColor"
+        fillOpacity={0.1}
+        stroke="currentColor"
+        strokeOpacity={0.22}
+        strokeWidth="1.2"
+      />
+      <rect
+        x="84"
+        y="58"
+        width="22"
+        height="50"
+        rx="4"
+        fill="currentColor"
+        fillOpacity={0.14}
+        stroke="currentColor"
+        strokeOpacity={0.22}
+        strokeWidth="1.2"
+      />
+      <rect
+        x="116"
+        y="44"
+        width="22"
+        height="64"
+        rx="4"
+        fill="currentColor"
+        fillOpacity={0.18}
+        stroke="currentColor"
+        strokeOpacity={0.28}
+        strokeWidth="1.2"
+      />
+      <rect
+        x="148"
+        y="62"
+        width="22"
+        height="46"
+        rx="4"
+        fill="currentColor"
+        fillOpacity={0.12}
+        stroke="currentColor"
+        strokeOpacity={0.22}
+        strokeWidth="1.2"
+      />
+      <rect
+        x="180"
+        y="80"
+        width="22"
+        height="28"
+        rx="4"
+        fill="currentColor"
+        fillOpacity={0.08}
+        stroke="currentColor"
+        strokeOpacity={0.2}
+        strokeWidth="1.2"
+      />
+      <path
+        d="M48 82 C72 52, 96 38, 127 38 C158 38, 182 54, 196 78"
+        stroke="currentColor"
+        strokeOpacity={0.35}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx="127" cy="38" r="4" fill="currentColor" fillOpacity={0.35} />
+      <line
+        x1="127"
+        y1="42"
+        x2="127"
+        y2="108"
+        stroke="currentColor"
+        strokeOpacity={0.15}
+        strokeWidth="1.5"
+        strokeDasharray="4 5"
+      />
+    </svg>
+  );
+}
+
+function StatisticsPresetEmptyState({ metricName }: { metricName: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-5 px-6 py-20 text-center">
+      <StatisticsEmptyIllustration className="h-[130px] w-[240px] text-foreground" />
+      <p className="max-w-md text-sm text-muted-foreground">
+        Summary statistics for {metricName} with current filters.
+      </p>
     </div>
   );
 }
@@ -1045,24 +1673,23 @@ function InnerTabs({
 // ---------------------------------------------------------------------------
 // Table
 
-function HeaderHelp() {
-  return (
-    <HelpCircle
-      className="h-3 w-3 shrink-0 self-center text-muted-foreground"
-      aria-hidden
-    />
-  );
-}
-
-function ExpectedConversionRateHelp() {
+function TableColumnHelp({
+  title,
+  body,
+  ariaLabel,
+}: {
+  title: string;
+  body: string;
+  ariaLabel: string;
+}) {
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             type="button"
-            className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="What is expected conversion rate"
+            className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={ariaLabel}
           >
             <HelpCircle className="h-3.5 w-3.5" aria-hidden />
           </button>
@@ -1070,26 +1697,72 @@ function ExpectedConversionRateHelp() {
         <TooltipContent
           side="top"
           align="center"
-          sideOffset={10}
+          sideOffset={12}
           className="relative max-w-[640px] overflow-visible rounded-xl border border-border bg-background px-8 py-7 text-left text-foreground shadow-xl"
         >
           <span
-            className="absolute -bottom-2 left-10 h-4 w-4 rotate-45 border-b border-r border-border bg-background"
+            className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-b border-r border-border bg-background"
             aria-hidden
           />
           <div className="space-y-3">
             <p className="text-[18px] font-semibold leading-tight text-foreground">
-              Expected Conversion Rate
+              {title}
             </p>
-            <p className="text-[14px] leading-6 text-foreground/80">
-              This is the median conversion rate you can expect from the
-              variation. The 'best case' and 'worst case' conversion rates
-              represent the expected interval of the conversion rate.
-            </p>
+            <p className="text-[14px] leading-6 text-foreground/80">{body}</p>
           </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+function UniqueConversionsHelp() {
+  return (
+    <TableColumnHelp
+      title="Unique conversions"
+      ariaLabel="What are unique conversions"
+      body="The number of distinct visitors who recorded at least one conversion for this metric in the selected date range. Each visitor is counted once, even if they convert multiple times."
+    />
+  );
+}
+
+function TotalVisitorsHelp() {
+  return (
+    <TableColumnHelp
+      title="Total visitors"
+      ariaLabel="What is total visitors"
+      body="The number of visitors who were exposed to each variation for this metric during the selected date range. Used as the denominator when interpreting conversion counts and rates."
+    />
+  );
+}
+
+function ExpectedImprovementHelp() {
+  return (
+    <TableColumnHelp
+      title="Expected improvement (v)"
+      ariaLabel="What is expected improvement"
+      body="Estimated relative lift of the variation compared to the control (baseline), shown as a percentage. The mini chart positions the estimate on a scale from −6% to +6% relative to no change."
+    />
+  );
+}
+
+function ProbabilityBetterOrEquivalentHelp() {
+  return (
+    <TableColumnHelp
+      title="Probability of Better or Equivalent (v)"
+      ariaLabel="What is probability of better or equivalent"
+      body="The probability that this variation performs at least as well as the control, given your data and statistical settings (MDE, ROPE, statistical power, and false positive rate). Higher values indicate stronger evidence in favor of the variation."
+    />
+  );
+}
+
+function WinnerThresholdHelp() {
+  return (
+    <TableColumnHelp
+      title={`Winner threshold: ${WINNER_THRESHOLD}%`}
+      ariaLabel="What is the winner threshold"
+      body={`A variation is highlighted as the winner when its probability of better or equivalent reaches at least ${WINNER_THRESHOLD}%. This threshold is shown on the probability bar for reference.`}
+    />
   );
 }
 
@@ -1098,33 +1771,33 @@ function TableHeader() {
     <>
       {/* Column titles — top-aligned so every label shares one baseline */}
       <div className="grid items-start bg-muted/30" style={GRID}>
-        <div className="flex items-center gap-1 px-5 pb-2 pt-3">
+        <div className="flex items-center gap-1 px-6 pb-2.5 pt-4">
           <span className="text-xs font-semibold text-foreground/75">Variations</span>
         </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
           <span className="text-right text-xs font-semibold text-foreground/75">
             Unique conversions
           </span>
-          <ExpectedConversionRateHelp />
+          <UniqueConversionsHelp />
         </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
           <span className="text-right text-xs font-semibold text-foreground/75">
             Total visitors
           </span>
-          <HeaderHelp />
+          <TotalVisitorsHelp />
         </div>
-        <div className="flex items-center justify-center gap-1 px-2 pb-2 pt-3">
+        <div className="flex items-center justify-center gap-1 px-2 pb-2.5 pt-4">
           <span className="text-center text-xs font-semibold text-foreground/75">
             Expected improvement(v)
           </span>
-          <HeaderHelp />
+          <ExpectedImprovementHelp />
         </div>
-        <div className="flex flex-col gap-0.5 px-5 pb-2 pt-3">
+        <div className="flex flex-col gap-0.5 px-6 pb-2.5 pt-4">
           <div className="flex items-center gap-1">
             <span className="text-xs font-semibold text-foreground/75">
               Probability of Better or Equivalent (v)
             </span>
-            <HeaderHelp />
+            <ProbabilityBetterOrEquivalentHelp />
           </div>
           <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
             MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
@@ -1149,7 +1822,7 @@ function TableHeader() {
         </div>
         <div className="flex h-5 items-center justify-end gap-1 pr-5">
           <span>Winner threshold: {WINNER_THRESHOLD}%</span>
-          <HeaderHelp />
+          <WinnerThresholdHelp />
         </div>
         <div className="h-5" />
       </div>
@@ -1276,7 +1949,7 @@ function DataRow({
 
   return (
     <div className="group grid items-stretch transition-colors hover:bg-muted/30" style={GRID}>
-      <div className="flex items-center gap-2 border-b border-border py-3 pl-5 pr-4">
+      <div className="flex items-center gap-2 border-b border-border py-3.5 pl-6 pr-4">
         <GraphBadge tone={tone}>{variant.label}</GraphBadge>
         <span className="text-sm font-medium text-foreground">{variant.name}</span>
         {isControl && (
@@ -1310,7 +1983,7 @@ function TotalRow({ conversions, visitors }: { conversions: number; visitors: nu
   const cell = "flex items-center border-t border-border py-6";
   return (
     <div className="grid items-stretch" style={GRID}>
-      <div className={cn(cell, "gap-2 pl-5 pr-4")}>
+      <div className={cn(cell, "gap-2 pl-6 pr-4")}>
         <GraphBadge tone="total">T</GraphBadge>
         <span className="text-sm font-medium text-foreground">Total</span>
       </div>
@@ -1383,9 +2056,23 @@ function ResultsTable({
 // Graph panel
 
 const GRAPH_TABS = [
-  { label: "Date Range Graph", icon: CalendarRange },
-  { label: "Expected Improvement Graph", icon: TrendingUp },
-];
+  {
+    label: "Date Range Graph",
+    icon: CalendarRange,
+    helpTitle: "Date Range Graph",
+    helpAria: "About the date range graph",
+    helpBody:
+      "Shows how the metric rate changes over the selected date range for each variation. Use the interval control to view daily or weekly points and compare trends over time.",
+  },
+  {
+    label: "Expected Improvement Graph",
+    icon: TrendingUp,
+    helpTitle: "Expected Improvement Graph",
+    helpAria: "About the expected improvement graph",
+    helpBody:
+      "Compares the expected relative improvement of each variation versus the control. Bar height and sign reflect estimated lift; use this view to see which variations are ahead at a glance.",
+  },
+] as const;
 
 const Y_AXIS = ["1.00%", "0.90%", "0.80%", "0.70%", "0.60%"];
 
@@ -1659,24 +2346,35 @@ function GraphPanel({
       : ["Week 1", "Week 2", "Week 3", "Week 4"];
 
   return (
-    <div className="flex flex-col gap-6 rounded-b-lg bg-background px-5 py-6">
+    <div className="flex flex-col gap-6 rounded-b-lg bg-background px-6 py-6">
       <div className="flex items-end gap-5 border-b border-border">
-        {GRAPH_TABS.map(({ label, icon: Icon }, i) => (
-          <button
+        {GRAPH_TABS.map(({ label, icon: Icon, helpTitle, helpBody, helpAria }, i) => (
+          <div
             key={label}
-            type="button"
-            onClick={() => setGraphTab(i)}
             className={cn(
-              "relative flex items-center gap-1.5 px-1 pb-2 text-sm transition-colors",
-              graphTab === i
-                ? activeTabClass
-                : "text-foreground/70 hover:text-foreground"
+              "relative flex items-center gap-1 px-1 pb-2",
+              graphTab === i && activeTabClass
             )}
           >
-            <Icon className="h-[18px] w-[18px]" aria-hidden />
-            {label}
-            <HelpCircle className="h-4 w-4 opacity-60" aria-hidden />
-          </button>
+            <button
+              type="button"
+              onClick={() => setGraphTab(i)}
+              className={cn(
+                "flex items-center gap-1.5 text-sm transition-colors",
+                graphTab === i
+                  ? "font-medium text-foreground"
+                  : "text-foreground/70 hover:text-foreground"
+              )}
+            >
+              <Icon className="h-[18px] w-[18px]" aria-hidden />
+              {label}
+            </button>
+            <TableColumnHelp
+              title={helpTitle}
+              body={helpBody}
+              ariaLabel={helpAria}
+            />
+          </div>
         ))}
       </div>
 
@@ -1837,6 +2535,111 @@ function MetricsNavShell({
   );
 }
 
+const CONVERSION_RATE_DEFINITION = {
+  eventName: "Purchase",
+  directionOfBetter: "Increase",
+  statisticalModel: "Bayesian Model",
+  conversionWindow: "Campaign duration",
+  category: "Custom",
+} as const;
+
+function MetricDefinitionTooltipContent({
+  eventName,
+  side,
+}: {
+  eventName: string;
+  side: "top" | "right" | "bottom" | "left";
+}) {
+  const arrowClass =
+    side === "bottom"
+      ? "absolute -top-2 left-10 h-4 w-4 rotate-45 border-l border-t border-border bg-background"
+      : side === "right"
+        ? "absolute -left-2 top-6 h-4 w-4 rotate-45 border-b border-l border-border bg-background"
+        : "absolute -top-2 left-10 h-4 w-4 rotate-45 border-l border-t border-border bg-background";
+
+  return (
+    <TooltipContent
+      side={side}
+      align={side === "bottom" ? "start" : "start"}
+      sideOffset={side === "bottom" ? 10 : 12}
+      className="relative w-[min(100vw-2rem,380px)] overflow-visible rounded-xl border border-border bg-background p-0 text-left text-foreground shadow-xl"
+    >
+      <span className={arrowClass} aria-hidden />
+      <div className="px-5 py-4">
+        <p className="text-sm font-semibold text-foreground">Definition</p>
+        <div className="mt-3 space-y-0.5 text-sm leading-snug text-foreground">
+          <p>
+            Metric measures{" "}
+            <span className="font-semibold">Unique visitors</span>
+          </p>
+          <p className="pl-4">
+            for event{" "}
+            <span className="border-b border-dotted border-muted-foreground font-semibold">
+              {eventName}
+            </span>
+          </p>
+        </div>
+        <dl className="mt-4 space-y-2.5 text-sm">
+          <div className="flex items-baseline gap-1">
+            <dt className="text-muted-foreground">Direction of Better</dt>
+            <dd className="ml-auto font-medium text-foreground">
+              : {CONVERSION_RATE_DEFINITION.directionOfBetter}
+            </dd>
+          </div>
+          <div className="flex items-center gap-1">
+            <dt className="flex items-center gap-1 text-muted-foreground">
+              Statistical Model
+              <HelpCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            </dt>
+            <dd className="ml-auto font-medium text-foreground">
+              : {CONVERSION_RATE_DEFINITION.statisticalModel}
+            </dd>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <dt className="text-muted-foreground">Conversion Window</dt>
+            <dd className="ml-auto font-medium text-foreground">
+              : {CONVERSION_RATE_DEFINITION.conversionWindow}
+            </dd>
+          </div>
+          <div className="flex items-center gap-1">
+            <dt className="text-muted-foreground">Category</dt>
+            <dd className="ml-auto flex items-center gap-1.5 font-medium text-foreground">
+              : {CONVERSION_RATE_DEFINITION.category}
+              <Wrench className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+            </dd>
+          </div>
+        </dl>
+        <div className="mt-4 border-t border-border pt-3">
+          <button
+            type="button"
+            className="flex items-center gap-0.5 text-sm font-medium text-foreground transition-colors hover:text-foreground/80"
+          >
+            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+            Advanced Settings
+          </button>
+        </div>
+      </div>
+    </TooltipContent>
+  );
+}
+
+function MetricDefinitionTooltip({
+  children,
+  side = "right",
+  eventName = CONVERSION_RATE_DEFINITION.eventName,
+}: {
+  children: ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  eventName?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <MetricDefinitionTooltipContent eventName={eventName} side={side} />
+    </Tooltip>
+  );
+}
+
 function MetricListItem({
   icon,
   label,
@@ -1981,33 +2784,58 @@ function MetricSelector({
     </TooltipProvider>
   );
 
+  const primaryMetricItem = (
+    <MetricListItem
+      icon={cursorIcon}
+      label={campaign.primaryMetric}
+      active={selectedMetric === campaign.primaryMetric}
+      onClick={() => onSelectMetric(campaign.primaryMetric)}
+      trailing={
+        <span
+          className={cn(
+            "rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground",
+            selectedMetric !== campaign.primaryMetric && "invisible"
+          )}
+          aria-hidden={selectedMetric !== campaign.primaryMetric}
+        >
+          Primary
+        </span>
+      }
+    />
+  );
+
   return (
-    <MetricsNavShell
-      collapsed={collapsed}
-      onToggleCollapsed={onToggleCollapsed}
-      collapsedContent={collapsedContent}
-    >
-      <div className={metricsSidebarScrollClass}>
-        {/* Primary Metric */}
-        <div className={metricsSidebarPrimarySectionClass}>
-          <MetricGroupLabel>Primary Metric</MetricGroupLabel>
-          <MetricListItem
-            icon={cursorIcon}
-            label={campaign.primaryMetric}
-            active={selectedMetric === campaign.primaryMetric}
-            onClick={() => onSelectMetric(campaign.primaryMetric)}
-            trailing={
-              <span
-                className={cn(
-                  "rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground",
-                  selectedMetric !== campaign.primaryMetric && "invisible"
-                )}
-                aria-hidden={selectedMetric !== campaign.primaryMetric}
-              >
-                Primary
-              </span>
-            }
-          />
+    <TooltipProvider delayDuration={200}>
+      <MetricsNavShell
+        collapsed={collapsed}
+        onToggleCollapsed={onToggleCollapsed}
+        collapsedContent={collapsedContent}
+      >
+        <div className={metricsSidebarScrollClass}>
+          {/* Primary Metric */}
+          <div className={metricsSidebarPrimarySectionClass}>
+            <MetricGroupLabel>Primary Metric</MetricGroupLabel>
+            {campaign.primaryMetric === "Conversion rate" ? (
+              <MetricDefinitionTooltip side="right">
+                {primaryMetricItem}
+              </MetricDefinitionTooltip>
+            ) : (
+              primaryMetricItem
+            )}
+          </div>
+
+        {/* Secondary */}
+        <div className={metricsSidebarSectionClass}>
+          <MetricGroupLabel>Secondary</MetricGroupLabel>
+          {secondary.map((metric) => (
+            <MetricListItem
+              key={metric.name}
+              icon={cursorIcon}
+              label={metric.name}
+              active={selectedMetric === metric.name}
+              onClick={() => onSelectMetric(metric.name)}
+            />
+          ))}
         </div>
 
         {/* Guardrails */}
@@ -2019,20 +2847,6 @@ function MetricSelector({
               icon={
                 i === 1 ? <LayoutPanelTop className="h-4 w-4" aria-hidden /> : cursorIcon
               }
-              label={metric.name}
-              active={selectedMetric === metric.name}
-              onClick={() => onSelectMetric(metric.name)}
-            />
-          ))}
-        </div>
-
-        {/* Secondary */}
-        <div className={metricsSidebarSectionClass}>
-          <MetricGroupLabel>Secondary</MetricGroupLabel>
-          {secondary.map((metric) => (
-            <MetricListItem
-              key={metric.name}
-              icon={cursorIcon}
               label={metric.name}
               active={selectedMetric === metric.name}
               onClick={() => onSelectMetric(metric.name)}
@@ -2055,7 +2869,8 @@ function MetricSelector({
           </div>
         </div>
       </div>
-    </MetricsNavShell>
+      </MetricsNavShell>
+    </TooltipProvider>
   );
 }
 
@@ -2212,30 +3027,30 @@ function CompareTableHeader() {
           <span className="text-xs font-semibold text-foreground/75">Variations</span>
           <FunnelIcon className="h-3 w-3 text-muted-foreground" />
         </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
           <span className="text-right text-xs font-semibold text-foreground/75">
             Unique conversions
           </span>
-          <ExpectedConversionRateHelp />
+          <UniqueConversionsHelp />
         </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2 pt-3">
+        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
           <span className="text-right text-xs font-semibold text-foreground/75">
             Total visitors
           </span>
-          <HeaderHelp />
+          <TotalVisitorsHelp />
         </div>
-        <div className="flex items-center justify-center gap-1 px-2 pb-2 pt-3">
+        <div className="flex items-center justify-center gap-1 px-2 pb-2.5 pt-4">
           <span className="text-center text-xs font-semibold text-foreground/75">
             Expected improvement(v)
           </span>
-          <HeaderHelp />
+          <ExpectedImprovementHelp />
         </div>
-        <div className="flex flex-col gap-0.5 px-5 pb-2 pt-3">
+        <div className="flex flex-col gap-0.5 px-6 pb-2.5 pt-4">
           <div className="flex items-center gap-1">
             <span className="text-xs font-semibold text-foreground/75">
               Probability of Better or Equivalent (v)
             </span>
-            <HeaderHelp />
+            <ProbabilityBetterOrEquivalentHelp />
           </div>
           <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
             MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
@@ -2258,7 +3073,7 @@ function CompareTableHeader() {
         </div>
         <div className="flex h-5 items-center justify-end gap-1 pr-5">
           <span>Winner threshold: {WINNER_THRESHOLD}%</span>
-          <HeaderHelp />
+          <WinnerThresholdHelp />
         </div>
       </div>
     </>
@@ -2433,16 +3248,46 @@ function CompareView({
 
 // ---------------------------------------------------------------------------
 
-export default function ResultsTab({ campaign }: { campaign: Campaign }) {
-  const [selectedMetric, setSelectedMetric] = useState(campaign.primaryMetric);
+export default function ResultsTab({
+  campaign,
+  onNavigateToVitals,
+}: {
+  campaign: Campaign;
+  onNavigateToVitals: () => void;
+}) {
+  const initCampaign = useReportViewsStore((s) => s.initCampaign);
+
+  useLayoutEffect(() => {
+    initCampaign(campaign.id, {
+      primaryMetric: campaign.primaryMetric,
+      dateRange: campaignReportDateRange(campaign),
+    });
+  }, [
+    campaign.id,
+    campaign.primaryMetric,
+    campaign.startedOn,
+    campaign.createdOn,
+    campaign.lastUpdated,
+    initCampaign,
+  ]);
+
+  const [selectedMetric, setSelectedMetric] = useReportSelectedMetric(
+    campaign.id,
+    campaign.primaryMetric
+  );
   const [compareMode, setCompareMode] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("variation");
-  const [innerTab, setInnerTab] = useState<InnerDataTab>(INNER_TABS[0]);
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
-  const [viewSettings, setViewSettings] = useState(DEFAULT_REPORT_VIEW_SETTINGS);
   const [statConfigOpen, setStatConfigOpen] = useState(false);
+  const [learningsOpen, setLearningsOpen] = useState(false);
+  const [metricsNavCollapsed, setMetricsNavCollapsed] =
+    useReportMetricsNavCollapsed(campaign.id);
 
-  const viewState = useReportActiveViewState(campaign.id);
+  const activePresetId = useActiveReportPresetId(campaign.id);
+  const viewState = useActiveReportPresetState(campaign.id);
+  const viewSettings =
+    viewState.viewSettings ?? DEFAULT_REPORT_VIEW_SETTINGS;
+  const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
   const filters: ReportFilterContext = useMemo(
     () => ({
       segments: viewState.segments,
@@ -2451,14 +3296,14 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
     }),
     [viewState.segments, viewState.dimensions, viewState.dateRange]
   );
+  const isStatisticsPreset = activePresetId === REPORT_PRESET_IDS.statistics;
   const dataMode: "visitors" | "sessions" =
-    innerTab === "Raw data (sessions)" ? "sessions" : "visitors";
+    activePresetId === REPORT_PRESET_IDS.sessions ? "sessions" : "visitors";
 
   const others = campaign.report.otherMetrics;
   const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
   const compareableMetrics = others.slice(splitAt);
   const [compareSelected, setCompareSelected] = useState<string[]>([]);
-  const [metricsNavCollapsed, setMetricsNavCollapsed] = useState(false);
 
   const enterCompare = () => {
     setCompareSelected([]);
@@ -2487,7 +3332,8 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
     variants[variants.length - 1];
 
   return (
-    <div className="flex min-h-full items-start">
+    <TooltipProvider delayDuration={200}>
+      <div className="flex min-h-full items-start">
       {compareMode ? (
         <CompareMetricSelector
           campaign={campaign}
@@ -2508,17 +3354,20 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
         />
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1120px] space-y-4 px-12 py-8">
+        <div className="mx-auto max-w-[1120px] space-y-5 px-12 py-8">
           <ViewSettingsDialog
             open={viewSettingsOpen}
             onOpenChange={setViewSettingsOpen}
             settings={viewSettings}
-            onSave={setViewSettings}
+            onSave={(next) =>
+              updateActivePreset(campaign.id, { viewSettings: next })
+            }
           />
           <StatisticalConfigurationDialog
             open={statConfigOpen}
             onOpenChange={setStatConfigOpen}
           />
+          <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
             <>
@@ -2549,18 +3398,21 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
             </>
           ) : (
             <>
+              <MetricHeader
+                metric={selectedMetric}
+                isPrimary={selectedMetric === campaign.primaryMetric}
+                onOpenChartView={() => setStatConfigOpen(true)}
+                onOpenSettings={() => setViewSettingsOpen(true)}
+                onOpenLearnings={() => setLearningsOpen(true)}
+                onViewVitalsDetails={onNavigateToVitals}
+              />
               <ResultsFilterPanel campaignId={campaign.id} />
               <div>
                 <ConclusionBanner variantName={best.name} />
                 <div className="overflow-hidden rounded-b-lg border border-border border-t-0 bg-background">
-                  <MetricHeader
-                    metric={selectedMetric}
-                    isPrimary={selectedMetric === campaign.primaryMetric}
-                    onOpenChartView={() => setStatConfigOpen(true)}
-                    onOpenSettings={() => setViewSettingsOpen(true)}
-                  />
-                  <InnerTabs active={innerTab} onChange={setInnerTab} />
-                  {innerTab !== "Statistics" ? viewSettings.layout === "graphs-first" ? (
+                  {isStatisticsPreset ? (
+                    <StatisticsPresetEmptyState metricName={selectedMetric} />
+                  ) : viewSettings.layout === "graphs-first" ? (
                     <>
                       <GraphPanel
                         campaign={campaign}
@@ -2592,10 +3444,6 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
                         defaultGraph={viewSettings.defaultGraph}
                       />
                     </>
-                  ) : (
-                    <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                      Summary statistics for {selectedMetric} with current filters.
-                    </div>
                   )}
                 </div>
               </div>
@@ -2604,5 +3452,6 @@ export default function ResultsTab({ campaign }: { campaign: Campaign }) {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
