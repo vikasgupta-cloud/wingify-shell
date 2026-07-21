@@ -1,3 +1,4 @@
+import { campaignBestVariantIndex } from "../../data/campaignConclusion";
 import type { Campaign, Variant } from "../../data/campaigns";
 import {
   filterMetricSeedSuffix,
@@ -42,6 +43,42 @@ export function variantVisitors(
   return mode === "sessions" ? Math.max(1, Math.round(visitors * 1.32)) : visitors;
 }
 
+/**
+ * Allocate campaign.uniqueConversions (filter-scaled) across variants
+ * proportional to convRate × visitorShare so totals match listing.
+ */
+export function variantConversionsAllocated(
+  campaign: Campaign,
+  index: number,
+  filters: ReportFilterContext,
+  dataMode: ReportDataMode = "visitors"
+): number {
+  const scale = reportVisitorScale(filters);
+  const totalConversions = Math.max(
+    0,
+    Math.round(campaign.uniqueConversions * scale)
+  );
+  const variants = campaign.report.variants;
+  if (variants.length === 0) return 0;
+  if (totalConversions === 0) return 0;
+
+  const weights = variants.map((variant, i) => {
+    const visitors = variantVisitors(campaign, i, filters, dataMode);
+    return Math.max(0.0001, (variant.convRate / 100) * visitors);
+  });
+  const weightSum = weights.reduce((a, b) => a + b, 0);
+  const raw = weights.map((w) => (w / weightSum) * totalConversions);
+  const floors = raw.map((n) => Math.floor(n));
+  let rem = totalConversions - floors.reduce((a, b) => a + b, 0);
+  const order = raw
+    .map((n, i) => ({ i, frac: n - floors[i]! }))
+    .sort((a, b) => b.frac - a.frac);
+  for (let k = 0; k < rem; k++) {
+    floors[order[k % order.length]!.i]! += 1;
+  }
+  return floors[index] ?? 0;
+}
+
 export function variantConversions(variant: Variant, visitors: number): number {
   return Math.max(1, Math.round((visitors * variant.convRate) / 100));
 }
@@ -72,8 +109,8 @@ export function formatConfidence(confidence: number | null): string {
 
 /**
  * Canonical per-variant metric stats for a campaign + filters.
- * Primary metric uses campaign variant fields (scaled); others are seeded.
- * Conversion rate is always conversions / visitors.
+ * Primary metric uses campaign variant fields + listing uniqueConversions.
+ * Other metrics anchor uplift from report.otherMetrics when present.
  */
 export function metricRowStats(
   campaign: Campaign,
@@ -85,12 +122,13 @@ export function metricRowStats(
 ): MetricRowStats {
   const visitors = variantVisitors(campaign, index, filters, dataMode);
   const suffix = filterMetricSeedSuffix(filters);
+  const scale = reportVisitorScale(filters);
 
   if (metricName === campaign.primaryMetric) {
     const uplift =
       variant.uplift === null
         ? null
-        : Number((variant.uplift * reportVisitorScale(filters)).toFixed(1));
+        : Number((variant.uplift * scale).toFixed(1));
     const confidence =
       variant.confidence === null
         ? null
@@ -98,12 +136,15 @@ export function metricRowStats(
             99,
             Math.max(
               1,
-              Math.round(
-                variant.confidence * (0.85 + reportVisitorScale(filters) * 0.15)
-              )
+              Math.round(variant.confidence * (0.85 + scale * 0.15))
             )
           );
-    const conversions = variantConversions(variant, visitors);
+    const conversions = variantConversionsAllocated(
+      campaign,
+      index,
+      filters,
+      dataMode
+    );
     return {
       uplift,
       confidence,
@@ -113,13 +154,18 @@ export function metricRowStats(
     };
   }
 
+  const listed = campaign.report.otherMetrics.find((m) => m.name === metricName);
   const seed = hashMetricSeed(
     `${campaign.id}:${metricName}:${variant.id}:${suffix}:${dataMode}`
   );
   const rng = (min: number, max: number) => min + (seed % (max - min + 1));
-  const controlRate = rng(15, 120) / 10;
+
   if (index === 0) {
-    const conversions = Math.max(1, Math.round((visitors * controlRate) / 100));
+    const controlRate =
+      listed != null
+        ? Math.max(0.5, variant.convRate * 0.9)
+        : rng(15, 120) / 10;
+    const conversions = Math.max(0, Math.round((visitors * controlRate) / 100));
     return {
       uplift: null,
       confidence: null,
@@ -128,10 +174,18 @@ export function metricRowStats(
       conversionRate: conversionRate(conversions, visitors),
     };
   }
-  const uplift = Number(((rng(-80, 280) - 100) / 10).toFixed(1));
+
+  const uplift =
+    listed != null
+      ? listed.uplift === null
+        ? null
+        : Number((listed.uplift * scale).toFixed(1))
+      : Number(((rng(-80, 280) - 100) / 10).toFixed(1));
   const confidence = rng(42, 98);
-  const convRate = controlRate * (1 + uplift / 100);
-  const conversions = Math.max(1, Math.round((visitors * convRate) / 100));
+  const baseRate = rng(15, 120) / 10;
+  const convRate =
+    uplift === null ? baseRate : baseRate * (1 + uplift / 100);
+  const conversions = Math.max(0, Math.round((visitors * convRate) / 100));
   return {
     uplift,
     confidence,
@@ -141,38 +195,17 @@ export function metricRowStats(
   };
 }
 
-/** Pick the leading variation using filter-adjusted confidence (then uplift). */
+/**
+ * Outcome / “best” index locked to listing (isBest → confidence → first).
+ * Filters scale numbers but do not change which variation is declared best.
+ */
 export function bestVariantIndex(
   campaign: Campaign,
-  metricName: string,
-  filters: ReportFilterContext,
-  dataMode: ReportDataMode = "visitors"
+  _metricName?: string,
+  _filters?: ReportFilterContext,
+  _dataMode?: ReportDataMode
 ): number {
-  const variants = campaign.report.variants;
-  let bestIdx = 0;
-  let bestScore = -Infinity;
-  variants.forEach((variant, index) => {
-    if (index === 0) return;
-    const stats = metricRowStats(
-      campaign,
-      metricName,
-      variant,
-      index,
-      filters,
-      dataMode
-    );
-    const score =
-      (stats.confidence ?? 0) * 1000 + (stats.uplift ?? Number.NEGATIVE_INFINITY);
-    if (score > bestScore) {
-      bestScore = score;
-      bestIdx = index;
-    }
-  });
-  if (bestIdx === 0 && variants.length > 1) {
-    const flagged = variants.findIndex((v) => v.isBest);
-    return flagged > 0 ? flagged : 1;
-  }
-  return bestIdx;
+  return campaignBestVariantIndex(campaign);
 }
 
 export function defaultReportFilters(

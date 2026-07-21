@@ -5,7 +5,16 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
+import type { Decision } from "../../data/campaigns";
 import type { Campaign, Variant } from "../../data/campaigns";
+import {
+  conclusionKind,
+  conclusionProgress,
+  conclusionTitle,
+  hasDeclaredWinner,
+  type ConclusionKind,
+  type ConclusionProgress,
+} from "../../data/campaignConclusion";
 import {
   REPORT_PRESET_IDS,
   useActiveReportPresetId,
@@ -30,6 +39,14 @@ export type ReportVariantRow = {
   variant: Variant;
   index: number;
   stats: MetricRowStats;
+};
+
+export type ReportConclusionSnapshot = {
+  kind: ConclusionKind;
+  title: string;
+  decision: Decision;
+  showWinnerChrome: boolean;
+  progress: ConclusionProgress;
 };
 
 export type ReportOverviewSnapshot = {
@@ -66,6 +83,9 @@ export type ReportOverviewSnapshot = {
 
 export type ReportData = {
   campaign: Campaign;
+  decision: Decision;
+  conclusion: ReportConclusionSnapshot;
+  showWinnerChrome: boolean;
   filters: ReportFilterContext;
   selectedMetric: string;
   dataMode: ReportDataMode;
@@ -99,7 +119,6 @@ function formatReportDate(iso: string) {
 
 function buildOverview(
   campaign: Campaign,
-  filters: ReportFilterContext,
   statsFor: (metricName: string, variantIndex: number) => MetricRowStats,
   bestIndex: number
 ): ReportOverviewSnapshot {
@@ -115,16 +134,43 @@ function buildOverview(
   );
   const perVisitor =
     bestStats.visitors > 0 ? projected / bestStats.visitors : 0;
+  const showWinner = hasDeclaredWinner(campaign.decision);
+  const kind = conclusionKind(campaign);
+
+  let headline: string;
+  let body: string;
+  let heading: string;
+
+  if (kind === "progress") {
+    headline = conclusionTitle(campaign);
+    body =
+      campaign.status === "Ended"
+        ? "This campaign ended before reaching a statistical conclusion."
+        : `Gathering data for ${metric.toLowerCase()}. Check back when the required sample is met.`;
+    heading = `Current standings on ${metric.toLowerCase()}`;
+  } else if (kind === "inconclusive") {
+    headline = "No clear winner";
+    body = `Results for ${metric.toLowerCase()} are inconclusive — no variation clearly outperformed the others.`;
+    heading = `No clear leader on ${metric.toLowerCase()}`;
+  } else if (kind === "baseline") {
+    headline = `${control.name} remains the best choice`;
+    body = `Keep the baseline. Monitor ${metric.toLowerCase()} after any future changes.`;
+    heading = `${control.name} leads on ${metric.toLowerCase()}`;
+  } else {
+    headline = `${best.name} is your best choice`;
+    body = `Roll it out to all traffic and monitor ${metric.toLowerCase()} for two weeks.`;
+    heading = `${best.name} leads on ${metric.toLowerCase()} vs. ${control.name}`;
+  }
 
   return {
     lastUpdated: formatReportDate(campaign.lastUpdated),
-    headline: `${best.name} is your best choice`,
-    body: `Roll it out to all traffic and monitor ${metric.toLowerCase()} for two weeks.`,
+    headline,
+    body,
     stats: [
       {
         value: formatConversionRate(bestStats.conversionRate),
         label: metric,
-        accent: true,
+        accent: showWinner,
       },
       {
         value: formatConfidence(bestStats.confidence),
@@ -147,16 +193,17 @@ function buildOverview(
       aovLift: Number((1.2 + Math.abs(upliftVsControl) / 50).toFixed(2)),
     },
     comparison: {
-      heading: `${best.name} leads on ${metric.toLowerCase()} vs. ${control.name}`,
+      heading,
       metric,
       rows: variants.map((variant, index) => {
         const stats = statsFor(metric, index);
+        const isWinner = showWinner && index === bestIndex;
         return {
           label: variant.label,
           name: variant.name,
           isControl: index === 0,
-          isWinner: index === bestIndex,
-          rank: index === bestIndex ? 1 : index === 0 ? null : index,
+          isWinner,
+          rank: isWinner ? 1 : index === 0 ? null : index,
           conversions: stats.conversions,
           ctaRate: formatConversionRate(stats.conversionRate),
           visitors: formatNumber(stats.visitors),
@@ -239,17 +286,23 @@ export function ReportDataProvider({
       (sum, r) => sum + r.stats.conversions,
       0
     );
-    const bestIndex = bestVariantIndex(
-      campaign,
-      selectedMetric,
-      filters,
-      dataMode
-    );
+    const bestIndex = bestVariantIndex(campaign);
     const best = campaign.report.variants[bestIndex]!;
     const bestStats = rows[bestIndex]?.stats ?? statsFor(selectedMetric, bestIndex);
+    const showWinnerChrome = hasDeclaredWinner(campaign.decision);
+    const conclusion: ReportConclusionSnapshot = {
+      kind: conclusionKind(campaign),
+      title: conclusionTitle(campaign),
+      decision: campaign.decision,
+      showWinnerChrome,
+      progress: conclusionProgress(campaign),
+    };
 
     return {
       campaign,
+      decision: campaign.decision,
+      conclusion,
+      showWinnerChrome,
       filters,
       selectedMetric,
       dataMode,
@@ -262,7 +315,7 @@ export function ReportDataProvider({
       bestIndex,
       best,
       bestStats,
-      overview: buildOverview(campaign, filters, statsFor, bestIndex),
+      overview: buildOverview(campaign, statsFor, bestIndex),
       statsFor,
     };
   }, [

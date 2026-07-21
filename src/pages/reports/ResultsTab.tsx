@@ -95,6 +95,7 @@ import {
 import { SegmentsSelector } from "./SegmentsDrawer";
 import { filterMetricSeedSuffix, type ReportFilterContext } from "./reportFilters";
 import { useReportData } from "./reportDataContext";
+import type { ReportConclusionSnapshot } from "./reportDataContext";
 import {
   formatNumber,
   hashMetricSeed,
@@ -583,18 +584,81 @@ function ResultsFilterPanel({
 }
 
 // ---------------------------------------------------------------------------
-// Conclusion banner
+// Conclusion banner — mirrors listing / quickview decision
 
-function ConclusionBanner({ variantName }: { variantName: string }) {
+function ConclusionBanner({
+  conclusion,
+  variantName,
+}: {
+  conclusion: ReportConclusionSnapshot;
+  variantName: string;
+}) {
+  const { kind, title, progress } = conclusion;
+
+  if (kind === "progress") {
+    return (
+      <div className="border-b border-border bg-muted/30 px-6 py-4">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <div className="mt-3 grid grid-cols-3 gap-4">
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Duration</div>
+            <div className="mt-1 tabular-nums">
+              <span className="text-base font-semibold text-foreground">
+                {progress.elapsedDays}
+              </span>{" "}
+              <span className="text-sm text-muted-foreground">
+                / {progress.requiredDays} days
+              </span>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Unique visitors</div>
+            <div className="mt-1 tabular-nums">
+              <span className="text-base font-semibold text-foreground">
+                {formatNumber(progress.visitors)}
+              </span>{" "}
+              <span className="text-sm text-muted-foreground">
+                / {formatNumber(progress.requiredVisitors)} required
+              </span>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Conversions</div>
+            <div className="mt-1 tabular-nums">
+              <span className="text-base font-semibold text-foreground">
+                {formatNumber(progress.uniqueConversions)}
+              </span>{" "}
+              <span className="text-sm text-muted-foreground">
+                / {formatNumber(progress.requiredConversions)} required
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "inconclusive") {
+    return (
+      <div className="flex items-center gap-3.5 border-b border-border bg-muted/30 px-6 py-4">
+        <p className="text-sm font-medium leading-snug text-muted-foreground">
+          No clear winner — results are inconclusive across variations
+        </p>
+      </div>
+    );
+  }
+
+  const copy =
+    kind === "baseline"
+      ? `${variantName} remains better or equivalent and the best choice to keep as baseline`
+      : `${variantName} is better or equivalent to baseline and the best choice as it gives the highest improvement`;
+
   return (
     <div className="flex items-center gap-3.5 border-b border-report-green-border bg-gradient-to-r from-report-green-badge to-report-green-tint px-6 py-4">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-report-green-border bg-background shadow-sm">
         <Award className="h-[18px] w-[18px] text-decision-winner-fg" aria-hidden />
       </span>
-      <p className="text-sm font-medium leading-snug text-foreground">
-        {variantName} is better or equivalent to baseline and the best choice as it gives the
-        highest improvement
-      </p>
+      <p className="text-sm font-medium leading-snug text-foreground">{copy}</p>
     </div>
   );
 }
@@ -4610,7 +4674,7 @@ export default function ResultsTab({
   onNavigateToVitals: () => void;
 }) {
   const reportData = useReportData();
-  const { filters, dataMode, best } = reportData;
+  const { filters, dataMode, best, conclusion } = reportData;
 
   const [selectedMetric, setSelectedMetric] = useReportSelectedMetric(
     campaign.id,
@@ -4744,7 +4808,10 @@ export default function ResultsTab({
               />
               <ResultsFilterPanel campaignId={campaign.id} />
               <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
-                <ConclusionBanner variantName={best.name} />
+                <ConclusionBanner
+                  conclusion={conclusion}
+                  variantName={best.name}
+                />
                 <div className="bg-background">
                   {isStatisticsPreset ? (
                     <StatisticsPresetEmptyState metricName={selectedMetric} />
