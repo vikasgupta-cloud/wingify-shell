@@ -38,9 +38,12 @@ export const BASE_STATE: ViewState = {
 type ViewsState = {
   views: View[];
   activeViewId: string;
+  /** View opened when the listing loads. */
+  defaultViewId: string;
   /** In-memory only — never persisted. */
   drafts: Record<string, ViewState>;
   setActiveView: (id: string) => void;
+  setDefaultView: (id: string) => void;
   updateActiveViewDraft: (patch: Partial<ViewState>) => void;
   saveDraftToActiveView: () => void;
   saveDraftAsNewView: (name: string) => string;
@@ -65,10 +68,19 @@ export const useViewsStore = create<ViewsState>()(
       return {
         views: [],
         activeViewId: BASE_VIEW_ID,
+        defaultViewId: BASE_VIEW_ID,
         drafts: {},
 
         setActiveView: (id) => {
           set({ activeViewId: id });
+          useTableStore.getState().setPage(1);
+        },
+
+        setDefaultView: (id) => {
+          const exists =
+            id === BASE_VIEW_ID || get().views.some((v) => v.id === id);
+          if (!exists) return;
+          set({ defaultViewId: id, activeViewId: id });
           useTableStore.getState().setPage(1);
         },
 
@@ -135,10 +147,12 @@ export const useViewsStore = create<ViewsState>()(
           set((s) => {
             const { [id]: _removed, ...restDrafts } = s.drafts;
             const wasActive = s.activeViewId === id;
+            const wasDefault = s.defaultViewId === id;
             return {
               views: s.views.filter((v) => v.id !== id),
               drafts: restDrafts,
               activeViewId: wasActive ? BASE_VIEW_ID : s.activeViewId,
+              defaultViewId: wasDefault ? BASE_VIEW_ID : s.defaultViewId,
             };
           }),
 
@@ -164,7 +178,31 @@ export const useViewsStore = create<ViewsState>()(
     },
     {
       name: "wingify-views-v1",
-      partialize: (s) => ({ views: s.views, activeViewId: s.activeViewId }),
+      partialize: (s) => ({
+        views: s.views,
+        activeViewId: s.activeViewId,
+        defaultViewId: s.defaultViewId,
+      }),
+      merge: (persisted, current) => {
+        if (!persisted || typeof persisted !== "object") return current;
+        const p = persisted as Partial<
+          Pick<ViewsState, "views" | "activeViewId" | "defaultViewId">
+        >;
+        const views = Array.isArray(p.views) ? p.views : current.views;
+        const resolveId = (id: string | undefined) => {
+          if (!id) return BASE_VIEW_ID;
+          if (id === BASE_VIEW_ID) return BASE_VIEW_ID;
+          return views.some((v) => v.id === id) ? id : BASE_VIEW_ID;
+        };
+        const defaultViewId = resolveId(p.defaultViewId ?? p.activeViewId);
+        const activeViewId = resolveId(p.activeViewId ?? defaultViewId);
+        return {
+          ...current,
+          views,
+          defaultViewId,
+          activeViewId,
+        };
+      },
     }
   )
 );

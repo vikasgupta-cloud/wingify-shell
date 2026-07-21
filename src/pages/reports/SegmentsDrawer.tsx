@@ -11,7 +11,6 @@ import {
   ChevronDown,
   Compass,
   Copy,
-  HelpCircle,
   Maximize2,
   Minimize2,
   MinusCircle,
@@ -547,6 +546,7 @@ function CustomLogicBuilder({
   setBlocks: Dispatch<SetStateAction<FilterBlock[]>>;
   onSave: () => void;
 }) {
+  const [wandzOpen, setWandzOpen] = useState(false);
   const totalConditions = blocks.reduce((n, b) => n + b.conditions.length, 0);
 
   const changeCondition = (blockId: string, condId: string, next: Condition) =>
@@ -602,7 +602,44 @@ function CustomLogicBuilder({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
-        <p className="text-sm font-medium text-foreground">All visitors…</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-medium text-foreground">All visitors…</p>
+          <button
+            type="button"
+            onClick={() => setWandzOpen((o) => !o)}
+            aria-expanded={wandzOpen}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium transition-colors",
+              wandzOpen
+                ? "bg-muted text-foreground"
+                : "bg-background text-foreground hover:bg-muted/60"
+            )}
+          >
+            Do it with
+            <Sparkles className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+            Wandz AI
+          </button>
+        </div>
+
+        {wandzOpen ? (
+          <div className="rounded-lg border border-border bg-muted/40 p-4">
+            <p className="text-sm font-medium text-foreground">
+              Describe the segment you want
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Wandz will turn your prompt into custom logic conditions.
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <Input
+                placeholder="e.g. Only mobile visitors from paid search"
+                className="h-9 flex-1"
+              />
+              <Button type="button" size="sm">
+                Generate
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         {blocks.map((block, bi) => (
           <Fragment key={block.id}>
@@ -806,11 +843,6 @@ function SegmentsPickerPanel({
       <div className="flex min-h-0 flex-1">
         {/* Left rail */}
         <div className="flex w-[180px] shrink-0 flex-col gap-1 border-r border-border p-2">
-          <div className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground">
-            <Sparkles className="h-4 w-4 text-muted-foreground" aria-hidden />
-            VWO AI
-            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-          </div>
           <LeftTab
             active={leftTab === "all"}
             onClick={() => setLeftTab("all")}

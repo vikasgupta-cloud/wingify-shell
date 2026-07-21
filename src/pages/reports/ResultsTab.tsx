@@ -10,8 +10,8 @@ import {
   Download,
   FlaskConical,
   GripVertical,
-  Heart,
   HelpCircle,
+  Info,
   Layers,
   LayoutPanelTop,
   LineChart,
@@ -22,9 +22,11 @@ import {
   Pencil,
   PieChart,
   Plus,
+  RotateCcw,
   Sparkles,
   Star,
   Settings,
+  Triangle,
   TrendingUp,
   Wrench,
   ChevronRight,
@@ -33,7 +35,7 @@ import {
 import type { Campaign, Variant } from "../../data/campaigns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+import { VitalsGlyph } from "@/components/ui/StatusBadge";
 import {
   Dialog,
   DialogContent,
@@ -70,6 +72,7 @@ import {
   toYmd,
   useActiveReportPresetId,
   useActiveReportPresetState,
+  useActiveResultsRowDensity,
   useActiveResultsTableColumns,
   useReportMetricsNavCollapsed,
   useReportSelectedMetric,
@@ -84,8 +87,10 @@ import {
   type ReportViewSettings,
   type ResultsLayout,
   type ResultsGraphDefault,
+  type ResultsRowDensity,
   type ResultsTableColumnId,
   RESULTS_TABLE_COLUMN_IDS,
+  DEFAULT_RESULTS_TABLE_COLUMNS,
 } from "./reportViewTypes";
 import { SegmentsSelector } from "./SegmentsDrawer";
 import {
@@ -151,14 +156,34 @@ function buildResultsGrid(columns: ResultsTableColumnId[]) {
 
 function stickyVariationsCellClass(showEdgeShadow: boolean) {
   return cn(
-    "sticky left-0 z-30 min-w-[220px] max-w-[220px] border-r border-border bg-background group-hover:bg-muted",
+    "sticky left-0 z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-muted/50",
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+  );
+}
+
+/** Opaque sticky header fill — matches muted/50 over white without letting scroll content bleed through. */
+const STICKY_HEADER_BG =
+  "bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]";
+
+function stickyVariationsHeaderClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky left-0 z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border",
+    STICKY_HEADER_BG,
     showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
   );
 }
 
 function stickyActionsCellClass(showEdgeShadow: boolean) {
   return cn(
-    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] border-l border-border bg-background group-hover:bg-muted",
+    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] overflow-hidden border-l border-border bg-background group-hover:bg-muted/50",
+    showEdgeShadow && "shadow-[-6px_0_12px_-8px_hsl(var(--border))]"
+  );
+}
+
+function stickyActionsHeaderClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] overflow-hidden border-l border-border",
+    STICKY_HEADER_BG,
     showEdgeShadow && "shadow-[-6px_0_12px_-8px_hsl(var(--border))]"
   );
 }
@@ -180,10 +205,35 @@ function measureStickyEdgeShadows(el: HTMLDivElement): StickyEdgeShadows {
 const resultsTableMetricCellClass = "relative z-0 min-w-0";
 
 const resultsTableHeaderLabelClass =
-  "text-xs font-medium leading-snug text-foreground/80";
+  "text-xs font-medium leading-none text-muted-foreground";
 
 const resultsTableSubheadClass =
   "text-[11px] leading-snug text-muted-foreground tabular-nums";
+
+const REPORT_COLUMN_CHECKBOX_CLASS =
+  "h-3.5 w-3.5 [&_svg]:size-3 disabled:cursor-not-allowed";
+
+const REPORT_ROW_DENSITIES: {
+  key: ResultsRowDensity;
+  label: string;
+  title: string;
+}[] = [
+  { key: "compact", label: "S", title: "Compact" },
+  { key: "default", label: "M", title: "Default" },
+  { key: "comfortable", label: "L", title: "Comfortable" },
+];
+
+const RESULTS_ROW_PAD: Record<ResultsRowDensity, string> = {
+  compact: "py-2",
+  default: "py-3",
+  comfortable: "py-5",
+};
+
+const RESULTS_CHART_H: Record<ResultsRowDensity, string> = {
+  compact: "h-[52px]",
+  default: "h-[68px]",
+  comfortable: "h-[84px]",
+};
 
 const formatNumber = (n: number) => n.toLocaleString("en-US");
 
@@ -282,10 +332,10 @@ function GraphBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }
     <span
       className={cn(
         "flex h-5 min-w-[28px] shrink-0 items-center justify-center rounded-full border px-2 text-xs font-medium",
-        tone === "ctrl" && "border-border bg-muted text-muted-foreground",
+        tone === "ctrl" && "border-border bg-muted text-foreground",
         tone === "v1" && "border-border bg-secondary text-foreground",
         tone === "v2" && "border-foreground/30 bg-background text-foreground",
-        tone === "total" && "border-transparent bg-muted-foreground text-background"
+        tone === "total" && "border-border bg-muted/50 text-foreground"
       )}
     >
       {children}
@@ -299,8 +349,8 @@ const filterPanelRowClass = "flex items-start gap-x-1";
 const filterPanelLabelClass =
   "flex w-[6.75rem] shrink-0 items-center gap-1.5 pt-1 text-sm text-muted-foreground";
 const filterPanelChipsClass =
-  "flex min-w-0 flex-1 flex-wrap items-center gap-2";
-const filterPanelInsetClass = "px-5 py-3.5";
+  "flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-2.5";
+const filterPanelInsetClass = "px-5 py-4";
 
 // ---------------------------------------------------------------------------
 // Filter bar
@@ -494,7 +544,7 @@ function AppliedSegmentChip({
 }) {
   const isCustom = /^Custom \d+$/.test(name);
   return (
-    <span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-border bg-background pl-2.5 pr-1.5 text-sm text-foreground">
+    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-background pl-3 pr-2 text-sm text-foreground">
       <span className="max-w-[160px] truncate">{name}</span>
       {isCustom && (
         <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
@@ -618,9 +668,9 @@ function ResultsFilterPanel({
 
 function ConclusionBanner({ variantName }: { variantName: string }) {
   return (
-    <div className="flex items-center gap-3 border-b border-report-green-border bg-report-green-tint px-8 py-4">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-report-green-border bg-report-green-badge">
-        <Award className="h-4 w-4 text-decision-winner-fg" aria-hidden />
+    <div className="flex items-center gap-3.5 border-b border-report-green-border bg-gradient-to-r from-report-green-badge to-report-green-tint px-6 py-4">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-report-green-border bg-background shadow-sm">
+        <Award className="h-[18px] w-[18px] text-decision-winner-fg" aria-hidden />
       </span>
       <p className="text-sm font-medium leading-snug text-foreground">
         {variantName} is better or equivalent to baseline and the best choice as it gives the
@@ -807,12 +857,12 @@ function ViewSettingsDialog({
                   <span className="text-sm text-foreground">Date Range</span>
                 </label>
                 <label className="flex cursor-pointer items-center gap-3">
+                  <RadioGroupItem value="expected-conversion-rate" />
+                  <span className="text-sm text-foreground">Expected Conversion Rate</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-3">
                   <RadioGroupItem value="expected-improvement" />
                   <span className="text-sm text-foreground">Expected Improvement</span>
-                </label>
-                <label className="flex cursor-not-allowed items-center gap-3 opacity-45">
-                  <RadioGroupItem value="expected-conversion-rate" disabled />
-                  <span className="text-sm text-foreground">Expected Conversion Rate</span>
                 </label>
                 <label className="flex cursor-not-allowed items-center gap-3 opacity-45">
                   <RadioGroupItem value="funnel-graph" disabled />
@@ -1113,16 +1163,6 @@ function MetricHeader({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-9 gap-1.5 rounded-md font-medium"
-          aria-label="Campaign summary"
-        >
-          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          Campaign summary
-        </Button>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -1177,6 +1217,16 @@ function MetricHeader({
         >
           <Settings className="h-[18px] w-[18px]" aria-hidden />
         </button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 gap-1.5 rounded-md font-medium"
+          aria-label="Campaign summary"
+        >
+          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          Campaign summary
+        </Button>
       </div>
     </div>
   );
@@ -1456,7 +1506,13 @@ function LearningsDialog({
   );
 }
 
-const VITAL_ITEMS = [
+const VITAL_ITEMS: {
+  id: string;
+  label: string;
+  icon: typeof LineChart;
+  help: string;
+  alert?: boolean;
+}[] = [
   {
     id: "data-tracking",
     label: "Data Tracking",
@@ -1488,7 +1544,7 @@ const VITAL_ITEMS = [
     help: "Flags configuration changes that can invalidate running experiment data.",
     alert: true,
   },
-] as const;
+];
 
 function ExperimentVitalsPopover({
   onViewDetails,
@@ -1512,7 +1568,7 @@ function ExperimentVitalsPopover({
               className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
               aria-label="Experiment vitals"
             >
-              <Heart className="h-[18px] w-[18px]" aria-hidden />
+              <VitalsGlyph size={18} className="text-current" />
               <span className="absolute right-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-vitals-unhealthy px-0.5 text-[9px] font-semibold leading-none text-background">
                 1
               </span>
@@ -1775,10 +1831,10 @@ function TableColumnHelp({
         <TooltipTrigger asChild>
           <button
             type="button"
-            className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
             aria-label={ariaLabel}
           >
-            <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+            <HelpCircle className="size-3.5" aria-hidden />
           </button>
         </TooltipTrigger>
         <TooltipContent
@@ -1907,13 +1963,17 @@ function reorderResultsColumns(
 function ReportResultsColumnConfig({
   columns,
   onColumnsChange,
+  rowDensity,
+  onRowDensityChange,
 }: {
   columns: ResultsTableColumnId[];
   onColumnsChange: (next: ResultsTableColumnId[]) => void;
+  rowDensity: ResultsRowDensity;
+  onRowDensityChange: (next: ResultsRowDensity) => void;
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
-  const hidden = RESULTS_TABLE_COLUMN_IDS.filter((id) => !columns.includes(id));
+  const available = RESULTS_TABLE_COLUMN_IDS.filter((id) => !columns.includes(id));
 
   const endDrag = () => {
     setDragIndex(null);
@@ -1929,76 +1989,137 @@ function ReportResultsColumnConfig({
     onColumnsChange([...columns, id]);
   };
 
+  const resetColumns = () => {
+    onColumnsChange([...DEFAULT_RESULTS_TABLE_COLUMNS]);
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-          aria-label="Configure table columns"
+          title="Configure columns"
+          aria-label="Configure columns"
+          className="inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
         >
-          <Columns3 className="h-3.5 w-3.5" aria-hidden />
+          <Columns3 className="size-3.5" aria-hidden />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[300px] p-3">
-        <p className="text-xs font-medium text-muted-foreground">Table columns</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Drag to reorder. Add optional metrics from the list below.
-        </p>
-        <ul className="mt-3 space-y-1">
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        className="w-[280px] p-3 text-sm"
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Row height</span>
+          <div className="inline-flex items-center rounded-md bg-muted p-0.5">
+            {REPORT_ROW_DENSITIES.map((d) => (
+              <button
+                key={d.key}
+                type="button"
+                title={d.title}
+                aria-label={`${d.title} row height`}
+                onClick={() => onRowDensityChange(d.key)}
+                className={cn(
+                  "rounded-[5px] px-2 py-0.5 text-xs transition-colors",
+                  rowDensity === d.key
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="my-2 h-px bg-border" />
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground">
+            Active view
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title="Reset to default"
+            aria-label="Reset to default"
+            onClick={resetColumns}
+            className="h-auto w-auto p-1 text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+        </div>
+
+        <div className="mt-1.5 flex flex-col">
           {columns.map((id, index) => (
-            <li
+            <div
               key={id}
               draggable
-              onDragStart={() => setDragIndex(index)}
+              onDragStart={(e) => {
+                setDragIndex(index);
+                e.dataTransfer.effectAllowed = "move";
+              }}
               onDragOver={(e) => {
+                if (dragIndex === null) return;
                 e.preventDefault();
                 setDropIndex(index);
               }}
-              onDragLeave={() => setDropIndex(null)}
-              onDrop={() => {
+              onDrop={(e) => {
+                e.preventDefault();
                 if (dragIndex !== null && dropIndex !== null) {
-                  onColumnsChange(reorderResultsColumns(columns, dragIndex, dropIndex));
+                  onColumnsChange(
+                    reorderResultsColumns(columns, dragIndex, dropIndex)
+                  );
                 }
                 endDrag();
               }}
               onDragEnd={endDrag}
               className={cn(
-                "flex items-center gap-2 rounded-md border border-transparent px-2 py-1.5",
-                dragIndex === index && "opacity-50",
-                dropIndex === index && dragIndex !== null && "border-border bg-muted/40"
+                "relative flex cursor-grab items-center gap-2 rounded-sm px-1.5 py-1.5 hover:bg-muted",
+                dragIndex === index && "opacity-50"
               )}
             >
-              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing" />
+              {dragIndex !== null && dropIndex === index && (
+                <div className="pointer-events-none absolute inset-x-0 -top-px h-0.5 bg-foreground" />
+              )}
               <Checkbox
                 checked
                 onCheckedChange={() => toggleColumn(id)}
-                className="h-3.5 w-3.5"
+                className={REPORT_COLUMN_CHECKBOX_CLASS}
               />
-              <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+              <span className="flex-1 truncate">
                 {RESULTS_TABLE_COLUMN_META[id].label}
               </span>
-            </li>
+              <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            </div>
           ))}
-        </ul>
-        {hidden.length > 0 ? (
+        </div>
+
+        {available.length > 0 ? (
           <>
             <div className="my-2 h-px bg-border" />
-            <p className="text-xs font-medium text-muted-foreground">Add columns</p>
-            <ul className="mt-2 space-y-1">
-              {hidden.map((id) => (
-                <li key={id}>
-                  <button
-                    type="button"
-                    onClick={() => toggleColumn(id)}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-muted/50"
-                  >
-                    <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">
+              Available Columns
+            </span>
+            <div className="mt-1.5 flex flex-col">
+              {available.map((id) => (
+                <label
+                  key={id}
+                  className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1.5 hover:bg-muted"
+                >
+                  <Checkbox
+                    checked={false}
+                    onCheckedChange={() => toggleColumn(id)}
+                    className={REPORT_COLUMN_CHECKBOX_CLASS}
+                  />
+                  <span className="flex-1 truncate">
                     {RESULTS_TABLE_COLUMN_META[id].label}
-                  </button>
-                </li>
+                  </span>
+                </label>
               ))}
-            </ul>
+            </div>
           </>
         ) : null}
       </PopoverContent>
@@ -2009,148 +2130,161 @@ function ReportResultsColumnConfig({
 function TableHeader({
   columns,
   onColumnsChange,
+  rowDensity,
+  onRowDensityChange,
   edgeShadows,
 }: {
   columns: ResultsTableColumnId[];
   onColumnsChange: (next: ResultsTableColumnId[]) => void;
+  rowDensity: ResultsRowDensity;
+  onRowDensityChange: (next: ResultsRowDensity) => void;
   edgeShadows: StickyEdgeShadows;
 }) {
-  const gridStyle = buildResultsGrid(columns);
+  const gridStyle = {
+    ...buildResultsGrid(columns),
+    gridTemplateRows: "auto auto",
+  } as const;
+
+  const titleCellClass =
+    "flex items-center gap-1.5 overflow-hidden bg-muted/50 px-3 pb-1.5 pt-3";
+  const subheadCellClass =
+    "flex items-start overflow-hidden bg-muted/50 px-3 pb-3 pt-1";
 
   return (
-    <>
+    <div
+      className="grid items-stretch border-b border-border bg-muted/50"
+      style={gridStyle}
+    >
+      {/* Title row — shared baseline across columns */}
       <div
-        className="grid items-stretch border-b border-border bg-muted"
-        style={gridStyle}
+        className={cn(
+          stickyVariationsHeaderClass(edgeShadows.left),
+          "flex min-w-0 items-center justify-between gap-2 px-4 pb-1.5 pt-3"
+        )}
       >
-        <div
-          className={cn(
-            stickyVariationsCellClass(edgeShadows.left),
-            "flex min-h-[3.25rem] items-center justify-between gap-2 bg-muted px-6 py-3 group-hover:bg-muted"
-          )}
-        >
-          <span className={resultsTableHeaderLabelClass}>Variations</span>
-          <ReportResultsColumnConfig
-            columns={columns}
-            onColumnsChange={onColumnsChange}
-          />
-        </div>
-        {columns.map((id) => {
-          const meta = RESULTS_TABLE_COLUMN_META[id];
-          const alignCenter = id === "expected-improvement";
-          const isProbability = id === "probability";
+        <span className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}>
+          Variations
+        </span>
+        <ReportResultsColumnConfig
+          columns={columns}
+          onColumnsChange={onColumnsChange}
+          rowDensity={rowDensity}
+          onRowDensityChange={onRowDensityChange}
+        />
+      </div>
+      {columns.map((id) => {
+        const meta = RESULTS_TABLE_COLUMN_META[id];
+        const alignCenter = id === "expected-improvement";
+        const isProbability = id === "probability";
+        return (
+          <div
+            key={`title-${id}`}
+            className={cn(
+              resultsTableMetricCellClass,
+              titleCellClass,
+              alignCenter && "justify-center px-5",
+              !alignCenter && !isProbability && "justify-end",
+              isProbability && "justify-start px-4"
+            )}
+          >
+            <span
+              className={cn(
+                resultsTableHeaderLabelClass,
+                "min-w-0 truncate",
+                alignCenter && "text-center",
+                !alignCenter && !isProbability && "text-right",
+                isProbability && "text-left"
+              )}
+              title={meta.label}
+            >
+              {meta.label}
+            </span>
+            <span className="inline-flex shrink-0 items-center">
+              <ResultsTableColumnHelp columnId={id} />
+            </span>
+          </div>
+        );
+      })}
+      <div
+        className={cn(
+          stickyActionsHeaderClass(edgeShadows.right),
+          "pb-1.5 pt-3"
+        )}
+      />
+
+      {/* Subhead row — shared baseline across columns */}
+      <div
+        className={cn(
+          stickyVariationsHeaderClass(edgeShadows.left),
+          "px-6 pb-3 pt-1"
+        )}
+      />
+      {columns.map((id) => {
+        if (id === "expected-improvement") {
           return (
             <div
-              key={id}
+              key={`sub-${id}`}
               className={cn(
                 resultsTableMetricCellClass,
-                "flex min-h-[3.25rem] items-center overflow-hidden bg-muted px-3 py-3",
-                alignCenter && "justify-center",
-                !alignCenter && !isProbability && "justify-end",
-                isProbability && "justify-start px-4"
+                subheadCellClass,
+                "justify-between gap-2 px-5"
               )}
             >
-              <div
+              <span className={resultsTableSubheadClass}>-6%</span>
+              <span
                 className={cn(
-                  "flex min-w-0 max-w-full items-center gap-1.5 overflow-hidden",
-                  alignCenter && "justify-center",
-                  !alignCenter && !isProbability && "justify-end",
-                  isProbability && "justify-start"
+                  resultsTableSubheadClass,
+                  "font-medium text-foreground/70"
                 )}
               >
-                <span
-                  className={cn(
-                    resultsTableHeaderLabelClass,
-                    "min-w-0",
-                    alignCenter && "text-center",
-                    !alignCenter && !isProbability && "text-right",
-                    isProbability && "line-clamp-2 text-left"
-                  )}
-                >
-                  {meta.label}
+                0%
+              </span>
+              <span className={resultsTableSubheadClass}>6%</span>
+            </div>
+          );
+        }
+        if (id === "probability") {
+          return (
+            <div
+              key={`sub-${id}`}
+              className={cn(
+                resultsTableMetricCellClass,
+                subheadCellClass,
+                "flex-col gap-0.5 px-4"
+              )}
+            >
+              <div className="flex min-w-0 items-center gap-1">
+                <span className={cn(resultsTableSubheadClass, "truncate")}>
+                  MDE ±20% · ROPE 1.5% · Power 80% · FPR 5%
                 </span>
-                <span className="shrink-0">
-                  <ResultsTableColumnHelp columnId={id} />
+                <Pencil
+                  className="h-3 w-3 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className={resultsTableSubheadClass}>
+                  Winner threshold: {WINNER_THRESHOLD}%
                 </span>
+                <WinnerThresholdHelp />
               </div>
             </div>
           );
-        })}
-        <div
-          className={cn(
-            stickyActionsCellClass(edgeShadows.right),
-            "min-h-[3.25rem] bg-muted group-hover:bg-muted"
-          )}
-        />
-      </div>
-
+        }
+        return (
+          <div
+            key={`sub-${id}`}
+            className={cn(resultsTableMetricCellClass, subheadCellClass)}
+          />
+        );
+      })}
       <div
-        className="grid items-stretch border-b border-border bg-muted"
-        style={gridStyle}
-      >
-        <div
-          className={cn(
-            stickyVariationsCellClass(edgeShadows.left),
-            "min-h-9 bg-muted group-hover:bg-muted"
-          )}
-        />
-        {columns.map((id) => {
-          if (id === "expected-improvement") {
-            return (
-              <div
-                key={id}
-                className={cn(
-                  resultsTableMetricCellClass,
-                  "flex min-h-9 items-center justify-between bg-muted px-5 py-2"
-                )}
-              >
-                <span className={resultsTableSubheadClass}>-6%</span>
-                <span className={cn(resultsTableSubheadClass, "font-medium text-foreground/70")}>
-                  0%
-                </span>
-                <span className={resultsTableSubheadClass}>6%</span>
-              </div>
-            );
-          }
-          if (id === "probability") {
-            return (
-              <div
-                key={id}
-                className={cn(
-                  resultsTableMetricCellClass,
-                  "flex min-h-9 flex-col items-end justify-center gap-1 bg-muted px-4 py-2"
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  <span className={resultsTableSubheadClass}>
-                    MDE: ± 20% · ROPE: 1.5% · Power: 80% · FPR: 5%
-                  </span>
-                  <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className={resultsTableSubheadClass}>
-                    Winner threshold: {WINNER_THRESHOLD}%
-                  </span>
-                  <WinnerThresholdHelp />
-                </div>
-              </div>
-            );
-          }
-          return (
-            <div
-              key={id}
-              className={cn(resultsTableMetricCellClass, "min-h-9 bg-muted")}
-            />
-          );
-        })}
-        <div
-          className={cn(
-            stickyActionsCellClass(edgeShadows.right),
-            "min-h-9 bg-muted group-hover:bg-muted"
-          )}
-        />
-      </div>
-    </>
+        className={cn(
+          stickyActionsHeaderClass(edgeShadows.right),
+          "pb-3 pt-1"
+        )}
+      />
+    </div>
   );
 }
 
@@ -2177,6 +2311,7 @@ function ResultsMetricCell({
   uplift,
   confidence,
   revenuePerVisitorValue,
+  rowDensity,
 }: {
   columnId: ResultsTableColumnId;
   isControl: boolean;
@@ -2185,17 +2320,20 @@ function ResultsMetricCell({
   uplift: number | null;
   confidence: number | null;
   revenuePerVisitorValue: number;
+  rowDensity: ResultsRowDensity;
 }) {
   const metricCell = cn(
     resultsTableMetricCellClass,
-    "overflow-hidden bg-background group-hover:bg-muted"
+    "overflow-hidden bg-background group-hover:bg-muted/50"
   );
+  const pad = RESULTS_ROW_PAD[rowDensity];
   switch (columnId) {
     case "unique-conversions":
       return (
         <div
           className={cn(
             metricCell,
+            pad,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2207,6 +2345,7 @@ function ResultsMetricCell({
         <div
           className={cn(
             metricCell,
+            pad,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2216,13 +2355,19 @@ function ResultsMetricCell({
     case "expected-improvement":
       return (
         <div className={metricCell}>
-          <ExpectedImprovementCell value={isControl ? null : uplift} />
+          <ExpectedImprovementCell
+            value={isControl ? null : uplift}
+            rowDensity={rowDensity}
+          />
         </div>
       );
     case "probability":
       return (
         <div className={metricCell}>
-          <ProbabilityCell value={isControl ? null : confidence} />
+          <ProbabilityCell
+            value={isControl ? null : confidence}
+            rowDensity={rowDensity}
+          />
         </div>
       );
     case "conversion-rate": {
@@ -2231,6 +2376,7 @@ function ResultsMetricCell({
         <div
           className={cn(
             metricCell,
+            pad,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2243,6 +2389,7 @@ function ResultsMetricCell({
         <div
           className={cn(
             metricCell,
+            pad,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2258,14 +2405,17 @@ function ResultsTotalMetricCell({
   columnId,
   conversions,
   visitors,
+  rowDensity,
 }: {
   columnId: ResultsTableColumnId;
   conversions: number;
   visitors: number;
+  rowDensity: ResultsRowDensity;
 }) {
   const cell = cn(
     resultsTableMetricCellClass,
-    "flex items-center border-t-2 border-border bg-muted py-5 group-hover:bg-muted"
+    RESULTS_ROW_PAD[rowDensity],
+    "flex items-center border-b border-border bg-muted/50 group-hover:bg-muted/50"
   );
   switch (columnId) {
     case "unique-conversions":
@@ -2310,15 +2460,18 @@ function ResultsTotalMetricCell({
 function RowActionsCell({
   className,
   edgeShadows,
+  rowDensity,
 }: {
   className?: string;
   edgeShadows: StickyEdgeShadows;
+  rowDensity: ResultsRowDensity;
 }) {
   return (
     <div
       className={cn(
         stickyActionsCellClass(edgeShadows.right),
-        "flex items-center justify-center border-b border-border bg-background group-hover:bg-muted",
+        RESULTS_ROW_PAD[rowDensity],
+        "flex items-center justify-center border-b border-border bg-background group-hover:bg-muted/50",
         className
       )}
     >
@@ -2334,10 +2487,22 @@ function RowActionsCell({
 }
 
 // The centred mini bar-chart cell for expected improvement. Axis spans -6%..+6%.
-function ExpectedImprovementCell({ value }: { value: number | null }) {
+function ExpectedImprovementCell({
+  value,
+  rowDensity,
+}: {
+  value: number | null;
+  rowDensity: ResultsRowDensity;
+}) {
+  const heightClass = RESULTS_CHART_H[rowDensity];
   if (value === null) {
     return (
-      <div className="flex h-[68px] items-center justify-center border-b border-border">
+      <div
+        className={cn(
+          "flex items-center justify-center border-b border-border",
+          heightClass
+        )}
+      >
         <span className="text-xs text-foreground/70">-</span>
       </div>
     );
@@ -2349,7 +2514,12 @@ function ExpectedImprovementCell({ value }: { value: number | null }) {
   const width = Math.abs(end - 50);
 
   return (
-    <div className="relative flex h-[68px] items-center border-b border-border px-5">
+    <div
+      className={cn(
+        "relative flex items-center border-b border-border px-5",
+        heightClass
+      )}
+    >
       <div className="relative h-full flex-1">
         {/* median range band */}
         <div className="absolute inset-y-0 left-1/2 w-[35px] -translate-x-1/2 rounded-md bg-muted/50" />
@@ -2377,17 +2547,34 @@ function ExpectedImprovementCell({ value }: { value: number | null }) {
 }
 
 // The horizontal probability bar. Track spans 0..100%; winner threshold marked.
-function ProbabilityCell({ value }: { value: number | null }) {
+function ProbabilityCell({
+  value,
+  rowDensity,
+}: {
+  value: number | null;
+  rowDensity: ResultsRowDensity;
+}) {
+  const heightClass = RESULTS_CHART_H[rowDensity];
   if (value === null) {
     return (
-      <div className="flex h-[68px] items-center border-b border-border px-5">
+      <div
+        className={cn(
+          "flex items-center border-b border-border px-5",
+          heightClass
+        )}
+      >
         <span className="text-sm font-medium text-foreground/70">-</span>
       </div>
     );
   }
   const isWinner = value >= WINNER_THRESHOLD;
   return (
-    <div className="relative flex h-[68px] items-center border-b border-border px-5">
+    <div
+      className={cn(
+        "relative flex items-center border-b border-border px-5",
+        heightClass
+      )}
+    >
       <div className="relative h-[15px] w-full">
         {isWinner && (
           <span className="absolute -top-[18px] left-0 whitespace-nowrap text-xs font-medium text-success-fg">
@@ -2415,7 +2602,10 @@ function ProbabilityCell({ value }: { value: number | null }) {
         </span>
         {/* winner-threshold divider spanning the row */}
         <div
-          className="absolute top-[-26px] h-[68px] border-r border-dashed border-border"
+          className={cn(
+            "absolute top-[-26px] border-r border-dashed border-border",
+            RESULTS_CHART_H[rowDensity]
+          )}
           style={{ left: `${WINNER_THRESHOLD}%` }}
         />
       </div>
@@ -2432,6 +2622,7 @@ function DataRow({
   dataMode,
   columns,
   edgeShadows,
+  rowDensity,
 }: {
   campaign: Campaign;
   variant: Variant;
@@ -2441,6 +2632,7 @@ function DataRow({
   dataMode: "visitors" | "sessions";
   columns: ResultsTableColumnId[];
   edgeShadows: StickyEdgeShadows;
+  rowDensity: ResultsRowDensity;
 }) {
   const visitors = variantVisitors(campaign, index, filters, dataMode);
   const { uplift, confidence, conversions } = metricRowStats(
@@ -2464,7 +2656,8 @@ function DataRow({
       <div
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
-          "flex items-center gap-2.5 border-b border-border py-5 pl-6 pr-4"
+          RESULTS_ROW_PAD[rowDensity],
+          "flex items-center gap-2.5 border-b border-border pl-6 pr-4"
         )}
       >
         <GraphBadge tone={tone}>{variant.label}</GraphBadge>
@@ -2485,9 +2678,10 @@ function DataRow({
           uplift={uplift}
           confidence={confidence}
           revenuePerVisitorValue={rpv}
+          rowDensity={rowDensity}
         />
       ))}
-      <RowActionsCell edgeShadows={edgeShadows} />
+      <RowActionsCell edgeShadows={edgeShadows} rowDensity={rowDensity} />
     </div>
   );
 }
@@ -2497,13 +2691,18 @@ function TotalRow({
   visitors,
   columns,
   edgeShadows,
+  rowDensity,
 }: {
   conversions: number;
   visitors: number;
   columns: ResultsTableColumnId[];
   edgeShadows: StickyEdgeShadows;
+  rowDensity: ResultsRowDensity;
 }) {
-  const cell = "flex items-center border-t-2 border-border bg-muted py-5";
+  const cell = cn(
+    "flex items-center border-b border-border bg-muted/50",
+    RESULTS_ROW_PAD[rowDensity]
+  );
   const gridStyle = buildResultsGrid(columns);
   return (
     <div className="group grid items-stretch" style={gridStyle}>
@@ -2511,7 +2710,7 @@ function TotalRow({
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
           cell,
-          "gap-2.5 pl-6 pr-4 group-hover:bg-muted"
+          "gap-2.5 pl-6 pr-4 group-hover:bg-muted/50"
         )}
       >
         <GraphBadge tone="total">T</GraphBadge>
@@ -2523,12 +2722,14 @@ function TotalRow({
           columnId={columnId}
           conversions={conversions}
           visitors={visitors}
+          rowDensity={rowDensity}
         />
       ))}
       <div
         className={cn(
           stickyActionsCellClass(edgeShadows.right),
-          "flex items-center justify-center border-t-2 border-border bg-muted py-5 group-hover:bg-muted"
+          RESULTS_ROW_PAD[rowDensity],
+          "flex items-center justify-center border-b border-border bg-muted/50 group-hover:bg-muted/50"
         )}
       />
     </div>
@@ -2543,6 +2744,8 @@ function ResultsTable({
   showTotalRow,
   columns,
   onColumnsChange,
+  rowDensity,
+  onRowDensityChange,
 }: {
   campaign: Campaign;
   metricName: string;
@@ -2551,6 +2754,8 @@ function ResultsTable({
   showTotalRow: boolean;
   columns: ResultsTableColumnId[];
   onColumnsChange: (next: ResultsTableColumnId[]) => void;
+  rowDensity: ResultsRowDensity;
+  onRowDensityChange: (next: ResultsRowDensity) => void;
 }) {
   const variants = campaign.report.variants;
   const rows = variants.map((variant, index) => {
@@ -2599,6 +2804,8 @@ function ResultsTable({
         <TableHeader
           columns={columns}
           onColumnsChange={onColumnsChange}
+          rowDensity={rowDensity}
+          onRowDensityChange={onRowDensityChange}
           edgeShadows={edgeShadows}
         />
         {rows.map((r) => (
@@ -2612,6 +2819,7 @@ function ResultsTable({
             dataMode={dataMode}
             columns={columns}
             edgeShadows={edgeShadows}
+            rowDensity={rowDensity}
           />
         ))}
         {showTotalRow ? (
@@ -2620,6 +2828,7 @@ function ResultsTable({
             visitors={totalVisitors}
             columns={columns}
             edgeShadows={edgeShadows}
+            rowDensity={rowDensity}
           />
         ) : null}
       </div>
@@ -2632,22 +2841,40 @@ function ResultsTable({
 
 const GRAPH_TABS = [
   {
+    id: "date-range" as const,
     label: "Date Range Graph",
     icon: CalendarRange,
     helpTitle: "Date Range Graph",
     helpAria: "About the date range graph",
     helpBody:
-      "Shows how the metric rate changes over the selected date range for each variation. Use the interval control to view daily or weekly points and compare trends over time.",
+      "Shows how the metric rate changes over the selected date range for each variation. Use the interval control to view daily or cumulative points and compare trends over time.",
   },
   {
+    id: "expected-conversion-rate" as const,
+    label: "Expected Conversion Rate",
+    icon: Triangle,
+    helpTitle: "Expected Conversion Rate",
+    helpAria: "About the expected conversion rate graph",
+    helpBody:
+      "Shows the posterior probability density of conversion rate for each variation. Peaks mark the most likely rate; overlap between curves reflects shared uncertainty.",
+  },
+  {
+    id: "expected-improvement" as const,
     label: "Expected Improvement Graph",
     icon: TrendingUp,
     helpTitle: "Expected Improvement Graph",
     helpAria: "About the expected improvement graph",
     helpBody:
-      "Compares the expected relative improvement of each variation versus the control. Bar height and sign reflect estimated lift; use this view to see which variations are ahead at a glance.",
+      "Shows the posterior density of relative improvement versus control. The worse and better regions highlight negative and positive lift; the peak is the most likely improvement.",
   },
 ] as const;
+
+type GraphTabId = (typeof GRAPH_TABS)[number]["id"];
+
+function graphTabIndexFromDefault(defaultGraph: ResultsGraphDefault): number {
+  const idx = GRAPH_TABS.findIndex((t) => t.id === defaultGraph);
+  return idx >= 0 ? idx : 0;
+}
 
 const Y_AXIS = ["1.00%", "0.90%", "0.80%", "0.70%", "0.60%"];
 
@@ -2663,13 +2890,33 @@ const CHART_STROKE: Record<Exclude<BadgeTone, "total">, string> = {
   v2: "hsl(var(--foreground))",
 };
 
+const CHART_RANGE_FILL: Record<Exclude<BadgeTone, "total">, string> = {
+  ctrl: "hsl(var(--muted-foreground) / 0.18)",
+  v1: "hsl(var(--foreground) / 0.1)",
+  v2: "hsl(var(--foreground) / 0.14)",
+};
+
 function chartY(value: number): number {
   const t = (value - CHART_Y_MIN) / (CHART_Y_MAX - CHART_Y_MIN);
   return (1 - t) * CHART_PLOT_H;
 }
 
 type ChartSeriesKey = Exclude<BadgeTone, "total">;
-type ChartInterval = "Daily" | "Weekly";
+type ChartInterval = "Daily" | "Cumulative";
+
+const GRAPH_METRIC_OPTIONS = [
+  "Conversion Rate (v)",
+  "Conversions (v)",
+  "Visitors",
+  "Sessions",
+  "Total Conversions (s)",
+] as const;
+type GraphMetricOption = (typeof GRAPH_METRIC_OPTIONS)[number];
+
+const GRAPH_DROPDOWN_ITEM_CLASS =
+  "flex w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted";
+const GRAPH_DROPDOWN_ITEM_ACTIVE_CLASS =
+  "bg-muted font-medium text-foreground hover:bg-muted";
 
 function chartSeriesValues(
   metricName: string,
@@ -2685,14 +2932,35 @@ function chartSeriesValues(
   const base = seriesKey === "ctrl" ? 0.66 : seriesKey === "v1" ? 0.68 : 0.7;
   const endBias =
     (seriesKey === "ctrl" ? 0.06 : seriesKey === "v1" ? 0.27 : 0.11) * scale;
+  const cumulativeBoost = interval === "Cumulative" ? 0.08 : 0;
   const values: number[] = [];
   for (let i = 0; i < pointCount; i++) {
     const t = i / (pointCount - 1);
     const wave = (((seed >> (i % 12)) & 7) - 3.5) * 0.004;
-    const v = base + endBias * t + wave;
+    const v = base + endBias * t + cumulativeBoost * t + wave;
     values.push(Math.min(CHART_Y_MAX - 0.005, Math.max(CHART_Y_MIN + 0.005, v)));
   }
   return values;
+}
+
+/** Half-width of CI band at each point — wider early, tighter as data accumulates. */
+function chartSeriesRangeHalf(
+  metricName: string,
+  seriesKey: string,
+  filters: ReportFilterContext,
+  interval: ChartInterval,
+  pointCount: number
+): number[] {
+  const seed = hashMetricSeed(
+    `${metricName}:date-range-band:${seriesKey}:${filterMetricSeedSuffix(filters)}:${interval}`
+  );
+  const halves: number[] = [];
+  for (let i = 0; i < pointCount; i++) {
+    const t = i / (pointCount - 1);
+    const jitter = (((seed >> (i % 8)) & 3) + 1) * 0.002;
+    halves.push(0.055 * (1 - t * 0.55) + jitter);
+  }
+  return halves;
 }
 
 function chartLinePath(values: number[]): string {
@@ -2705,23 +2973,54 @@ function chartLinePath(values: number[]): string {
     .join(" ");
 }
 
+function chartRangeBandPath(values: number[], halves: number[]): string {
+  const n = values.length;
+  if (n < 2) return "";
+  const upper: string[] = [];
+  const lower: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * CHART_PLOT_W;
+    const half = halves[i] ?? 0.04;
+    const v = values[i]!;
+    const yTop = chartY(Math.min(CHART_Y_MAX, v + half));
+    const yBot = chartY(Math.max(CHART_Y_MIN, v - half));
+    upper.push(`${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${yTop.toFixed(2)}`);
+    lower.push(`L ${x.toFixed(2)} ${yBot.toFixed(2)}`);
+  }
+  return `${upper.join(" ")} ${lower.reverse().join(" ")} Z`;
+}
+
 function DateRangeLineChart({
   metricName,
   filters,
   interval,
   visible,
+  showRanges,
 }: {
   metricName: string;
   filters: ReportFilterContext;
   interval: ChartInterval;
   visible: Record<ChartSeriesKey, boolean>;
+  showRanges: boolean;
 }) {
-  const pointCount = interval === "Daily" ? 13 : 7;
-  const series: { key: ChartSeriesKey; values: number[] }[] = (
+  const pointCount = 13;
+  const series: { key: ChartSeriesKey; values: number[]; halves: number[] }[] = (
     [
-      { key: "ctrl" as const, values: chartSeriesValues(metricName, "ctrl", filters, interval, pointCount) },
-      { key: "v1" as const, values: chartSeriesValues(metricName, "v1", filters, interval, pointCount) },
-      { key: "v2" as const, values: chartSeriesValues(metricName, "v2", filters, interval, pointCount) },
+      {
+        key: "ctrl" as const,
+        values: chartSeriesValues(metricName, "ctrl", filters, interval, pointCount),
+        halves: chartSeriesRangeHalf(metricName, "ctrl", filters, interval, pointCount),
+      },
+      {
+        key: "v1" as const,
+        values: chartSeriesValues(metricName, "v1", filters, interval, pointCount),
+        halves: chartSeriesRangeHalf(metricName, "v1", filters, interval, pointCount),
+      },
+      {
+        key: "v2" as const,
+        values: chartSeriesValues(metricName, "v2", filters, interval, pointCount),
+        halves: chartSeriesRangeHalf(metricName, "v2", filters, interval, pointCount),
+      },
     ] as const
   ).filter((s) => visible[s.key]);
   const markerIndex = Math.round((CHART_MARKER_X / CHART_PLOT_W) * (pointCount - 1));
@@ -2744,6 +3043,15 @@ function DateRangeLineChart({
           vectorEffect="non-scaling-stroke"
           strokeDasharray="4 4"
         />
+        {showRanges &&
+          series.map(({ key, values, halves }) => (
+            <path
+              key={`${key}-range`}
+              d={chartRangeBandPath(values, halves)}
+              fill={CHART_RANGE_FILL[key]}
+              stroke="none"
+            />
+          ))}
         {series.map(({ key, values }) => (
           <path
             key={key}
@@ -2782,45 +3090,502 @@ function DateRangeLineChart({
   );
 }
 
-function ExpectedImprovementChart({
+function gaussianPdf(x: number, mean: number, std: number): number {
+  const z = (x - mean) / std;
+  return Math.exp(-0.5 * z * z) / (std * Math.sqrt(2 * Math.PI));
+}
+
+function densityCurvePath(
+  mean: number,
+  std: number,
+  xMin: number,
+  xMax: number,
+  plotW: number,
+  plotH: number,
+  yMax: number,
+  samples = 96
+): string {
+  const parts: string[] = [];
+  for (let i = 0; i <= samples; i++) {
+    const t = i / samples;
+    const x = xMin + (xMax - xMin) * t;
+    const y = Math.min(yMax, gaussianPdf(x, mean, std));
+    const px = t * plotW;
+    const py = (1 - y / yMax) * plotH;
+    parts.push(`${i === 0 ? "M" : "L"} ${px.toFixed(2)} ${py.toFixed(2)}`);
+  }
+  return parts.join(" ");
+}
+
+function densityPeak(
+  mean: number,
+  std: number,
+  xMin: number,
+  xMax: number,
+  plotW: number,
+  plotH: number,
+  yMax: number
+) {
+  const t = (mean - xMin) / (xMax - xMin);
+  const y = Math.min(yMax, gaussianPdf(mean, mean, std));
+  return {
+    x: t * plotW,
+    y: (1 - y / yMax) * plotH,
+    labelXPct: t * 100,
+    labelYPct: ((1 - y / yMax) * plotH) / plotH * 100,
+  };
+}
+
+const DENSITY_PLOT_W = 100;
+const DENSITY_PLOT_H = 200;
+
+const DENSITY_STROKE = {
+  ctrl: "hsl(var(--report-ctrl-fg))",
+  v1: "hsl(var(--report-v1-fg))",
+} as const;
+
+function UnderstandGraphLink() {
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-report-brand-fg transition-colors hover:text-report-brand"
+    >
+      Understand the graph
+      <Info className="h-3.5 w-3.5" aria-hidden />
+    </button>
+  );
+}
+
+function DensitySeriesLegend({
+  tone,
+  label,
+  name,
+  checked,
+  onCheckedChange,
+}: {
+  tone: "ctrl" | "v1";
+  label: string;
+  name: string;
+  checked: boolean;
+  onCheckedChange: (next: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2">
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(v) => onCheckedChange(v === true)}
+        className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-report-brand data-[state=checked]:bg-report-brand"
+      />
+      <span
+        className={cn(
+          "flex h-5 min-w-[28px] shrink-0 items-center justify-center rounded-full border px-2 text-xs font-medium",
+          tone === "ctrl" &&
+            "border-report-ctrl-border bg-report-ctrl-bg text-report-ctrl-fg",
+          tone === "v1" &&
+            "border-report-v1-border bg-report-v1-bg text-report-v1-fg"
+        )}
+      >
+        {label}
+      </span>
+      <span className="text-sm text-muted-foreground">{name}</span>
+    </label>
+  );
+}
+
+function ExpectedConversionRateChart({
   campaign,
   metricName,
   filters,
+  visible,
+  onVisibleChange,
 }: {
   campaign: Campaign;
   metricName: string;
   filters: ReportFilterContext;
+  visible: { ctrl: boolean; v1: boolean };
+  onVisibleChange: (key: "ctrl" | "v1", next: boolean) => void;
 }) {
-  const variants = campaign.report.variants.slice(0, 3);
-  const uplifts = variants.map((v, i) => {
-    const s = metricRowStats(campaign, metricName, v, i, filters);
-    return s.uplift ?? 0;
-  });
-  const max = Math.max(6, ...uplifts.map((u) => Math.abs(u)));
+  const ctrlStats = metricRowStats(
+    campaign,
+    metricName,
+    campaign.report.variants[0]!,
+    0,
+    filters
+  );
+  const v1Stats = metricRowStats(
+    campaign,
+    metricName,
+    campaign.report.variants[1] ?? campaign.report.variants[0]!,
+    1,
+    filters
+  );
+  const ctrlMean = Math.min(34, Math.max(14, 18 + (ctrlStats.conversions % 90) / 20));
+  const v1Mean = Math.min(34, Math.max(16, ctrlMean + 3.5 + (v1Stats.uplift ?? 4) / 10));
+  const std = 2.35;
+  const xMin = 12;
+  const xMax = 36;
+  const yMax =
+    Math.max(
+      gaussianPdf(ctrlMean, ctrlMean, std),
+      gaussianPdf(v1Mean, v1Mean, std)
+    ) * 1.12;
+  const xTicks = [12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36];
+  const series = [
+    visible.ctrl
+      ? {
+          key: "ctrl" as const,
+          mean: ctrlMean,
+          path: densityCurvePath(
+            ctrlMean,
+            std,
+            xMin,
+            xMax,
+            DENSITY_PLOT_W,
+            DENSITY_PLOT_H,
+            yMax
+          ),
+          peak: densityPeak(
+            ctrlMean,
+            std,
+            xMin,
+            xMax,
+            DENSITY_PLOT_W,
+            DENSITY_PLOT_H,
+            yMax
+          ),
+        }
+      : null,
+    visible.v1
+      ? {
+          key: "v1" as const,
+          mean: v1Mean,
+          path: densityCurvePath(
+            v1Mean,
+            std,
+            xMin,
+            xMax,
+            DENSITY_PLOT_W,
+            DENSITY_PLOT_H,
+            yMax
+          ),
+          peak: densityPeak(
+            v1Mean,
+            std,
+            xMin,
+            xMax,
+            DENSITY_PLOT_W,
+            DENSITY_PLOT_H,
+            yMax
+          ),
+        }
+      : null,
+  ].filter(Boolean) as {
+    key: "ctrl" | "v1";
+    mean: number;
+    path: string;
+    peak: ReturnType<typeof densityPeak>;
+  }[];
 
   return (
-    <div className="flex h-[172px] items-end justify-around gap-4 px-8 pt-6">
-      {variants.map((v, i) => {
-        const uplift = uplifts[i] ?? 0;
-        const h = Math.max(8, (Math.abs(uplift) / max) * 120);
-        const positive = uplift >= 0;
-        return (
-          <div key={v.id} className="flex flex-col items-center gap-2">
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {uplift === 0 ? "—" : `${positive ? "+" : ""}${uplift.toFixed(1)}%`}
-            </span>
-            <div
-              className={cn(
-                "w-10",
-                positive ? "bg-success-fg" : "bg-danger-fg"
-              )}
-              style={{ height: h }}
-            />
-            <GraphBadge tone={badgeTone(i)}>{v.label}</GraphBadge>
+    <div className="space-y-5">
+      <div className="flex justify-end">
+        <UnderstandGraphLink />
+      </div>
+      <div className="flex gap-3">
+        <div className="flex w-6 shrink-0 items-center justify-center">
+          <span className="-rotate-90 whitespace-nowrap text-xs font-medium text-muted-foreground">
+            Probability Density
+          </span>
+        </div>
+        <div className="relative min-w-0 flex-1">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 flex flex-col justify-between"
+            style={{ height: DENSITY_PLOT_H }}
+            aria-hidden
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-px w-full bg-border/70" />
+            ))}
           </div>
-        );
-      })}
+          <svg
+            className="relative h-[200px] w-full"
+            viewBox={`0 0 ${DENSITY_PLOT_W} ${DENSITY_PLOT_H}`}
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            {series.map(({ key, path, peak }) => (
+              <g key={key}>
+                <line
+                  x1={peak.x}
+                  x2={peak.x}
+                  y1={peak.y}
+                  y2={DENSITY_PLOT_H}
+                  stroke={DENSITY_STROKE[key]}
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                  vectorEffect="non-scaling-stroke"
+                  opacity={0.7}
+                />
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={DENSITY_STROKE[key]}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            ))}
+          </svg>
+          {series.map(({ key, mean, peak }) => (
+            <span
+              key={`${key}-label`}
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-foreground shadow-sm"
+              style={{
+                left: `${peak.labelXPct}%`,
+                top: `${Math.max(4, peak.labelYPct - 2)}%`,
+              }}
+            >
+              {mean.toFixed(2)}%
+            </span>
+          ))}
+          <div className="mt-2 flex justify-between text-xs tabular-nums text-muted-foreground">
+            {xTicks.map((t) => (
+              <span key={t}>{t}</span>
+            ))}
+          </div>
+          <p className="mt-2 text-center text-xs font-medium text-muted-foreground">
+            Conversion Rate
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-6">
+          <DensitySeriesLegend
+            tone="ctrl"
+            label="C"
+            name="Control"
+            checked={visible.ctrl}
+            onCheckedChange={(next) => onVisibleChange("ctrl", next)}
+          />
+          <DensitySeriesLegend
+            tone="v1"
+            label="V1"
+            name="Variation 1"
+            checked={visible.v1}
+            onCheckedChange={(next) => onVisibleChange("v1", next)}
+          />
+        </div>
+        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <span
+            className="inline-block h-3 w-5 shrink-0 rounded-sm"
+            style={{
+              background:
+                "repeating-linear-gradient(-45deg, hsl(var(--border)), hsl(var(--border)) 1px, transparent 1px, transparent 3px)",
+            }}
+            aria-hidden
+          />
+          Uncertainty Overlap
+          <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+        </span>
+      </div>
     </div>
+  );
+}
+
+function ExpectedImprovementChart({
+  campaign,
+  metricName,
+  filters,
+  visible,
+  onVisibleChange,
+}: {
+  campaign: Campaign;
+  metricName: string;
+  filters: ReportFilterContext;
+  visible: boolean;
+  onVisibleChange: (next: boolean) => void;
+}) {
+  const v1 = campaign.report.variants[1] ?? campaign.report.variants[0]!;
+  const stats = metricRowStats(campaign, metricName, v1, 1, filters);
+  const mean = Math.max(4, Math.min(40, 12 + (stats.uplift ?? 8)));
+  const std = 7.2;
+  const xMin = -15;
+  const xMax = 45;
+  const yMax = gaussianPdf(mean, mean, std) * 1.15;
+  const path = densityCurvePath(
+    mean,
+    std,
+    xMin,
+    xMax,
+    DENSITY_PLOT_W,
+    DENSITY_PLOT_H,
+    yMax
+  );
+  const peak = densityPeak(
+    mean,
+    std,
+    xMin,
+    xMax,
+    DENSITY_PLOT_W,
+    DENSITY_PLOT_H,
+    yMax
+  );
+  const zeroX = ((0 - xMin) / (xMax - xMin)) * 100;
+  const ropeLeft = ((-1.5 - xMin) / (xMax - xMin)) * 100;
+  const ropeRight = ((1.5 - xMin) / (xMax - xMin)) * 100;
+  const xTicks = [-15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45];
+
+  return (
+    <div className="space-y-5">
+      <div className="flex justify-end">
+        <UnderstandGraphLink />
+      </div>
+      <div className="flex gap-3">
+        <div className="flex w-6 shrink-0 items-center justify-center">
+          <span className="-rotate-90 whitespace-nowrap text-xs font-medium text-muted-foreground">
+            Improvement Density
+          </span>
+        </div>
+        <div className="relative min-w-0 flex-1">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden rounded-sm"
+            style={{ height: DENSITY_PLOT_H }}
+            aria-hidden
+          >
+            <div
+              className="absolute inset-y-0 left-0 bg-[hsl(var(--report-red)/0.08)]"
+              style={{ width: `${zeroX}%` }}
+            />
+            <div
+              className="absolute inset-y-0 bg-report-green-tint"
+              style={{ left: `${zeroX}%`, right: 0 }}
+            />
+            <div
+              className="absolute inset-y-0 bg-muted"
+              style={{ left: `${ropeLeft}%`, width: `${ropeRight - ropeLeft}%` }}
+            />
+            <span className="absolute left-3 top-2 text-[11px] font-semibold uppercase tracking-wide text-danger-fg">
+              Worse
+            </span>
+            <span className="absolute right-3 top-2 text-[11px] font-semibold uppercase tracking-wide text-success-fg">
+              Better
+            </span>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute inset-x-0 h-px bg-border/50"
+                style={{ top: `${(i / 5) * 100}%` }}
+              />
+            ))}
+          </div>
+          {visible ? (
+            <>
+              <svg
+                className="relative h-[200px] w-full"
+                viewBox={`0 0 ${DENSITY_PLOT_W} ${DENSITY_PLOT_H}`}
+                preserveAspectRatio="none"
+                aria-hidden
+              >
+                <line
+                  x1={peak.x}
+                  x2={peak.x}
+                  y1={peak.y}
+                  y2={DENSITY_PLOT_H}
+                  stroke={DENSITY_STROKE.v1}
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                  vectorEffect="non-scaling-stroke"
+                  opacity={0.75}
+                />
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={DENSITY_STROKE.v1}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+              <span
+                className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-foreground shadow-sm"
+                style={{
+                  left: `${peak.labelXPct}%`,
+                  top: `${Math.max(4, peak.labelYPct - 2)}%`,
+                }}
+              >
+                {mean.toFixed(2)}%
+              </span>
+            </>
+          ) : (
+            <div style={{ height: DENSITY_PLOT_H }} />
+          )}
+          <div className="mt-2 flex justify-between text-xs tabular-nums text-muted-foreground">
+            {xTicks.map((t) => (
+              <span key={t}>{t}</span>
+            ))}
+          </div>
+          <p className="mt-2 text-center text-xs font-medium text-muted-foreground">
+            Improvement
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-6">
+        <DensitySeriesLegend
+          tone="v1"
+          label="V1"
+          name="Variation 1"
+          checked={visible}
+          onCheckedChange={onVisibleChange}
+        />
+      </div>
+    </div>
+  );
+}
+
+function GraphMetricDropdown({
+  value,
+  onChange,
+}: {
+  value: GraphMetricOption;
+  onChange: (v: GraphMetricOption) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 px-1 text-sm font-medium text-foreground"
+        >
+          {value}
+          <ChevronDown
+            className={cn("h-4 w-4 opacity-70 transition-transform", open && "rotate-180")}
+            aria-hidden
+          />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[220px] p-1">
+        {GRAPH_METRIC_OPTIONS.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => {
+              onChange(opt);
+              setOpen(false);
+            }}
+            className={cn(
+              GRAPH_DROPDOWN_ITEM_CLASS,
+              value === opt && GRAPH_DROPDOWN_ITEM_ACTIVE_CLASS
+            )}
+          >
+            {opt}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -2831,26 +3596,33 @@ function IntervalDropdown({
   value: ChartInterval;
   onChange: (v: ChartInterval) => void;
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
           className="inline-flex items-center gap-1.5 px-1 text-sm font-medium text-foreground"
         >
           {value}
-          <ChevronDown className="h-4 w-4 opacity-70" aria-hidden />
+          <ChevronDown
+            className={cn("h-4 w-4 opacity-70 transition-transform", open && "rotate-180")}
+            aria-hidden
+          />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-36 p-1">
-        {(["Daily", "Weekly"] as const).map((opt) => (
+      <PopoverContent align="start" className="w-40 p-1">
+        {(["Daily", "Cumulative"] as const).map((opt) => (
           <button
             key={opt}
             type="button"
-            onClick={() => onChange(opt)}
+            onClick={() => {
+              onChange(opt);
+              setOpen(false);
+            }}
             className={cn(
-              "flex w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent",
-              value === opt && "bg-accent font-medium"
+              GRAPH_DROPDOWN_ITEM_CLASS,
+              value === opt && GRAPH_DROPDOWN_ITEM_ACTIVE_CLASS
             )}
           >
             {opt}
@@ -2894,14 +3666,19 @@ function GraphPanel({
   metricName,
   filters,
   defaultGraph,
+  className,
 }: {
   campaign: Campaign;
   metricName: string;
   filters: ReportFilterContext;
   defaultGraph: ResultsGraphDefault;
+  className?: string;
 }) {
-  const [graphTab, setGraphTab] = useState(
-    defaultGraph === "expected-improvement" ? 1 : 0
+  const [graphTab, setGraphTab] = useState(() =>
+    graphTabIndexFromDefault(defaultGraph)
+  );
+  const [graphMetric, setGraphMetric] = useState<GraphMetricOption>(
+    "Conversion Rate (v)"
   );
   const [interval, setInterval] = useState<ChartInterval>("Daily");
   const [showRanges, setShowRanges] = useState(false);
@@ -2910,22 +3687,22 @@ function GraphPanel({
     v1: true,
     v2: true,
   });
+  const [densityVisible, setDensityVisible] = useState({ ctrl: true, v1: true });
+  const [improvementVisible, setImprovementVisible] = useState(true);
 
   useEffect(() => {
-    setGraphTab(defaultGraph === "expected-improvement" ? 1 : 0);
+    setGraphTab(graphTabIndexFromDefault(defaultGraph));
   }, [defaultGraph]);
 
-  const xLabels =
-    interval === "Daily"
-      ? ["Oct 25", "Nov 25", "Dec 25", "Jan 26"]
-      : ["Week 1", "Week 2", "Week 3", "Week 4"];
+  const activeTabId: GraphTabId = GRAPH_TABS[graphTab]?.id ?? "date-range";
+  const xLabels = ["Oct 25", "Nov 25", "Dec 25", "Jan 26"];
 
   return (
-    <div className="px-8 pb-8 pt-6">
+    <div className={cn("px-8 pb-8", className)}>
       <div className="flex flex-wrap items-end gap-x-8 gap-y-1 border-b border-border">
-        {GRAPH_TABS.map(({ label, icon: Icon, helpTitle, helpBody, helpAria }, i) => (
+        {GRAPH_TABS.map(({ id, label, icon: Icon, helpTitle, helpBody, helpAria }, i) => (
           <div
-            key={label}
+            key={id}
             className={cn(
               "relative -mb-px flex items-center gap-1.5 border-b-2 border-transparent px-0.5 pb-2.5",
               graphTab === i
@@ -2955,13 +3732,12 @@ function GraphPanel({
         ))}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm font-semibold text-foreground">{metricName}</span>
-          <Separator orientation="vertical" className="hidden h-4 sm:block" />
-          <IntervalDropdown value={interval} onChange={setInterval} />
-        </div>
-        {graphTab === 0 ? (
+      {activeTabId === "date-range" ? (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-5">
+            <GraphMetricDropdown value={graphMetric} onChange={setGraphMetric} />
+            <IntervalDropdown value={interval} onChange={setInterval} />
+          </div>
           <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5">
             <Checkbox
               checked={showRanges}
@@ -2973,11 +3749,11 @@ function GraphPanel({
               <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
             </span>
           </label>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 rounded-xl border border-border bg-background p-6">
-        {graphTab === 0 ? (
+        {activeTabId === "date-range" ? (
           <div className="flex gap-6">
             <div className="flex flex-col justify-between py-2 text-right text-xs font-medium tabular-nums text-muted-foreground">
               {Y_AXIS.map((v) => (
@@ -2993,17 +3769,12 @@ function GraphPanel({
                   <div key={v} className="h-px w-full bg-border/80" />
                 ))}
               </div>
-              {showRanges ? (
-                <div
-                  className="pointer-events-none absolute inset-x-[12%] top-2 h-[172px] rounded-lg bg-muted"
-                  aria-hidden
-                />
-              ) : null}
               <DateRangeLineChart
-                metricName={metricName}
+                metricName={graphMetric}
                 filters={filters}
                 interval={interval}
                 visible={visible}
+                showRanges={showRanges}
               />
               <div className="mt-2 flex justify-between px-12 text-xs tabular-nums text-muted-foreground">
                 {xLabels.map((d) => (
@@ -3012,17 +3783,29 @@ function GraphPanel({
               </div>
             </div>
           </div>
+        ) : activeTabId === "expected-conversion-rate" ? (
+          <ExpectedConversionRateChart
+            campaign={campaign}
+            metricName={metricName}
+            filters={filters}
+            visible={densityVisible}
+            onVisibleChange={(key, next) =>
+              setDensityVisible((v) => ({ ...v, [key]: next }))
+            }
+          />
         ) : (
           <ExpectedImprovementChart
             campaign={campaign}
             metricName={metricName}
             filters={filters}
+            visible={improvementVisible}
+            onVisibleChange={setImprovementVisible}
           />
         )}
       </div>
 
-      {graphTab === 0 ? (
-        <div className="mt-6 flex flex-wrap items-center gap-6 border-t border-border pt-5">
+      {activeTabId === "date-range" ? (
+        <div className="mt-6 flex flex-wrap items-center gap-6 pt-5">
           <LegendItem
             tone="ctrl"
             label="C"
@@ -3371,17 +4154,6 @@ function MetricSelector({
       label={campaign.primaryMetric}
       active={selectedMetric === campaign.primaryMetric}
       onClick={() => onSelectMetric(campaign.primaryMetric)}
-      trailing={
-        <span
-          className={cn(
-            "rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground",
-            selectedMetric !== campaign.primaryMetric && "invisible"
-          )}
-          aria-hidden={selectedMetric !== campaign.primaryMetric}
-        >
-          Primary
-        </span>
-      }
     />
   );
 
@@ -3462,12 +4234,10 @@ function CompareCheckItem({
   name,
   checked,
   onToggle,
-  badge,
 }: {
   name: string;
   checked: boolean;
   onToggle: () => void;
-  badge?: string;
 }) {
   return (
     <label
@@ -3484,11 +4254,6 @@ function CompareCheckItem({
         />
       </span>
       <span className="min-w-0 flex-1 truncate">{name}</span>
-      {badge && (
-        <span className="shrink-0 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground">
-          {badge}
-        </span>
-      )}
     </label>
   );
 }
@@ -3523,7 +4288,6 @@ function CompareMetricSelector({
             name={primary}
             checked={selected.includes(primary)}
             onToggle={() => onToggle(primary)}
-            badge={selected.includes(primary) ? "Primary" : undefined}
           />
         </div>
 
@@ -3598,66 +4362,64 @@ function MetricLabel({ name, isPrimary }: { name: string; isPrimary: boolean }) 
 
 function CompareTableHeader() {
   return (
-    <>
-      <div className="grid items-start bg-muted/30" style={COMPARE_GRID}>
-        <div className="flex items-center gap-1.5 border-r border-border px-5 pb-2 pt-3">
-          <span className="text-xs font-semibold text-foreground/75">Metric</span>
-          <FunnelIcon className="h-3 w-3 text-muted-foreground" />
-        </div>
-        <div className="flex items-center gap-1.5 px-4 pb-2 pt-3">
-          <span className="text-xs font-semibold text-foreground/75">Variations</span>
-          <FunnelIcon className="h-3 w-3 text-muted-foreground" />
-        </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
-          <span className="text-right text-xs font-semibold text-foreground/75">
-            Unique conversions
-          </span>
-          <UniqueConversionsHelp />
-        </div>
-        <div className="flex items-center justify-end gap-1 px-2 pb-2.5 pt-4">
-          <span className="text-right text-xs font-semibold text-foreground/75">
-            Total visitors
-          </span>
-          <TotalVisitorsHelp />
-        </div>
-        <div className="flex items-center justify-center gap-1 px-2 pb-2.5 pt-4">
-          <span className="text-center text-xs font-semibold text-foreground/75">
-            Expected improvement(v)
-          </span>
-          <ExpectedImprovementHelp />
-        </div>
-        <div className="flex flex-col gap-0.5 px-6 pb-2.5 pt-4">
-          <div className="flex items-center gap-1">
-            <span className="text-xs font-semibold text-foreground/75">
-              Probability of Better or Equivalent (v)
-            </span>
-            <ProbabilityBetterOrEquivalentHelp />
-          </div>
-          <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
-            MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
-          </div>
-        </div>
+    <div
+      className="grid items-stretch border-b border-border bg-muted/50"
+      style={{ ...COMPARE_GRID, gridTemplateRows: "auto auto" }}
+    >
+      {/* Title row */}
+      <div className="flex items-center gap-1.5 border-r border-border px-5 pb-1.5 pt-3">
+        <span className="text-xs font-medium text-muted-foreground">Metric</span>
+        <FunnelIcon className="h-3 w-3 text-muted-foreground" />
+      </div>
+      <div className="flex items-center gap-1.5 px-4 pb-1.5 pt-3">
+        <span className="text-xs font-medium text-muted-foreground">Variations</span>
+        <FunnelIcon className="h-3 w-3 text-muted-foreground" />
+      </div>
+      <div className="flex items-center justify-end gap-1 px-2 pb-1.5 pt-3">
+        <span className="truncate text-right text-xs font-medium text-muted-foreground">
+          Unique conversions
+        </span>
+        <UniqueConversionsHelp />
+      </div>
+      <div className="flex items-center justify-end gap-1 px-2 pb-1.5 pt-3">
+        <span className="truncate text-right text-xs font-medium text-muted-foreground">
+          Total visitors
+        </span>
+        <TotalVisitorsHelp />
+      </div>
+      <div className="flex items-center justify-center gap-1 px-5 pb-1.5 pt-3">
+        <span className="truncate text-center text-xs font-medium text-muted-foreground">
+          Expected improvement(v)
+        </span>
+        <ExpectedImprovementHelp />
+      </div>
+      <div className="flex items-center gap-1 px-6 pb-1.5 pt-3">
+        <span className="truncate text-xs font-medium text-muted-foreground">
+          Probability of Better or Equivalent (v)
+        </span>
+        <ProbabilityBetterOrEquivalentHelp />
       </div>
 
-      <div
-        className="grid items-center border-b border-border bg-muted/40 text-[10px] leading-none text-muted-foreground"
-        style={COMPARE_GRID}
-      >
-        <div className="h-5 border-r border-border" />
-        <div className="h-5" />
-        <div className="h-5" />
-        <div className="h-5" />
-        <div className="flex h-5 items-center justify-between px-5">
-          <span>-6%</span>
-          <span>0%</span>
-          <span>6%</span>
-        </div>
-        <div className="flex h-5 items-center justify-end gap-1 pr-5">
+      {/* Subhead row */}
+      <div className="border-r border-border px-5 pb-3 pt-1" />
+      <div className="px-4 pb-3 pt-1" />
+      <div className="px-2 pb-3 pt-1" />
+      <div className="px-2 pb-3 pt-1" />
+      <div className="flex items-start justify-between px-5 pb-3 pt-1 text-[10px] leading-none text-muted-foreground">
+        <span>-6%</span>
+        <span>0%</span>
+        <span>6%</span>
+      </div>
+      <div className="flex flex-col items-start gap-0.5 px-6 pb-3 pt-1 text-[10px] leading-none text-muted-foreground">
+        <span className="truncate">
+          MDE ±20% · ROPE 1.5% · Power 80% · FPR 5%
+        </span>
+        <div className="flex items-center gap-1">
           <span>Winner threshold: {WINNER_THRESHOLD}%</span>
           <WinnerThresholdHelp />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -3751,8 +4513,14 @@ function CompareTable({
                   <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
                     {formatNumber(row.visitors)}
                   </div>
-                  <ExpectedImprovementCell value={row.improvement} />
-                  <ProbabilityCell value={row.probability} />
+                  <ExpectedImprovementCell
+                    value={row.improvement}
+                    rowDensity="default"
+                  />
+                  <ProbabilityCell
+                    value={row.probability}
+                    rowDensity="default"
+                  />
                 </Fragment>
               ))}
             </Fragment>
@@ -3869,12 +4637,18 @@ export default function ResultsTab({
   const viewSettings =
     viewState.viewSettings ?? DEFAULT_REPORT_VIEW_SETTINGS;
   const resultsTableColumns = useActiveResultsTableColumns(campaign.id);
+  const resultsRowDensity = useActiveResultsRowDensity(campaign.id);
   const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
   const setResultsTableColumnsDraft = useReportViewsStore(
     (s) => s.setResultsTableColumnsDraft
   );
+  const setResultsRowDensityDraft = useReportViewsStore(
+    (s) => s.setResultsRowDensityDraft
+  );
   const setResultsTableColumns = (next: ResultsTableColumnId[]) =>
     setResultsTableColumnsDraft(campaign.id, next);
+  const setResultsRowDensity = (next: ResultsRowDensity) =>
+    setResultsRowDensityDraft(campaign.id, next);
   const filters: ReportFilterContext = useMemo(
     () => ({
       segments: viewState.segments,
@@ -3928,7 +4702,7 @@ export default function ResultsTab({
           onToggle={toggleCompare}
           onClear={() => setCompareMode(false)}
           collapsed={metricsNavCollapsed}
-          onToggleCollapsed={() => setMetricsNavCollapsed((c) => !c)}
+          onToggleCollapsed={() => setMetricsNavCollapsed(!metricsNavCollapsed)}
         />
       ) : (
         <MetricSelector
@@ -3937,18 +4711,17 @@ export default function ResultsTab({
           onSelectMetric={setSelectedMetric}
           onEnterCompare={enterCompare}
           collapsed={metricsNavCollapsed}
-          onToggleCollapsed={() => setMetricsNavCollapsed((c) => !c)}
+          onToggleCollapsed={() => setMetricsNavCollapsed(!metricsNavCollapsed)}
         />
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1120px] space-y-5 px-12 py-8">
+        <div className="mx-auto max-w-[1120px] space-y-8 px-12 py-8">
           <ViewSettingsDialog
             open={viewSettingsOpen}
             onOpenChange={setViewSettingsOpen}
             settings={viewSettings}
             onSave={(next) => {
-              const { resultsTableColumns: _columns, ...rest } = next;
-              updateActivePreset(campaign.id, { viewSettings: rest });
+              updateActivePreset(campaign.id, { viewSettings: next });
             }}
           />
           <StatisticalConfigurationDialog
@@ -4001,12 +4774,13 @@ export default function ResultsTab({
                   {isStatisticsPreset ? (
                     <StatisticsPresetEmptyState metricName={selectedMetric} />
                   ) : viewSettings.layout === "graphs-first" ? (
-                    <>
+                    <div className="flex flex-col gap-12">
                       <GraphPanel
                         campaign={campaign}
                         metricName={selectedMetric}
                         filters={filters}
                         defaultGraph={viewSettings.defaultGraph}
+                        className="pt-6"
                       />
                       <ResultsTable
                         campaign={campaign}
@@ -4016,10 +4790,12 @@ export default function ResultsTab({
                         showTotalRow={viewSettings.showTotalRow}
                         columns={resultsTableColumns}
                         onColumnsChange={setResultsTableColumns}
+                        rowDensity={resultsRowDensity}
+                        onRowDensityChange={setResultsRowDensity}
                       />
-                    </>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex flex-col gap-12">
                       <ResultsTable
                         campaign={campaign}
                         metricName={selectedMetric}
@@ -4028,6 +4804,8 @@ export default function ResultsTab({
                         showTotalRow={viewSettings.showTotalRow}
                         columns={resultsTableColumns}
                         onColumnsChange={setResultsTableColumns}
+                        rowDensity={resultsRowDensity}
+                        onRowDensityChange={setResultsRowDensity}
                       />
                       <GraphPanel
                         campaign={campaign}
@@ -4035,7 +4813,7 @@ export default function ResultsTab({
                         filters={filters}
                         defaultGraph={viewSettings.defaultGraph}
                       />
-                    </>
+                    </div>
                   )}
                 </div>
               </div>

@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import ResultsTab from "./ResultsTab";
+import VitalsTab from "./VitalsTab";
 import vwoMark from "./vwo-mark.svg";
 
 // ---------------------------------------------------------------------------
@@ -846,17 +847,19 @@ export default function ReportsPage() {
             onNavigateToVitals={() => setActiveTab("vitals")}
           />
         </TabsContent>
-        {TABS.slice(2).map((tab) => (
-          <TabsContent
-            key={tab}
-            value={tabValue(tab)}
-            className="mt-0 flex-1 focus-visible:outline-none"
-          >
-            <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-              {tab} coming soon.
-            </div>
-          </TabsContent>
-        ))}
+        <TabsContent value="behaviour" className="mt-0 flex-1 focus-visible:outline-none">
+          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+            Behaviour coming soon.
+          </div>
+        </TabsContent>
+        <TabsContent value="live-hits" className="mt-0 flex-1 focus-visible:outline-none">
+          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+            Live hits coming soon.
+          </div>
+        </TabsContent>
+        <TabsContent value="vitals" className="mt-0 flex-1 focus-visible:outline-none">
+          <VitalsTab key={campaign.id} campaign={campaign} />
+        </TabsContent>
       </Tabs>
     </div>
   );

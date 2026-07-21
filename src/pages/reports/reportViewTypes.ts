@@ -1,5 +1,9 @@
 export type ResultsLayout = "table-first" | "graphs-first";
-export type ResultsGraphDefault = "date-range" | "expected-improvement";
+export type ResultsGraphDefault =
+  | "date-range"
+  | "expected-conversion-rate"
+  | "expected-improvement";
+export type ResultsRowDensity = "compact" | "default" | "comfortable";
 
 export type ResultsTableColumnId =
   | "unique-conversions"
@@ -27,6 +31,12 @@ export const DEFAULT_RESULTS_TABLE_COLUMNS: ResultsTableColumnId[] = [
 
 const RESULTS_TABLE_COLUMN_ID_SET = new Set<string>(RESULTS_TABLE_COLUMN_IDS);
 
+const RESULTS_ROW_DENSITY_SET = new Set<string>([
+  "compact",
+  "default",
+  "comfortable",
+]);
+
 export function sanitizeResultsTableColumns(
   value: unknown,
   fallback: ResultsTableColumnId[] = DEFAULT_RESULTS_TABLE_COLUMNS
@@ -40,6 +50,15 @@ export function sanitizeResultsTableColumns(
   return filtered.length > 0 ? filtered : [...fallback];
 }
 
+export function sanitizeResultsRowDensity(
+  value: unknown,
+  fallback: ResultsRowDensity = "default"
+): ResultsRowDensity {
+  return typeof value === "string" && RESULTS_ROW_DENSITY_SET.has(value)
+    ? (value as ResultsRowDensity)
+    : fallback;
+}
+
 export type ReportViewSettings = {
   layout: ResultsLayout;
   defaultGraph: ResultsGraphDefault;
@@ -48,6 +67,7 @@ export type ReportViewSettings = {
   showTotalRow: boolean;
   showDisabledVariationRows: boolean;
   resultsTableColumns: ResultsTableColumnId[];
+  rowDensity: ResultsRowDensity;
 };
 
 export const DEFAULT_REPORT_VIEW_SETTINGS: ReportViewSettings = {
@@ -58,6 +78,7 @@ export const DEFAULT_REPORT_VIEW_SETTINGS: ReportViewSettings = {
   showTotalRow: true,
   showDisabledVariationRows: true,
   resultsTableColumns: [...DEFAULT_RESULTS_TABLE_COLUMNS],
+  rowDensity: "default",
 };
 
 export const REPORT_PRESET_IDS = {
