@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    @apply font-sans antialiased;
+  }
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 0 0% 3.9%;
@@ -62,6 +68,44 @@
   /* Result tokens — used ONLY for uplift values and the confidence bar. */
   --success-fg: 142 64% 26%;
   --danger-fg: 0 72% 46%;
+
+  /* Report tokens — used ONLY by the campaign Reports page. These mirror the
+     Figma report design (semantic result colors, not chrome). */
+  --report-green-deep: 155 90% 24%;   /* uplift values, winner text */
+  --report-green: 142 76% 36%;        /* decision-banner accent + rollout CTA */
+  --report-green-mid: 151 86% 33%;    /* preview CTA, revenue bars */
+  --report-green-bar: 152 77% 39%;    /* projected-impact bar fill */
+  --report-green-badge: 141 84% 93%;  /* status pill / winner pill bg */
+  --report-green-tint: 139 76% 97%;   /* decision-banner gradient start */
+  --report-green-border: 148 63% 67%; /* decision-banner + winner card border */
+  --report-red: 0 72% 51%;            /* negative uplift */
+  --report-amber: 42 77% 62%;         /* browser-mock traffic light */
+  --report-track: 0 0% 85%;           /* revenue bar rail */
+  --report-link: 249 47% 43%;         /* "View full result" style links */
+  --report-blue-bg: 201 82% 89%;      /* variation series chip (blue) */
+  --report-blue-border: 207 71% 66%;
+  --report-blue-fg: 218 88% 26%;
+  --report-purple-bg: 272 88% 97%;    /* variation series chip (purple) */
+  --report-purple-border: 270 47% 83%;
+  --report-purple-fg: 272 35% 46%;
+
+  /* Results-tab tokens — metric table + graph on the Reports page. */
+  --report-conclusion-bg: 145 81% 96%; /* conclusion banner background */
+  --report-brand: 249 43% 52%;         /* active inner-tab underline */
+  --report-brand-fg: 250 47% 45%;      /* active inner-tab label */
+  --report-brand-tint: 252 100% 97%;   /* selected metric-list item bg */
+  --report-ctrl-bg: 254 72% 92%;       /* Control graph badge (purple) */
+  --report-ctrl-border: 252 58% 71%;
+  --report-ctrl-fg: 247 59% 27%;
+  --report-v1-bg: 33 92% 91%;          /* Variation 1 graph badge (amber) */
+  --report-v1-border: 25 87% 72%;
+  --report-v1-fg: 9 81% 35%;
+  --report-v2-bg: 128 85% 90%;         /* Variation 2 graph badge (green) */
+  --report-v2-border: 140 72% 67%;
+  --report-v2-fg: 170 87% 22%;
+  --report-prob-fill: 148 63% 67%;     /* "probability of better" green bar */
+  --report-info-bg: 209 100% 91%;      /* expected-improvement median band */
+  --report-threshold: 148 40% 69%;     /* winner-threshold dashed divider */
 }
 
 * {
@@ -87,11 +131,7 @@ select:-webkit-autofill {
 
 body {
   margin: 0;
-  font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  -webkit-font-smoothing: antialiased;
+  @apply bg-background text-foreground;
   font-feature-settings: "cv11", "ss01";
   font-variation-settings: "opsz" 32;
 }

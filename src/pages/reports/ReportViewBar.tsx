@@ -5,12 +5,13 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  BASE_STATE,
-  BASE_VIEW_ID,
-  isDirtyIgnoringLayout,
-  useIsActiveViewDirty,
-  useViewsStore,
-} from "../../store/views";
+  REPORT_BASE_STATE,
+  REPORT_BASE_VIEW_ID,
+  isReportViewDirty,
+  useIsReportViewDirty,
+  useReportCampaignSlice,
+  useReportViewsStore,
+} from "../../store/reportViews";
 import { cn } from "../../lib/utils";
 
 function DirtyDot() {
@@ -22,18 +23,21 @@ function DirtyDot() {
   );
 }
 
-export default function ViewBar() {
-  const views = useViewsStore((s) => s.views);
-  const activeViewId = useViewsStore((s) => s.activeViewId);
-  const drafts = useViewsStore((s) => s.drafts);
-  const setActiveView = useViewsStore((s) => s.setActiveView);
-  const saveDraftToActiveView = useViewsStore((s) => s.saveDraftToActiveView);
-  const saveDraftAsNewView = useViewsStore((s) => s.saveDraftAsNewView);
-  const discardActiveViewDraft = useViewsStore((s) => s.discardActiveViewDraft);
-  const renameView = useViewsStore((s) => s.renameView);
-  const deleteView = useViewsStore((s) => s.deleteView);
-  const reorderViews = useViewsStore((s) => s.reorderViews);
-  const isDirty = useIsActiveViewDirty();
+export default function ReportViewBar({ campaignId }: { campaignId: string }) {
+  const { views, activeViewId } = useReportCampaignSlice(campaignId);
+  const drafts = useReportViewsStore((s) => s.drafts);
+  const setActiveView = useReportViewsStore((s) => s.setActiveView);
+  const saveDraftToActiveView = useReportViewsStore(
+    (s) => s.saveDraftToActiveView
+  );
+  const saveDraftAsNewView = useReportViewsStore((s) => s.saveDraftAsNewView);
+  const discardActiveViewDraft = useReportViewsStore(
+    (s) => s.discardActiveViewDraft
+  );
+  const renameView = useReportViewsStore((s) => s.renameView);
+  const deleteView = useReportViewsStore((s) => s.deleteView);
+  const reorderViews = useReportViewsStore((s) => s.reorderViews);
+  const isDirty = useIsReportViewDirty(campaignId);
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -46,18 +50,16 @@ export default function ViewBar() {
   const hasStrip = views.length > 0;
   const activeView = views.find((v) => v.id === activeViewId);
 
-  // One row: tab strip left, Discard/Save right. Renders when either exists;
-  // otherwise nothing at all, keeping the header→toolbar gap exactly 32px.
   if (!hasStrip && !isDirty) return null;
 
   const dirtyFor = (id: string) => {
-    const draft = drafts[id];
+    const draft = drafts[`${campaignId}::${id}`];
     if (!draft) return false;
     const saved =
-      id === BASE_VIEW_ID
-        ? BASE_STATE
-        : views.find((v) => v.id === id)?.state ?? BASE_STATE;
-    return isDirtyIgnoringLayout(draft, saved);
+      id === REPORT_BASE_VIEW_ID
+        ? REPORT_BASE_STATE
+        : views.find((v) => v.id === id)?.state ?? REPORT_BASE_STATE;
+    return isReportViewDirty(draft, saved);
   };
 
   const startRename = (id: string, name: string) => {
@@ -65,7 +67,7 @@ export default function ViewBar() {
     setRenameValue(name);
   };
   const commitRename = () => {
-    if (renamingId) renameView(renamingId, renameValue);
+    if (renamingId) renameView(campaignId, renamingId, renameValue);
     setRenamingId(null);
   };
 
@@ -74,7 +76,7 @@ export default function ViewBar() {
     setSaveAsOpen(true);
   };
   const submitSaveAs = () => {
-    saveDraftAsNewView(saveAsName);
+    saveDraftAsNewView(campaignId, saveAsName);
     setSaveAsOpen(false);
   };
 
@@ -87,26 +89,24 @@ export default function ViewBar() {
     <>
       <div
         className={cn(
-          "mb-4 flex min-h-[36px] items-end justify-between gap-4",
+          "mb-3 flex min-h-[36px] items-end justify-between gap-4",
           hasStrip && "border-b border-border"
         )}
       >
-        {/* A) TAB STRIP — only when there is at least one saved view */}
         {hasStrip ? (
           <div className="flex items-end">
-            {/* "All" tab */}
             <button
               type="button"
-              onClick={() => setActiveView(BASE_VIEW_ID)}
+              onClick={() => setActiveView(campaignId, REPORT_BASE_VIEW_ID)}
               className={cn(
                 "-mb-px flex items-center border-b-2 px-3 py-2 text-sm transition-colors",
-                activeViewId === BASE_VIEW_ID
+                activeViewId === REPORT_BASE_VIEW_ID
                   ? "border-foreground text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              All
-              {dirtyFor(BASE_VIEW_ID) && <DirtyDot />}
+              Default
+              {dirtyFor(REPORT_BASE_VIEW_ID) && <DirtyDot />}
             </button>
 
             {views.map((view, index) => {
@@ -128,7 +128,7 @@ export default function ViewBar() {
                   onDrop={(e) => {
                     e.preventDefault();
                     if (dragIndex !== null && overIndex !== null)
-                      reorderViews(dragIndex, overIndex);
+                      reorderViews(campaignId, dragIndex, overIndex);
                     endDrag();
                   }}
                   onDragEnd={endDrag}
@@ -159,7 +159,7 @@ export default function ViewBar() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setActiveView(view.id)}
+                      onClick={() => setActiveView(campaignId, view.id)}
                       className="flex items-center py-2 pl-3 pr-1 text-sm"
                     >
                       {view.name}
@@ -215,18 +215,17 @@ export default function ViewBar() {
           <div />
         )}
 
-        {/* B) SAVE CONTROLS — right-aligned, only while the active view is dirty */}
         {isDirty && (
           <div className="mb-1 flex shrink-0 animate-fade-in items-center gap-2 duration-150">
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={discardActiveViewDraft}
+              onClick={() => discardActiveViewDraft(campaignId)}
             >
               Discard
             </Button>
-            {activeViewId === BASE_VIEW_ID ? (
+            {activeViewId === REPORT_BASE_VIEW_ID ? (
               <Button type="button" size="sm" onClick={openSaveAs}>
                 Save view
               </Button>
@@ -244,7 +243,7 @@ export default function ViewBar() {
                     className="z-50 min-w-[200px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
                   >
                     <DropdownMenu.Item
-                      onSelect={() => saveDraftToActiveView()}
+                      onSelect={() => saveDraftToActiveView(campaignId)}
                       className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
                     >
                       Save changes to “{activeView?.name}”
@@ -263,7 +262,6 @@ export default function ViewBar() {
         )}
       </div>
 
-      {/* Delete confirmation */}
       <AlertDialog.Root
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
@@ -280,31 +278,27 @@ export default function ViewBar() {
             </AlertDialog.Description>
             <div className="mt-5 flex justify-end gap-2">
               <AlertDialog.Cancel asChild>
-                <button
-                  type="button"
-                  className="rounded-md border border-input px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
-                >
+                <Button type="button" variant="outline" size="sm">
                   Cancel
-                </button>
+                </Button>
               </AlertDialog.Cancel>
               <AlertDialog.Action asChild>
-                <button
+                <Button
                   type="button"
+                  size="sm"
                   onClick={() => {
-                    if (deleteId) deleteView(deleteId);
+                    if (deleteId) deleteView(campaignId, deleteId);
                     setDeleteId(null);
                   }}
-                  className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
                 >
                   Delete
-                </button>
+                </Button>
               </AlertDialog.Action>
             </div>
           </AlertDialog.Content>
         </AlertDialog.Portal>
       </AlertDialog.Root>
 
-      {/* Save-as dialog */}
       <Dialog.Root open={saveAsOpen} onOpenChange={setSaveAsOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
@@ -330,15 +324,11 @@ export default function ViewBar() {
               />
               <div className="mt-5 flex justify-end gap-2">
                 <Dialog.Close asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-auto border border-input px-3 py-1.5 text-foreground hover:bg-muted hover:text-foreground"
-                  >
+                  <Button type="button" variant="outline" size="sm">
                     Cancel
                   </Button>
                 </Dialog.Close>
-                <Button type="submit" className="h-auto px-3 py-1.5 shadow-none">
+                <Button type="submit" size="sm">
                   Save
                 </Button>
               </div>
