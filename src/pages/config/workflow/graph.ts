@@ -8,6 +8,7 @@ export const FIXED_NODE_IDS = {
   target: "target",
   excluded: "excluded",
   split: "traffic-split",
+  addVariation: "add-variation",
 } as const;
 
 export const variationNodeId = (variationId: string) => `variation-${variationId}`;
@@ -21,6 +22,7 @@ const INITIAL_SIZE: Record<string, { w: number; h: number }> = {
   [FIXED_NODE_IDS.target]: { w: 320, h: 172 },
   [FIXED_NODE_IDS.excluded]: { w: 320, h: 60 },
   [FIXED_NODE_IDS.split]: { w: 160, h: 90 },
+  [FIXED_NODE_IDS.addVariation]: { w: 360, h: 52 },
 };
 const VARIATION_SIZE = { w: 360, h: 120 };
 
@@ -36,6 +38,11 @@ export function defaultPositions(config: CampaignConfig): Record<string, XYPosit
   config.variations.forEach((v, i) => {
     positions[variationNodeId(v.id)] = { x: 1000, y: i * 180 };
   });
+  // The "Add variation" affordance sits just below the last variation.
+  positions[FIXED_NODE_IDS.addVariation] = {
+    x: 1000,
+    y: config.variations.length * 180,
+  };
   return positions;
 }
 
@@ -90,6 +97,14 @@ export function buildGraph(
       data: { campaignId, variationId: v.id },
       ...sized(variationNodeId(v.id)),
     })),
+    {
+      id: FIXED_NODE_IDS.addVariation,
+      type: "addVariation",
+      position: at(FIXED_NODE_IDS.addVariation),
+      data: { campaignId },
+      draggable: false,
+      ...sized(FIXED_NODE_IDS.addVariation),
+    },
   ];
 
   const stroke = "hsl(var(--foreground) / 0.6)";

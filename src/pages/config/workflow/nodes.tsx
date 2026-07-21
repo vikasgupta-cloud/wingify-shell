@@ -3,6 +3,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import {
   ChevronDown,
   ChevronUp,
+  CirclePlus,
   CornerUpRight,
   Focus,
   Image as ImageIcon,
@@ -431,10 +432,29 @@ function VariationNode({ data, selected }: NodeProps) {
   );
 }
 
+// --- F) Add variation ------------------------------------------------------
+// A dashed action card below the last variation. Mirrors the Variations
+// section's "Add variation" and adds a blank variation to the campaign.
+function AddVariationNode({ data }: NodeProps) {
+  const { campaignId } = data as NodeData;
+  const addVariation = useConfigStore((s) => s.addVariation);
+  return (
+    <button
+      type="button"
+      onClick={() => addVariation(campaignId, "blank")}
+      className="nodrag flex w-[360px] items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-background/60 px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:bg-accent hover:text-foreground"
+    >
+      <CirclePlus className="h-4 w-4" />
+      Add variation
+    </button>
+  );
+}
+
 export const nodeTypes = {
   trafficAllocation: TrafficAllocationNode,
   target: TargetNode,
   excluded: ExcludedNode,
   trafficSplit: TrafficSplitNode,
   variation: VariationNode,
+  addVariation: AddVariationNode,
 };
