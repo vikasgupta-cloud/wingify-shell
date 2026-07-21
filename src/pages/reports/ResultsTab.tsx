@@ -33,6 +33,7 @@ import {
 import type { Campaign, Variant } from "../../data/campaigns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -177,6 +178,12 @@ function measureStickyEdgeShadows(el: HTMLDivElement): StickyEdgeShadows {
 }
 
 const resultsTableMetricCellClass = "relative z-0 min-w-0";
+
+const resultsTableHeaderLabelClass =
+  "text-xs font-medium leading-snug text-foreground/80";
+
+const resultsTableSubheadClass =
+  "text-[11px] leading-snug text-muted-foreground tabular-nums";
 
 const formatNumber = (n: number) => n.toLocaleString("en-US");
 
@@ -613,7 +620,7 @@ function ResultsFilterPanel({
 
 function ConclusionBanner({ variantName }: { variantName: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-t-lg border border-report-green-border bg-report-green-tint px-6 py-4">
+    <div className="flex items-center gap-3 border-b border-report-green-border bg-report-green-tint px-8 py-4">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-report-green-border bg-report-green-badge">
         <Award className="h-4 w-4 text-decision-winner-fg" aria-hidden />
       </span>
@@ -2014,14 +2021,17 @@ function TableHeader({
 
   return (
     <>
-      <div className="grid items-start bg-muted" style={gridStyle}>
+      <div
+        className="grid items-stretch border-b border-border bg-muted"
+        style={gridStyle}
+      >
         <div
           className={cn(
             stickyVariationsCellClass(edgeShadows.left),
-            "flex items-center justify-between gap-2 bg-muted px-6 pb-2.5 pt-4 group-hover:bg-muted"
+            "flex min-h-[3.25rem] items-center justify-between gap-2 bg-muted px-6 py-3 group-hover:bg-muted"
           )}
         >
-          <span className="text-xs font-semibold text-foreground/75">Variations</span>
+          <span className={resultsTableHeaderLabelClass}>Variations</span>
           <ReportResultsColumnConfig
             columns={columns}
             onColumnsChange={onColumnsChange}
@@ -2036,13 +2046,15 @@ function TableHeader({
               key={id}
               className={cn(
                 resultsTableMetricCellClass,
-                "overflow-hidden bg-muted px-2 pb-2.5 pt-4",
-                isProbability && "flex flex-col gap-0.5 px-4"
+                "flex min-h-[3.25rem] items-center overflow-hidden bg-muted px-3 py-3",
+                alignCenter && "justify-center",
+                !alignCenter && !isProbability && "justify-end",
+                isProbability && "justify-start px-4"
               )}
             >
               <div
                 className={cn(
-                  "flex min-w-0 items-start gap-1 overflow-hidden",
+                  "flex min-w-0 max-w-full items-center gap-1.5 overflow-hidden",
                   alignCenter && "justify-center",
                   !alignCenter && !isProbability && "justify-end",
                   isProbability && "justify-start"
@@ -2050,10 +2062,11 @@ function TableHeader({
               >
                 <span
                   className={cn(
-                    "min-w-0 text-xs font-semibold leading-snug text-foreground/75",
+                    resultsTableHeaderLabelClass,
+                    "min-w-0",
                     alignCenter && "text-center",
                     !alignCenter && !isProbability && "text-right",
-                    isProbability ? "line-clamp-2" : "truncate"
+                    isProbability && "line-clamp-2 text-left"
                   )}
                 >
                   {meta.label}
@@ -2062,28 +2075,27 @@ function TableHeader({
                   <ResultsTableColumnHelp columnId={id} />
                 </span>
               </div>
-              {isProbability ? (
-                <div className="flex items-center gap-1 text-[10px] leading-none text-muted-foreground">
-                  MDE: ± 20%&nbsp;&nbsp;ROPE: 1.5%&nbsp;&nbsp;Power: 80%&nbsp;&nbsp;FPR: 5%
-                  <Pencil className="h-3 w-3 shrink-0" aria-hidden />
-                </div>
-              ) : null}
             </div>
           );
         })}
         <div
           className={cn(
             stickyActionsCellClass(edgeShadows.right),
-            "h-full min-h-[52px] bg-muted group-hover:bg-muted"
+            "min-h-[3.25rem] bg-muted group-hover:bg-muted"
           )}
         />
       </div>
 
       <div
-        className="grid items-center border-b border-border bg-muted text-[10px] leading-none text-muted-foreground"
+        className="grid items-stretch border-b border-border bg-muted"
         style={gridStyle}
       >
-        <div className={cn(stickyVariationsCellClass(edgeShadows.left), "h-5 bg-muted group-hover:bg-muted")} />
+        <div
+          className={cn(
+            stickyVariationsCellClass(edgeShadows.left),
+            "min-h-9 bg-muted group-hover:bg-muted"
+          )}
+        />
         {columns.map((id) => {
           if (id === "expected-improvement") {
             return (
@@ -2091,12 +2103,14 @@ function TableHeader({
                 key={id}
                 className={cn(
                   resultsTableMetricCellClass,
-                  "flex h-5 items-center justify-between bg-muted px-5"
+                  "flex min-h-9 items-center justify-between bg-muted px-5 py-2"
                 )}
               >
-                <span>-6%</span>
-                <span>0%</span>
-                <span>6%</span>
+                <span className={resultsTableSubheadClass}>-6%</span>
+                <span className={cn(resultsTableSubheadClass, "font-medium text-foreground/70")}>
+                  0%
+                </span>
+                <span className={resultsTableSubheadClass}>6%</span>
               </div>
             );
           }
@@ -2106,17 +2120,37 @@ function TableHeader({
                 key={id}
                 className={cn(
                   resultsTableMetricCellClass,
-                  "flex h-5 items-center justify-end gap-1 bg-muted pr-5"
+                  "flex min-h-9 flex-col items-end justify-center gap-1 bg-muted px-4 py-2"
                 )}
               >
-                <span>Winner threshold: {WINNER_THRESHOLD}%</span>
-                <WinnerThresholdHelp />
+                <div className="flex items-center gap-1">
+                  <span className={resultsTableSubheadClass}>
+                    MDE: ± 20% · ROPE: 1.5% · Power: 80% · FPR: 5%
+                  </span>
+                  <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className={resultsTableSubheadClass}>
+                    Winner threshold: {WINNER_THRESHOLD}%
+                  </span>
+                  <WinnerThresholdHelp />
+                </div>
               </div>
             );
           }
-          return <div key={id} className={cn(resultsTableMetricCellClass, "h-5 bg-muted")} />;
+          return (
+            <div
+              key={id}
+              className={cn(resultsTableMetricCellClass, "min-h-9 bg-muted")}
+            />
+          );
         })}
-        <div className={cn(stickyActionsCellClass(edgeShadows.right), "h-5 bg-muted group-hover:bg-muted")} />
+        <div
+          className={cn(
+            stickyActionsCellClass(edgeShadows.right),
+            "min-h-9 bg-muted group-hover:bg-muted"
+          )}
+        />
       </div>
     </>
   );
@@ -2233,7 +2267,7 @@ function ResultsTotalMetricCell({
 }) {
   const cell = cn(
     resultsTableMetricCellClass,
-    "flex items-center border-t border-border bg-background py-6 group-hover:bg-muted"
+    "flex items-center border-t-2 border-border bg-muted py-5 group-hover:bg-muted"
   );
   switch (columnId) {
     case "unique-conversions":
@@ -2432,7 +2466,7 @@ function DataRow({
       <div
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
-          "flex items-center gap-2 border-b border-border py-3.5 pl-6 pr-4"
+          "flex items-center gap-2.5 border-b border-border py-4 pl-6 pr-4"
         )}
       >
         <GraphBadge tone={tone}>{variant.label}</GraphBadge>
@@ -2471,13 +2505,19 @@ function TotalRow({
   columns: ResultsTableColumnId[];
   edgeShadows: StickyEdgeShadows;
 }) {
-  const cell = "flex items-center border-t border-border py-6";
+  const cell = "flex items-center border-t-2 border-border bg-muted py-5";
   const gridStyle = buildResultsGrid(columns);
   return (
     <div className="group grid items-stretch" style={gridStyle}>
-      <div className={cn(stickyVariationsCellClass(edgeShadows.left), cell, "gap-2 pl-6 pr-4")}>
+      <div
+        className={cn(
+          stickyVariationsCellClass(edgeShadows.left),
+          cell,
+          "gap-2.5 pl-6 pr-4 group-hover:bg-muted"
+        )}
+      >
         <GraphBadge tone="total">T</GraphBadge>
-        <span className="text-sm font-medium text-foreground">Total</span>
+        <span className="text-sm font-semibold text-foreground">Total</span>
       </div>
       {columns.map((columnId) => (
         <ResultsTotalMetricCell
@@ -2490,7 +2530,7 @@ function TotalRow({
       <div
         className={cn(
           stickyActionsCellClass(edgeShadows.right),
-          "flex items-center justify-center border-t border-border bg-background py-6 group-hover:bg-muted"
+          "flex items-center justify-center border-t-2 border-border bg-muted py-5 group-hover:bg-muted"
         )}
       />
     </div>
@@ -2555,7 +2595,7 @@ function ResultsTable({
     <div
       ref={scrollRef}
       onScroll={syncEdgeShadows}
-      className="overflow-x-auto bg-background"
+      className="overflow-x-auto bg-background [scrollbar-gutter:stable]"
     >
       <div style={{ minWidth }}>
         <TableHeader
@@ -2883,13 +2923,13 @@ function GraphPanel({
       : ["Week 1", "Week 2", "Week 3", "Week 4"];
 
   return (
-    <div className="flex flex-col gap-6 rounded-b-lg bg-background px-6 py-6">
-      <div className="flex items-end gap-5 border-b border-border">
+    <div className="border-t border-border px-8 py-8">
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-3 border-b border-border pb-3">
         {GRAPH_TABS.map(({ label, icon: Icon, helpTitle, helpBody, helpAria }, i) => (
           <div
             key={label}
             className={cn(
-              "relative flex items-center gap-1 px-1 pb-2",
+              "relative flex items-center gap-1.5 px-0.5 pb-2",
               graphTab === i && activeTabClass
             )}
           >
@@ -2897,10 +2937,10 @@ function GraphPanel({
               type="button"
               onClick={() => setGraphTab(i)}
               className={cn(
-                "flex items-center gap-1.5 text-sm transition-colors",
+                "flex items-center gap-2 text-sm transition-colors",
                 graphTab === i
                   ? "font-medium text-foreground"
-                  : "text-foreground/70 hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className="h-[18px] w-[18px]" aria-hidden />
@@ -2915,53 +2955,57 @@ function GraphPanel({
         ))}
       </div>
 
-      <div className="flex items-center justify-between py-1">
-        <div className="flex items-center gap-3">
-          <span className="px-1 text-sm font-medium text-foreground">{metricName}</span>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-semibold text-foreground">{metricName}</span>
+          <Separator orientation="vertical" className="hidden h-4 sm:block" />
           <IntervalDropdown value={interval} onChange={setInterval} />
         </div>
-        {graphTab === 0 && (
-          <label className="flex cursor-pointer items-center gap-1.5">
+        {graphTab === 0 ? (
+          <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5">
             <Checkbox
               checked={showRanges}
               onCheckedChange={(v) => setShowRanges(v === true)}
               className="h-4 w-4 rounded-[2px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
             />
-            <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+            <span className="flex items-center gap-1 text-sm text-foreground">
               Show ranges
-              <HelpCircle className="h-3.5 w-3.5 opacity-60" aria-hidden />
+              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
             </span>
           </label>
-        )}
+        ) : null}
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="mt-6 rounded-xl border border-border bg-background p-6">
         {graphTab === 0 ? (
-          <div className="flex gap-5">
-            <div className="flex flex-col justify-between py-1.5 text-right text-xs font-medium text-foreground/70">
+          <div className="flex gap-6">
+            <div className="flex flex-col justify-between py-2 text-right text-xs font-medium tabular-nums text-muted-foreground">
               {Y_AXIS.map((v) => (
                 <span key={v}>{v}</span>
               ))}
             </div>
-            <div className="relative flex-1">
-              <div className="flex flex-col justify-between py-1.5" style={{ height: CHART_PLOT_H }}>
+            <div className="relative min-w-0 flex-1">
+              <div
+                className="flex flex-col justify-between py-2"
+                style={{ height: CHART_PLOT_H }}
+              >
                 {Y_AXIS.map((v) => (
-                  <div key={v} className="h-px w-full bg-border" />
+                  <div key={v} className="h-px w-full bg-border/80" />
                 ))}
               </div>
-              {showRanges && (
+              {showRanges ? (
                 <div
-                  className="pointer-events-none absolute inset-x-[12%] top-1.5 h-[172px] rounded-md bg-muted/30"
+                  className="pointer-events-none absolute inset-x-[12%] top-2 h-[172px] rounded-lg bg-muted"
                   aria-hidden
                 />
-              )}
+              ) : null}
               <DateRangeLineChart
                 metricName={metricName}
                 filters={filters}
                 interval={interval}
                 visible={visible}
               />
-              <div className="mt-1.5 flex justify-between px-12 text-xs text-foreground/70">
+              <div className="mt-2 flex justify-between px-12 text-xs tabular-nums text-muted-foreground">
                 {xLabels.map((d) => (
                   <span key={d}>{d}</span>
                 ))}
@@ -2975,33 +3019,33 @@ function GraphPanel({
             filters={filters}
           />
         )}
-
-        {graphTab === 0 && (
-          <div className="flex flex-wrap items-center gap-5 pt-2">
-            <LegendItem
-              tone="ctrl"
-              label="C"
-              days="30 Days"
-              checked={visible.ctrl}
-              onCheckedChange={(next) => setVisible((v) => ({ ...v, ctrl: next }))}
-            />
-            <LegendItem
-              tone="v1"
-              label="V1"
-              days="14 Days"
-              checked={visible.v1}
-              onCheckedChange={(next) => setVisible((v) => ({ ...v, v1: next }))}
-            />
-            <LegendItem
-              tone="v2"
-              label="V2"
-              days="7 Days"
-              checked={visible.v2}
-              onCheckedChange={(next) => setVisible((v) => ({ ...v, v2: next }))}
-            />
-          </div>
-        )}
       </div>
+
+      {graphTab === 0 ? (
+        <div className="mt-6 flex flex-wrap items-center gap-6 border-t border-border pt-5">
+          <LegendItem
+            tone="ctrl"
+            label="C"
+            days="30 Days"
+            checked={visible.ctrl}
+            onCheckedChange={(next) => setVisible((v) => ({ ...v, ctrl: next }))}
+          />
+          <LegendItem
+            tone="v1"
+            label="V1"
+            days="14 Days"
+            checked={visible.v1}
+            onCheckedChange={(next) => setVisible((v) => ({ ...v, v1: next }))}
+          />
+          <LegendItem
+            tone="v2"
+            label="V2"
+            days="7 Days"
+            checked={visible.v2}
+            onCheckedChange={(next) => setVisible((v) => ({ ...v, v2: next }))}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -3951,9 +3995,9 @@ export default function ResultsTab({
                 onViewVitalsDetails={onNavigateToVitals}
               />
               <ResultsFilterPanel campaignId={campaign.id} />
-              <div>
+              <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
                 <ConclusionBanner variantName={best.name} />
-                <div className="overflow-hidden rounded-b-lg border border-border border-t-0 bg-background">
+                <div className="bg-background">
                   {isStatisticsPreset ? (
                     <StatisticsPresetEmptyState metricName={selectedMetric} />
                   ) : viewSettings.layout === "graphs-first" ? (
