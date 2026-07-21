@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useConfigStore } from "../../store/config";
 import { INTEGRATIONS, monogram } from "../../data/integrations";
 import IntegrationsBrowseSheet from "./IntegrationsBrowseSheet";

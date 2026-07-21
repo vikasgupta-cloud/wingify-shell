@@ -87,7 +87,7 @@ export default function DotNav({ id }: { id: string }) {
 
   // Guided swaps the shown step (no scrolling — only one step is rendered);
   // Scroll jumps to the section anchor. Frictionless: any step, anytime.
-  const goToStep = (sid: string) => {
+  const goToStep = (sid: SectionId) => {
     if (viewMode === "guided") setActiveStepId(sid);
     else scrollToSection(sid);
   };

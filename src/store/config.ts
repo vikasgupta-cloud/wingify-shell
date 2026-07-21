@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { IP_SUBJECTS, IP_OPERATORS } from "../config/configOptions";
 import type { CustomSegmentDef } from "../config/segments";
+import type { SectionId } from "../config/configSections";
 
 // NOTE: Session-only by design. This store is NOT persisted — a reload wipes
 // every campaign's config and its saved snapshot.
@@ -224,8 +225,8 @@ type ConfigState = {
   // step the DotNav highlights; defaults to the first step (Main Information).
   viewMode: "scroll" | "guided";
   setViewMode: (mode: "scroll" | "guided") => void;
-  activeStepId: string;
-  setActiveStepId: (stepId: string) => void;
+  activeStepId: SectionId;
+  setActiveStepId: (stepId: SectionId) => void;
   // NOTE: session-only view state — ids of connected third-party integrations.
   // Deliberately OUTSIDE CampaignConfig so connecting/disconnecting never marks
   // the config dirty (not part of the saved snapshot comparison).

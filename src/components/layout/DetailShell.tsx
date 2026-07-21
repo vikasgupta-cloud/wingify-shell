@@ -13,6 +13,7 @@ import {
   FileBarChart,
   GalleryVerticalEnd,
   HelpCircle,
+  type LucideIcon,
   MoreHorizontal,
   PenLine,
   Printer,
