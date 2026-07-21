@@ -11,9 +11,13 @@ import {
   Download,
   Eraser,
   FileBarChart,
+  GalleryVerticalEnd,
+  HelpCircle,
+  type LucideIcon,
   MoreHorizontal,
   PenLine,
   Printer,
+  Rows3,
   Save,
   Search,
   Share2,
@@ -112,7 +116,72 @@ function IconRail({ basePath, entityId }: { basePath: string; entityId?: string 
           </TooltipTrigger>
           <TooltipContent side="right">Reports</TooltipContent>
         </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" aria-label="Help" className={cn(railButton(false), "mt-auto")}>
+              <HelpCircle className="h-[18px] w-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Help</TooltipContent>
+        </Tooltip>
       </nav>
+    </TooltipProvider>
+  );
+}
+
+// Scroll/Guided view toggle for the config surface. A two-option segmented
+// control matching the Web Experimentation LayoutSwitcher pattern; bound to the
+// session-only viewMode. Grayscale — reuses the segmented-control tokens (muted
+// track, background-filled active pill).
+const VIEW_OPTIONS: {
+  value: "scroll" | "guided";
+  label: string;
+  tooltip: string;
+  icon: LucideIcon;
+}[] = [
+  { value: "scroll", label: "Scroll", tooltip: "Single scroll", icon: Rows3 },
+  {
+    value: "guided",
+    label: "Guided",
+    tooltip: "Guided (one step at a time)",
+    icon: GalleryVerticalEnd,
+  },
+];
+
+function ViewToggle() {
+  const viewMode = useConfigStore((s) => s.viewMode);
+  const setViewMode = useConfigStore((s) => s.setViewMode);
+  return (
+    <TooltipProvider delayDuration={200}>
+      <div className="inline-flex items-center gap-0.5 rounded-md bg-muted p-0.5">
+        {VIEW_OPTIONS.map(({ value, label, tooltip, icon: Icon }) => {
+          const active = viewMode === value;
+          return (
+            <Tooltip key={value}>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={label}
+                  aria-pressed={active}
+                  onClick={() => setViewMode(value)}
+                  className={cn(
+                    "h-auto w-auto rounded-md p-1.5 transition-all duration-150",
+                    active
+                      ? "bg-background text-foreground shadow-sm hover:bg-background"
+                      : "text-muted-foreground hover:bg-transparent hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{tooltip}</TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
     </TooltipProvider>
   );
 }
@@ -509,8 +578,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
             the list pages only. Status + kebab need a real campaign. */}
         <div className="flex shrink-0 items-center gap-2">
+          {/* View toggle is a config-surface control — hidden on Reports. */}
+          {campaign && !pathname.endsWith("/reports") && <ViewToggle />}
           <SaveButton entityId={entityId} />
-          {campaign && <StatusMenu campaign={campaign} />}
+          {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
           {campaign && <KebabMenu campaign={campaign} />}
         </div>
       </header>

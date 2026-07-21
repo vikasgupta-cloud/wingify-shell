@@ -1,12 +1,3 @@
-export const SEGMENTS = [
-  "All Traffic",
-  "New visitors",
-  "Returning visitors",
-  "Mobile users",
-  "India Users",
-  "High-intent visitors",
-];
-
 export const TRIGGERS = [
   "Page Viewed",
   "Element Clicked",

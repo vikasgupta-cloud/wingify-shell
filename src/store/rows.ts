@@ -5,6 +5,7 @@ import {
   type CampaignStatus,
   type CampaignType,
 } from "../data/campaigns";
+import { useConfigStore } from "./config";
 
 // NOTE: In-memory row overrides. This stands in for a real backend — archive,
 // delete, status changes, AND newly-created campaigns are session-only, so a
@@ -94,6 +95,10 @@ export const useRowsStore = create<RowsState>((set, get) => ({
       report: emptyReport(),
     };
     set((s) => ({ added: [...s.added, campaign] }));
+    // Eagerly seed the in-memory config draft (keyed by id) so a campaign left
+    // before its first Save is still retained — retention no longer depends on
+    // the config page mounting. Session-only, like the config store itself.
+    useConfigStore.getState().ensureConfig(id, campaign.name);
     return id;
   },
 }));

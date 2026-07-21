@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Copy,
-  FilePlus2,
+  Check,
+  ChevronDown,
+  Edit2,
+  HelpCircle,
   Lock,
+  LockOpen,
+  MinusCircle,
   Monitor,
-  Plus,
+  MoreVertical,
+  PlusCircle,
+  Rows3,
+  Settings,
   Smartphone,
   Tablet,
-  Trash2,
-  Unlock,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
@@ -21,6 +27,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Tooltip,
@@ -29,21 +42,24 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useConfigStore, type ConfigVariation } from "../../store/config";
+import {
+  useConfigStore,
+  type ConfigVariation,
+  type RedirectMatchType,
+} from "../../store/config";
 import { useWandzStore } from "../../store/wandz";
-import { SEGMENTS, TRIGGERS, FREQUENCIES } from "../../config/configOptions";
+import { TRIGGERS, FREQUENCIES } from "../../config/configOptions";
 import AskWandzButton from "./AskWandzButton";
+import SegmentPicker from "./SegmentPicker";
 
-// The numbered header + card wrapper shared by all three sub-blocks.
+// The header + card wrapper shared by all three sub-blocks.
 function SubBlock({
-  n,
   anchor,
   title,
   description,
   noPadding,
   children,
 }: {
-  n: number;
   anchor: string;
   title: string;
   description: string;
@@ -52,18 +68,19 @@ function SubBlock({
 }) {
   return (
     <div id={anchor} className="scroll-mt-20">
-      <div className="mb-3 flex items-start gap-2.5">
-        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground">
-          {n}
-        </span>
-        <div>
-          <div className="text-sm font-medium text-foreground">{title}</div>
-          <div className="text-sm text-muted-foreground">{description}</div>
-        </div>
-      </div>
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="mb-3 inline-block w-fit cursor-default text-sm font-medium text-foreground">
+              {title}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="right">{description}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <div
         className={cn(
-          "rounded-lg border border-border bg-background",
+          "overflow-hidden rounded-lg border border-border bg-background",
           !noPadding && "p-6"
         )}
       >
@@ -111,113 +128,738 @@ const VIEWS: { id: "desktop" | "mobile" | "tablet"; icon: typeof Monitor }[] = [
   { id: "mobile", icon: Smartphone },
 ];
 
-function VariationRow({
+// Shared grid used by the table header and every variation row. Fixed layout:
+// the four content columns share the available width via fr tracks (Edit-with
+// gets the most, for the redirect editor), the actions column sizes to content,
+// and every cell truncates rather than forcing horizontal scroll. No resizing.
+const GRID =
+  "grid grid-cols-[0.9fr_1.8fr_1.1fr_1.8fr_84px] items-center gap-4";
+
+type RowHeight = "sm" | "md" | "lg";
+// Body-row vertical padding per density. Header band is unaffected.
+const ROW_PADDING: Record<RowHeight, string> = {
+  sm: "py-1.5",
+  md: "py-2.5",
+  lg: "py-4",
+};
+const ROW_HEIGHT_OPTIONS: { id: RowHeight; label: string }[] = [
+  { id: "sm", label: "Small" },
+  { id: "md", label: "Medium" },
+  { id: "lg", label: "Large" },
+];
+
+const REDIRECT_MATCH_LABELS: Record<RedirectMatchType, string> = {
+  matches: "URL matches",
+  contains: "URL contains",
+  starts: "URL starts with",
+  ends: "URL ends with",
+};
+
+// -- Editor URL row (card header band above the table). ----------------------
+function EditorUrlRow({ campaignId }: { campaignId: string }) {
+  const config = useConfigStore((s) => s.configs[campaignId]);
+  const patch = useConfigStore((s) => s.patch);
+  const [editing, setEditing] = useState(false);
+  if (!config) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-4 bg-background px-6 py-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 text-sm text-muted-foreground">Editor URL</span>
+        {editing ? (
+          <Input
+            autoFocus
+            placeholder="https://"
+            value={config.editorUrl}
+            onChange={(e) => patch(campaignId, { editorUrl: e.target.value })}
+            onBlur={() => setEditing(false)}
+            onKeyDown={(e) => e.key === "Enter" && setEditing(false)}
+            className="h-8 w-[280px] bg-background"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="group inline-flex min-w-0 items-center gap-1.5"
+          >
+            <span
+              className={cn(
+                "truncate text-sm",
+                config.editorUrl ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              {config.editorUrl || "https://"}
+            </span>
+            <Edit2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none md:opacity-0" />
+          </button>
+        )}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="text-sm text-muted-foreground">Editor view:</span>
+        <div className="flex items-center rounded-md border border-border bg-background p-0.5">
+          {VIEWS.map(({ id: view, icon: Icon }) => (
+            <Button
+              key={view}
+              type="button"
+              variant={config.editorView === view ? "secondary" : "ghost"}
+              size="icon"
+              aria-label={view}
+              className="h-7 w-7"
+              onClick={() => patch(campaignId, { editorView: view })}
+            >
+              <Icon />
+            </Button>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Editor settings"
+          className="h-8 w-8 bg-background text-muted-foreground"
+          // TODO: editor settings
+        >
+          <Settings />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// -- Variations name cell (text -> hover pencil -> inline input). ------------
+function NameCell({
   campaignId,
   variation,
-  editable,
-  showRemove,
+  editing,
+  onStart,
+  onDone,
 }: {
   campaignId: string;
   variation: ConfigVariation;
-  editable: boolean;
-  showRemove: boolean;
+  editing: boolean;
+  onStart: () => void;
+  onDone: () => void;
 }) {
   const renameVariation = useConfigStore((s) => s.renameVariation);
-  const setSplit = useConfigStore((s) => s.setSplit);
-  const toggleLock = useConfigStore((s) => s.toggleLock);
-  const removeVariation = useConfigStore((s) => s.removeVariation);
-
   return (
-    <div className="flex items-center gap-3 px-6 py-3">
+    <div className="flex min-w-0 items-center gap-2.5">
       <span className="flex size-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-medium text-foreground">
         {variation.label}
       </span>
-
-      <Input
-        value={variation.name}
-        onChange={(e) => renameVariation(campaignId, variation.id, e.target.value)}
-        className="h-8 flex-1"
-      />
-
-      <span className="w-28 shrink-0 text-xs text-muted-foreground">
-        {variation.modifications === 0
-          ? "No changes"
-          : `${variation.modifications} change${variation.modifications === 1 ? "" : "s"}`}
-      </span>
-
-      <div className="flex shrink-0 items-center gap-1">
+      {editing ? (
         <Input
+          autoFocus
+          placeholder="Variation name"
+          value={variation.name}
+          onChange={(e) => renameVariation(campaignId, variation.id, e.target.value)}
+          onBlur={onDone}
+          onKeyDown={(e) => e.key === "Enter" && onDone()}
+          className="h-8 flex-1"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={onStart}
+          className="group inline-flex min-w-0 items-center gap-1.5"
+        >
+          <span
+            title={variation.name}
+            className="truncate text-sm text-foreground"
+          >
+            {variation.name}
+          </span>
+          <Edit2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none md:opacity-0" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// -- Variation traffic split cell. -------------------------------------------
+function SplitCell({
+  campaignId,
+  variation,
+  mode,
+}: {
+  campaignId: string;
+  variation: ConfigVariation;
+  mode: "Manual" | "Equal" | "Auto";
+}) {
+  const setSplit = useConfigStore((s) => s.setSplit);
+  const toggleLock = useConfigStore((s) => s.toggleLock);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  if (mode !== "Manual") {
+    return <span className="text-sm tabular-nums text-foreground">{variation.split}%</span>;
+  }
+
+  const commit = () => {
+    const n = Number(draft);
+    if (!Number.isNaN(n)) setSplit(campaignId, variation.id, n);
+    setEditing(false);
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      {editing ? (
+        <Input
+          autoFocus
           type="number"
-          value={variation.split}
-          disabled={!editable}
-          onChange={(e) => setSplit(campaignId, variation.id, Number(e.target.value))}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => e.key === "Enter" && commit()}
           className="h-8 w-16 tabular-nums"
         />
-        <span className="text-sm text-muted-foreground">%</span>
-      </div>
-
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={!editable}
-              aria-label={variation.locked ? "Unlock split" : "Lock split"}
-              className="h-8 w-8 shrink-0 text-muted-foreground"
-              onClick={() => toggleLock(campaignId, variation.id)}
-            >
-              {variation.locked ? <Lock /> : <Unlock />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{variation.locked ? "Unlock split" : "Lock split"}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      <div className="w-8 shrink-0">
-        {showRemove && (
-          <TooltipProvider delayDuration={200}>
+      ) : (
+        <>
+          <span className="w-10 text-sm tabular-nums text-foreground">
+            {variation.split}%
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Edit split"
+            className="h-8 w-8 text-muted-foreground"
+            onClick={() => {
+              setDraft(String(variation.split));
+              setEditing(true);
+            }}
+          >
+            <Edit2 className="h-3.5 w-3.5" />
+          </Button>
+          <TooltipProvider delayDuration={150}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label="Remove variation"
+                  aria-label={variation.locked ? "Unlock split" : "Lock split"}
                   className="h-8 w-8 text-muted-foreground"
-                  onClick={() => removeVariation(campaignId, variation.id)}
+                  onClick={() => toggleLock(campaignId, variation.id)}
                 >
-                  <Trash2 />
+                  {variation.locked ? <Lock /> : <LockOpen />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Remove variation</TooltipContent>
+              <TooltipContent>
+                {variation.locked ? "Unlock split" : "Lock split"}
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// -- Redirect editor (committed + editing states) for the Edit-with cell. -----
+function RedirectEditor({
+  campaignId,
+  variation,
+  editing,
+  onEdit,
+  onDone,
+}: {
+  campaignId: string;
+  variation: ConfigVariation;
+  editing: boolean;
+  onEdit: () => void;
+  onDone: () => void;
+}) {
+  const updateVariation = useConfigStore((s) => s.updateVariation);
+  const matchType = variation.redirectMatchType ?? "matches";
+  const [draftUrl, setDraftUrl] = useState(variation.redirectUrl ?? "");
+  const [draftMatch, setDraftMatch] = useState<RedirectMatchType>(matchType);
+
+  // Seed the drafts from the committed values whenever we (re-)enter edit mode.
+  useEffect(() => {
+    if (editing) {
+      setDraftUrl(variation.redirectUrl ?? "");
+      setDraftMatch(variation.redirectMatchType ?? "matches");
+    }
+  }, [editing, variation.redirectUrl, variation.redirectMatchType]);
+
+  if (editing) {
+    const confirm = () => {
+      updateVariation(campaignId, variation.id, {
+        redirectUrl: draftUrl,
+        redirectMatchType: draftMatch,
+      });
+      onDone();
+    };
+    return (
+      // Single row: the match-type Select conveys "Redirect to …" (no separate
+      // label needed), and the URL input flexes to fill the cell (min-w-0 lets
+      // it shrink rather than wrap or force horizontal scroll).
+      <div className="flex items-center gap-2">
+        <Select
+          value={draftMatch}
+          onValueChange={(v) => setDraftMatch(v as RedirectMatchType)}
+        >
+          <SelectTrigger className="h-8 w-[130px] shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(REDIRECT_MATCH_LABELS) as RedirectMatchType[]).map((k) => (
+              <SelectItem key={k} value={k}>
+                {REDIRECT_MATCH_LABELS[k]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          autoFocus
+          placeholder="https://"
+          value={draftUrl}
+          onChange={(e) => setDraftUrl(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && confirm()}
+          className="h-8 min-w-0 flex-1"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Cancel"
+          className="h-8 w-8 shrink-0 text-muted-foreground"
+          onClick={onDone}
+        >
+          <X />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Confirm redirect"
+          className="h-8 w-8 shrink-0"
+          onClick={confirm}
+        >
+          <Check />
+        </Button>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="text-xs text-muted-foreground">
+          Redirect to {REDIRECT_MATCH_LABELS[matchType]}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span
+            title={variation.redirectUrl || undefined}
+            className={cn(
+              "truncate text-sm",
+              variation.redirectUrl ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {variation.redirectUrl || "https://"}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Edit redirect"
+            className="h-7 w-7 shrink-0 text-muted-foreground"
+            onClick={onEdit}
+          >
+            <Edit2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Redirection settings"
+            className="h-8 shrink-0 gap-1 px-2 text-muted-foreground"
+          >
+            <Settings className="h-4 w-4" />
+            <ChevronDown className="h-3.5 w-3.5" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-72 p-4">
+          <div className="text-sm font-medium text-foreground">Redirection settings</div>
+          <div className="mt-3 flex flex-col gap-3">
+            <label className="flex gap-2">
+              <Checkbox
+                checked={!!variation.redirectExcludeQuery}
+                onCheckedChange={(c) =>
+                  updateVariation(campaignId, variation.id, {
+                    redirectExcludeQuery: c === true,
+                  })
+                }
+                className="mt-0.5"
+              />
+              <span className="text-sm leading-tight">
+                <span className="text-foreground">Exclude Query String</span>
+                <span className="block text-xs text-muted-foreground">
+                  Excludes text after '?' while redirecting
+                </span>
+              </span>
+            </label>
+            <label className="flex gap-2">
+              <Checkbox
+                checked={!!variation.redirectExcludeFragments}
+                onCheckedChange={(c) =>
+                  updateVariation(campaignId, variation.id, {
+                    redirectExcludeFragments: c === true,
+                  })
+                }
+                className="mt-0.5"
+              />
+              <span className="text-sm leading-tight">
+                <span className="text-foreground">Exclude Fragments</span>
+                <span className="block text-xs text-muted-foreground">
+                  Excludes text after '#' while redirecting
+                </span>
+              </span>
+            </label>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+// -- Edit-with cell dispatch. ------------------------------------------------
+function EditWithCell({
+  campaignId,
+  variation,
+  redirectEditing,
+  onRedirectEdit,
+  onRedirectDone,
+}: {
+  campaignId: string;
+  variation: ConfigVariation;
+  redirectEditing: boolean;
+  onRedirectEdit: () => void;
+  onRedirectDone: () => void;
+}) {
+  if (variation.id === "control") {
+    return <span className="text-sm text-muted-foreground">View</span>;
+  }
+  if (variation.type === "redirect") {
+    return (
+      <RedirectEditor
+        campaignId={campaignId}
+        variation={variation}
+        editing={redirectEditing}
+        onEdit={onRedirectEdit}
+        onDone={onRedirectDone}
+      />
+    );
+  }
+  return (
+    <Button
+      type="button"
+      variant="link"
+      size="sm"
+      className="h-auto p-0 text-sm font-medium"
+      // TODO: launch the visual editor
+    >
+      Launch Editor
+    </Button>
+  );
+}
+
+// -- Actions cell (minus-remove + kebab). ------------------------------------
+function ActionsCell({
+  campaignId,
+  variation,
+}: {
+  campaignId: string;
+  variation: ConfigVariation;
+}) {
+  const removeVariation = useConfigStore((s) => s.removeVariation);
+  const isControl = variation.id === "control";
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+
+  return (
+    <div
+      className="flex items-center justify-end gap-0.5 pl-2"
+      onClick={stop}
+    >
+      {!isControl && (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Remove"
+                className="shrink-0 text-muted-foreground"
+                onClick={() => removeVariation(campaignId, variation.id)}
+              >
+                <MinusCircle />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remove</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="More actions"
+            className="shrink-0 text-muted-foreground"
+          >
+            <MoreVertical />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled>Use this as baseline</DropdownMenuItem>
+          <DropdownMenuItem disabled>Disable variation</DropdownMenuItem>
+          <DropdownMenuItem
+            // TODO: open live preview
+          >
+            Live Preview
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isControl}
+            onSelect={() => removeVariation(campaignId, variation.id)}
+          >
+            Remove
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
 
 const SPLIT_MODES: Array<"Manual" | "Equal" | "Auto"> = ["Manual", "Equal", "Auto"];
 
+// -- The variations table (SubBlock 3 body). ---------------------------------
+function VariationsTable({ campaignId }: { campaignId: string }) {
+  const config = useConfigStore((s) => s.configs[campaignId]);
+  const patch = useConfigStore((s) => s.patch);
+  const setSplitMode = useConfigStore((s) => s.setSplitMode);
+  const addTypedVariation = useConfigStore((s) => s.addTypedVariation);
+
+  const [nameEditingId, setNameEditingId] = useState<string | null>(null);
+  const [redirectEditingId, setRedirectEditingId] = useState<string | null>(null);
+
+  // Session-only table view state (row density only; no column resizing).
+  const [rowHeight, setRowHeight] = useState<RowHeight>("md");
+
+  if (!config) return null;
+
+  const addEditor = () => {
+    const id = addTypedVariation(campaignId, "editor");
+    if (id) setNameEditingId(id);
+  };
+  const addRedirect = () => {
+    const id = addTypedVariation(campaignId, "redirect");
+    if (id) setRedirectEditingId(id);
+  };
+
+  return (
+    <div>
+      <EditorUrlRow campaignId={campaignId} />
+
+      {/* Fixed-layout table: the four content columns share the available width
+          (fr tracks) so it fits in one view with no horizontal scroll; the
+          actions column sizes to content. */}
+      {/* Table header band. */}
+      <div className={cn(GRID, "border-y border-border bg-muted px-6 py-3")}>
+        <div className="flex min-w-0 items-center pr-2">
+          <span className="truncate text-sm font-medium text-foreground">Variations</span>
+        </div>
+        <div className="flex min-w-0 items-center gap-2 pr-2">
+          <span className="truncate text-sm font-medium text-foreground">
+            Traffic Split :
+          </span>
+          <Select
+            value={config.splitMode}
+            onValueChange={(v) => setSplitMode(campaignId, v as typeof config.splitMode)}
+          >
+            <SelectTrigger className="h-7 w-[84px] border-0 px-2 shadow-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SPLIT_MODES.map((m) => (
+                <SelectItem key={m} value={m}>
+                  {m === "Auto" ? "Auto (multi-armed bandit)" : m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex min-w-0 items-center gap-1 pr-2">
+          <span className="truncate text-sm font-medium text-foreground">Modifications</span>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Number of design changes made to this variation.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex min-w-0 items-center gap-2 pr-2">
+          <span className="shrink-0 text-sm font-medium text-foreground">Edit with:</span>
+          <Select
+            value={config.editWith}
+            onValueChange={(v) => patch(campaignId, { editWith: v as "visual" | "code" })}
+          >
+            <SelectTrigger className="h-7 w-[120px] border-0 px-2 shadow-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="visual">Visual Editor</SelectItem>
+              <SelectItem value="code">Code Editor</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center justify-end pl-2">
+          <TooltipProvider delayDuration={150}>
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Row height"
+                      className="h-8 w-8 text-muted-foreground"
+                    >
+                      <Rows3 />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Row height</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end">
+                {ROW_HEIGHT_OPTIONS.map((o) => (
+                  <DropdownMenuCheckboxItem
+                    key={o.id}
+                    checked={rowHeight === o.id}
+                    onCheckedChange={() => setRowHeight(o.id)}
+                  >
+                    {o.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TooltipProvider>
+        </div>
+      </div>
+
+      {/* Rows. */}
+      <div className="divide-y divide-border">
+        {config.variations.map((v) => {
+          const isControl = v.id === "control";
+          const mods = isControl || v.type === "redirect" ? "—" : "0";
+          return (
+            <div
+              key={v.id}
+              className={cn(GRID, "bg-background px-6", ROW_PADDING[rowHeight])}
+            >
+              <div className="min-w-0 overflow-hidden">
+                <NameCell
+                  campaignId={campaignId}
+                  variation={v}
+                  editing={nameEditingId === v.id}
+                  onStart={() => setNameEditingId(v.id)}
+                  onDone={() => setNameEditingId((c) => (c === v.id ? null : c))}
+                />
+              </div>
+              <div className="min-w-0 overflow-hidden">
+                <SplitCell campaignId={campaignId} variation={v} mode={config.splitMode} />
+              </div>
+              <span className="min-w-0 truncate text-sm tabular-nums text-muted-foreground">
+                {mods}
+              </span>
+              <div className="min-w-0 overflow-hidden">
+                <EditWithCell
+                  campaignId={campaignId}
+                  variation={v}
+                  redirectEditing={redirectEditingId === v.id}
+                  onRedirectEdit={() => setRedirectEditingId(v.id)}
+                  onRedirectDone={() =>
+                    setRedirectEditingId((c) => (c === v.id ? null : c))
+                  }
+                />
+              </div>
+              <ActionsCell campaignId={campaignId} variation={v} />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer: add-variation split button. */}
+      <div className="flex items-center border-t border-border px-6 py-3">
+        <div className="inline-flex">
+          <Button
+            type="button"
+            size="sm"
+            className="rounded-r-none"
+            onClick={addEditor}
+          >
+            <PlusCircle />
+            Add variation
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                aria-label="Add variation options"
+                className="h-8 w-8 rounded-l-none border-l border-background/20"
+              >
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-72">
+              <DropdownMenuItem
+                className="flex-col items-start gap-0.5"
+                onSelect={addEditor}
+              >
+                <span className="text-sm text-foreground">Edit with the Editor</span>
+                <span className="text-xs text-muted-foreground">
+                  Make design changes directly on this page.
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex-col items-start gap-0.5"
+                onSelect={addRedirect}
+              >
+                <span className="text-sm text-foreground">Redirect to another page</span>
+                <span className="text-xs text-muted-foreground">
+                  Send visitors to a different URL you've already built.
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function VariationsSection({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
   const patch = useConfigStore((s) => s.patch);
-  const addVariation = useConfigStore((s) => s.addVariation);
-  const setSplitMode = useConfigStore((s) => s.setSplitMode);
   const openWorkflow = useConfigStore((s) => s.openWorkflow);
   const openWandz = useWandzStore((s) => s.openWandz);
-  const [editingUrl, setEditingUrl] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
 
   if (!config) return null;
 
   const inCampaign = config.trafficAllocation;
   const outCampaign = 100 - config.trafficAllocation;
-  const manual = config.splitMode === "Manual";
-  const total = config.variations.reduce((s, v) => s + v.split, 0);
 
   const setAllocation = (raw: number) => {
     const clamped = Math.max(0, Math.min(100, Math.round(raw || 0)));
@@ -229,7 +871,7 @@ export default function VariationsSection({ id }: { id: string }) {
       {/* Heading row. */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <h2 className="text-lg font-semibold text-foreground">Variations and Targets</h2>
+          <h2 className="text-lg font-semibold text-foreground">Target and Variation</h2>
           <AskWandzButton
             onClick={() =>
               openWandz({
@@ -253,7 +895,6 @@ export default function VariationsSection({ id }: { id: string }) {
       <div className="flex flex-col gap-8">
         {/* 1 — Allocate traffic. */}
         <SubBlock
-          n={1}
           anchor="section-variations-allocate"
           title="Allocate traffic"
           description="Select how much traffic needs to be diverted to this campaign"
@@ -281,14 +922,6 @@ export default function VariationsSection({ id }: { id: string }) {
 
           <div className="mt-6 flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <Switch
-                checked={config.variationSplitEnabled}
-                onCheckedChange={(v) => patch(id, { variationSplitEnabled: v })}
-              />
-              <span className="text-muted-foreground">Variation split</span>
-            </div>
-            <div className="h-4 border-l border-border" />
-            <div className="flex items-center gap-2">
               <span className="size-3 rounded-sm bg-foreground" />
               <span className="text-muted-foreground">In campaign:</span>
               <span className="tabular-nums text-foreground">{inCampaign}%</span>
@@ -303,18 +936,16 @@ export default function VariationsSection({ id }: { id: string }) {
 
         {/* 2 — Set targeting. */}
         <SubBlock
-          n={2}
           anchor="section-variations-targeting"
           title="Set targeting"
           description="Select who, when and how users will see your campaign."
         >
           <div className="flex flex-col gap-4">
-            <TargetingRow
-              label="Segment"
-              value={config.segment}
-              options={SEGMENTS}
-              onChange={(v) => patch(id, { segment: v })}
-            />
+            <div className="grid grid-cols-[120px_auto_1fr] items-center gap-3">
+              <span className="text-sm text-muted-foreground">Segment</span>
+              <span className="text-muted-foreground">:</span>
+              <SegmentPicker campaignId={id} />
+            </div>
             <TargetingRow
               label="Trigger"
               value={config.trigger}
@@ -332,138 +963,12 @@ export default function VariationsSection({ id }: { id: string }) {
 
         {/* 3 — Variations. */}
         <SubBlock
-          n={3}
           anchor="section-variations-variations"
           title="Variations"
           description="Create variations and set traffic split"
           noPadding
         >
-          {/* Editor bar. */}
-          <div className="flex items-center justify-between border-b border-border px-6 py-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="shrink-0 text-sm text-muted-foreground">Editor URL</span>
-              {config.editorUrl && !editingUrl ? (
-                <button
-                  type="button"
-                  onClick={() => setEditingUrl(true)}
-                  className="truncate text-sm text-foreground hover:underline"
-                >
-                  {config.editorUrl}
-                </button>
-              ) : (
-                <Input
-                  autoFocus={editingUrl}
-                  placeholder="https://"
-                  value={config.editorUrl}
-                  onChange={(e) => patch(id, { editorUrl: e.target.value })}
-                  onBlur={() => setEditingUrl(false)}
-                  className="h-8 w-[280px]"
-                />
-              )}
-            </div>
-
-            <div className="flex shrink-0 items-center gap-3">
-              <div className="flex items-center rounded-md border border-border p-0.5">
-                {VIEWS.map(({ id: view, icon: Icon }) => (
-                  <Button
-                    key={view}
-                    type="button"
-                    variant={config.editorView === view ? "secondary" : "ghost"}
-                    size="icon"
-                    aria-label={view}
-                    className="h-7 w-7"
-                    onClick={() => patch(id, { editorView: view })}
-                  >
-                    <Icon />
-                  </Button>
-                ))}
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                // TODO: launch the visual editor
-              >
-                Open Editor
-              </Button>
-            </div>
-          </div>
-
-          {/* Split-mode + add controls. */}
-          <div className="flex items-center justify-between px-6 py-3">
-            <div className="flex items-center rounded-md border border-border p-0.5">
-              {SPLIT_MODES.map((mode) => (
-                <Button
-                  key={mode}
-                  type="button"
-                  variant={config.splitMode === mode ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-7"
-                  onClick={() => setSplitMode(id, mode)}
-                >
-                  {mode}
-                </Button>
-              ))}
-            </div>
-
-            <Popover open={addOpen} onOpenChange={setAddOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" size="sm">
-                  <Plus />
-                  Add Variation
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-48 p-1">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-foreground hover:bg-accent"
-                  onClick={() => {
-                    addVariation(id, "blank");
-                    setAddOpen(false);
-                  }}
-                >
-                  <FilePlus2 className="h-4 w-4 text-muted-foreground" />
-                  Blank variation
-                </button>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-foreground hover:bg-accent"
-                  onClick={() => {
-                    addVariation(id, "duplicate");
-                    setAddOpen(false);
-                  }}
-                >
-                  <Copy className="h-4 w-4 text-muted-foreground" />
-                  Duplicate last
-                </button>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Variation list. */}
-          <div className="divide-y divide-border border-t border-border">
-            {config.variations.map((v) => (
-              <VariationRow
-                key={v.id}
-                campaignId={id}
-                variation={v}
-                editable={manual}
-                showRemove={v.id !== "control"}
-              />
-            ))}
-          </div>
-
-          {/* Split total readout. */}
-          <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3 text-sm">
-            <span className="text-muted-foreground">Total split</span>
-            <span
-              className={cn(
-                "tabular-nums font-medium",
-                total === 100 ? "text-foreground" : "text-muted-foreground"
-              )}
-            >
-              {total}%
-            </span>
-          </div>
+          <VariationsTable campaignId={id} />
         </SubBlock>
       </div>
     </section>

@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Eye, Shield, Star, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
 import { useWandzStore } from "../../store/wandz";
@@ -25,17 +31,21 @@ function BlockHeader({
   action: React.ReactNode;
 }) {
   return (
-    <div className="mb-3 flex items-start justify-between gap-4">
-      <div>
-        <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-          <Icon className="h-4 w-4 text-muted-foreground" aria-hidden />
-          {title}
-          {suffix && (
-            <span className="font-normal text-muted-foreground">{suffix}</span>
-          )}
-        </div>
-        <div className="mt-0.5 text-sm text-muted-foreground">{description}</div>
-      </div>
+    <div className="mb-3 flex items-center justify-between gap-4">
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex w-fit cursor-default items-center gap-1.5 text-sm font-medium text-foreground">
+              <Icon className="h-4 w-4 text-muted-foreground" aria-hidden />
+              {title}
+              {suffix && (
+                <span className="font-normal text-muted-foreground">{suffix}</span>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">{description}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <div className="shrink-0">{action}</div>
     </div>
   );
@@ -49,7 +59,7 @@ function EmptyState({
   onChoose?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input p-8">
+    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input bg-background p-8">
       <p className="text-sm text-muted-foreground">{message}</p>
       {onChoose && (
         <Button type="button" variant="outline" size="sm" onClick={onChoose}>
@@ -114,7 +124,11 @@ export default function MetricsSection({ id }: { id: string }) {
         <div>
           <BlockHeader
             icon={Eye}
-            title={`Observation Metric (${observationMetrics.length})`}
+            title={
+              observationMetrics.length > 0
+                ? `Observation Metric (${observationMetrics.length})`
+                : "Observation Metric"
+            }
             suffix="(Optional)"
             description="Track additional metrics for deeper campaign insights."
             action={

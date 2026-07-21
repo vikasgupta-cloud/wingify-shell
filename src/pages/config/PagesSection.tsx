@@ -8,8 +8,10 @@ import {
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import {
   Command,
   CommandEmpty,
@@ -25,7 +27,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useConfigStore, type PageGroup, type PageRule } from "../../store/config";
+import {
+  useConfigStore,
+  DEFAULT_URL_SETTINGS,
+  type PageGroup,
+  type PageRule,
+  type UrlSettings,
+} from "../../store/config";
 import { useWandzStore } from "../../store/wandz";
 import { PAGE_GROUPS } from "../../config/urlPredicates";
 import AskWandzButton from "./AskWandzButton";
@@ -75,11 +83,88 @@ function PageGroupCombobox({
   );
 }
 
+const URL_SETTING_OPTIONS: {
+  key: keyof UrlSettings;
+  label: string;
+  description?: string;
+}[] = [
+  {
+    key: "ignoreQueryString",
+    label: "Ignore query string",
+    description: "Ignores text after the question mark (?) in the URL",
+  },
+  {
+    key: "ignoreFragment",
+    label: "Ignore fragment",
+    description: "Ignores text after the pound sign (#) in the URL",
+  },
+  { key: "caseInsensitive", label: "Case insensitive" },
+];
+
+function UrlSettingsPopover({
+  settings,
+  onChange,
+}: {
+  settings: UrlSettings;
+  onChange: (settings: UrlSettings) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="URL settings"
+          className="rounded-l-none border border-l-0 border-input shadow-sm"
+        >
+          <Settings />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-4">
+        <div className="text-sm font-medium text-foreground">Configuration</div>
+        <div className="mt-3 flex flex-col gap-3">
+          {URL_SETTING_OPTIONS.map((opt) => (
+            <label key={opt.key} className="flex gap-2">
+              <Checkbox
+                checked={settings[opt.key]}
+                onCheckedChange={(checked) =>
+                  onChange({ ...settings, [opt.key]: checked === true })
+                }
+                className="mt-0.5"
+              />
+              <span className="text-sm leading-tight">
+                <span className="text-foreground">{opt.label}</span>
+                {opt.description && (
+                  <span className="block text-xs text-muted-foreground">
+                    {opt.description}
+                  </span>
+                )}
+              </span>
+            </label>
+          ))}
+        </div>
+        <Separator className="my-3" />
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-xs font-medium"
+          onClick={() => onChange({ ...DEFAULT_URL_SETTINGS })}
+        >
+          Reset to default
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function RuleRow({
   campaignId,
   group,
   rule,
   showRemove,
+  onRemove,
   focused,
   onFocus,
   onBlur,
@@ -88,12 +173,12 @@ function RuleRow({
   group: PageGroup;
   rule: PageRule;
   showRemove: boolean;
+  onRemove: () => void;
   focused: boolean;
   onFocus: () => void;
   onBlur: () => void;
 }) {
   const updateRule = useConfigStore((s) => s.updateRule);
-  const removeRule = useConfigStore((s) => s.removeRule);
   const isPageGroup = rule.predicate === "Page group is";
 
   return (
@@ -125,23 +210,12 @@ function RuleRow({
               onBlur={onBlur}
               className="rounded-r-none"
             />
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="URL settings"
-                    className="rounded-l-none border border-l-0 border-input shadow-sm"
-                    // TODO: open URL settings
-                  >
-                    <Settings />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>URL settings</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <UrlSettingsPopover
+              settings={rule.settings}
+              onChange={(settings) =>
+                updateRule(campaignId, group.id, rule.id, { settings })
+              }
+            />
           </div>
         )}
 
@@ -155,7 +229,7 @@ function RuleRow({
                   size="icon"
                   aria-label="Remove"
                   className="shrink-0 text-muted-foreground"
-                  onClick={() => removeRule(campaignId, group.id, rule.id)}
+                  onClick={onRemove}
                 >
                   <MinusCircle />
                 </Button>
@@ -197,10 +271,18 @@ function GroupBlock({
 }) {
   const addRule = useConfigStore((s) => s.addRule);
   const addExcludeGroup = useConfigStore((s) => s.addExcludeGroup);
+  const removeRule = useConfigStore((s) => s.removeRule);
   const [focusedRuleId, setFocusedRuleId] = useState<string | null>(null);
 
   const isExclude = group.kind === "exclude";
-  const showRemove = group.rules.length > 1;
+  // Floors: Include keeps a mandatory last row (removable only at 2+); Exclude
+  // has a floor of 0 (every row removable, incl. the last one).
+  const showRemove = isExclude ? true : group.rules.length > 1;
+
+  // removeRule drops an emptied non-include group, so removing the last Exclude
+  // row collapses the whole Exclude section — the "+ Exclude" button then
+  // returns beside "+ Include" (its pre-exclude layout).
+  const removeRow = (ruleId: string) => removeRule(campaignId, group.id, ruleId);
 
   return (
     <div className="p-6">
@@ -218,6 +300,7 @@ function GroupBlock({
             group={group}
             rule={rule}
             showRemove={showRemove}
+            onRemove={() => removeRow(rule.id)}
             focused={focusedRuleId === rule.id}
             onFocus={() => setFocusedRuleId(rule.id)}
             onBlur={() => setFocusedRuleId((cur) => (cur === rule.id ? null : cur))}
@@ -253,7 +336,6 @@ function GroupBlock({
 
 export default function PagesSection({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
-  const addIncludeGroup = useConfigStore((s) => s.addIncludeGroup);
   const openWandz = useWandzStore((s) => s.openWandz);
   const [testOpen, setTestOpen] = useState(false);
 
@@ -280,7 +362,7 @@ export default function PagesSection({ id }: { id: string }) {
           // TODO: save for future use
         >
           <Save />
-          Save for future use
+          Save as page group
         </Button>
       </div>
 
@@ -302,18 +384,6 @@ export default function PagesSection({ id }: { id: string }) {
             />
           </div>
         ))}
-
-        <div className="px-6 pb-6">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => addIncludeGroup(id)}
-          >
-            <PlusCircle />
-            More Conditions
-          </Button>
-        </div>
 
         <div className="border-t border-border">
           <button
