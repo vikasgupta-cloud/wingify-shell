@@ -341,7 +341,9 @@ function generateReport(
       isBest: false,
     },
   ];
-  for (let v = 1; v < variations; v++) {
+  // listing `variations` = count of non-control variants; report always
+  // includes Control + that many Variation N rows.
+  for (let v = 1; v <= variations; v++) {
     const uplift = Number((rng(-120, 350) / 10).toFixed(1)); // -12.0 .. 35.0
     const convRate = Number((controlRate * (1 + uplift / 100)).toFixed(2));
     variants.push({
