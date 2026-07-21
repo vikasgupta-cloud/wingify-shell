@@ -13,7 +13,11 @@ import { Button } from "@/components/ui/button";
 import { useConfigStore } from "../../../store/config";
 import EditorBar from "./EditorBar";
 import { nodeTypes } from "./nodes";
-import { buildGraph } from "./graph";
+import { buildGraph, FIXED_NODE_IDS } from "./graph";
+
+// Vertical gap kept between the bottom of the Target node and the top of the
+// Excluded node, so the latter never hides behind the former when Target grows.
+const EXCLUDED_GAP = 40;
 
 // Neutralise react-flow's default (blue) accents so everything reads grayscale.
 const canvasVars = {
@@ -53,12 +57,34 @@ export default function WorkflowMode({ id }: { id: string }) {
     const desired = buildGraph(id, config, {});
     setNodes((prev) => {
       const byId = new Map(prev.map((n) => [n.id, n]));
-      // Keep surviving nodes verbatim (position + measured); add new ones.
-      return desired.nodes.map((d) => byId.get(d.id) ?? d);
+      // Keep surviving nodes verbatim (position + measured); add new ones. The
+      // "Add variation" node is the exception — it must re-anchor below the new
+      // last variation, so always take its freshly computed position.
+      return desired.nodes.map((d) =>
+        d.id === FIXED_NODE_IDS.addVariation ? d : byId.get(d.id) ?? d
+      );
     });
     setEdges(desired.edges);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, variationKey, setNodes, setEdges]);
+
+  // Keep the Excluded node anchored just below the Target node as Target's
+  // height changes (e.g. when Additional options expand), so it is never hidden
+  // behind it. Runs only once Target has been measured.
+  const targetNode = nodes.find((n) => n.id === FIXED_NODE_IDS.target);
+  const targetHeight = targetNode?.measured?.height;
+  const targetY = targetNode?.position.y;
+  useEffect(() => {
+    if (targetHeight == null || targetY == null) return;
+    const desiredY = targetY + targetHeight + EXCLUDED_GAP;
+    setNodes((prev) =>
+      prev.map((n) => {
+        if (n.id !== FIXED_NODE_IDS.excluded) return n;
+        if (Math.abs(n.position.y - desiredY) < 1) return n;
+        return { ...n, position: { ...n.position, y: desiredY } };
+      })
+    );
+  }, [targetHeight, targetY, setNodes]);
 
   if (!config) return null;
 
@@ -97,9 +123,9 @@ export default function WorkflowMode({ id }: { id: string }) {
           >
             <Background
               variant={BackgroundVariant.Dots}
-              gap={16}
-              size={1}
-              color="hsl(var(--border))"
+              gap={20}
+              size={1.6}
+              color="hsl(var(--muted-foreground) / 0.35)"
             />
             <Controls
               position="bottom-right"

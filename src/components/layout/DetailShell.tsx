@@ -320,7 +320,7 @@ function KebabMenu({ campaign }: { campaign: Campaign }) {
 
 const EDGE_OPEN_DELAY_MS = 240;
 const OVERLAY_CLOSE_GRACE_MS = 250;
-/** Must match the duration-[180ms] classes on the overlay scrim and panel. */
+/** Must match the [transition-duration:180ms] classes on the overlay scrim and panel. */
 const OVERLAY_ANIM_MS = 180;
 
 type DetailShellProps = {
@@ -572,14 +572,20 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 </Popover.Content>
               </Popover.Portal>
             </Popover.Root>
+
+            {/* View toggle sits beside the campaign name; config-surface only,
+                hidden on Reports. */}
+            {campaign && !pathname.endsWith("/reports") && (
+              <div className="ml-1 shrink-0">
+                <ViewToggle />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
             the list pages only. Status + kebab need a real campaign. */}
         <div className="flex shrink-0 items-center gap-2">
-          {/* View toggle is a config-surface control — hidden on Reports. */}
-          {campaign && !pathname.endsWith("/reports") && <ViewToggle />}
           <SaveButton entityId={entityId} />
           {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
           {campaign && <KebabMenu campaign={campaign} />}
@@ -608,14 +614,14 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           >
             <div
               className={cn(
-                "absolute inset-0 bg-foreground transition-opacity duration-[180ms] ease-out",
+                "absolute inset-0 bg-foreground transition-opacity [transition-duration:180ms] ease-out",
                 navShown ? "opacity-20" : "opacity-0"
               )}
               onClick={() => setNavOpen(false)}
             />
             <div
               className={cn(
-                "absolute inset-y-0 left-0 flex bg-background shadow-xl transition-transform duration-[180ms] ease-out motion-reduce:transition-none",
+                "absolute inset-y-0 left-0 flex bg-background shadow-xl transition-transform [transition-duration:180ms] ease-out motion-reduce:transition-none",
                 navShown ? "translate-x-0" : "-translate-x-full"
               )}
               onMouseEnter={cancelScheduledClose}

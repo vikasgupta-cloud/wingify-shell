@@ -1,10 +1,46 @@
 import { create } from "zustand";
-import { IP_SUBJECTS, IP_OPERATORS } from "../config/configOptions";
+import { IP_OPERATORS, NAMED_OPERATORS } from "../config/qaOperators";
 import type { CustomSegmentDef } from "../config/segments";
 import type { SectionId } from "../config/configSections";
 
 // NOTE: Session-only by design. This store is NOT persisted — a reload wipes
-// every campaign's config and its saved snapshot.
+// every campaign's config and its saved snapshot. The one exception is the
+// dock/undock preference below, which is persisted on its own to localStorage
+// so the chosen layout survives reloads.
+
+type DockState = "docked" | "undocked";
+type ViewMode = "scroll" | "guided";
+type DockPrefs = Record<ViewMode, DockState>;
+
+const DOCK_PREF_KEY = "wingify:config:dockPrefs";
+
+// The dock preference is remembered per view mode, each with its own default:
+// the guided (step-by-step) view docks the step nav, the long-scroll view
+// leaves it as the floating undocked dots. A stored value for a mode overrides
+// only that mode's default.
+const DOCK_DEFAULTS: DockPrefs = { scroll: "undocked", guided: "docked" };
+
+function readDockPrefs(): DockPrefs {
+  try {
+    const raw = localStorage.getItem(DOCK_PREF_KEY);
+    if (!raw) return { ...DOCK_DEFAULTS };
+    const parsed = JSON.parse(raw) as Partial<DockPrefs>;
+    return {
+      scroll: parsed.scroll === "docked" ? "docked" : parsed.scroll === "undocked" ? "undocked" : DOCK_DEFAULTS.scroll,
+      guided: parsed.guided === "docked" ? "docked" : parsed.guided === "undocked" ? "undocked" : DOCK_DEFAULTS.guided,
+    };
+  } catch {
+    return { ...DOCK_DEFAULTS };
+  }
+}
+
+function writeDockPrefs(prefs: DockPrefs) {
+  try {
+    localStorage.setItem(DOCK_PREF_KEY, JSON.stringify(prefs));
+  } catch {
+    /* ignore write failures (private mode, quota) */
+  }
+}
 
 export type UrlPredicate =
   | "URL matches"
@@ -52,13 +88,18 @@ export type SmartStats = {
   convertAfterDays: number;
 };
 
-export type QaIpRule = { id: string; subject: string; operator: string; value: string };
+// IP rows are operator + value; cookie/query rows add a name.
+export type QaIpRule = { id: string; operator: string; value: string };
+export type QaNamedRule = { id: string; name: string; operator: string; value: string };
+export type QaRuleKind = "ip" | "cookie" | "query";
 
 export type QaConfig = {
   ipEnabled: boolean;
   ipRules: QaIpRule[];
-  cookiesEnabled: boolean;
-  urlParamsEnabled: boolean;
+  cookieEnabled: boolean;
+  cookieRules: QaNamedRule[];
+  queryEnabled: boolean;
+  queryRules: QaNamedRule[];
   previewVariationId: string;
   previewUrl: string;
   debugUrl: string;
@@ -165,8 +206,10 @@ export function defaultConfig(name: string): CampaignConfig {
     qa: {
       ipEnabled: false,
       ipRules: [],
-      cookiesEnabled: false,
-      urlParamsEnabled: false,
+      cookieEnabled: false,
+      cookieRules: [],
+      queryEnabled: false,
+      queryRules: [],
       previewVariationId: "control",
       previewUrl: "",
       debugUrl: "",
@@ -213,11 +256,13 @@ type ConfigState = {
   openWorkflow: (id: string) => void;
   closeWorkflow: (id: string) => void;
   // NOTE: view state only — how the config step navigator (DotNav) is shown.
-  // 'undocked' = hover-dots flyout; 'docked' = persistent left panel. Session-
-  // only (this store is not persisted) and outside CampaignConfig so it never
-  // marks the config dirty.
-  dockState: "docked" | "undocked";
-  setDockState: (state: "docked" | "undocked") => void;
+  // 'undocked' = hover-dots flyout; 'docked' = persistent left panel. Tracked
+  // per view mode (`dockPrefs`) and persisted to localStorage; `dockState` is
+  // the effective value for the current `viewMode`. Outside CampaignConfig so
+  // it never marks the config dirty.
+  dockState: DockState;
+  dockPrefs: DockPrefs;
+  setDockState: (state: DockState) => void;
   // NOTE: session-only view state — how the config surface renders its steps.
   // 'scroll' = all steps in one vertical scroll (default); 'guided' = one step
   // at a time, navigated via the DotNav. Outside CampaignConfig so it never
@@ -270,9 +315,14 @@ type ConfigState = {
   setObservationMetrics: (campaignId: string, ids: string[]) => void;
   toggleGuardrail: (campaignId: string, metricId: string) => void;
   setProtectionMetrics: (campaignId: string, ids: string[]) => void;
-  addIpRule: (campaignId: string) => void;
-  removeIpRule: (campaignId: string, ruleId: string) => void;
-  updateIpRule: (campaignId: string, ruleId: string, patch: Partial<QaIpRule>) => void;
+  addQaRule: (campaignId: string, kind: QaRuleKind) => void;
+  removeQaRule: (campaignId: string, kind: QaRuleKind, ruleId: string) => void;
+  updateQaRule: (
+    campaignId: string,
+    kind: QaRuleKind,
+    ruleId: string,
+    patch: Partial<QaNamedRule>
+  ) => void;
 };
 
 export const useConfigStore = create<ConfigState>((set, get) => ({
@@ -283,10 +333,19 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: true } })),
   closeWorkflow: (id) =>
     set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: false } })),
-  dockState: "undocked",
-  setDockState: (state) => set({ dockState: state }),
+  dockPrefs: readDockPrefs(),
+  // Initial viewMode is "scroll", so the effective dock state starts from the
+  // scroll-view preference.
+  dockState: readDockPrefs().scroll,
+  setDockState: (state) =>
+    set((s) => {
+      const dockPrefs = { ...s.dockPrefs, [s.viewMode]: state };
+      writeDockPrefs(dockPrefs);
+      return { dockState: state, dockPrefs };
+    }),
   viewMode: "scroll",
-  setViewMode: (mode) => set({ viewMode: mode }),
+  // Switching view mode re-applies that mode's remembered dock preference.
+  setViewMode: (mode) => set((s) => ({ viewMode: mode, dockState: s.dockPrefs[mode] })),
   activeStepId: "main",
   setActiveStepId: (stepId) => set({ activeStepId: stepId }),
   connectedIntegrations: [],
@@ -540,33 +599,47 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   setProtectionMetrics: (campaignId, ids) => {
     get().patch(campaignId, { protectionMetrics: ids });
   },
-  addIpRule: (campaignId) => {
+  addQaRule: (campaignId, kind) => {
     const current = get().configs[campaignId];
     if (!current) return;
-    const rule: QaIpRule = {
-      id: uid("ip"),
-      subject: IP_SUBJECTS[0],
-      operator: IP_OPERATORS[0],
+    if (kind === "ip") {
+      const rule: QaIpRule = { id: uid("ip"), operator: IP_OPERATORS[0].id, value: "" };
+      get().patch(campaignId, {
+        qa: { ...current.qa, ipRules: [...current.qa.ipRules, rule] },
+      });
+      return;
+    }
+    const rule: QaNamedRule = {
+      id: uid(kind),
+      name: "",
+      operator: NAMED_OPERATORS[0].id,
       value: "",
     };
+    const key = kind === "cookie" ? "cookieRules" : "queryRules";
     get().patch(campaignId, {
-      qa: { ...current.qa, ipRules: [...current.qa.ipRules, rule] },
+      qa: { ...current.qa, [key]: [...current.qa[key], rule] },
     });
   },
-  removeIpRule: (campaignId, ruleId) => {
+  removeQaRule: (campaignId, kind, ruleId) => {
     const current = get().configs[campaignId];
     if (!current) return;
-    get().patch(campaignId, {
-      qa: { ...current.qa, ipRules: current.qa.ipRules.filter((r) => r.id !== ruleId) },
-    });
+    const { qa } = current;
+    const keep = <T extends { id: string }>(rs: T[]) => rs.filter((r) => r.id !== ruleId);
+    if (kind === "ip") get().patch(campaignId, { qa: { ...qa, ipRules: keep(qa.ipRules) } });
+    else if (kind === "cookie")
+      get().patch(campaignId, { qa: { ...qa, cookieRules: keep(qa.cookieRules) } });
+    else get().patch(campaignId, { qa: { ...qa, queryRules: keep(qa.queryRules) } });
   },
-  updateIpRule: (campaignId, ruleId, patch) => {
+  updateQaRule: (campaignId, kind, ruleId, patch) => {
     const current = get().configs[campaignId];
     if (!current) return;
-    const ipRules = current.qa.ipRules.map((r) =>
-      r.id === ruleId ? { ...r, ...patch } : r
-    );
-    get().patch(campaignId, { qa: { ...current.qa, ipRules } });
+    const { qa } = current;
+    const apply = <T extends { id: string }>(rs: T[]) =>
+      rs.map((r) => (r.id === ruleId ? { ...r, ...patch } : r));
+    if (kind === "ip") get().patch(campaignId, { qa: { ...qa, ipRules: apply(qa.ipRules) } });
+    else if (kind === "cookie")
+      get().patch(campaignId, { qa: { ...qa, cookieRules: apply(qa.cookieRules) } });
+    else get().patch(campaignId, { qa: { ...qa, queryRules: apply(qa.queryRules) } });
   },
 }));
 

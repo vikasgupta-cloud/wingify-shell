@@ -162,13 +162,17 @@ function EditorUrlRow({ campaignId }: { campaignId: string }) {
   const [editing, setEditing] = useState(false);
   if (!config) return null;
 
+  // Show the open input whenever the URL is empty (nothing to display yet) or
+  // while the user is explicitly editing an existing value.
+  const showInput = editing || !config.editorUrl;
+
   return (
     <div className="flex items-center justify-between gap-4 bg-background px-6 py-3">
       <div className="flex min-w-0 items-center gap-2">
         <span className="shrink-0 text-sm text-muted-foreground">Editor URL</span>
-        {editing ? (
+        {showInput ? (
           <Input
-            autoFocus
+            autoFocus={editing}
             placeholder="https://"
             value={config.editorUrl}
             onChange={(e) => patch(campaignId, { editorUrl: e.target.value })}
@@ -868,8 +872,9 @@ export default function VariationsSection({ id }: { id: string }) {
 
   return (
     <section>
-      {/* Heading row. */}
-      <div className="mb-6 flex items-center justify-between">
+      {/* Heading row. Hidden in the guided view, where the step header owns the
+          title and the Workflow Mode CTA (see ConfigPage). */}
+      <div data-section-heading className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <h2 className="text-lg font-semibold text-foreground">Target and Variation</h2>
           <AskWandzButton

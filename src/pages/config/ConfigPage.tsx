@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import {
+  ChevronLeft,
+  ChevronRight,
   Columns2,
   Files,
   GitBranch,
@@ -8,10 +10,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type { CampaignType } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
 import { useConfigStore } from "../../store/config";
-import { SECTIONS } from "../../config/configSections";
+import { SECTIONS, type SectionId } from "../../config/configSections";
 import MainInformation from "./MainInformation";
 import PagesSection from "./PagesSection";
 import VariationsSection from "./VariationsSection";
@@ -36,7 +39,15 @@ const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
 // The body for a single step section. Shared by Scroll (all sections) and
 // Guided (one section) so the two views always render identical content — the
 // same config store, the same components (Workflow Mode included).
-function SectionBody({ sectionId, id }: { sectionId: string; id: string }) {
+function SectionBody({
+  sectionId,
+  id,
+  guided,
+}: {
+  sectionId: string;
+  id: string;
+  guided?: boolean;
+}) {
   switch (sectionId) {
     case "main":
       return <MainInformation id={id} />;
@@ -48,14 +59,21 @@ function SectionBody({ sectionId, id }: { sectionId: string; id: string }) {
       return <MetricsSection id={id} />;
     case "integrations":
       return <IntegrationsSection id={id} />;
+    // The two optional sections are accordions only in the long-scroll view. In
+    // the guided view each is its own step (the step header already names it),
+    // so the content renders directly — expanded, no collapsible wrapper.
     case "additional":
-      return (
+      return guided ? (
+        <AdditionalSettings id={id} />
+      ) : (
         <CollapsibleSection id="additional" title="Additional Settings" optional>
           <AdditionalSettings id={id} />
         </CollapsibleSection>
       );
     case "qa":
-      return (
+      return guided ? (
+        <QaAssistant id={id} />
+      ) : (
         <CollapsibleSection id="qa" title="QA Assistant" optional>
           <QaAssistant id={id} />
         </CollapsibleSection>
@@ -65,62 +83,39 @@ function SectionBody({ sectionId, id }: { sectionId: string; id: string }) {
   }
 }
 
-function ConfigPageBody({
-  id,
-  campaign,
-  viewMode,
+// Guided-only footer: step-to-step navigation matching the design's
+// "Prev" / "Save and Next" controls. Prev is disabled on the first step and
+// Next on the last, so the pair never advances past the ends.
+function StepNav({
   activeStepId,
-  TypeIcon,
+  onGo,
 }: {
-  id: string;
-  campaign: { name: string };
-  viewMode: "scroll" | "guided";
-  activeStepId: string;
-  TypeIcon: LucideIcon;
+  activeStepId: SectionId;
+  onGo: (id: SectionId) => void;
 }) {
+  const order = SECTIONS.map((s) => s.id);
+  const idx = Math.max(0, order.indexOf(activeStepId));
+  const isFirst = idx === 0;
+  const isLast = idx === order.length - 1;
   return (
-    <>
-      {viewMode === "scroll" && (
-        <div className="flex items-center gap-3">
-          <TypeIcon className="h-6 w-6 text-foreground" aria-hidden />
-          <h1 className="text-2xl font-semibold text-foreground">{campaign.name}</h1>
-        </div>
-      )}
-
-      {viewMode === "guided" ? (
-        <div
-          key={activeStepId}
-          className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
-        >
-          <GuidedStepHeader
-            section={
-              SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]
-            }
-          />
-          <div className="[&_h2+button]:hidden [&_h2]:hidden">
-            <SectionBody sectionId={activeStepId} id={id} />
-          </div>
-        </div>
-      ) : (
-        <div className="mt-10 flex flex-col gap-10">
-          {SECTIONS.map((section, i) => {
-            const isCollapsible = section.id === "additional" || section.id === "qa";
-            return (
-              <div
-                key={section.id}
-                id={isCollapsible ? undefined : `section-${section.id}`}
-                className={cn(
-                  !isCollapsible && "scroll-mt-20",
-                  i > 0 && "border-t border-border pt-10"
-                )}
-              >
-                <SectionBody sectionId={section.id} id={id} />
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </>
+    <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
+      <Button
+        variant="outline"
+        disabled={isFirst}
+        onClick={() => onGo(order[idx - 1])}
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Prev
+      </Button>
+      <Button
+        variant="outline"
+        disabled={isLast}
+        onClick={() => onGo(order[idx + 1])}
+      >
+        Next
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }
 
@@ -130,16 +125,25 @@ export default function ConfigPage() {
   const campaigns = useVisibleCampaigns();
   const campaign = campaigns.find((c) => c.id === id);
   const ensureConfig = useConfigStore((s) => s.ensureConfig);
+  const openWorkflow = useConfigStore((s) => s.openWorkflow);
   const workflowOpen = useConfigStore((s) => s.workflowOpen[id] ?? false);
   const dockState = useConfigStore((s) => s.dockState);
   const viewMode = useConfigStore((s) => s.viewMode);
   const activeStepId = useConfigStore((s) => s.activeStepId);
+  const setActiveStepId = useConfigStore((s) => s.setActiveStepId);
   const wandzOpen = useWandzStore((s) => s.open);
   const wasWorkflowOpen = useRef(false);
 
   useEffect(() => {
     if (campaign) ensureConfig(campaign.id, campaign.name);
   }, [campaign, ensureConfig]);
+
+  // Always land on the first step when the campaign changes. activeStepId is
+  // session-global (not per-campaign), so without this a new or freshly-opened
+  // campaign would inherit whatever step the previous one was left on.
+  useEffect(() => {
+    setActiveStepId("main");
+  }, [id, setActiveStepId]);
 
   // On closing Workflow Mode, return the reader to the variations section.
   // Defer to the next frame so the freshly-mounted section list has laid out.
@@ -217,49 +221,100 @@ export default function ConfigPage() {
 
   return (
     <div className="min-h-full bg-canvas">
-      {dockState === "docked" ? (
-        <div className="flex w-full items-stretch">
-          <DotNav id={id} />
-          <div className="min-w-0 flex-1 px-6 py-10">
-            <div
-              className={cn(
-                "mx-auto flex w-full items-start gap-6",
-                wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
-              )}
-            >
-              <div className="relative min-w-0 max-w-[860px] flex-1">
-                <ConfigPageBody
-                  id={id}
-                  campaign={campaign}
-                  viewMode={viewMode}
-                  activeStepId={activeStepId}
-                  TypeIcon={TypeIcon}
-                />
+      {/* When docked, the DotNav is a fixed 16rem (w-64) sidebar that overlays
+          the left gutter. Reserve that width here so the centred content column
+          (and the Wandz panel) never slide under it and never force a
+          horizontal scroll. */}
+      <div className={cn(dockState === "docked" && "pl-64")}>
+      {/* Content column + the Wandz panel sit side by side; the panel pushes the
+          content, which stays capped at 860px. DotNav floats in the left canvas
+          gutter, anchored to the content column, and does not overlap either. */}
+      <div
+        className={cn(
+          "mx-auto flex w-full items-start gap-6 px-6 py-10",
+          wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
+        )}
+      >
+        {/* Docked: DotNav is a flex sibling, so it pushes the content right. */}
+        {dockState === "docked" && <DotNav id={id} />}
+        <div className="relative min-w-0 max-w-[860px] flex-1">
+        {/* Undocked: DotNav floats in the left gutter of the content column. */}
+        {dockState === "undocked" && <DotNav id={id} />}
+        {/* Bespoke page header — product-type icon + name only (ID is in the
+            breadcrumb). Suppressed in guided, where the title lives in the
+            step header and the name is already in the breadcrumb. */}
+        {viewMode === "scroll" && (
+          <div className="flex items-center gap-3">
+            <TypeIcon className="h-6 w-6 text-foreground" aria-hidden />
+            <h1 className="text-2xl font-semibold text-foreground">{campaign.name}</h1>
+          </div>
+        )}
+
+        {viewMode === "guided" ? (
+          // GUIDED: one focused step, using the SAME content column width as
+          // Scroll. Re-keyed on activeStepId so a 200ms fade/slide plays on each
+          // swap (disabled under prefers-reduced-motion). The composed step
+          // (header + body) is vertically centred within the height below the
+          // global header when it's shorter than that space (justify-center over
+          // a min-height); a taller step grows past the min-height, so it
+          // top-aligns and scrolls in <main> — never clipped. The step body's
+          // own h2 heading (+ its Ask-Wandz sparkle) is hidden so the title
+          // shows once, in the guided header.
+          <div
+            key={activeStepId}
+            className="flex min-h-[calc(100vh-8.5rem)] flex-col duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
+          >
+            <div className="flex flex-1 flex-col justify-center">
+              <GuidedStepHeader
+                section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]}
+                action={
+                  activeStepId === "variations" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openWorkflow(id)}
+                    >
+                      Workflow Mode
+                    </Button>
+                  ) : undefined
+                }
+              />
+              {/* In guided the step title lives in GuidedStepHeader, so each
+                  section's own heading row (h2 + its inline actions) is hidden. */}
+              <div className="[&_[data-section-heading]]:hidden [&_h2+button]:hidden [&_h2]:hidden">
+                <SectionBody sectionId={activeStepId} id={id} guided />
               </div>
-              {wandzOpen && <WandzPanel />}
             </div>
+            <StepNav activeStepId={activeStepId} onGo={setActiveStepId} />
           </div>
-        </div>
-      ) : (
-        <div
-          className={cn(
-            "mx-auto flex w-full items-start gap-6 px-6 py-10",
-            wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
-          )}
-        >
-          <div className="relative min-w-0 max-w-[860px] flex-1">
-            <DotNav id={id} />
-            <ConfigPageBody
-              id={id}
-              campaign={campaign}
-              viewMode={viewMode}
-              activeStepId={activeStepId}
-              TypeIcon={TypeIcon}
-            />
+        ) : (
+          <div className="mt-10 flex flex-col gap-10">
+            {SECTIONS.map((section, i) => {
+              // Collapsible sections own their own `section-<id>` anchor, so the
+              // spacing wrapper here must not also set the id (no duplicates).
+              const isCollapsible = section.id === "additional" || section.id === "qa";
+              return (
+                <div
+                  key={section.id}
+                  id={isCollapsible ? undefined : `section-${section.id}`}
+                  className={cn(
+                    !isCollapsible && "scroll-mt-20",
+                    i > 0 && "border-t border-border pt-10"
+                  )}
+                >
+                  <SectionBody sectionId={section.id} id={id} />
+                </div>
+              );
+            })}
           </div>
-          {wandzOpen && <WandzPanel />}
+        )}
         </div>
-      )}
+
+        {/* Mutual exclusion keeps Quick view and Wandz from both rendering. */}
+        {wandzOpen && <WandzPanel />}
+      </div>
+      </div>
     </div>
   );
 }

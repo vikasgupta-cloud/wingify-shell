@@ -42,26 +42,47 @@ export default function DotNav({ id }: { id: string }) {
   const [expanded, setExpanded] = useState(false);
   const closeTimer = useRef<number | undefined>(undefined);
 
-  // Track the section currently in view.
+  // Track the section currently in view (scroll view only). A deterministic
+  // scan against a reference line ~25% down the scroll area picks the last
+  // section whose top has passed that line — i.e. the one you're reading.
+  //
+  // This replaces IntersectionObserver-by-ratio, which failed for a very tall
+  // section (Target and Variation): its intersection ratio is capped well below
+  // the observer thresholds, so it never won the "highest ratio" comparison and
+  // the previous section stayed stuck as active while scrolling through it.
   useEffect(() => {
-    const els = SECTIONS.map((s) => document.getElementById(`section-${s.id}`)).filter(
-      (el): el is HTMLElement => el !== null
-    );
-    if (els.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) {
-          setScrollActive(visible[0].target.id.replace("section-", "") as SectionId);
-        }
-      },
-      { rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.25, 0.5, 1] }
-    );
-    els.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [id, dockState]);
+    if (viewMode !== "scroll") return;
+    const scroller = document.querySelector("main");
+    if (!scroller) return;
+
+    let raf = 0;
+    const compute = () => {
+      const rect = scroller.getBoundingClientRect();
+      // Reading line ~25% down the scroll area. clientHeight guards against a
+      // transient 0-height rect collapsing the line onto the top edge.
+      const height = scroller.clientHeight || rect.height || 640;
+      const line = rect.top + Math.min(height * 0.25, 200);
+      let current: SectionId = SECTIONS[0].id;
+      for (const s of SECTIONS) {
+        const el = document.getElementById(`section-${s.id}`);
+        if (el && el.getBoundingClientRect().top - line <= 0) current = s.id;
+      }
+      setScrollActive(current);
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(compute);
+    };
+
+    compute();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [id, dockState, viewMode]);
 
   // Close the panel on Escape.
   useEffect(() => {

@@ -1,5 +1,8 @@
+import { useState, type ReactNode } from "react";
 import {
+  Check,
   ChevronDown,
+  Copy,
   ExternalLink,
   HelpCircle,
   MinusCircle,
@@ -24,7 +27,12 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
-import { IP_SUBJECTS, IP_OPERATORS } from "../../config/configOptions";
+import type { QaRuleKind } from "../../store/config";
+import { IP_OPERATORS, NAMED_OPERATORS, type OperatorDef } from "../../config/qaOperators";
+import OperatorPicker from "./OperatorPicker";
+
+// Client-side placeholder — no real IP detection.
+const YOUR_IP = "2401:4900:1c64:7e00:60f9:f55c:de2a:4572";
 
 function HelpTip() {
   return (
@@ -42,45 +50,165 @@ function HelpTip() {
   );
 }
 
-// A Switch paired with a title + description block.
+// The "Your IP: … [copy]" pill shown beside the IP Address title.
+function YourIpBadge() {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(YOUR_IP);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+      <span>
+        Your IP: <span className="font-medium text-foreground">{YOUR_IP}</span>
+      </span>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="Copy your IP address"
+        className="text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+    </span>
+  );
+}
+
+// A Switch paired with a title + description block, plus an optional accessory
+// (e.g. the "Your IP" badge) rendered beside the title.
 function ToggleBlock({
   checked,
   onCheckedChange,
   title,
   description,
+  accessory,
 }: {
   checked: boolean;
   onCheckedChange: (v: boolean) => void;
   title: string;
   description: string;
+  accessory?: ReactNode;
 }) {
   return (
     <div className="flex items-start gap-3">
       <Switch checked={checked} onCheckedChange={onCheckedChange} className="mt-0.5" />
       <div>
-        <div className="text-sm font-medium text-foreground">{title}</div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-foreground">{title}</span>
+          {accessory}
+        </div>
         <div className="text-sm text-muted-foreground">{description}</div>
       </div>
     </div>
   );
 }
 
+// Loose shape covering both IP rules (no name) and named cookie/query rules.
+type EditableRule = { id: string; operator: string; value: string; name?: string };
+
+// Shared repeatable rule editor: optional name field + operator picker + value,
+// with per-row remove and an "Add another" affordance.
+function RulesEditor({
+  id,
+  kind,
+  rules,
+  operators,
+  showName,
+}: {
+  id: string;
+  kind: QaRuleKind;
+  rules: EditableRule[];
+  operators: OperatorDef[];
+  showName?: boolean;
+}) {
+  const addQaRule = useConfigStore((s) => s.addQaRule);
+  const removeQaRule = useConfigStore((s) => s.removeQaRule);
+  const updateQaRule = useConfigStore((s) => s.updateQaRule);
+
+  return (
+    <>
+      <div className="flex flex-col gap-2">
+        {rules.map((rule) => (
+          <div key={rule.id} className="flex items-center gap-2">
+            {showName && (
+              <Input
+                className="flex-1"
+                placeholder="Enter name"
+                value={rule.name ?? ""}
+                onChange={(e) => updateQaRule(id, kind, rule.id, { name: e.target.value })}
+              />
+            )}
+            <OperatorPicker
+              operators={operators}
+              value={rule.operator}
+              onChange={(op) => updateQaRule(id, kind, rule.id, { operator: op })}
+            />
+            <Input
+              className="flex-1"
+              placeholder="Enter value"
+              value={rule.value}
+              onChange={(e) => updateQaRule(id, kind, rule.id, { value: e.target.value })}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Remove rule"
+              className="shrink-0 text-muted-foreground"
+              onClick={() => removeQaRule(id, kind, rule.id)}
+            >
+              <MinusCircle />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="mt-2 text-foreground"
+        onClick={() => addQaRule(id, kind)}
+      >
+        <Plus />
+        Add another
+      </Button>
+    </>
+  );
+}
+
 export default function QaAssistant({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
   const patch = useConfigStore((s) => s.patch);
-  const addIpRule = useConfigStore((s) => s.addIpRule);
-  const removeIpRule = useConfigStore((s) => s.removeIpRule);
-  const updateIpRule = useConfigStore((s) => s.updateIpRule);
+  const addQaRule = useConfigStore((s) => s.addQaRule);
 
   if (!config) return null;
 
   const { qa } = config;
 
-  const toggleIp = (v: boolean) => {
-    patch(id, { qa: { ...qa, ipEnabled: v } });
-    // Seed one rule the first time the block is opened.
-    if (v && qa.ipRules.length === 0) addIpRule(id);
+  // Toggling a section on seeds one rule the first time it opens. Reads the
+  // freshest qa at click time so toggling one section never clobbers another.
+  const toggleSection = (
+    kind: QaRuleKind,
+    enabledKey: "ipEnabled" | "cookieEnabled" | "queryEnabled",
+    rulesKey: "ipRules" | "cookieRules" | "queryRules",
+    v: boolean
+  ) => {
+    const fresh = useConfigStore.getState().configs[id]?.qa;
+    if (!fresh) return;
+    patch(id, { qa: { ...fresh, [enabledKey]: v } });
+    if (v && fresh[rulesKey].length === 0) addQaRule(id, kind);
   };
+
+  const bodyClass = (open: boolean) =>
+    cn(
+      "overflow-hidden pl-12 transition-all duration-150 ease-out motion-reduce:transition-none",
+      open ? "mt-3 max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -89,105 +217,59 @@ export default function QaAssistant({ id }: { id: string }) {
         <div className="mb-4 text-base font-medium text-foreground">Configurations</div>
 
         <div className="flex flex-col gap-6">
-          {/* IP address. */}
+          {/* IP Address. */}
           <div>
             <ToggleBlock
               checked={qa.ipEnabled}
-              onCheckedChange={toggleIp}
-              title="IP address"
-              description="User with a specific user id will qualify for the campaign"
+              onCheckedChange={(v) => toggleSection("ip", "ipEnabled", "ipRules", v)}
+              title="IP Address"
+              description="Restrict visibility to selected IP addresses."
+              accessory={<YourIpBadge />}
             />
-            <div
-              className={cn(
-                "overflow-hidden pl-12 transition-all duration-150 ease-out motion-reduce:transition-none",
-                qa.ipEnabled ? "mt-3 max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
-              )}
-            >
-              <div className="text-sm font-medium text-foreground">IP address of</div>
-              <div className="mt-2 flex flex-col gap-2">
-                {qa.ipRules.map((rule) => (
-                  <div key={rule.id} className="flex items-center gap-2">
-                    <Select
-                      value={rule.subject}
-                      onValueChange={(v) => updateIpRule(id, rule.id, { subject: v })}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {IP_SUBJECTS.map((o) => (
-                          <SelectItem key={o} value={o}>
-                            {o}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={rule.operator}
-                      onValueChange={(v) => updateIpRule(id, rule.id, { operator: v })}
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {IP_OPERATORS.map((o) => (
-                          <SelectItem key={o} value={o}>
-                            {o}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      className="flex-1"
-                      placeholder="0.0.0.0"
-                      value={rule.value}
-                      onChange={(e) => updateIpRule(id, rule.id, { value: e.target.value })}
-                    />
-                    {qa.ipRules.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Remove IP rule"
-                        className="shrink-0 text-muted-foreground"
-                        onClick={() => removeIpRule(id, rule.id)}
-                      >
-                        <MinusCircle />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="mt-2"
-                onClick={() => addIpRule(id)}
-              >
-                <Plus />
-                Add another
-              </Button>
+            <div className={bodyClass(qa.ipEnabled)}>
+              <RulesEditor id={id} kind="ip" rules={qa.ipRules} operators={IP_OPERATORS} />
             </div>
           </div>
 
-          {/* Cookies. */}
-          <ToggleBlock
-            checked={qa.cookiesEnabled}
-            onCheckedChange={(v) => patch(id, { qa: { ...qa, cookiesEnabled: v } })}
-            title="Cookies"
-            description="Target specific cookies to qualify for the campaign"
-          />
-          {/* TODO: cookie rules body */}
+          {/* Cookie Value. */}
+          <div>
+            <ToggleBlock
+              checked={qa.cookieEnabled}
+              onCheckedChange={(v) =>
+                toggleSection("cookie", "cookieEnabled", "cookieRules", v)
+              }
+              title="Cookie Value"
+              description="Qualify visitors using a specific cookie."
+            />
+            <div className={bodyClass(qa.cookieEnabled)}>
+              <RulesEditor
+                id={id}
+                kind="cookie"
+                rules={qa.cookieRules}
+                operators={NAMED_OPERATORS}
+                showName
+              />
+            </div>
+          </div>
 
-          {/* URL Parameters. */}
-          <ToggleBlock
-            checked={qa.urlParamsEnabled}
-            onCheckedChange={(v) => patch(id, { qa: { ...qa, urlParamsEnabled: v } })}
-            title="URL Parameters"
-            description="[temp copy]"
-          />
-          {/* TODO: url parameter rules body */}
+          {/* Query Parameter. */}
+          <div>
+            <ToggleBlock
+              checked={qa.queryEnabled}
+              onCheckedChange={(v) => toggleSection("query", "queryEnabled", "queryRules", v)}
+              title="Query Parameter"
+              description="Query Parameter is a parameter appended to the URL of a web page."
+            />
+            <div className={bodyClass(qa.queryEnabled)}>
+              <RulesEditor
+                id={id}
+                kind="query"
+                rules={qa.queryRules}
+                operators={NAMED_OPERATORS}
+                showName
+              />
+            </div>
+          </div>
         </div>
 
         {/* Live Preview. */}

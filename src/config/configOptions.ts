@@ -12,7 +12,3 @@ export const FREQUENCIES = [
   "Once per visitor",
   "Every 24 hours",
 ];
-
-export const IP_SUBJECTS = ["IPv4", "IPv6", "Range"];
-
-export const IP_OPERATORS = ["equals", "not equals", "contains"];
