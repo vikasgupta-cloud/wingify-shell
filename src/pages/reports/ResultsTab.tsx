@@ -20,13 +20,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
+  Percent,
   PieChart,
   Plus,
   RotateCcw,
   Sparkles,
   Star,
   Settings,
-  Triangle,
   TrendingUp,
   Wrench,
   ChevronRight,
@@ -2838,7 +2838,7 @@ const GRAPH_TABS = [
   {
     id: "expected-conversion-rate" as const,
     label: "Expected Conversion Rate",
-    icon: Triangle,
+    icon: Percent,
     helpTitle: "Expected Conversion Rate",
     helpAria: "About the expected conversion rate graph",
     helpBody:
