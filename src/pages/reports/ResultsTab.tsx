@@ -227,17 +227,14 @@ const REPORT_ROW_DENSITIES: {
   { key: "comfortable", label: "L", title: "Comfortable" },
 ];
 
-const RESULTS_ROW_PAD: Record<ResultsRowDensity, string> = {
-  compact: "py-2",
-  default: "py-3",
-  comfortable: "py-5",
-};
-
-const RESULTS_CHART_H: Record<ResultsRowDensity, string> = {
+/** Shared row height for variation + total rows across S / M / L. */
+const RESULTS_ROW_H: Record<ResultsRowDensity, string> = {
   compact: "h-[52px]",
   default: "h-[68px]",
   comfortable: "h-[84px]",
 };
+
+const RESULTS_CHART_H = RESULTS_ROW_H;
 
 type BadgeTone = "ctrl" | "v1" | "v2" | "total";
 
@@ -960,144 +957,192 @@ function ViewSettingsDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Statistical configuration dialog
+// Statistical configuration tooltip (hover on metric-header icon)
 
-function StatisticalConfigurationDialog({
-  open,
-  onOpenChange,
+type StatisticalConfigSnapshot = {
+  statisticalModel: string;
+  testingApproach: string;
+  multipleTestingCorrection: string;
+  metricCode: string;
+  metricName: string;
+  testingObjective: string;
+  mde: string;
+  rope: string;
+  power: string;
+  falsePositiveRate: string;
+};
+
+function statisticalConfigFor(
+  campaign: Campaign,
+  metricName: string
+): StatisticalConfigSnapshot {
+  const seed = hashMetricSeed(`${campaign.id}:${metricName}:stat-config`);
+  const mdePct = Math.max(
+    5,
+    Math.min(20, Math.round(Math.abs(campaign.expectedImprovement) || 5))
+  );
+  const ropePct = mdePct <= 5 ? 1 : Number((mdePct / 5).toFixed(1));
+  const fpr = seed % 2 === 0 ? 5 : 10;
+  const metricNum =
+    5000 + (Number.parseInt(campaign.id, 10) % 900 || seed % 900);
+  const approaches = ["Sequential", "Fixed horizon"] as const;
+  const corrections = ["None", "Bonferroni", "FDR"] as const;
+
+  return {
+    statisticalModel: "Bayesian",
+    testingApproach: approaches[seed % approaches.length]!,
+    multipleTestingCorrection: corrections[seed % corrections.length]!,
+    metricCode: `M${metricNum}`,
+    metricName,
+    testingObjective: "Better",
+    mde: `±${mdePct}% of baseline average`,
+    rope: `±${ropePct}%`,
+    power: "80%",
+    falsePositiveRate: `${fpr}%`,
+  };
+}
+
+function StatConfigRow({
+  label,
+  value,
+  valueBold,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  label: string;
+  value: string;
+  valueBold?: boolean;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[760px] border-0 bg-transparent p-0 shadow-none sm:rounded-lg [&>button]:hidden">
-        <div className="rounded-xl border border-border bg-background p-8 shadow-sm">
-          <div className="space-y-3">
-            <h2 className="text-[34px] font-semibold leading-tight tracking-tight text-foreground">
+    <div className="flex items-baseline gap-1 text-sm leading-5">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "ml-auto text-foreground",
+          valueBold ? "font-semibold" : "font-medium"
+        )}
+      >
+        : {value}
+      </span>
+    </div>
+  );
+}
+
+function StatisticalConfigurationTooltip({
+  campaign,
+  metricName,
+  children,
+}: {
+  campaign: Campaign;
+  metricName: string;
+  children: ReactNode;
+}) {
+  const config = statisticalConfigFor(campaign, metricName);
+
+  return (
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        align="end"
+        sideOffset={10}
+        className="relative w-[min(100vw-2rem,420px)] overflow-visible rounded-xl border border-border bg-background p-0 text-left text-foreground shadow-xl"
+      >
+        <span
+          className="absolute -top-2 right-6 h-4 w-4 rotate-45 border-l border-t border-border bg-background"
+          aria-hidden
+        />
+        <div className="space-y-5 px-5 py-4">
+          <div className="space-y-1.5">
+            <p className="text-base font-semibold text-foreground">
               Statistical Configuration
-            </h2>
-            <p className="text-base leading-6 text-muted-foreground">
+            </p>
+            <p className="text-sm leading-5 text-muted-foreground">
               These are advanced statistical adjustments used to fine tune your
               experiment.
             </p>
           </div>
 
-          <div className="mt-8 space-y-8">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-semibold text-foreground">
-                  Campaign Specific
-                </h3>
-                <button
-                  type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted/60"
-                  aria-label="Edit campaign specific"
-                  onClick={() => {
-                    // UI-only mock: editing flows are out of scope for this modal.
-                  }}
-                >
-                  <Pencil className="h-4 w-4" aria-hidden />
-                </button>
-              </div>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Campaign Specific
+              </h3>
+              <span
+                className="flex h-6 w-6 items-center justify-center text-muted-foreground"
+                aria-hidden
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </span>
+            </div>
+            <div className="space-y-2">
+              <StatConfigRow
+                label="Statistical Model"
+                value={config.statisticalModel}
+              />
+              <StatConfigRow
+                label="Testing approach"
+                value={config.testingApproach}
+              />
+              <StatConfigRow
+                label="Multiple Testing Correction"
+                value={config.multipleTestingCorrection}
+              />
+            </div>
+          </section>
 
-              <div className="grid gap-3">
-                <div className="flex items-center justify-between gap-6">
-                  <span className="text-base text-foreground/80">
-                    Testing approach
-                  </span>
-                  <span className="flex items-center gap-3 text-base text-foreground">
-                    <span className="text-muted-foreground">•</span> Sequential
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-6">
-                  <span className="text-base text-foreground/80">
-                    Multiple Testing Correction
-                  </span>
-                  <span className="flex items-center gap-3 text-base text-foreground">
-                    <span className="text-muted-foreground">•</span> None
-                  </span>
-                </div>
-              </div>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Metric Specific
+              </h3>
+              <span
+                className="flex h-6 w-6 items-center justify-center text-muted-foreground"
+                aria-hidden
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </span>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-semibold text-foreground">
-                  Metric Specific
-                </h3>
-                <button
-                  type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted/60"
-                  aria-label="Edit metric specific"
-                  onClick={() => {
-                    // UI-only mock: editing flows are out of scope for this modal.
-                  }}
-                >
-                  <Pencil className="h-4 w-4" aria-hidden />
-                </button>
-              </div>
-
-              <div className="rounded-lg border border-border bg-muted/20 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-2 rounded-md border border-report-blue-border bg-report-blue-bg px-3 py-1 text-sm font-semibold text-report-blue-fg">
-                    <Star className="h-4 w-4" aria-hidden />
-                    M4
-                  </span>
-                  <span className="text-base font-medium text-foreground">
-                    Page Visit To Live-Session-Recording
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid gap-3">
-                <div className="flex items-baseline justify-between gap-6">
-                  <span className="text-base text-foreground/80">
-                    Testing Objective
-                  </span>
-                  <span className="text-base font-medium text-foreground">
-                    <span className="mr-3 text-muted-foreground">•</span> Better
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between gap-6">
-                  <span className="text-base text-foreground/80">
-                    Minimum Detectable Effect (MDE)
-                  </span>
-                  <span className="text-base font-medium text-foreground">
-                    <span className="mr-3 text-muted-foreground">•</span> ±5% of
-                    baseline average
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between gap-6">
-                  <span className="text-base text-foreground/80">
-                    Region of Practical Equivalence (ROPE)
-                  </span>
-                  <span className="text-base font-medium text-foreground">
-                    <span className="mr-3 text-muted-foreground">•</span> ±1%
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between gap-6">
-                  <span className="text-base text-foreground/80">
-                    Statistical Power (1 - β)
-                  </span>
-                  <span className="text-base font-medium text-foreground">
-                    <span className="mr-3 text-muted-foreground">•</span> 80%
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between gap-6">
-                  <span className="text-base text-foreground/80">
-                    False Positive Rate (α)
-                  </span>
-                  <span className="text-base font-medium text-foreground">
-                    <span className="mr-3 text-muted-foreground">•</span> 10%
-                  </span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2.5 rounded-md bg-muted/50 px-3 py-2.5">
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-report-blue-bg px-2.5 py-0.5 text-xs font-semibold text-report-blue-fg">
+                <Star className="h-3 w-3" aria-hidden />
+                {config.metricCode}
+              </span>
+              <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                {config.metricName}
+              </span>
             </div>
-          </div>
+
+            <div className="space-y-2">
+              <StatConfigRow
+                label="Testing Objective"
+                value={config.testingObjective}
+                valueBold
+              />
+              <StatConfigRow
+                label="Minimum Detectable Effect (MDE)"
+                value={config.mde}
+                valueBold
+              />
+              <StatConfigRow
+                label="Region of Practical Equivalence (ROPE)"
+                value={config.rope}
+                valueBold
+              />
+              <StatConfigRow
+                label="Statistical Power (1 - β)"
+                value={config.power}
+                valueBold
+              />
+              <StatConfigRow
+                label="False Positive Rate (α)"
+                value={config.falsePositiveRate}
+                valueBold
+              />
+            </div>
+          </section>
         </div>
-      </DialogContent>
-    </Dialog>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -1105,16 +1150,16 @@ function StatisticalConfigurationDialog({
 // Metric header
 
 function MetricHeader({
+  campaign,
   metric,
   isPrimary,
-  onOpenChartView,
   onOpenSettings,
   onOpenLearnings,
   onViewVitalsDetails,
 }: {
+  campaign: Campaign;
   metric: string;
   isPrimary: boolean;
-  onOpenChartView: () => void;
   onOpenSettings: () => void;
   onOpenLearnings: () => void;
   onViewVitalsDetails: () => void;
@@ -1147,21 +1192,18 @@ function MetricHeader({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={onOpenChartView}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
-              aria-label="Statistical configuration"
-            >
-              <PieChart className="h-[18px] w-[18px]" aria-hidden />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" sideOffset={8}>
-            Statistical Configuration
-          </TooltipContent>
-        </Tooltip>
+        <StatisticalConfigurationTooltip
+          campaign={campaign}
+          metricName={metric}
+        >
+          <button
+            type="button"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
+            aria-label="Statistical configuration"
+          >
+            <PieChart className="h-[18px] w-[18px]" aria-hidden />
+          </button>
+        </StatisticalConfigurationTooltip>
         <ExperimentVitalsPopover onViewDetails={onViewVitalsDetails} />
         <Tooltip>
           <TooltipTrigger asChild>
@@ -1238,8 +1280,8 @@ function LearningIcon({ className }: { className?: string }) {
 function downloadCsvSummary(metricName: string) {
   const slug = metricName.toLowerCase().replace(/\s+/g, "-");
   const csv = [
-    "Metric,Exported At",
-    `"${metricName.replace(/"/g, '""')}","${new Date().toISOString()}"`,
+    "Note",
+    '"This file will be populated with real data."',
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -1521,37 +1563,59 @@ function ExperimentVitalsPopover({
   onViewDetails: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const openPanel = () => {
+    clearCloseTimer();
+    setOpen(true);
+  };
+
+  const scheduleClose = () => {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  useEffect(() => () => clearCloseTimer(), []);
 
   const goToVitals = () => {
+    clearCloseTimer();
     setOpen(false);
     onViewDetails();
   };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
-              aria-label="Experiment vitals"
-            >
-              <VitalsGlyph size={18} className="text-current" />
-              <span className="absolute right-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-vitals-unhealthy px-0.5 text-[9px] font-semibold leading-none text-background">
-                1
-              </span>
-            </button>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" sideOffset={8}>
-          Experiment Vitals
-        </TooltipContent>
-      </Tooltip>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
+          aria-label="Experiment vitals"
+          onMouseEnter={openPanel}
+          onMouseLeave={scheduleClose}
+          onFocus={openPanel}
+          onBlur={scheduleClose}
+        >
+          <VitalsGlyph size={18} className="text-current" />
+          <span className="absolute right-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-vitals-unhealthy px-0.5 text-[9px] font-semibold leading-none text-background">
+            1
+          </span>
+        </button>
+      </PopoverTrigger>
       <PopoverContent
         align="end"
         sideOffset={8}
         className="w-[min(100vw-2rem,420px)] rounded-xl border border-border p-0 shadow-xl"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onMouseEnter={openPanel}
+        onMouseLeave={scheduleClose}
       >
         <div className="space-y-3 border-b border-border px-5 pb-4 pt-5">
           <div className="flex items-start justify-between gap-3">
@@ -2297,14 +2361,14 @@ function ResultsMetricCell({
     resultsTableMetricCellClass,
     "overflow-hidden bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]"
   );
-  const pad = RESULTS_ROW_PAD[rowDensity];
+  const rowH = RESULTS_ROW_H[rowDensity];
   switch (columnId) {
     case "unique-conversions":
       return (
         <div
           className={cn(
             metricCell,
-            pad,
+            rowH,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2316,7 +2380,7 @@ function ResultsMetricCell({
         <div
           className={cn(
             metricCell,
-            pad,
+            rowH,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2325,7 +2389,7 @@ function ResultsMetricCell({
       );
     case "expected-improvement":
       return (
-        <div className={metricCell}>
+        <div className={cn(metricCell, "overflow-visible")}>
           <ExpectedImprovementCell
             value={isControl ? null : uplift}
             rowDensity={rowDensity}
@@ -2346,7 +2410,7 @@ function ResultsMetricCell({
         <div
           className={cn(
             metricCell,
-            pad,
+            rowH,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2359,7 +2423,7 @@ function ResultsMetricCell({
         <div
           className={cn(
             metricCell,
-            pad,
+            rowH,
             "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
           )}
         >
@@ -2384,7 +2448,7 @@ function ResultsTotalMetricCell({
 }) {
   const cell = cn(
     resultsTableMetricCellClass,
-    RESULTS_ROW_PAD[rowDensity],
+    RESULTS_ROW_H[rowDensity],
     "flex items-center border-b border-border",
     STICKY_HEADER_BG
   );
@@ -2441,7 +2505,7 @@ function RowActionsCell({
     <div
       className={cn(
         stickyActionsCellClass(edgeShadows.right),
-        RESULTS_ROW_PAD[rowDensity],
+        RESULTS_ROW_H[rowDensity],
         "flex items-center justify-center border-b border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
         className
       )}
@@ -2483,31 +2547,44 @@ function ExpectedImprovementCell({
   const positive = value >= 0;
   const left = Math.min(50, end);
   const width = Math.abs(end - 50);
+  const nearRight = end >= 88;
+  const nearLeft = end <= 12;
 
   return (
     <div
       className={cn(
-        "relative flex items-center overflow-hidden border-b border-border px-5",
+        "relative flex items-center overflow-visible border-b border-border px-5",
         heightClass
       )}
     >
-      <div className="relative h-full flex-1 overflow-hidden">
+      <div className="relative h-full w-full min-w-0 flex-1 overflow-visible">
         {/* median range band */}
         <div className="absolute inset-y-0 left-1/2 w-[35px] -translate-x-1/2 rounded-md bg-muted/50" />
         {/* 0% centre line */}
         <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border" />
-        {/* value bar */}
-        <div
-          className={cn(
-            "absolute top-1/2 h-[15px] -translate-y-1/2 rounded-[3px]",
-            positive ? "bg-success-fg" : "bg-danger-fg"
-          )}
-          style={{ left: `${left}%`, width: `${Math.max(width, 1)}%` }}
-        />
-        {/* value label */}
+        {/* value bar — clipped so the fill never spills the cell */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className={cn(
+              "absolute top-1/2 h-[15px] -translate-y-1/2 rounded-[3px]",
+              positive ? "bg-success-fg" : "bg-danger-fg"
+            )}
+            style={{ left: `${left}%`, width: `${Math.max(width, 1)}%` }}
+          />
+        </div>
+        {/* value label — kept fully inside the cell near the edges */}
         <span
-          className="absolute top-[calc(50%-24px)] -translate-x-1/2 whitespace-nowrap text-xs text-foreground/70"
-          style={{ left: `${end}%` }}
+          className={cn(
+            "absolute top-[calc(50%-24px)] whitespace-nowrap text-xs tabular-nums text-foreground/70",
+            !nearLeft && !nearRight && "-translate-x-1/2"
+          )}
+          style={
+            nearRight
+              ? { right: 0 }
+              : nearLeft
+                ? { left: 0 }
+                : { left: `${end}%` }
+          }
         >
           {value.toFixed(1)}%
         </span>
@@ -2552,11 +2629,11 @@ function ProbabilityCell({
           </span>
         )}
         {/* track */}
-        <div className="absolute inset-0 rounded-full bg-muted" />
+        <div className="absolute inset-0 rounded-[3px] bg-muted" />
         {/* fill */}
         <div
           className={cn(
-            "absolute inset-y-0 left-0 rounded-full",
+            "absolute inset-y-0 left-0 rounded-[3px]",
             isWinner ? "bg-success-fg" : "bg-muted-foreground/30"
           )}
           style={{ width: `${value}%` }}
@@ -2621,7 +2698,7 @@ function DataRow({
       <div
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
-          RESULTS_ROW_PAD[rowDensity],
+          RESULTS_ROW_H[rowDensity],
           "flex min-w-0 items-center gap-2 border-b border-border pl-6 pr-3"
         )}
       >
@@ -2670,7 +2747,7 @@ function TotalRow({
   const cell = cn(
     "flex items-center border-b border-border",
     STICKY_HEADER_BG,
-    RESULTS_ROW_PAD[rowDensity]
+    RESULTS_ROW_H[rowDensity]
   );
   const gridStyle = buildResultsGrid(columns);
   return (
@@ -2699,7 +2776,7 @@ function TotalRow({
       <div
         className={cn(
           stickyActionsCellClass(edgeShadows.right),
-          RESULTS_ROW_PAD[rowDensity],
+          RESULTS_ROW_H[rowDensity],
           "flex items-center justify-center border-b border-border",
           STICKY_HEADER_BG
         )}
@@ -3212,15 +3289,15 @@ const DENSITY_PLOT_W = 100;
 const DENSITY_PLOT_H = 200;
 
 const DENSITY_STROKE = {
-  ctrl: "hsl(var(--report-ctrl-fg))",
-  v1: "hsl(var(--report-v1-fg))",
+  ctrl: "hsl(var(--muted-foreground))",
+  v1: "hsl(var(--foreground) / 0.55)",
 } as const;
 
 function UnderstandGraphLink() {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1.5 text-sm font-medium text-report-brand-fg transition-colors hover:text-report-brand"
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
     >
       Understand the graph
       <Info className="h-3.5 w-3.5" aria-hidden />
@@ -3246,15 +3323,13 @@ function DensitySeriesLegend({
       <Checkbox
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(v === true)}
-        className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-report-brand data-[state=checked]:bg-report-brand"
+        className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
       />
       <span
         className={cn(
           "flex h-5 min-w-[28px] shrink-0 items-center justify-center rounded-full border px-2 text-xs font-medium",
-          tone === "ctrl" &&
-            "border-report-ctrl-border bg-report-ctrl-bg text-report-ctrl-fg",
-          tone === "v1" &&
-            "border-report-v1-border bg-report-v1-bg text-report-v1-fg"
+          tone === "ctrl" && "border-border bg-muted text-foreground",
+          tone === "v1" && "border-border bg-secondary text-foreground"
         )}
       >
         {label}
@@ -3526,21 +3601,21 @@ function ExpectedImprovementChart({
             aria-hidden
           >
             <div
-              className="absolute inset-y-0 left-0 bg-[hsl(var(--report-red)/0.08)]"
+              className="absolute inset-y-0 left-0 bg-muted"
               style={{ width: `${zeroX}%` }}
             />
             <div
-              className="absolute inset-y-0 bg-report-green-tint"
+              className="absolute inset-y-0 bg-canvas"
               style={{ left: `${zeroX}%`, right: 0 }}
             />
             <div
-              className="absolute inset-y-0 bg-muted"
+              className="absolute inset-y-0 bg-border/60"
               style={{ left: `${ropeLeft}%`, width: `${ropeRight - ropeLeft}%` }}
             />
-            <span className="absolute left-3 top-2 text-[11px] font-semibold uppercase tracking-wide text-danger-fg">
+            <span className="absolute left-3 top-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Worse
             </span>
-            <span className="absolute right-3 top-2 text-[11px] font-semibold uppercase tracking-wide text-success-fg">
+            <span className="absolute right-3 top-2 text-[11px] font-semibold uppercase tracking-wide text-foreground">
               Better
             </span>
             {Array.from({ length: 6 }).map((_, i) => (
@@ -4676,7 +4751,6 @@ export default function ResultsTab({
   const [compareMode, setCompareMode] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("variation");
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
-  const [statConfigOpen, setStatConfigOpen] = useState(false);
   const [learningsOpen, setLearningsOpen] = useState(false);
   const [metricsNavCollapsed, setMetricsNavCollapsed] =
     useReportMetricsNavCollapsed(campaign.id);
@@ -4755,10 +4829,6 @@ export default function ResultsTab({
               updateActivePreset(campaign.id, { viewSettings: next });
             }}
           />
-          <StatisticalConfigurationDialog
-            open={statConfigOpen}
-            onOpenChange={setStatConfigOpen}
-          />
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
@@ -4792,9 +4862,9 @@ export default function ResultsTab({
           ) : (
             <>
               <MetricHeader
+                campaign={campaign}
                 metric={selectedMetric}
                 isPrimary={selectedMetric === campaign.primaryMetric}
-                onOpenChartView={() => setStatConfigOpen(true)}
                 onOpenSettings={() => setViewSettingsOpen(true)}
                 onOpenLearnings={() => setLearningsOpen(true)}
                 onViewVitalsDetails={onNavigateToVitals}
