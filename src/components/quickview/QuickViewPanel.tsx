@@ -17,6 +17,10 @@ import {
 } from "lucide-react";
 import {
   campaignBestVariant,
+  CONCLUSION_MIN_CONVERSIONS,
+  CONCLUSION_MIN_RUNTIME_DAYS,
+  CONCLUSION_MIN_VISITORS,
+  conclusionKind,
   conclusionTitle,
   hasDeclaredWinner,
 } from "../../data/campaignConclusion";
@@ -94,9 +98,16 @@ function Detail({ label, value }: { label: string; value: string }) {
 function ConclusionCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
   const title = conclusionTitle(campaign);
+  const kind = conclusionKind(campaign);
+  const collecting = kind === "collecting";
   return (
     <div className="rounded-lg border border-border p-4">
       <div className="text-xl font-semibold text-foreground">{title}</div>
+      {collecting ? (
+        <p className="mt-1 text-sm text-muted-foreground">
+          Too early for a conclusion — wait for the minimum runtime and sample.
+        </p>
+      ) : null}
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
         {campaign.startedOn && <span>Started on : {formatDate(campaign.startedOn)}</span>}
         {r.estimatedEndDate && (
@@ -107,18 +118,30 @@ function ConclusionCard({ campaign }: { campaign: Campaign }) {
         <ConclusionStat
           label="Duration"
           achieved={`${r.elapsedDays}`}
-          rest={`/ ${r.requiredDays} days`}
+          rest={
+            collecting
+              ? `/ ${CONCLUSION_MIN_RUNTIME_DAYS} days`
+              : `/ ${r.requiredDays} days`
+          }
         />
         <ConclusionStat
           label="Unique visitors"
           achieved={formatNumber(campaign.visitors)}
-          rest={`/ ${formatNumber(r.requiredVisitors)} required`}
+          rest={
+            collecting
+              ? `/ ${formatNumber(CONCLUSION_MIN_VISITORS)} minimum`
+              : `/ ${formatNumber(r.requiredVisitors)} required`
+          }
         />
         <ConclusionStat
           label="Conversions"
           info
           achieved={formatNumber(campaign.uniqueConversions)}
-          rest={`/ ${formatNumber(r.requiredConversions)} required`}
+          rest={
+            collecting
+              ? `/ ${formatNumber(CONCLUSION_MIN_CONVERSIONS)} minimum`
+              : `/ ${formatNumber(r.requiredConversions)} required`
+          }
         />
       </div>
     </div>

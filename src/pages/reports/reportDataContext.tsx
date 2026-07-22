@@ -141,7 +141,11 @@ function buildOverview(
   let body: string;
   let heading: string;
 
-  if (kind === "progress") {
+  if (kind === "collecting") {
+    headline = conclusionTitle(campaign);
+    body = `Too early to conclude on ${metric.toLowerCase()}. Wait for at least 5 days and a minimum sample before progress estimates appear.`;
+    heading = `Early standings on ${metric.toLowerCase()}`;
+  } else if (kind === "progress") {
     headline = conclusionTitle(campaign);
     body =
       campaign.status === "Ended"

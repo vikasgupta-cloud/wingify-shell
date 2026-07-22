@@ -1,5 +1,15 @@
 import type { Campaign, Decision, Variant } from "./campaigns";
 
+/** Mandatory wait before any conclusion progress is shown. */
+export const CONCLUSION_MIN_RUNTIME_DAYS = 5;
+
+/**
+ * Soft sample floors for leaving the initial collecting stage.
+ * Full statistical targets remain report.requiredVisitors / requiredConversions.
+ */
+export const CONCLUSION_MIN_VISITORS = 1000;
+export const CONCLUSION_MIN_CONVERSIONS = 40;
+
 /** Winner | Baseline — listing shows “Best performer” chrome. */
 export function hasDeclaredWinner(decision: Decision): boolean {
   return decision === "Winner" || decision === "Baseline";
@@ -28,6 +38,26 @@ export function campaignBestVariantIndex(campaign: Campaign): number {
   return idx >= 0 ? idx : 0;
 }
 
+export function hasMinimumRuntime(campaign: Campaign): boolean {
+  return campaign.report.elapsedDays >= CONCLUSION_MIN_RUNTIME_DAYS;
+}
+
+export function hasMinimumConclusionSample(campaign: Campaign): boolean {
+  return (
+    campaign.visitors >= CONCLUSION_MIN_VISITORS &&
+    campaign.uniqueConversions >= CONCLUSION_MIN_CONVERSIONS
+  );
+}
+
+/**
+ * Very early stage: still inside the 5-day wait and/or below minimum sample.
+ * Only applies while decision is still open.
+ */
+export function isInitialCollectingStage(campaign: Campaign): boolean {
+  if (campaign.decision !== "No decision") return false;
+  return !hasMinimumRuntime(campaign) || !hasMinimumConclusionSample(campaign);
+}
+
 /** Listing / quickview conclusion title. */
 export function conclusionTitle(campaign: Campaign): string {
   if (campaign.decision !== "No decision") {
@@ -36,6 +66,18 @@ export function conclusionTitle(campaign: Campaign): string {
     return `${best.name} is your best choice`;
   }
   if (campaign.status === "Ended") return "Ended without a conclusion";
+  if (isInitialCollectingStage(campaign)) {
+    if (!hasMinimumRuntime(campaign)) {
+      const remaining = Math.max(
+        0,
+        CONCLUSION_MIN_RUNTIME_DAYS - campaign.report.elapsedDays
+      );
+      return remaining === 0
+        ? "Collecting minimum data"
+        : `Collecting data · ${remaining} day${remaining === 1 ? "" : "s"} to go`;
+    }
+    return "Collecting minimum data";
+  }
   const remaining = Math.max(
     0,
     campaign.report.requiredDays - campaign.report.elapsedDays
@@ -43,7 +85,12 @@ export function conclusionTitle(campaign: Campaign): string {
   return `Conclusion in ${remaining} days`;
 }
 
-export type ConclusionKind = "progress" | "winner" | "baseline" | "inconclusive";
+export type ConclusionKind =
+  | "collecting"
+  | "progress"
+  | "winner"
+  | "baseline"
+  | "inconclusive";
 
 export function conclusionKind(campaign: Campaign): ConclusionKind {
   switch (campaign.decision) {
@@ -54,7 +101,7 @@ export function conclusionKind(campaign: Campaign): ConclusionKind {
     case "Inconclusive":
       return "inconclusive";
     default:
-      return "progress";
+      return isInitialCollectingStage(campaign) ? "collecting" : "progress";
   }
 }
 
@@ -65,6 +112,12 @@ export type ConclusionProgress = {
   requiredVisitors: number;
   uniqueConversions: number;
   requiredConversions: number;
+  /** Target days for the initial collecting stage. */
+  minRuntimeDays: number;
+  /** Soft visitor floor for leaving collecting. */
+  minVisitors: number;
+  /** Soft conversion floor for leaving collecting. */
+  minConversions: number;
   startedOn: string | null;
   estimatedEndDate: string | null;
 };
@@ -78,6 +131,9 @@ export function conclusionProgress(campaign: Campaign): ConclusionProgress {
     requiredVisitors: r.requiredVisitors,
     uniqueConversions: campaign.uniqueConversions,
     requiredConversions: r.requiredConversions,
+    minRuntimeDays: CONCLUSION_MIN_RUNTIME_DAYS,
+    minVisitors: CONCLUSION_MIN_VISITORS,
+    minConversions: CONCLUSION_MIN_CONVERSIONS,
     startedOn: campaign.startedOn,
     estimatedEndDate: r.estimatedEndDate,
   };

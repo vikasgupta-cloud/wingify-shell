@@ -314,12 +314,17 @@ function generateReport(
 
   const requiredDays = rng(14, 45);
   // A campaign that never started has no elapsed duration — 0, never NaN.
-  // Otherwise: no-decision rows must read "Conclusion in N days" with N > 0 → elapsed < required.
+  // No decision: ~1/3 still inside the 5-day minimum-runtime wait (collecting);
+  // the rest are past that wait and progress toward requiredDays.
+  // Winner/Baseline/Inconclusive keep longer elapsed windows. Visitors /
+  // conversions / decision are unchanged here.
   const elapsedDays =
     startedOn === null
       ? 0
       : decision === "No decision"
-        ? rng(2, Math.max(3, requiredDays - 2))
+        ? rng(0, 2) === 0
+          ? rng(0, 4)
+          : rng(5, Math.max(6, requiredDays - 2))
         : rng(Math.floor(requiredDays / 2), requiredDays + 8);
 
   const requiredVisitors = Math.max(visitors, 5000) + rng(3000, 45000);

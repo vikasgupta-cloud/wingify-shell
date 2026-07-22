@@ -613,6 +613,52 @@ function ConclusionBanner({
   const shell =
     "overflow-hidden rounded-lg border border-border bg-background shadow-sm";
 
+  if (kind === "collecting") {
+    return (
+      <div className={cn(shell, "px-6 py-4")}>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Too early for a conclusion — wait for the minimum runtime and sample.
+        </p>
+        <div className="mt-3 grid grid-cols-3 gap-4">
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Duration</div>
+            <div className="mt-1 tabular-nums">
+              <span className="text-base font-semibold text-foreground">
+                {progress.elapsedDays}
+              </span>{" "}
+              <span className="text-sm text-muted-foreground">
+                / {progress.minRuntimeDays} days
+              </span>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Unique visitors</div>
+            <div className="mt-1 tabular-nums">
+              <span className="text-base font-semibold text-foreground">
+                {formatNumber(progress.visitors)}
+              </span>{" "}
+              <span className="text-sm text-muted-foreground">
+                / {formatNumber(progress.minVisitors)} minimum
+              </span>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Conversions</div>
+            <div className="mt-1 tabular-nums">
+              <span className="text-base font-semibold text-foreground">
+                {formatNumber(progress.uniqueConversions)}
+              </span>{" "}
+              <span className="text-sm text-muted-foreground">
+                / {formatNumber(progress.minConversions)} minimum
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (kind === "progress") {
     return (
       <div className={cn(shell, "px-6 py-4")}>
