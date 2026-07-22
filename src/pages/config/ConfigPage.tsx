@@ -220,23 +220,26 @@ export default function ConfigPage() {
   }
 
   return (
-    <div className="min-h-full bg-canvas">
-      {/* When docked, the DotNav is a fixed 16rem (w-64) sidebar that overlays
-          the left gutter. Reserve that width here so the centred content column
-          (and the Wandz panel) never slide under it and never force a
-          horizontal scroll. */}
-      <div className={cn(dockState === "docked" && "pl-64")}>
+    <div
+      className={cn(
+        "min-h-full bg-canvas",
+        dockState === "docked" && "flex items-start"
+      )}
+    >
+      {/* Docked: DotNav is an in-flow, sticky w-64 sidebar flush against the
+          icon rail; the content area takes the remaining width. */}
+      {dockState === "docked" && <DotNav id={id} />}
+      {/* Content area: when docked it is the flex remainder next to the sidebar;
+          the centred content column + the Wandz panel sit inside it. */}
+      <div className={cn("min-w-0", dockState === "docked" && "flex-1")}>
       {/* Content column + the Wandz panel sit side by side; the panel pushes the
-          content, which stays capped at 860px. DotNav floats in the left canvas
-          gutter, anchored to the content column, and does not overlap either. */}
+          content, which stays capped at 860px. */}
       <div
         className={cn(
           "mx-auto flex w-full items-start gap-6 px-6 py-10",
           wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
         )}
       >
-        {/* Docked: DotNav is a flex sibling, so it pushes the content right. */}
-        {dockState === "docked" && <DotNav id={id} />}
         <div className="relative min-w-0 max-w-[860px] flex-1">
         {/* Undocked: DotNav floats in the left gutter of the content column. */}
         {dockState === "undocked" && <DotNav id={id} />}
@@ -307,6 +310,9 @@ export default function ConfigPage() {
                 </div>
               );
             })}
+            {/* Trailing scroll room so the last section can scroll up into the
+                nav's active-highlight band (and sit at the top when clicked). */}
+            <div aria-hidden className="h-[50vh] shrink-0" />
           </div>
         )}
         </div>

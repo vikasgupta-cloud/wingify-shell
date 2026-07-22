@@ -35,6 +35,7 @@ export default function DotNav({ id }: { id: string }) {
   const viewMode = useConfigStore((s) => s.viewMode);
   const activeStepId = useConfigStore((s) => s.activeStepId);
   const setActiveStepId = useConfigStore((s) => s.setActiveStepId);
+  const setSectionOpen = useConfigStore((s) => s.setSectionOpen);
   const [scrollActive, setScrollActive] = useState<SectionId>("main");
   // Scroll view highlights the section under the scroll position; Guided view
   // highlights the step the user picked (activeStepId).
@@ -108,9 +109,25 @@ export default function DotNav({ id }: { id: string }) {
 
   // Guided swaps the shown step (no scrolling — only one step is rendered);
   // Scroll jumps to the section anchor. Frictionless: any step, anytime.
+  // Collapsible sections (Additional Settings / QA Assistant) are opened first
+  // so the click both reveals and scrolls to their content; the expand happens
+  // before the scroll settles so the target offset is correct.
+  const COLLAPSIBLE: SectionId[] = ["additional", "qa"];
   const goToStep = (sid: SectionId) => {
-    if (viewMode === "guided") setActiveStepId(sid);
-    else scrollToSection(sid);
+    if (viewMode === "guided") {
+      setActiveStepId(sid);
+      return;
+    }
+    // Select immediately so the click always highlights its target — the scroll
+    // observer only re-selects when a section is actually within its active
+    // band, so it never fights this (and the last section, which lands above
+    // that band, stays selected).
+    setScrollActive(sid);
+    if (COLLAPSIBLE.includes(sid)) setSectionOpen(sid, true);
+    // Scroll immediately: a section header's offset is stable (opening its
+    // accordion only adds height below it), and the trailing scroll spacer
+    // guarantees room to bring any section — including the last — to the top.
+    scrollToSection(sid);
   };
 
   // A single grouped step list, shared by the expanded flyout and the docked

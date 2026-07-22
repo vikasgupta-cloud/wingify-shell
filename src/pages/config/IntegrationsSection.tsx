@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useConfigStore } from "../../store/config";
 import { INTEGRATIONS, monogram } from "../../data/integrations";
 import IntegrationsBrowseSheet from "./IntegrationsBrowseSheet";
@@ -33,10 +39,18 @@ export default function IntegrationsSection({ id }: { id: string }) {
     <section>
       {/* Heading. */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-foreground">Integrations</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Integrate with third-party products.
-        </p>
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <h2 className="w-fit cursor-default text-lg font-semibold text-foreground">
+                Integrations
+              </h2>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Integrate with third-party products.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {connected.length === 0 ? (
