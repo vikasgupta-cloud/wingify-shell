@@ -658,15 +658,15 @@ function ConclusionBanner({
 
   if (kind === "collecting") {
     return (
-      <div className={cn(shell, "px-6 py-4")}>
+      <div className={cn(shell, "px-8 py-6")}>
         <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Too early for a conclusion. Wait for the minimum runtime and sample.
         </p>
-        <div className="mt-3 grid grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-3 gap-x-10 gap-y-4">
           <div className="min-w-0">
             <div className="text-xs text-muted-foreground">Minimum duration</div>
-            <div className="mt-1 tabular-nums">
+            <div className="mt-2 tabular-nums">
               <span className="text-base font-semibold text-foreground">
                 {progress.elapsedDays}
               </span>{" "}
@@ -677,7 +677,7 @@ function ConclusionBanner({
           </div>
           <div className="min-w-0">
             <div className="text-xs text-muted-foreground">Minimum unique visitors</div>
-            <div className="mt-1 tabular-nums">
+            <div className="mt-2 tabular-nums">
               <span className="text-base font-semibold text-foreground">
                 {formatNumber(progress.visitors)}
               </span>{" "}
@@ -688,7 +688,7 @@ function ConclusionBanner({
           </div>
           <div className="min-w-0">
             <div className="text-xs text-muted-foreground">Minimum conversions</div>
-            <div className="mt-1 tabular-nums">
+            <div className="mt-2 tabular-nums">
               <span className="text-base font-semibold text-foreground">
                 {formatNumber(progress.uniqueConversions)}
               </span>{" "}
