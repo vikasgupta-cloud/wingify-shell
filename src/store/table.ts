@@ -46,8 +46,12 @@ export const useTableStore = create<TableState>()(
       // hold the old default, so adopt the new one once on upgrade.
       version: 1,
       migrate: (state, version) => {
-        const s = state as Partial<TableState>;
-        if (version < 1) return { ...s, ganttZoom: "month" as GanttZoom };
+        const s = state as {
+          pageSize: number;
+          ganttZoom: GanttZoom;
+          rowDensity: RowDensity;
+        };
+        if (version < 1) s.ganttZoom = "month";
         return s;
       },
       partialize: (s) => ({
