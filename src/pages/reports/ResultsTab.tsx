@@ -17,6 +17,7 @@ import {
   Columns3,
   Compass,
   Construction,
+  Crosshair,
   Download,
   FlaskConical,
   GripVertical,
@@ -109,11 +110,14 @@ import type { ReportConclusionSnapshot } from "./reportDataContext";
 import {
   formatNumber,
   hashMetricSeed,
+  metricRowStats,
   type MetricRowStats,
   type ReportDataMode,
 } from "./reportMetrics";
 
 const WINNER_THRESHOLD = 95;
+
+type ResultsGroupBy = "variation" | "segment";
 
 const RESULTS_TABLE_COLUMN_META: Record<
   ResultsTableColumnId,
@@ -151,21 +155,60 @@ const RESULTS_TABLE_COLUMN_META: Record<
   },
 };
 
-function resultsTableMinWidth(columns: ResultsTableColumnId[]) {
+function resultsTableMinWidth(
+  columns: ResultsTableColumnId[],
+  grouped = false
+) {
   const metrics = columns.reduce(
     (sum, id) => sum + RESULTS_TABLE_COLUMN_META[id].minWidthPx,
     0
   );
-  return 220 + metrics + 40;
+  return (grouped ? 180 + 220 : 220) + metrics + 40;
 }
 
-function buildResultsGrid(columns: ResultsTableColumnId[]) {
+function buildResultsGrid(columns: ResultsTableColumnId[], grouped = false) {
   const widths = columns
     .map((id) => RESULTS_TABLE_COLUMN_META[id].gridWidth)
     .join(" ");
   return {
-    gridTemplateColumns: `220px ${widths} 40px`,
+    gridTemplateColumns: grouped
+      ? `180px 220px ${widths} 40px`
+      : `220px ${widths} 40px`,
   } as const;
+}
+
+/** Opaque sticky header fill — matches muted/50 over white without letting scroll content bleed through. */
+const STICKY_HEADER_BG =
+  "bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]";
+
+function stickyGroupCellClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky left-0 z-30 w-[180px] min-w-[180px] max-w-[180px] overflow-hidden border-r border-border bg-background",
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+  );
+}
+
+function stickyGroupHeaderClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky left-0 z-30 w-[180px] min-w-[180px] max-w-[180px] overflow-hidden border-r border-border",
+    STICKY_HEADER_BG,
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+  );
+}
+
+function stickyNestedCellClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky left-[180px] z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+  );
+}
+
+function stickyNestedHeaderClass(showEdgeShadow: boolean) {
+  return cn(
+    "sticky left-[180px] z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border",
+    STICKY_HEADER_BG,
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+  );
 }
 
 function stickyVariationsCellClass(showEdgeShadow: boolean) {
@@ -174,10 +217,6 @@ function stickyVariationsCellClass(showEdgeShadow: boolean) {
     showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
   );
 }
-
-/** Opaque sticky header fill — matches muted/50 over white without letting scroll content bleed through. */
-const STICKY_HEADER_BG =
-  "bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]";
 
 function stickyVariationsHeaderClass(showEdgeShadow: boolean) {
   return cn(
@@ -2287,15 +2326,20 @@ function TableHeader({
   rowDensity,
   onRowDensityChange,
   edgeShadows,
+  grouped,
+  groupBy,
 }: {
   columns: ResultsTableColumnId[];
   onColumnsChange: (next: ResultsTableColumnId[]) => void;
   rowDensity: ResultsRowDensity;
   onRowDensityChange: (next: ResultsRowDensity) => void;
   edgeShadows: StickyEdgeShadows;
+  grouped?: boolean;
+  groupBy?: ResultsGroupBy;
 }) {
+  const isGrouped = Boolean(grouped);
   const gridStyle = {
-    ...buildResultsGrid(columns),
+    ...buildResultsGrid(columns, isGrouped),
     gridTemplateRows: "auto auto",
   } as const;
 
@@ -2304,28 +2348,69 @@ function TableHeader({
   const subheadCellClass =
     "flex items-start overflow-hidden bg-muted/50 px-3 pb-3 pt-1";
 
+  const groupTitle =
+    groupBy === "variation" ? "Variations" : "Segment";
+  const nestedTitle =
+    groupBy === "variation" ? "Segment" : "Variations";
+
   return (
     <div
       className="grid items-stretch border-b border-border bg-muted/50"
       style={gridStyle}
     >
       {/* Title row — shared baseline across columns */}
-      <div
-        className={cn(
-          stickyVariationsHeaderClass(edgeShadows.left),
-          "flex min-w-0 items-center justify-between gap-2 px-4 pb-1.5 pt-3"
-        )}
-      >
-        <span className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}>
-          Variations
-        </span>
-        <ReportResultsColumnConfig
-          columns={columns}
-          onColumnsChange={onColumnsChange}
-          rowDensity={rowDensity}
-          onRowDensityChange={onRowDensityChange}
-        />
-      </div>
+      {isGrouped ? (
+        <>
+          <div
+            className={cn(
+              stickyGroupHeaderClass(edgeShadows.left),
+              "flex min-w-0 items-center gap-1.5 px-4 pb-1.5 pt-3"
+            )}
+          >
+            <span className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}>
+              {groupTitle}
+            </span>
+          </div>
+          <div
+            className={cn(
+              stickyNestedHeaderClass(edgeShadows.left),
+              "flex min-w-0 items-center justify-between gap-2 px-4 pb-1.5 pt-3"
+            )}
+          >
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span
+                className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}
+              >
+                {nestedTitle}
+              </span>
+              <FunnelIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+            </span>
+            <ReportResultsColumnConfig
+              columns={columns}
+              onColumnsChange={onColumnsChange}
+              rowDensity={rowDensity}
+              onRowDensityChange={onRowDensityChange}
+            />
+          </div>
+        </>
+      ) : (
+        <div
+          className={cn(
+            stickyVariationsHeaderClass(edgeShadows.left),
+            "flex min-w-0 items-center justify-between gap-2 px-4 pb-1.5 pt-3"
+          )}
+        >
+          <span className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}>
+            Variations
+          </span>
+          <ReportResultsColumnConfig
+            columns={columns}
+            onColumnsChange={onColumnsChange}
+            rowDensity={rowDensity}
+            onRowDensityChange={onRowDensityChange}
+          />
+        </div>
+      )}
       {columns.map((id) => {
         const meta = RESULTS_TABLE_COLUMN_META[id];
         const alignCenter = id === "expected-improvement";
@@ -2367,12 +2452,29 @@ function TableHeader({
       />
 
       {/* Subhead row — shared baseline across columns */}
-      <div
-        className={cn(
-          stickyVariationsHeaderClass(edgeShadows.left),
-          "px-6 pb-3 pt-1"
-        )}
-      />
+      {isGrouped ? (
+        <>
+          <div
+            className={cn(
+              stickyGroupHeaderClass(edgeShadows.left),
+              "px-4 pb-3 pt-1"
+            )}
+          />
+          <div
+            className={cn(
+              stickyNestedHeaderClass(edgeShadows.left),
+              "px-6 pb-3 pt-1"
+            )}
+          />
+        </>
+      ) : (
+        <div
+          className={cn(
+            stickyVariationsHeaderClass(edgeShadows.left),
+            "px-6 pb-3 pt-1"
+          )}
+        />
+      )}
       {columns.map((id) => {
         if (id === "expected-improvement") {
           return (
@@ -2787,6 +2889,7 @@ function DataRow({
   index,
   metricName,
   filters,
+  dataMode,
   columns,
   edgeShadows,
   rowDensity,
@@ -2801,11 +2904,8 @@ function DataRow({
   edgeShadows: StickyEdgeShadows;
   rowDensity: ResultsRowDensity;
 }) {
-  const { statsFor } = useReportData();
-  const { uplift, confidence, conversions, conversionRate, visitors } = statsFor(
-    metricName,
-    index
-  );
+  const { uplift, confidence, conversions, conversionRate, visitors } =
+    metricRowStats(campaign, metricName, variant, index, filters, dataMode);
   const tone = badgeTone(index);
   const isControl = index === 0;
   const gridStyle = buildResultsGrid(columns);
@@ -2906,6 +3006,148 @@ function TotalRow({
   );
 }
 
+function isAllTrafficSegment(name: string) {
+  return /^all (visitors|traffic)$/i.test(name.trim());
+}
+
+function SegmentLabel({
+  name,
+  linked = false,
+}: {
+  name: string;
+  linked?: boolean;
+}) {
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      {!isAllTrafficSegment(name) ? (
+        <Crosshair
+          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+      ) : null}
+      <span
+        className={cn(
+          "min-w-0 truncate text-sm font-medium text-foreground",
+          linked &&
+            "border-b border-dashed border-muted-foreground/70 pb-px"
+        )}
+      >
+        {name}
+      </span>
+    </span>
+  );
+}
+
+function VariationLabelContent({
+  variant,
+  index,
+}: {
+  variant: Variant;
+  index: number;
+}) {
+  return (
+    <>
+      <GraphBadge tone={badgeTone(index)}>{variant.label}</GraphBadge>
+      <span className="min-w-0 truncate text-sm font-medium text-foreground">
+        {variant.name}
+      </span>
+      {index === 0 ? (
+        <span className="shrink-0 rounded-full bg-muted px-2 text-xs font-medium text-foreground">
+          Baseline
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+function GroupedMetricCells({
+  campaign,
+  variant,
+  index,
+  metricName,
+  filters,
+  dataMode,
+  columns,
+  rowDensity,
+}: {
+  campaign: Campaign;
+  variant: Variant;
+  index: number;
+  metricName: string;
+  filters: ReportFilterContext;
+  dataMode: "visitors" | "sessions";
+  columns: ResultsTableColumnId[];
+  rowDensity: ResultsRowDensity;
+}) {
+  const { uplift, confidence, conversions, conversionRate, visitors } =
+    metricRowStats(campaign, metricName, variant, index, filters, dataMode);
+  const rpv = revenuePerVisitor(campaign, metricName, variant, index, filters);
+  const isControl = index === 0;
+  return (
+    <>
+      {columns.map((columnId) => (
+        <ResultsMetricCell
+          key={columnId}
+          columnId={columnId}
+          isControl={isControl}
+          conversions={conversions}
+          visitors={visitors}
+          conversionRate={conversionRate}
+          uplift={uplift}
+          confidence={confidence}
+          revenuePerVisitorValue={rpv}
+          rowDensity={rowDensity}
+        />
+      ))}
+    </>
+  );
+}
+
+function GroupedResultsBlock({
+  groupBy,
+  groupLabel,
+  groupNode,
+  rowCount,
+  columns,
+  edgeShadows,
+  children,
+}: {
+  groupBy: ResultsGroupBy;
+  groupLabel: string;
+  groupNode: ReactNode;
+  rowCount: number;
+  columns: ResultsTableColumnId[];
+  edgeShadows: StickyEdgeShadows;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="grid items-stretch"
+      style={{
+        ...buildResultsGrid(columns, true),
+        gridTemplateRows: `repeat(${rowCount}, auto)`,
+      }}
+    >
+      <div
+        className={cn(
+          stickyGroupCellClass(edgeShadows.left),
+          "flex items-center border-b border-border px-4 py-3"
+        )}
+        style={{ gridRow: `span ${rowCount}` }}
+      >
+        {groupBy === "variation" ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {groupNode}
+          </div>
+        ) : (
+          <SegmentLabel name={groupLabel} />
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function ResultsTable({
   campaign,
   metricName,
@@ -2916,6 +3158,7 @@ function ResultsTable({
   onColumnsChange,
   rowDensity,
   onRowDensityChange,
+  groupBy,
 }: {
   campaign: Campaign;
   metricName: string;
@@ -2926,36 +3169,12 @@ function ResultsTable({
   onColumnsChange: (next: ResultsTableColumnId[]) => void;
   rowDensity: ResultsRowDensity;
   onRowDensityChange: (next: ResultsRowDensity) => void;
+  groupBy: ResultsGroupBy;
 }) {
-  const { statsFor, rows: selectedRows, selectedMetric, totals } =
-    useReportData();
   const variants = campaign.report.variants;
-  const rows =
-    metricName === selectedMetric
-      ? selectedRows.map(({ variant, index, stats }) => ({
-          variant,
-          index,
-          visitors: stats.visitors,
-          conversions: stats.conversions,
-        }))
-      : variants.map((variant, index) => {
-          const stats = statsFor(metricName, index);
-          return {
-            variant,
-            index,
-            visitors: stats.visitors,
-            conversions: stats.conversions,
-          };
-        });
-  const totalConversions =
-    metricName === selectedMetric
-      ? totals.conversions
-      : rows.reduce((sum, r) => sum + r.conversions, 0);
-  const totalVisitors =
-    metricName === selectedMetric
-      ? totals.visitors
-      : rows.reduce((sum, r) => sum + r.visitors, 0);
-  const minWidth = resultsTableMinWidth(columns);
+  const selectedSegments = filters.segments;
+  const isGrouped = selectedSegments.length > 0;
+  const minWidth = resultsTableMinWidth(columns, isGrouped);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [edgeShadows, setEdgeShadows] =
     useState<StickyEdgeShadows>(NO_STICKY_EDGE_SHADOWS);
@@ -2975,7 +3194,33 @@ function ResultsTable({
     const inner = el.firstElementChild;
     if (inner) ro.observe(inner);
     return () => ro.disconnect();
-  }, [syncEdgeShadows, columns, showTotalRow, metricName, campaign.id]);
+  }, [
+    syncEdgeShadows,
+    columns,
+    showTotalRow,
+    metricName,
+    campaign.id,
+    groupBy,
+    selectedSegments.length,
+  ]);
+
+  const variationTotals = (() => {
+    let conversions = 0;
+    let visitors = 0;
+    for (let i = 0; i < variants.length; i++) {
+      const stats = metricRowStats(
+        campaign,
+        metricName,
+        variants[i]!,
+        i,
+        filters,
+        dataMode
+      );
+      conversions += stats.conversions;
+      visitors += stats.visitors;
+    }
+    return { conversions, visitors };
+  })();
 
   return (
     <div
@@ -2990,30 +3235,131 @@ function ResultsTable({
           rowDensity={rowDensity}
           onRowDensityChange={onRowDensityChange}
           edgeShadows={edgeShadows}
+          grouped={isGrouped}
+          groupBy={groupBy}
         />
-        {rows.map((r) => (
-          <DataRow
-            key={`${metricName}-${r.variant.id}`}
-            campaign={campaign}
-            variant={r.variant}
-            index={r.index}
-            metricName={metricName}
-            filters={filters}
-            dataMode={dataMode}
-            columns={columns}
-            edgeShadows={edgeShadows}
-            rowDensity={rowDensity}
-          />
-        ))}
-        {showTotalRow ? (
-          <TotalRow
-            conversions={totalConversions}
-            visitors={totalVisitors}
-            columns={columns}
-            edgeShadows={edgeShadows}
-            rowDensity={rowDensity}
-          />
-        ) : null}
+
+        {!isGrouped ? (
+          <>
+            {variants.map((variant, index) => (
+              <DataRow
+                key={`${metricName}-${variant.id}`}
+                campaign={campaign}
+                variant={variant}
+                index={index}
+                metricName={metricName}
+                filters={filters}
+                dataMode={dataMode}
+                columns={columns}
+                edgeShadows={edgeShadows}
+                rowDensity={rowDensity}
+              />
+            ))}
+            {showTotalRow ? (
+              <TotalRow
+                conversions={variationTotals.conversions}
+                visitors={variationTotals.visitors}
+                columns={columns}
+                edgeShadows={edgeShadows}
+                rowDensity={rowDensity}
+              />
+            ) : null}
+          </>
+        ) : groupBy === "segment" ? (
+          selectedSegments.map((segment) => {
+            const segmentFilters: ReportFilterContext = {
+              ...filters,
+              segments: [segment],
+            };
+            return (
+              <GroupedResultsBlock
+                key={segment}
+                groupBy={groupBy}
+                groupLabel={segment}
+                groupNode={null}
+                rowCount={variants.length}
+                columns={columns}
+                edgeShadows={edgeShadows}
+              >
+                {variants.map((variant, index) => (
+                  <Fragment key={`${segment}-${variant.id}`}>
+                    <div
+                      className={cn(
+                        stickyNestedCellClass(edgeShadows.left),
+                        RESULTS_ROW_H[rowDensity],
+                        "group flex min-w-0 items-center gap-2 border-b border-border pl-4 pr-3"
+                      )}
+                    >
+                      <VariationLabelContent variant={variant} index={index} />
+                    </div>
+                    <GroupedMetricCells
+                      campaign={campaign}
+                      variant={variant}
+                      index={index}
+                      metricName={metricName}
+                      filters={segmentFilters}
+                      dataMode={dataMode}
+                      columns={columns}
+                      rowDensity={rowDensity}
+                    />
+                    <RowActionsCell
+                      edgeShadows={edgeShadows}
+                      rowDensity={rowDensity}
+                    />
+                  </Fragment>
+                ))}
+              </GroupedResultsBlock>
+            );
+          })
+        ) : (
+          variants.map((variant, index) => (
+            <GroupedResultsBlock
+              key={variant.id}
+              groupBy={groupBy}
+              groupLabel={variant.name}
+              groupNode={
+                <VariationLabelContent variant={variant} index={index} />
+              }
+              rowCount={selectedSegments.length}
+              columns={columns}
+              edgeShadows={edgeShadows}
+            >
+              {selectedSegments.map((segment) => {
+                const segmentFilters: ReportFilterContext = {
+                  ...filters,
+                  segments: [segment],
+                };
+                return (
+                  <Fragment key={`${variant.id}-${segment}`}>
+                    <div
+                      className={cn(
+                        stickyNestedCellClass(edgeShadows.left),
+                        RESULTS_ROW_H[rowDensity],
+                        "group flex min-w-0 items-center border-b border-border pl-4 pr-3"
+                      )}
+                    >
+                      <SegmentLabel name={segment} linked />
+                    </div>
+                    <GroupedMetricCells
+                      campaign={campaign}
+                      variant={variant}
+                      index={index}
+                      metricName={metricName}
+                      filters={segmentFilters}
+                      dataMode={dataMode}
+                      columns={columns}
+                      rowDensity={rowDensity}
+                    />
+                    <RowActionsCell
+                      edgeShadows={edgeShadows}
+                      rowDensity={rowDensity}
+                    />
+                  </Fragment>
+                );
+              })}
+            </GroupedResultsBlock>
+          ))
+        )}
       </div>
     </div>
   );
@@ -4584,6 +4930,32 @@ function CompareMetricSelector({
 type CompareMetric = { name: string; isPrimary: boolean };
 type GroupBy = "variation" | "metric";
 
+function ResultsGroupByControl({
+  value,
+  onChange,
+}: {
+  value: ResultsGroupBy;
+  onChange: (next: ResultsGroupBy) => void;
+}) {
+  return (
+    <>
+      <span className="text-sm text-muted-foreground">Group by :</span>
+      <Select
+        value={value}
+        onValueChange={(v) => onChange(v as ResultsGroupBy)}
+      >
+        <SelectTrigger className="h-7 w-[130px] gap-1 rounded-md border-border text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="variation">Variations</SelectItem>
+          <SelectItem value="segment">Segments</SelectItem>
+        </SelectContent>
+      </Select>
+    </>
+  );
+}
+
 const COMPARE_GRID = {
   gridTemplateColumns:
     "minmax(150px,0.8fr) minmax(220px,1.4fr) 110px 110px minmax(180px,1.1fr) minmax(280px,1.5fr)",
@@ -4874,6 +5246,8 @@ export default function ResultsTab({
   );
   const [compareMode, setCompareMode] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("variation");
+  const [resultsGroupBy, setResultsGroupBy] =
+    useState<ResultsGroupBy>("variation");
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [learningsOpen, setLearningsOpen] = useState(false);
   const [metricsNavCollapsed, setMetricsNavCollapsed] =
@@ -4985,7 +5359,17 @@ export default function ResultsTab({
             </>
           ) : (
             <>
-              <ResultsFilterPanel campaignId={campaign.id} />
+              <ResultsFilterPanel
+                campaignId={campaign.id}
+                right={
+                  filters.segments.length > 0 ? (
+                    <ResultsGroupByControl
+                      value={resultsGroupBy}
+                      onChange={setResultsGroupBy}
+                    />
+                  ) : undefined
+                }
+              />
               <MetricHeader
                 campaign={campaign}
                 metric={selectedMetric}
@@ -5023,6 +5407,7 @@ export default function ResultsTab({
                       onColumnsChange={setResultsTableColumns}
                       rowDensity={resultsRowDensity}
                       onRowDensityChange={setResultsRowDensity}
+                      groupBy={resultsGroupBy}
                     />
                   </div>
                 ) : (
@@ -5037,6 +5422,7 @@ export default function ResultsTab({
                       onColumnsChange={setResultsTableColumns}
                       rowDensity={resultsRowDensity}
                       onRowDensityChange={setResultsRowDensity}
+                      groupBy={resultsGroupBy}
                     />
                     <GraphPanel
                       campaign={campaign}
