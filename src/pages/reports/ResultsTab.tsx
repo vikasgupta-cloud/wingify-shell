@@ -565,12 +565,21 @@ function AppliedDimensionsRow({ campaignId }: { campaignId: string }) {
 function ResultsFilterPanel({
   campaignId,
   right,
+  embedded,
 }: {
   campaignId: string;
   right?: ReactNode;
+  /** When true, sits inside the results/table card (no outer border/radius). */
+  embedded?: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-background">
+    <div
+      className={cn(
+        embedded
+          ? "border-b border-border bg-background"
+          : "overflow-hidden rounded-lg border border-border bg-background"
+      )}
+    >
       <div className={filterPanelInsetClass}>
         <FilterBar campaignId={campaignId} right={right} />
       </div>
@@ -591,10 +600,12 @@ function ConclusionBanner({
   variantName: string;
 }) {
   const { kind, title, progress } = conclusion;
+  const shell =
+    "overflow-hidden rounded-lg border border-border bg-background shadow-sm";
 
   if (kind === "progress") {
     return (
-      <div className="border-b border-border bg-muted/30 px-6 py-4">
+      <div className={cn(shell, "px-6 py-4")}>
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <div className="mt-3 grid grid-cols-3 gap-4">
           <div className="min-w-0">
@@ -637,7 +648,7 @@ function ConclusionBanner({
 
   if (kind === "inconclusive") {
     return (
-      <div className="flex items-center gap-3.5 border-b border-border bg-muted/30 px-6 py-4">
+      <div className={cn(shell, "flex items-center gap-3.5 px-6 py-4")}>
         <p className="text-sm font-medium leading-snug text-muted-foreground">
           No clear winner — results are inconclusive across variations
         </p>
@@ -651,7 +662,7 @@ function ConclusionBanner({
       : `${variantName} is better or equivalent to baseline and the best choice as it gives the highest improvement`;
 
   return (
-    <div className="flex items-center gap-3.5 border-b border-report-green-border bg-gradient-to-r from-report-green-badge to-report-green-tint px-6 py-4">
+    <div className={cn(shell, "flex items-center gap-3.5 px-6 py-4")}>
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-report-green-border bg-background shadow-sm">
         <Award className="h-[18px] w-[18px] text-decision-winner-fg" aria-hidden />
       </span>
@@ -4869,12 +4880,12 @@ export default function ResultsTab({
                 onOpenLearnings={() => setLearningsOpen(true)}
                 onViewVitalsDetails={onNavigateToVitals}
               />
-              <ResultsFilterPanel campaignId={campaign.id} />
+              <ConclusionBanner
+                conclusion={conclusion}
+                variantName={best.name}
+              />
               <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
-                <ConclusionBanner
-                  conclusion={conclusion}
-                  variantName={best.name}
-                />
+                <ResultsFilterPanel campaignId={campaign.id} embedded />
                 <div className="bg-background">
                   {isStatisticsPreset ? (
                     <StatisticsPresetEmptyState metricName={selectedMetric} />

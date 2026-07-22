@@ -5,8 +5,9 @@ import {
   useState,
 } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -112,6 +113,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const renameCustomView = useReportViewsStore((s) => s.renameCustomView);
   const deleteCustomView = useReportViewsStore((s) => s.deleteCustomView);
   const reorderCustomViews = useReportViewsStore((s) => s.reorderCustomViews);
+  const saveAsNew = useReportViewsStore((s) => s.saveReportViewAsNew);
   const columnDrafts = useReportViewsStore(
     (s) => s.draftsByCampaign[campaignId]
   );
@@ -120,6 +122,8 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("New view");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(() =>
@@ -131,6 +135,18 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const moreMeasureRef = useRef<HTMLSpanElement>(null);
+  const addMeasureRef = useRef<HTMLSpanElement>(null);
+
+  const openCreateView = () => {
+    const nextIndex = customViews.length + 1;
+    setCreateName(`New view ${nextIndex}`);
+    setCreateOpen(true);
+  };
+
+  const commitCreateView = () => {
+    saveAsNew(campaignId, createName);
+    setCreateOpen(false);
+  };
 
   const openMore = () => {
     if (moreCloseTimer.current) {
@@ -195,9 +211,10 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
     const sync = () => {
       const available = container.clientWidth;
       const moreWidth = moreMeasureRef.current?.offsetWidth ?? 40;
+      const addWidth = addMeasureRef.current?.offsetWidth ?? 28;
       const children = Array.from(measureRow.children) as HTMLElement[];
-      // Last child is the More measure span.
-      const tabEls = children.slice(0, -1);
+      // Last two children are More + Add measure spans.
+      const tabEls = children.slice(0, -2);
       const widths = tabEls.map((el) => el.offsetWidth);
 
       if (widths.length === 0) {
@@ -205,16 +222,21 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
         return;
       }
 
-      const total =
+      const tabsTotal =
         widths.reduce((sum, w) => sum + w, 0) +
         TAB_GAP_PX * Math.max(0, widths.length - 1);
 
-      if (total <= available) {
+      // Always leave room for the + control.
+      if (tabsTotal + TAB_GAP_PX + addWidth <= available) {
         setVisibleCount(widths.length);
         return;
       }
 
-      const budget = Math.max(0, available - moreWidth - TAB_GAP_PX);
+      // Overflowing — also reserve More.
+      const budget = Math.max(
+        0,
+        available - addWidth - TAB_GAP_PX - moreWidth - TAB_GAP_PX
+      );
       let used = 0;
       let count = 0;
       for (let i = 0; i < widths.length; i++) {
@@ -388,6 +410,12 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
             <span ref={moreMeasureRef} className="shrink-0 px-1 pb-2 text-sm">
               More
             </span>
+            <span
+              ref={addMeasureRef}
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center"
+            >
+              <Plus className="h-4 w-4" />
+            </span>
           </div>
 
           <div className="flex min-w-0 items-end gap-5 overflow-visible">
@@ -516,6 +544,15 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                 </PopoverContent>
               </Popover>
             ) : null}
+            <button
+              type="button"
+              onClick={openCreateView}
+              className="mb-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              aria-label="Create new view"
+              title="Create new view"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+            </button>
           </div>
         </div>
         <div className="flex h-9 min-w-[11.5rem] shrink-0 items-center justify-end self-end">
@@ -526,6 +563,48 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
           )}
         </div>
       </div>
+
+      <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl">
+            <Dialog.Title className="text-sm font-medium text-foreground">
+              Create new view
+            </Dialog.Title>
+            <Dialog.Description className="mt-1.5 text-sm text-muted-foreground">
+              Saves your current filters, columns, and layout into a new custom
+              view.
+            </Dialog.Description>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                commitCreateView();
+              }}
+            >
+              <label className="mt-4 block text-xs font-medium text-muted-foreground">
+                View name
+              </label>
+              <input
+                autoFocus
+                value={createName}
+                onFocus={(e) => e.currentTarget.select()}
+                onChange={(e) => setCreateName(e.target.value)}
+                className="mt-1.5 w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+              />
+              <div className="mt-5 flex justify-end gap-2">
+                <Dialog.Close asChild>
+                  <Button type="button" variant="outline" size="sm">
+                    Cancel
+                  </Button>
+                </Dialog.Close>
+                <Button type="submit" size="sm">
+                  Create view
+                </Button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       <AlertDialog.Root
         open={deleteId !== null}

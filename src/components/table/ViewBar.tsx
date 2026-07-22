@@ -111,11 +111,6 @@ export default function ViewBar() {
                 className="flex items-center py-2 pl-3 pr-1 text-sm"
               >
                 All
-                {defaultViewId === BASE_VIEW_ID && (
-                  <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                    Default
-                  </span>
-                )}
                 {dirtyFor(BASE_VIEW_ID) && <DirtyDot />}
               </button>
               <DropdownMenu.Root>
@@ -209,11 +204,6 @@ export default function ViewBar() {
                       className="flex items-center py-2 pl-3 pr-1 text-sm"
                     >
                       {view.name}
-                      {defaultViewId === view.id && (
-                        <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                          Default
-                        </span>
-                      )}
                       {dirtyFor(view.id) && <DirtyDot />}
                     </button>
                   )}
