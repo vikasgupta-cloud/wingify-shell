@@ -1,4 +1,14 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import {
+  Fragment,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+} from "react";
 import {
   Award,
   CalendarClock,
@@ -656,17 +666,20 @@ function ConclusionBanner({
     );
   }
 
-  const copy =
+  const decisionTail =
     kind === "baseline"
-      ? `${variantName} remains better or equivalent and the best choice to keep as baseline`
-      : `${variantName} is better or equivalent to baseline and the best choice as it gives the highest improvement`;
+      ? "remains better or equivalent to every variation — the strongest choice to keep as baseline."
+      : "is better or equivalent to baseline and gives the highest improvement — the strongest choice to roll out.";
 
   return (
-    <div className={cn(shell, "flex items-center gap-3.5 px-6 py-4")}>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-report-green-border bg-background shadow-sm">
-        <Award className="h-[18px] w-[18px] text-decision-winner-fg" aria-hidden />
+    <div className="flex items-center gap-4 overflow-hidden rounded-xl border border-report-green-border bg-gradient-to-r from-report-green-badge/70 via-report-green-tint to-report-green-tint px-6 py-5 shadow-sm">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-report-green-border bg-background shadow-sm">
+        <Award className="h-5 w-5 text-decision-winner-fg" aria-hidden />
       </span>
-      <p className="text-sm font-medium leading-snug text-foreground">{copy}</p>
+      <p className="min-w-0 text-sm leading-relaxed text-foreground/80">
+        <span className="font-semibold text-foreground">{variantName}</span>{" "}
+        {decisionTail}
+      </p>
     </div>
   );
 }
@@ -705,6 +718,51 @@ function LayoutOptionCard({
   title: string;
   linesFirst: boolean;
 }) {
+  const tablePreview = (
+    <div className="grid grid-cols-5 gap-1.5">
+      {Array.from({ length: 10 }).map((_, index) => (
+        <span
+          key={index}
+          className={cn(
+            "h-2 rounded-sm",
+            index % 3 === 0 ? "bg-report-purple-bg" : "bg-muted"
+          )}
+        />
+      ))}
+    </div>
+  );
+
+  const graphPreview = (
+    <div className="rounded-md bg-report-purple-bg/60 px-2 py-2">
+      <svg viewBox="0 0 120 48" className="h-12 w-full">
+        <path
+          d={
+            linesFirst
+              ? "M4 36 L22 26 L38 32 L58 18 L78 22 L102 10"
+              : "M4 30 L22 34 L40 22 L58 26 L78 18 L102 12"
+          }
+          fill="none"
+          stroke="hsl(var(--report-brand))"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d={
+            linesFirst
+              ? "M4 24 L22 34 L40 28 L58 32 L78 24 L102 16"
+              : "M4 36 L22 24 L40 34 L58 20 L78 28 L102 22"
+          }
+          fill="none"
+          stroke="hsl(var(--report-purple-border))"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+
   return (
     <label
       className={cn(
@@ -720,45 +778,17 @@ function LayoutOptionCard({
       </div>
       <div className="rounded-md border border-report-brand/35 bg-background p-2.5">
         <div className="space-y-2">
-          <div className="grid grid-cols-5 gap-1.5">
-            {Array.from({ length: 10 }).map((_, index) => (
-              <span
-                key={index}
-                className={cn(
-                  "h-2 rounded-sm",
-                  index % 3 === 0 ? "bg-report-purple-bg" : "bg-muted"
-                )}
-              />
-            ))}
-          </div>
-          <div className="rounded-md bg-report-purple-bg/60 px-2 py-2">
-            <svg viewBox="0 0 120 48" className="h-12 w-full">
-              <path
-                d={
-                  linesFirst
-                    ? "M4 36 L22 26 L38 32 L58 18 L78 22 L102 10"
-                    : "M4 30 L22 34 L40 22 L58 26 L78 18 L102 12"
-                }
-                fill="none"
-                stroke="hsl(var(--report-brand))"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d={
-                  linesFirst
-                    ? "M4 24 L22 34 L40 28 L58 32 L78 24 L102 16"
-                    : "M4 36 L22 24 L40 34 L58 20 L78 28 L102 22"
-                }
-                fill="none"
-                stroke="hsl(var(--report-purple-border))"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+          {linesFirst ? (
+            <>
+              {graphPreview}
+              {tablePreview}
+            </>
+          ) : (
+            <>
+              {tablePreview}
+              {graphPreview}
+            </>
+          )}
         </div>
       </div>
     </label>
@@ -1176,13 +1206,13 @@ function MetricHeader({
   onViewVitalsDetails: () => void;
 }) {
   const metricTitleClass =
-    "border-b border-dashed border-muted-foreground text-2xl font-semibold leading-tight tracking-tight text-foreground";
+    "border-b border-dashed border-muted-foreground text-lg font-semibold leading-tight tracking-tight text-foreground";
 
   return (
     <div className="flex items-center justify-between gap-6">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2.5">
         <MousePointerClick
-          className="h-6 w-6 shrink-0 text-foreground"
+          className="h-5 w-5 shrink-0 text-foreground"
           aria-hidden
         />
         <div className="flex min-w-0 flex-wrap items-center gap-2.5">
@@ -4148,28 +4178,31 @@ function MetricDefinitionTooltip({
   );
 }
 
-function MetricListItem({
-  icon,
-  label,
-  active,
-  trailing,
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  active?: boolean;
-  trailing?: ReactNode;
-  onClick: () => void;
-}) {
+const MetricListItem = forwardRef<
+  HTMLButtonElement,
+  {
+    icon: ReactNode;
+    label: string;
+    active?: boolean;
+    trailing?: ReactNode;
+    onClick: () => void;
+  } & ButtonHTMLAttributes<HTMLButtonElement>
+>(function MetricListItem(
+  { icon, label, active, trailing, onClick, className, ...props },
+  ref
+) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
       aria-current={active ? "true" : undefined}
       className={cn(
         "flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-foreground transition-colors hover:bg-muted",
-        active && "bg-accent text-accent-foreground"
+        active && "bg-accent text-accent-foreground",
+        className
       )}
+      {...props}
     >
       <span className="shrink-0 text-foreground/70">{icon}</span>
       <span
@@ -4182,7 +4215,7 @@ function MetricListItem({
       ) : null}
     </button>
   );
-}
+});
 
 function MetricGroupLabel({ children }: { children: ReactNode }) {
   return (
@@ -4841,6 +4874,12 @@ export default function ResultsTab({
             }}
           />
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
+          {!compareMode ? (
+            <ConclusionBanner
+              conclusion={conclusion}
+              variantName={best.name}
+            />
+          ) : null}
           <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
             <>
@@ -4871,69 +4910,65 @@ export default function ResultsTab({
               />
             </>
           ) : (
-            <>
-              <MetricHeader
-                campaign={campaign}
-                metric={selectedMetric}
-                isPrimary={selectedMetric === campaign.primaryMetric}
-                onOpenSettings={() => setViewSettingsOpen(true)}
-                onOpenLearnings={() => setLearningsOpen(true)}
-                onViewVitalsDetails={onNavigateToVitals}
-              />
-              <ConclusionBanner
-                conclusion={conclusion}
-                variantName={best.name}
-              />
-              <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
-                <ResultsFilterPanel campaignId={campaign.id} embedded />
-                <div className="bg-background">
-                  {isStatisticsPreset ? (
-                    <StatisticsPresetEmptyState metricName={selectedMetric} />
-                  ) : viewSettings.layout === "graphs-first" ? (
-                    <div className="flex flex-col gap-12">
-                      <GraphPanel
-                        campaign={campaign}
-                        metricName={selectedMetric}
-                        filters={filters}
-                        defaultGraph={viewSettings.defaultGraph}
-                        className="pt-6"
-                      />
-                      <ResultsTable
-                        campaign={campaign}
-                        metricName={selectedMetric}
-                        filters={filters}
-                        dataMode={dataMode}
-                        showTotalRow={viewSettings.showTotalRow}
-                        columns={resultsTableColumns}
-                        onColumnsChange={setResultsTableColumns}
-                        rowDensity={resultsRowDensity}
-                        onRowDensityChange={setResultsRowDensity}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-12">
-                      <ResultsTable
-                        campaign={campaign}
-                        metricName={selectedMetric}
-                        filters={filters}
-                        dataMode={dataMode}
-                        showTotalRow={viewSettings.showTotalRow}
-                        columns={resultsTableColumns}
-                        onColumnsChange={setResultsTableColumns}
-                        rowDensity={resultsRowDensity}
-                        onRowDensityChange={setResultsRowDensity}
-                      />
-                      <GraphPanel
-                        campaign={campaign}
-                        metricName={selectedMetric}
-                        filters={filters}
-                        defaultGraph={viewSettings.defaultGraph}
-                      />
-                    </div>
-                  )}
-                </div>
+            <div className="rounded-lg border border-border bg-background shadow-sm">
+              <div className="border-b border-border px-6 py-4">
+                <MetricHeader
+                  campaign={campaign}
+                  metric={selectedMetric}
+                  isPrimary={selectedMetric === campaign.primaryMetric}
+                  onOpenSettings={() => setViewSettingsOpen(true)}
+                  onOpenLearnings={() => setLearningsOpen(true)}
+                  onViewVitalsDetails={onNavigateToVitals}
+                />
               </div>
-            </>
+              <ResultsFilterPanel campaignId={campaign.id} embedded />
+              <div className="overflow-hidden bg-background">
+                {isStatisticsPreset ? (
+                  <StatisticsPresetEmptyState metricName={selectedMetric} />
+                ) : viewSettings.layout === "graphs-first" ? (
+                  <div className="flex flex-col gap-12">
+                    <GraphPanel
+                      campaign={campaign}
+                      metricName={selectedMetric}
+                      filters={filters}
+                      defaultGraph={viewSettings.defaultGraph}
+                      className="pt-6"
+                    />
+                    <ResultsTable
+                      campaign={campaign}
+                      metricName={selectedMetric}
+                      filters={filters}
+                      dataMode={dataMode}
+                      showTotalRow={viewSettings.showTotalRow}
+                      columns={resultsTableColumns}
+                      onColumnsChange={setResultsTableColumns}
+                      rowDensity={resultsRowDensity}
+                      onRowDensityChange={setResultsRowDensity}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-12">
+                    <ResultsTable
+                      campaign={campaign}
+                      metricName={selectedMetric}
+                      filters={filters}
+                      dataMode={dataMode}
+                      showTotalRow={viewSettings.showTotalRow}
+                      columns={resultsTableColumns}
+                      onColumnsChange={setResultsTableColumns}
+                      rowDensity={resultsRowDensity}
+                      onRowDensityChange={setResultsRowDensity}
+                    />
+                    <GraphPanel
+                      campaign={campaign}
+                      metricName={selectedMetric}
+                      filters={filters}
+                      defaultGraph={viewSettings.defaultGraph}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
