@@ -1,4 +1,11 @@
-export type SegmentAttribute = { id: string; label: string };
+// `description` powers the definition panel in the segment picker; `example` fills
+// the optional "For example" box (dummy copy — no real targeting is evaluated).
+export type SegmentAttribute = {
+  id: string;
+  label: string;
+  description?: string;
+  example?: string;
+};
 export type SegmentCategory = { id: string; label: string; attributes: SegmentAttribute[] };
 
 export const STANDARD_SEGMENTS: SegmentCategory[] = [
@@ -6,52 +13,170 @@ export const STANDARD_SEGMENTS: SegmentCategory[] = [
     id: "traffic",
     label: "Traffic",
     attributes: [
-      { id: "all-traffic", label: "All Traffic" },
-      { id: "direct", label: "Direct" },
-      { id: "referral", label: "Referral" },
-      { id: "social", label: "Social" },
-      { id: "non-paid", label: "Non-paid" },
-      { id: "paid", label: "Paid" },
-      { id: "search", label: "Search" },
-      { id: "email", label: "Email" },
+      {
+        id: "all-traffic",
+        label: "All Traffic",
+        description: "Everyone who visits, with no filtering applied.",
+        example: "Use as the baseline audience for most experiments.",
+      },
+      {
+        id: "direct",
+        label: "Direct",
+        description:
+          "Visitors who arrived by typing your URL or via a bookmark — no referrer.",
+        example: "Someone opening the site from a saved bookmark.",
+      },
+      {
+        id: "referral",
+        label: "Referral",
+        description: "Visitors who came from a link on another website.",
+        example: "A visitor clicking a link from a partner blog.",
+      },
+      {
+        id: "social",
+        label: "Social",
+        description:
+          "Visitors who arrived from a social network such as Facebook, X, or LinkedIn.",
+        example: "A visitor tapping a link in an Instagram bio.",
+      },
+      {
+        id: "non-paid",
+        label: "Non-paid",
+        description:
+          "Visitors from unpaid sources such as organic search and direct traffic.",
+        example: "A visitor from an organic Google result.",
+      },
+      {
+        id: "paid",
+        label: "Paid",
+        description: "Visitors from paid campaigns like Google Ads or paid social.",
+        example: "A visitor from a Google Ads click.",
+      },
+      {
+        id: "search",
+        label: "Search",
+        description: "Visitors who arrived from a search engine results page.",
+        example: "A visitor searching your brand name on Bing.",
+      },
+      {
+        id: "email",
+        label: "Email",
+        description: "Visitors who clicked through from an email campaign.",
+        example: "A visitor opening a link in your newsletter.",
+      },
     ],
   },
   {
     id: "device",
     label: "Device",
     attributes: [
-      { id: "desktop", label: "Desktop" },
-      { id: "mobile", label: "Mobile" },
-      { id: "tablet", label: "Tablet" },
+      {
+        id: "desktop",
+        label: "Desktop",
+        description: "Visitors browsing on a desktop or laptop computer.",
+        example: "A visitor on a 15-inch laptop.",
+      },
+      {
+        id: "mobile",
+        label: "Mobile",
+        description: "Visitors browsing on a mobile phone.",
+        example: "A visitor on an iPhone or Android phone.",
+      },
+      {
+        id: "tablet",
+        label: "Tablet",
+        description: "Visitors browsing on a tablet device.",
+        example: "A visitor on an iPad.",
+      },
     ],
   },
   {
     id: "visitor",
     label: "Visitor",
     attributes: [
-      { id: "new", label: "New visitors" },
-      { id: "returning", label: "Returning visitors" },
-      { id: "logged-in", label: "Logged in" },
-      { id: "logged-out", label: "Logged out" },
+      {
+        id: "new",
+        label: "New visitors",
+        description: "People visiting your site for the first time.",
+        example: "A first-time shopper with no prior cookie.",
+      },
+      {
+        id: "returning",
+        label: "Returning visitors",
+        description: "People who have visited your site before.",
+        example: "A shopper coming back a second time.",
+      },
+      {
+        id: "logged-in",
+        label: "Logged in",
+        description: "Visitors authenticated into an account.",
+        example: "A signed-in member browsing their dashboard.",
+      },
+      {
+        id: "logged-out",
+        label: "Logged out",
+        description: "Visitors who are not signed in.",
+        example: "An anonymous visitor with no active session.",
+      },
     ],
   },
   {
     id: "os",
     label: "Operating System",
     attributes: [
-      { id: "windows", label: "Windows" },
-      { id: "macos", label: "Mac OS" },
-      { id: "linux", label: "Linux" },
-      { id: "ios", label: "iOS" },
-      { id: "android", label: "Android" },
+      {
+        id: "windows",
+        label: "Windows",
+        description: "Visitors on the Windows operating system.",
+        example: "A visitor on Windows 11.",
+      },
+      {
+        id: "macos",
+        label: "Mac OS",
+        description: "Visitors on macOS.",
+        example: "A visitor on a MacBook running macOS.",
+      },
+      {
+        id: "linux",
+        label: "Linux",
+        description: "Visitors on a Linux distribution.",
+        example: "A visitor on Ubuntu.",
+      },
+      {
+        id: "ios",
+        label: "iOS",
+        description: "Visitors on Apple iOS (iPhone or iPad).",
+        example: "A visitor on an iPhone running iOS.",
+      },
+      {
+        id: "android",
+        label: "Android",
+        description: "Visitors on the Android operating system.",
+        example: "A visitor on a Samsung Galaxy phone.",
+      },
     ],
   },
 ];
 
 export const MY_SEGMENTS: SegmentAttribute[] = [
-  { id: "india-users", label: "India Users" },
-  { id: "mumbai-windows-phone", label: "Mumbai Windows Phone" },
-  { id: "email-subscribers", label: "Email" },
+  {
+    id: "india-users",
+    label: "India Users",
+    description: "Visitors located in India.",
+    example: "A visitor browsing from Bengaluru.",
+  },
+  {
+    id: "mumbai-windows-phone",
+    label: "Mumbai Windows Phone",
+    description: "Visitors in Mumbai using a Windows Phone device.",
+    example: "A visitor in Mumbai on a Windows Phone.",
+  },
+  {
+    id: "email-subscribers",
+    label: "Email",
+    description: "Visitors who arrived from one of your email campaigns.",
+    example: "A subscriber clicking a promo email link.",
+  },
 ];
 
 export const STANDARD_COUNT = STANDARD_SEGMENTS.reduce(
