@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode } from "react";
 import { Eye, Shield, Star, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +14,6 @@ import AskWandzButton from "./AskWandzButton";
 import MetricCard from "./MetricCard";
 import MetricPicker from "./MetricPicker";
 
-type Mode = "success" | "observation" | "protection";
-
 // The header row shared by each metric block.
 function BlockHeader({
   icon: Icon,
@@ -28,7 +26,7 @@ function BlockHeader({
   title: string;
   suffix?: string;
   description: string;
-  action: React.ReactNode;
+  action?: ReactNode;
 }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-4">
@@ -46,26 +44,17 @@ function BlockHeader({
           <TooltipContent side="right">{description}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <div className="shrink-0">{action}</div>
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
 
-function EmptyState({
-  message,
-  onChoose,
-}: {
-  message: string;
-  onChoose?: () => void;
-}) {
+// The dashed empty-state box; its CTA (the metric picker trigger) lives inside.
+function EmptyState({ message, cta }: { message: string; cta?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input bg-background p-8">
       <p className="text-sm text-muted-foreground">{message}</p>
-      {onChoose && (
-        <Button type="button" variant="outline" size="sm" onClick={onChoose}>
-          Choose a metric
-        </Button>
-      )}
+      {cta}
     </div>
   );
 }
@@ -73,11 +62,11 @@ function EmptyState({
 export default function MetricsSection({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
   const openWandz = useWandzStore((s) => s.openWandz);
-  const [picker, setPicker] = useState<Mode | null>(null);
 
   if (!config) return null;
 
   const { successMetric, observationMetrics, protectionMetrics } = config;
+  const hasObservation = observationMetrics.length > 0;
 
   return (
     <section>
@@ -92,7 +81,8 @@ export default function MetricsSection({ id }: { id: string }) {
       </div>
 
       <div className="flex flex-col gap-8">
-        {/* A — Success Metric. */}
+        {/* A — Success Metric. The header CTA appears only once a metric is
+            chosen; while empty, the CTA lives inside the box. */}
         <div>
           <BlockHeader
             icon={Star}
@@ -100,14 +90,18 @@ export default function MetricsSection({ id }: { id: string }) {
             suffix="(Mandatory)"
             description="Decisions will be based on this metric."
             action={
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPicker("success")}
-              >
-                {successMetric ? "Choose another metric" : "Choose a metric"}
-              </Button>
+              successMetric ? (
+                <MetricPicker
+                  mode="success"
+                  campaignId={id}
+                  align="end"
+                  trigger={
+                    <Button type="button" variant="outline" size="sm">
+                      Choose another metric
+                    </Button>
+                  }
+                />
+              ) : undefined
             }
           />
           {successMetric ? (
@@ -115,41 +109,69 @@ export default function MetricsSection({ id }: { id: string }) {
           ) : (
             <EmptyState
               message="No success metric selected."
-              onChoose={() => setPicker("success")}
+              cta={
+                <MetricPicker
+                  mode="success"
+                  campaignId={id}
+                  trigger={
+                    <Button type="button" variant="outline" size="sm">
+                      Choose a metric
+                    </Button>
+                  }
+                />
+              }
             />
           )}
         </div>
 
-        {/* B — Observation Metric. */}
+        {/* B — Observation Metric. Same pattern: header CTA only once metrics
+            are selected; otherwise the CTA is inside the empty box. */}
         <div>
           <BlockHeader
             icon={Eye}
             title={
-              observationMetrics.length > 0
+              hasObservation
                 ? `Observation Metric (${observationMetrics.length})`
                 : "Observation Metric"
             }
             suffix="(Optional)"
             description="Track additional metrics for deeper campaign insights."
             action={
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPicker("observation")}
-              >
-                Select Metrics
-              </Button>
+              hasObservation ? (
+                <MetricPicker
+                  mode="observation"
+                  campaignId={id}
+                  align="end"
+                  trigger={
+                    <Button type="button" variant="outline" size="sm">
+                      Select Metrics
+                    </Button>
+                  }
+                />
+              ) : undefined
             }
           />
-          {observationMetrics.length > 0 ? (
+          {hasObservation ? (
             <div className="flex flex-col gap-3">
               {observationMetrics.map((mid) => (
                 <MetricCard key={mid} metricId={mid} campaignId={id} />
               ))}
             </div>
           ) : (
-            <EmptyState message="No observation metrics." />
+            <EmptyState
+              message="No observation metrics."
+              cta={
+                <MetricPicker
+                  mode="observation"
+                  campaignId={id}
+                  trigger={
+                    <Button type="button" variant="outline" size="sm">
+                      Select Metrics
+                    </Button>
+                  }
+                />
+              }
+            />
           )}
         </div>
 
@@ -167,14 +189,16 @@ export default function MetricsSection({ id }: { id: string }) {
             title={`Protection Metric (${protectionMetrics.length})`}
             description="These metrics help identify and mitigate risk. Protection metrics are also tracked as observational metrics."
             action={
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPicker("protection")}
-              >
-                Select Metrics
-              </Button>
+              <MetricPicker
+                mode="protection"
+                campaignId={id}
+                align="end"
+                trigger={
+                  <Button type="button" variant="outline" size="sm">
+                    Select Metrics
+                  </Button>
+                }
+              />
             }
           />
           <div className="flex flex-col gap-3">
@@ -184,15 +208,6 @@ export default function MetricsSection({ id }: { id: string }) {
           </div>
         </div>
       </div>
-
-      {picker && (
-        <MetricPicker
-          open={picker !== null}
-          onOpenChange={(o) => !o && setPicker(null)}
-          mode={picker}
-          campaignId={id}
-        />
-      )}
     </section>
   );
 }
