@@ -1661,7 +1661,15 @@ function ExperimentVitalsPopover({
   onViewDetails: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearOpenTimer = () => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+  };
 
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
@@ -1670,20 +1678,35 @@ function ExperimentVitalsPopover({
     }
   };
 
-  const openPanel = () => {
+  const clearTimers = () => {
+    clearOpenTimer();
     clearCloseTimer();
+  };
+
+  const scheduleOpen = () => {
+    clearCloseTimer();
+    if (open || openTimerRef.current) return;
+    openTimerRef.current = setTimeout(() => {
+      openTimerRef.current = null;
+      setOpen(true);
+    }, 300);
+  };
+
+  const openPanel = () => {
+    clearTimers();
     setOpen(true);
   };
 
   const scheduleClose = () => {
+    clearOpenTimer();
     clearCloseTimer();
     closeTimerRef.current = setTimeout(() => setOpen(false), 150);
   };
 
-  useEffect(() => () => clearCloseTimer(), []);
+  useEffect(() => () => clearTimers(), []);
 
   const goToVitals = () => {
-    clearCloseTimer();
+    clearTimers();
     setOpen(false);
     onViewDetails();
   };
@@ -1695,7 +1718,7 @@ function ExperimentVitalsPopover({
           type="button"
           className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
           aria-label="Experiment vitals"
-          onMouseEnter={openPanel}
+          onMouseEnter={scheduleOpen}
           onMouseLeave={scheduleClose}
           onFocus={openPanel}
           onBlur={scheduleClose}
