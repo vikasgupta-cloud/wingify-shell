@@ -4,7 +4,6 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import {
   Archive,
-  BarChart3,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -30,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { hasReport, type Campaign, type CampaignType } from "../../data/campaigns";
+import { campaignLandingPath, type Campaign, type CampaignType } from "../../data/campaigns";
 import { COLUMNS, type ColumnDef, type ColumnId } from "../../config/columns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
@@ -122,14 +121,16 @@ const STICKY_NAME_BODY =
   "sticky left-[44px] z-10 bg-background group-hover:bg-muted";
 const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-muted";
 const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-muted";
-// The pinned name column's right edge. Drawn as a box-shadow — NOT a cell border —
-// so it travels with the sticky cell; a collapsed-table border belongs to the grid
-// and would scroll away. A soft drop shadow fades in once scrolled, matching Gantt.
+// The pinned name column's right edge. It CANNOT be a box-shadow on the <td>/<th>:
+// the table is `border-collapse`, which suppresses cell box-shadows entirely (no
+// z-index rescues them). Instead we overlay a 1px-wide absolutely-positioned element
+// pinned to the cell's right edge and hang the shadow off THAT — a normal block paints
+// its shadow fine, and living inside the z-10 sticky cell it draws over the scrolling
+// columns. A 1px line plus a soft always-on drop shadow, matching Gantt's fixed column.
 // Arbitrary *property* (not shadow-[…]) so Tailwind's ring-color processing doesn't
 // mangle the multi-shadow value.
-const NAME_EDGE = "[box-shadow:1px_0_0_0_hsl(var(--border))]";
-const NAME_EDGE_SCROLLED =
-  "[box-shadow:1px_0_0_0_hsl(var(--border)),4px_0_8px_-4px_rgba(0,0,0,0.12)]";
+const NAME_EDGE_OVERLAY =
+  "pointer-events-none absolute inset-y-0 right-0 w-px [box-shadow:1px_0_0_0_hsl(var(--border)),6px_0_10px_-2px_rgba(0,0,0,0.18)]";
 
 // Vertical padding for body cells by the global row-density preference.
 const DENSITY_PAD: Record<RowDensity, string> = {
@@ -143,14 +144,14 @@ const CHECKBOX_COL_WIDTH = 44;
 
 function NameCell({ campaign }: { campaign: Campaign }) {
   const TypeIcon = TYPE_ICONS[campaign.type];
-  const openQuickView = useQuickViewStore((s) => s.open);
-  const openWandz = useWandzStore((s) => s.openWandz);
+  const openQuickView = useQuickViewStore((s) => s.toggle);
+  const openWandz = useWandzStore((s) => s.toggleWandz);
   return (
     <div className="flex items-center gap-2.5">
       <TypeIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={campaign.type} />
       <div className="min-w-0 flex-1">
         <Link
-          to={`/web-experiment/c/${campaign.id}`}
+          to={campaignLandingPath(campaign)}
           className="block truncate text-sm font-medium text-foreground hover:underline"
         >
           {campaign.name}
@@ -158,7 +159,7 @@ function NameCell({ campaign }: { campaign: Campaign }) {
         <div className="truncate text-xs text-muted-foreground">{campaign.url}</div>
       </div>
       {/* Hover-revealed row actions */}
-      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
+      <div className="hidden shrink-0 items-center gap-0.5 group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex">
         <Button
           type="button"
           variant="ghost"
@@ -184,17 +185,6 @@ function NameCell({ campaign }: { campaign: Campaign }) {
         >
           <PanelRight className="h-4 w-4" />
         </Button>
-        {hasReport(campaign.status) && (
-          <Button asChild variant="ghost" size="icon" className={ROW_ICON_BUTTON}>
-            <Link
-              to={`/web-experiment/c/${campaign.id}/reports`}
-              title="Reports"
-              aria-label="Reports"
-            >
-              <BarChart3 className="h-4 w-4" />
-            </Link>
-          </Button>
-        )}
         <DropdownMenu.Root modal={false}>
           <DropdownMenu.Trigger asChild>
             <Button
@@ -383,15 +373,6 @@ export default function CampaignTable() {
   // Track horizontal scroll so the pinned name column can cast a shadow over the
   // scrolling content once scrollLeft > 0.
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const onScroll = () => setIsScrolled(el.scrollLeft > 0);
-    onScroll();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
 
   const setSort = (id: ColumnId) => {
     if (sort?.column !== id) {
@@ -524,15 +505,17 @@ export default function CampaignTable() {
         <td
           key={col.id}
           className={cn(
-            "overflow-hidden px-3 align-middle",
+            "px-3 align-middle",
+            // Name cell hosts the edge overlay, so it must NOT clip overflow;
+            // its content truncates via inner `truncate` classes instead.
+            col.id === "name" ? "relative" : "overflow-hidden",
             DENSITY_PAD[rowDensity],
             col.id === "name" && STICKY_NAME_BODY,
-            col.id === "name" && "transition-shadow duration-150",
-            col.id === "name" && (isScrolled ? NAME_EDGE_SCROLLED : NAME_EDGE),
             col.align === "right" && "text-right tabular-nums"
           )}
         >
           {renderCell(c, col)}
+          {col.id === "name" && <span aria-hidden className={NAME_EDGE_OVERLAY} />}
         </td>
       ))}
       {/* Filler cell so the row spans the full card width when columns are narrow. */}
@@ -617,11 +600,12 @@ export default function CampaignTable() {
                     className={cn(
                       "relative whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
                       col.id === "name" && STICKY_NAME_HEAD,
-                      col.id === "name" && "transition-shadow duration-150",
-                      col.id === "name" && (isScrolled ? NAME_EDGE_SCROLLED : NAME_EDGE),
                       col.align === "right" && "text-right"
                     )}
                   >
+                    {col.id === "name" && (
+                      <span aria-hidden className={NAME_EDGE_OVERLAY} />
+                    )}
                     {col.sortable ? (
                       <button
                         type="button"

@@ -1,7 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  BarChart3,
   Columns2,
   Files,
   GitBranch,
@@ -12,7 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
-  hasReport,
+  campaignLandingPath,
   phasesFor,
   type Campaign,
   type CampaignStatus,
@@ -150,8 +149,8 @@ export default function KanbanCard({
   showStatus: boolean;
 }) {
   const navigate = useNavigate();
-  const openQuickView = useQuickViewStore((s) => s.open);
-  const openWandz = useWandzStore((s) => s.openWandz);
+  const openQuickView = useQuickViewStore((s) => s.toggle);
+  const openWandz = useWandzStore((s) => s.toggleWandz);
   const TypeIcon = TYPE_ICONS[campaign.type];
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -162,11 +161,11 @@ export default function KanbanCard({
     <div
       role="button"
       tabIndex={0}
-      onClick={() => navigate(`/web-experiment/c/${campaign.id}`)}
+      onClick={() => navigate(campaignLandingPath(campaign))}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          navigate(`/web-experiment/c/${campaign.id}`);
+          navigate(campaignLandingPath(campaign));
         }
       }}
       className="group relative cursor-pointer rounded-lg border border-border bg-background p-3 transition-shadow duration-150 hover:shadow-sm"
@@ -189,7 +188,7 @@ export default function KanbanCard({
           </span>
         )}
         {/* Hover/focus-revealed actions, right-aligned */}
-        <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
+        <div className="ml-auto hidden shrink-0 items-center gap-0.5 group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex">
           <Button
             type="button"
             variant="ghost"
@@ -218,18 +217,6 @@ export default function KanbanCard({
           >
             <PanelRight className="h-4 w-4" />
           </Button>
-          {hasReport(campaign.status) && (
-            <Button asChild variant="ghost" size="icon" className={CARD_ICON_BUTTON}>
-              <Link
-                to={`/web-experiment/c/${campaign.id}/reports`}
-                title="Reports"
-                aria-label="Reports"
-                onClick={stop}
-              >
-                <BarChart3 className="h-4 w-4" />
-              </Link>
-            </Button>
-          )}
           <DropdownMenu.Root modal={false}>
             <DropdownMenu.Trigger asChild>
               <Button

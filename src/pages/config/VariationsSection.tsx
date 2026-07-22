@@ -128,12 +128,28 @@ const VIEWS: { id: "desktop" | "mobile" | "tablet"; icon: typeof Monitor }[] = [
   { id: "mobile", icon: Smartphone },
 ];
 
-// Shared grid used by the table header and every variation row. Fixed layout:
-// the four content columns share the available width via fr tracks (Edit-with
-// gets the most, for the redirect editor), the actions column sizes to content,
-// and every cell truncates rather than forcing horizontal scroll. No resizing.
-const GRID =
-  "grid grid-cols-[0.9fr_1.8fr_1.1fr_1.8fr_84px] items-center gap-4";
+// Shared grid used by the table header and every variation row. Columns are FIXED
+// widths so nothing gets congested — the redirect editor (URL match + URL + cancel +
+// confirm) always has room. When the sum exceeds the panel, the wrapper scrolls
+// horizontally (see the overflow-x-auto container) rather than squashing cells. The
+// Variations (first) and actions (last) columns are pinned via STICKY_* below.
+// items-stretch so each cell fills the row height and the pinned cells' opaque
+// background fully masks the cells scrolling underneath them.
+const GRID_BASE = "grid items-stretch gap-4";
+// Default: flexible columns that fill the panel — no horizontal scroll.
+const GRID_FIT =
+  "grid-cols-[minmax(160px,1.5fr)_minmax(110px,0.8fr)_minmax(110px,0.8fr)_minmax(160px,1.3fr)_96px]";
+// Once a redirect variation exists the Edit-with column needs the redirect editor
+// (match + URL + cancel + confirm), so we switch to fixed widths + a min-width that
+// triggers horizontal scroll rather than squashing the cells.
+const GRID_SCROLL =
+  "grid-cols-[220px_160px_140px_minmax(340px,1fr)_96px] min-w-[1020px]";
+// Pinned first column (variation name) — sticks to the left edge while scrolling.
+const STICKY_NAME =
+  "sticky left-0 z-10 flex min-w-0 items-center overflow-hidden pl-6";
+// Pinned last column (row actions) — sticks to the right edge while scrolling.
+const STICKY_ACTIONS =
+  "sticky right-0 z-10 flex items-center justify-end pr-4";
 
 type RowHeight = "sm" | "md" | "lg";
 // Body-row vertical padding per density. Header band is unaffected.
@@ -399,7 +415,7 @@ function RedirectEditor({
       // Single row: the match-type Select conveys "Redirect to …" (no separate
       // label needed), and the URL input flexes to fill the cell (min-w-0 lets
       // it shrink rather than wrap or force horizontal scroll).
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2">
         <Select
           value={draftMatch}
           onValueChange={(v) => setDraftMatch(v as RedirectMatchType)}
@@ -448,7 +464,7 @@ function RedirectEditor({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full items-center gap-2">
       <div className="min-w-0 flex-1">
         <div className="text-xs text-muted-foreground">
           Redirect to {REDIRECT_MATCH_LABELS[matchType]}
@@ -658,6 +674,11 @@ function VariationsTable({ campaignId }: { campaignId: string }) {
 
   if (!config) return null;
 
+  // Only redirect variations need the wide Edit-with editor; without them the table
+  // fits and must not scroll horizontally.
+  const hasRedirect = config.variations.some((v) => v.type === "redirect");
+  const gridClass = cn(GRID_BASE, hasRedirect ? GRID_SCROLL : GRID_FIT);
+
   const addEditor = () => {
     const id = addTypedVariation(campaignId, "editor");
     if (id) setNameEditingId(id);
@@ -671,137 +692,137 @@ function VariationsTable({ campaignId }: { campaignId: string }) {
     <div>
       <EditorUrlRow campaignId={campaignId} />
 
-      {/* Fixed-layout table: the four content columns share the available width
-          (fr tracks) so it fits in one view with no horizontal scroll; the
-          actions column sizes to content. */}
-      {/* Table header band. */}
-      <div className={cn(GRID, "border-y border-border bg-muted px-6 py-3")}>
-        <div className="flex min-w-0 items-center pr-2">
-          <span className="truncate text-sm font-medium text-foreground">Variations</span>
-        </div>
-        <div className="flex min-w-0 items-center gap-2 pr-2">
-          <span className="truncate text-sm font-medium text-foreground">
-            Traffic Split :
-          </span>
-          <Select
-            value={config.splitMode}
-            onValueChange={(v) => setSplitMode(campaignId, v as typeof config.splitMode)}
-          >
-            <SelectTrigger className="h-7 w-[84px] border-0 px-2 shadow-none">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SPLIT_MODES.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m === "Auto" ? "Auto (multi-armed bandit)" : m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex min-w-0 items-center gap-1 pr-2">
-          <span className="truncate text-sm font-medium text-foreground">Modifications</span>
-          <TooltipProvider delayDuration={150}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                Number of design changes made to this variation.
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <div className="flex min-w-0 items-center gap-2 pr-2">
-          <span className="shrink-0 text-sm font-medium text-foreground">Edit with:</span>
-          <Select
-            value={config.editWith}
-            onValueChange={(v) => patch(campaignId, { editWith: v as "visual" | "code" })}
-          >
-            <SelectTrigger className="h-7 w-[120px] border-0 px-2 shadow-none">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="visual">Visual Editor</SelectItem>
-              <SelectItem value="code">Code Editor</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center justify-end pl-2">
-          <TooltipProvider delayDuration={150}>
-            <DropdownMenu>
+      {/* Horizontally scrollable table. Columns keep generous fixed widths; when the
+          redirect editor pushes the total past the panel, this scrolls instead of
+          squeezing. The Variations and actions columns are pinned (STICKY_*). */}
+      <div className="overflow-x-auto">
+        {/* Header band — each column's label, with the split-mode and editor selects
+            docked directly beneath their own column labels. */}
+        <div className={cn(gridClass, "border-y border-border bg-muted")}>
+          <div className="sticky left-0 z-10 flex min-w-0 items-start overflow-hidden bg-muted pl-6 py-3">
+            <span className="truncate text-sm font-medium text-foreground">Variations</span>
+          </div>
+          <div className="flex min-w-0 flex-col gap-1.5 py-3">
+            <span className="truncate text-sm font-medium text-foreground">Traffic Split</span>
+            <Select
+              value={config.splitMode}
+              onValueChange={(v) => setSplitMode(campaignId, v as typeof config.splitMode)}
+            >
+              <SelectTrigger className="h-7 w-fit gap-1 border-0 bg-transparent px-0 text-sm text-foreground shadow-none focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SPLIT_MODES.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m === "Auto" ? "Auto (multi-armed bandit)" : m}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex min-w-0 items-start gap-1 py-3">
+            <span className="truncate text-sm font-medium text-foreground">Modifications</span>
+            <TooltipProvider delayDuration={150}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Row height"
-                      className="h-8 w-8 text-muted-foreground"
-                    >
-                      <Rows3 />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <HelpCircle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </TooltipTrigger>
-                <TooltipContent>Row height</TooltipContent>
+                <TooltipContent>
+                  Number of design changes made to this variation.
+                </TooltipContent>
               </Tooltip>
-              <DropdownMenuContent align="end">
-                {ROW_HEIGHT_OPTIONS.map((o) => (
-                  <DropdownMenuCheckboxItem
-                    key={o.id}
-                    checked={rowHeight === o.id}
-                    onCheckedChange={() => setRowHeight(o.id)}
-                  >
-                    {o.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TooltipProvider>
-        </div>
-      </div>
-
-      {/* Rows. */}
-      <div className="divide-y divide-border">
-        {config.variations.map((v) => {
-          const isControl = v.id === "control";
-          const mods = isControl || v.type === "redirect" ? "—" : "0";
-          return (
-            <div
-              key={v.id}
-              className={cn(GRID, "bg-background px-6", ROW_PADDING[rowHeight])}
+            </TooltipProvider>
+          </div>
+          <div className="flex min-w-0 flex-col gap-1.5 py-3">
+            <span className="truncate text-sm font-medium text-foreground">Edit with</span>
+            <Select
+              value={config.editWith}
+              onValueChange={(v) => patch(campaignId, { editWith: v as "visual" | "code" })}
             >
-              <div className="min-w-0 overflow-hidden">
-                <NameCell
-                  campaignId={campaignId}
-                  variation={v}
-                  editing={nameEditingId === v.id}
-                  onStart={() => setNameEditingId(v.id)}
-                  onDone={() => setNameEditingId((c) => (c === v.id ? null : c))}
-                />
+              <SelectTrigger className="h-7 w-fit gap-1 border-0 bg-transparent px-0 text-sm text-foreground shadow-none focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="visual">Visual Editor</SelectItem>
+                <SelectItem value="code">Code Editor</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="sticky right-0 z-10 flex items-start justify-end bg-muted pr-4 py-3">
+            <TooltipProvider delayDuration={150}>
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Row height"
+                        className="h-8 w-8 text-muted-foreground"
+                      >
+                        <Rows3 />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Row height</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  {ROW_HEIGHT_OPTIONS.map((o) => (
+                    <DropdownMenuCheckboxItem
+                      key={o.id}
+                      checked={rowHeight === o.id}
+                      onCheckedChange={() => setRowHeight(o.id)}
+                    >
+                      {o.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TooltipProvider>
+          </div>
+        </div>
+
+        {/* Rows. */}
+        <div className="divide-y divide-border">
+          {config.variations.map((v) => {
+            const isControl = v.id === "control";
+            const mods = isControl || v.type === "redirect" ? "—" : "0";
+            return (
+              <div key={v.id} className={cn(gridClass, "bg-background")}>
+                <div className={cn(STICKY_NAME, "bg-background", ROW_PADDING[rowHeight])}>
+                  <NameCell
+                    campaignId={campaignId}
+                    variation={v}
+                    editing={nameEditingId === v.id}
+                    onStart={() => setNameEditingId(v.id)}
+                    onDone={() => setNameEditingId((c) => (c === v.id ? null : c))}
+                  />
+                </div>
+                <div className={cn("flex min-w-0 items-center overflow-hidden", ROW_PADDING[rowHeight])}>
+                  <SplitCell campaignId={campaignId} variation={v} mode={config.splitMode} />
+                </div>
+                <span className={cn("flex min-w-0 items-center truncate text-sm tabular-nums text-muted-foreground", ROW_PADDING[rowHeight])}>
+                  {mods}
+                </span>
+                <div className={cn("flex min-w-0 items-center overflow-hidden", ROW_PADDING[rowHeight])}>
+                  <EditWithCell
+                    campaignId={campaignId}
+                    variation={v}
+                    redirectEditing={redirectEditingId === v.id}
+                    onRedirectEdit={() => setRedirectEditingId(v.id)}
+                    onRedirectDone={() =>
+                      setRedirectEditingId((c) => (c === v.id ? null : c))
+                    }
+                  />
+                </div>
+                <div className={cn(STICKY_ACTIONS, "bg-background", ROW_PADDING[rowHeight])}>
+                  <ActionsCell campaignId={campaignId} variation={v} />
+                </div>
               </div>
-              <div className="min-w-0 overflow-hidden">
-                <SplitCell campaignId={campaignId} variation={v} mode={config.splitMode} />
-              </div>
-              <span className="min-w-0 truncate text-sm tabular-nums text-muted-foreground">
-                {mods}
-              </span>
-              <div className="min-w-0 overflow-hidden">
-                <EditWithCell
-                  campaignId={campaignId}
-                  variation={v}
-                  redirectEditing={redirectEditingId === v.id}
-                  onRedirectEdit={() => setRedirectEditingId(v.id)}
-                  onRedirectDone={() =>
-                    setRedirectEditingId((c) => (c === v.id ? null : c))
-                  }
-                />
-              </div>
-              <ActionsCell campaignId={campaignId} variation={v} />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Footer: add-variation split button. */}

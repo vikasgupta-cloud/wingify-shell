@@ -39,6 +39,7 @@ type WandzState = {
   threads: Record<string /* contextKey */, ChatMessage[]>;
   pending: boolean;
   openWandz: (context: WandzContext) => void;
+  toggleWandz: (context: WandzContext) => void;
   closeWandz: () => void;
   send: (body: string) => void;
   clearThread: (key: string) => void;
@@ -65,6 +66,16 @@ export const useWandzStore = create<WandzState>((set, get) => ({
         ? s.threads
         : { ...s.threads, [key]: [assistantMsg(greetingFor(context))] },
     }));
+  },
+
+  // Clicking the same context's Wandz icon again closes the panel.
+  toggleWandz: (context) => {
+    const s = get();
+    if (s.open && s.context && contextKey(s.context) === contextKey(context)) {
+      set({ open: false });
+    } else {
+      get().openWandz(context);
+    }
   },
 
   closeWandz: () => set({ open: false }),

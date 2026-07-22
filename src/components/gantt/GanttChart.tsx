@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  BarChart3,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -10,6 +10,7 @@ import {
   ChevronsUpDown,
   ChevronUp,
   Columns2,
+  EllipsisVertical,
   Files,
   GitBranch,
   Grid2x2,
@@ -18,7 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
-  hasReport,
+  campaignLandingPath,
   phasesFor,
   type Campaign,
   type CampaignStatus,
@@ -91,6 +92,8 @@ const SCROLL_SHADOW = "shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]";
 // Hover-revealed row action icons — ghost icon Button sized to the original 28px hit area.
 const ROW_ICON_BUTTON =
   "h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground";
+// Mirrors the Table / Kanban kebab menu. TODO: wire up (Clone / Timeline / Archive / Delete).
+const ROW_ACTIONS = ["Clone", "Timeline", "Archive", "Delete"];
 const PAGER_BUTTON =
   "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40";
 
@@ -136,8 +139,8 @@ function GanttRow({
   gridInterval: number;
 }) {
   const TypeIcon = TYPE_ICONS[c.type];
-  const openQuickView = useQuickViewStore((s) => s.open);
-  const openWandz = useWandzStore((s) => s.openWandz);
+  const openQuickView = useQuickViewStore((s) => s.toggle);
+  const openWandz = useWandzStore((s) => s.toggleWandz);
   const phases = phasesFor(c);
 
   const segs = phases.map((ph, idx) => {
@@ -168,7 +171,7 @@ function GanttRow({
       {/* Frozen left column */}
       <div
         className={cn(
-          "sticky left-0 z-30 flex shrink-0 items-center gap-2.5 border-r border-border bg-background px-3 transition-shadow duration-150",
+          "sticky left-0 z-30 flex shrink-0 items-center gap-2.5 border-r border-border bg-background px-3 transition-[box-shadow,background-color] duration-150 group-hover:bg-muted",
           isScrolled && SCROLL_SHADOW
         )}
         style={{ width: FROZEN_WIDTH }}
@@ -177,7 +180,7 @@ function GanttRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <Link
-              to={`/web-experiment/c/${c.id}`}
+              to={campaignLandingPath(c)}
               title={c.name}
               className="truncate text-sm font-medium text-foreground hover:underline"
             >
@@ -190,7 +193,7 @@ function GanttRow({
           <div className="truncate text-xs text-muted-foreground">{c.url}</div>
         </div>
         {/* Hover-revealed actions */}
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+        <div className="hidden shrink-0 items-center gap-0.5 group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex">
           <Button
             type="button"
             variant="ghost"
@@ -219,18 +222,38 @@ function GanttRow({
           >
             <PanelRight className="h-4 w-4" />
           </Button>
-          {hasReport(c.status) && (
-            <Button asChild variant="ghost" size="icon" className={ROW_ICON_BUTTON}>
-              <Link
-                to={`/web-experiment/c/${c.id}/reports`}
-                title="Reports"
-                aria-label="Reports"
+          <DropdownMenu.Root modal={false}>
+            <DropdownMenu.Trigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="More"
+                aria-label="More"
                 onClick={stop}
+                className={ROW_ICON_BUTTON}
               >
-                <BarChart3 className="h-4 w-4" />
-              </Link>
-            </Button>
-          )}
+                <EllipsisVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={4}
+                className="z-50 min-w-[160px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+              >
+                {ROW_ACTIONS.map((action) => (
+                  <DropdownMenu.Item
+                    key={action}
+                    onSelect={(e) => e.stopPropagation()}
+                    className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
+                  >
+                    {action}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </div>
         <div className="shrink-0">
           <StatusMenu campaign={c} />
@@ -323,7 +346,7 @@ function GanttGroupHeader({
 }
 
 export default function GanttChart() {
-  const { search, page, pageSize, setPage, setPageSize, ganttZoom, setGanttZoom } =
+  const { search, page, pageSize, setPage, setPageSize, ganttZoom, ganttTodayTick } =
     useTableStore();
   const { filters, sort, groupBy } = useActiveViewState();
   const updateDraft = useViewsStore((s) => s.updateActiveViewDraft);
@@ -375,14 +398,18 @@ export default function GanttChart() {
 
   const today = useMemo(() => startOfDay(new Date()), []);
 
-  // Axis spans the earliest createdOn across the visible page to 14 days past the
-  // latest phase end (or today, whichever is later). The origin is snapped to a
-  // zoom-appropriate boundary (Monday for week, 1st for month).
+  // Axis spans the earliest createdOn across the visible page to the later of
+  // (14 days past the latest phase end) and the end of the current year, so there's
+  // always future runway visible ahead of today. Origin snapped to a zoom-appropriate
+  // boundary (Monday for week, 1st for month).
+  const yearEnd = useMemo(
+    () => startOfDay(new Date(today.getFullYear(), 11, 31)),
+    [today]
+  );
   const axis = useMemo<Axis>(() => {
     if (pageRows.length === 0) {
       const start = snapStart(today, ganttZoom);
-      const end = addDays(today, 14);
-      return { start, end, totalDays: diffDays(start, end) };
+      return { start, end: yearEnd, totalDays: diffDays(start, yearEnd) };
     }
     let earliest = startOfDay(new Date(pageRows[0].createdOn));
     let latestEnd = today;
@@ -395,9 +422,10 @@ export default function GanttChart() {
       }
     }
     const start = snapStart(earliest, ganttZoom);
-    const end = addDays(startOfDay(latestEnd), 14);
+    const padded = addDays(startOfDay(latestEnd), 14);
+    const end = padded > yearEnd ? padded : yearEnd;
     return { start, end, totalDays: diffDays(start, end) };
-  }, [pageRows, today, ganttZoom]);
+  }, [pageRows, today, ganttZoom, yearEnd]);
 
   const innerWidth = FROZEN_WIDTH + axis.totalDays * pxPerDay;
 
@@ -459,6 +487,18 @@ export default function GanttChart() {
     scrollToToday();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [axis.start, axis.totalDays, pxPerDay]);
+
+  // The "Today" control lives in the page toolbar; it bumps ganttTodayTick to ask
+  // us to re-centre. Skip the initial value (the mount effect above already did it).
+  const firstTick = useRef(true);
+  useEffect(() => {
+    if (firstTick.current) {
+      firstTick.current = false;
+      return;
+    }
+    scrollToToday();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ganttTodayTick]);
 
   const cycleSort = () => {
     if (sort?.column !== "name") updateDraft({ sort: { column: "name", dir: "asc" } });
@@ -580,31 +620,6 @@ export default function GanttChart() {
       {/* Controls + pagination */}
       <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center gap-3">
-          {/* Zoom control — same treatment as the layout switcher. */}
-          <div className="inline-flex items-center rounded-md bg-muted p-0.5">
-            {(["day", "week", "month"] as const).map((z) => (
-              <button
-                key={z}
-                type="button"
-                onClick={() => setGanttZoom(z)}
-                className={cn(
-                  "rounded-[5px] px-2.5 py-1 text-sm capitalize transition-colors",
-                  ganttZoom === z
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {z}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={scrollToToday}
-            className="rounded-md border border-input px-2.5 py-1 text-sm text-foreground transition-colors hover:bg-muted"
-          >
-            Today
-          </button>
           <div className="flex items-center gap-2">
             <span>Showing</span>
             <select

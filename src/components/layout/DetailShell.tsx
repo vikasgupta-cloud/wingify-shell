@@ -5,6 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import {
   Archive,
+  Check,
   ChevronDown,
   Clock,
   Copy,
@@ -14,6 +15,7 @@ import {
   GalleryVerticalEnd,
   HelpCircle,
   type LucideIcon,
+  ListFilter,
   MoreHorizontal,
   PenLine,
   Printer,
@@ -57,7 +59,11 @@ import StatusMenu from "@/components/ui/StatusMenu";
 import { useConfigStore, useIsConfigDirty } from "../../store/config";
 import { useWandzStore } from "../../store/wandz";
 import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
-import type { Campaign } from "../../data/campaigns";
+import {
+  campaignLandingPath,
+  CAMPAIGN_STATUSES,
+  type Campaign,
+} from "../../data/campaigns";
 import PrimaryRail from "./PrimaryRail";
 
 // The vertical icon rail on the left of a detail surface: Ask Wandz (stub),
@@ -204,9 +210,9 @@ function SaveButton({ entityId }: { entityId?: string }) {
   );
 }
 
-// Filter the real campaign list by the active chip + search text, mapping each
-// down to the entity-switcher's {id, name} shape. "Recent" is a sort (10 most
-// recently updated), not a status; the others match campaign.status.
+// Filter the real campaign list by the active filter + search text, mapping each
+// down to the entity-switcher's {id, name} shape. "All" is everything, "Recent" is
+// a sort (10 most recently updated); any other value is a CampaignStatus to match.
 function filterCampaigns(
   campaigns: Campaign[],
   filter: string,
@@ -217,12 +223,8 @@ function filterCampaigns(
     list = [...campaigns]
       .sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))
       .slice(0, 10);
-  } else if (filter === "Running") {
-    list = campaigns.filter((c) => c.status === "Running");
-  } else if (filter === "Drafts") {
-    list = campaigns.filter((c) => c.status === "Draft");
-  } else if (filter === "Paused") {
-    list = campaigns.filter((c) => c.status === "Paused");
+  } else if (filter !== "All") {
+    list = campaigns.filter((c) => c.status === filter);
   }
   const q = search.trim().toLowerCase();
   if (q) list = list.filter((c) => c.name.toLowerCase().includes(q));
@@ -360,10 +362,14 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const realData = isRealDataPath(basePath);
   const campaigns = useVisibleCampaigns();
   const [activeFilter, setActiveFilter] = useState("All");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [entitySearch, setEntitySearch] = useState("");
 
   const dummyEntities = getEntities(basePath);
-  const filters = getFilters(basePath);
+  // Real-data paths expose every status; dummy sections keep their small chip set.
+  const filters = realData
+    ? ["All", "Recent", ...CAMPAIGN_STATUSES]
+    : getFilters(basePath);
 
   // The real campaign backing this detail surface (real-data paths only) — drives
   // the breadcrumb name, the StatusMenu, and the kebab actions.
@@ -499,7 +505,13 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               </>
             )}
             <span className="text-muted-foreground">/</span>
-            <Popover.Root open={entityOpen} onOpenChange={setEntityOpen}>
+            <Popover.Root
+              open={entityOpen}
+              onOpenChange={(o) => {
+                setEntityOpen(o);
+                if (!o) setFilterMenuOpen(false);
+              }}
+            >
               <Popover.Trigger asChild>
                 <button
                   type="button"
@@ -518,35 +530,59 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                   sideOffset={6}
                   className="z-50 w-[300px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
                 >
-                  {/* Real-data paths wire search + chips; others stay visual-only. */}
-                  <div className="flex items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
-                    <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder="Search…"
-                      value={realData ? entitySearch : undefined}
-                      onChange={realData ? (e) => setEntitySearch(e.target.value) : undefined}
-                      className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-                    />
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {filters.map((filter, i) => {
-                      const chipActive = realData ? filter === activeFilter : i === 0;
-                      return (
+                  {/* Real-data paths wire search + a status filter; others stay visual-only. */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
+                      <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Search…"
+                        value={realData ? entitySearch : undefined}
+                        onChange={realData ? (e) => setEntitySearch(e.target.value) : undefined}
+                        className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    {realData && (
+                      <div className="relative shrink-0">
                         <button
-                          key={filter}
                           type="button"
-                          onClick={() => realData && setActiveFilter(filter)}
+                          title="Filter by status"
+                          aria-label="Filter by status"
+                          aria-expanded={filterMenuOpen}
+                          onClick={() => setFilterMenuOpen((o) => !o)}
                           className={cn(
-                            "rounded-full border border-input px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted",
-                            chipActive &&
-                              "border-transparent bg-secondary font-medium text-secondary-foreground"
+                            "flex items-center justify-center rounded-md border border-input p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                            activeFilter !== "All" &&
+                              "border-transparent bg-secondary text-secondary-foreground"
                           )}
                         >
-                          {filter}
+                          <ListFilter className="h-4 w-4" />
                         </button>
-                      );
-                    })}
+                        {filterMenuOpen && (
+                          <div className="absolute right-0 top-full z-10 mt-1 max-h-64 w-44 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-lg">
+                            {filters.map((filter) => (
+                              <button
+                                key={filter}
+                                type="button"
+                                onClick={() => {
+                                  setActiveFilter(filter);
+                                  setFilterMenuOpen(false);
+                                }}
+                                className={cn(
+                                  "flex w-full items-center justify-between gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-muted",
+                                  activeFilter === filter && "font-medium"
+                                )}
+                              >
+                                {filter}
+                                {activeFilter === filter && (
+                                  <Check className="h-4 w-4 shrink-0" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
                     {entities.map((entity) => (
@@ -554,7 +590,17 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         key={entity.id}
                         type="button"
                         onClick={() => {
-                          navigate(`${basePath}/c/${entity.id}`);
+                          // Real campaigns land on Reports or Configuration by status;
+                          // dummy sections keep their plain detail path.
+                          const target = realData
+                            ? campaignLandingPath({
+                                id: entity.id,
+                                status:
+                                  campaigns.find((c) => c.id === entity.id)?.status ??
+                                  "Draft",
+                              })
+                            : `${basePath}/c/${entity.id}`;
+                          navigate(target);
                           setEntityOpen(false);
                         }}
                         className={cn(
