@@ -105,7 +105,7 @@ function ConclusionCard({ campaign }: { campaign: Campaign }) {
       <div className="text-xl font-semibold text-foreground">{title}</div>
       {collecting ? (
         <p className="mt-1 text-sm text-muted-foreground">
-          Too early for a conclusion — wait for the minimum runtime and sample.
+          Too early for a conclusion. Wait for the minimum runtime and sample.
         </p>
       ) : null}
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -116,7 +116,7 @@ function ConclusionCard({ campaign }: { campaign: Campaign }) {
       </div>
       <div className="mt-4 grid grid-cols-3 gap-4">
         <ConclusionStat
-          label="Duration"
+          label={collecting ? "Minimum duration" : "Duration"}
           achieved={`${r.elapsedDays}`}
           rest={
             collecting
@@ -125,21 +125,21 @@ function ConclusionCard({ campaign }: { campaign: Campaign }) {
           }
         />
         <ConclusionStat
-          label="Unique visitors"
+          label={collecting ? "Minimum unique visitors" : "Unique visitors"}
           achieved={formatNumber(campaign.visitors)}
           rest={
             collecting
-              ? `/ ${formatNumber(CONCLUSION_MIN_VISITORS)} minimum`
+              ? `/ ${formatNumber(CONCLUSION_MIN_VISITORS)}`
               : `/ ${formatNumber(r.requiredVisitors)} required`
           }
         />
         <ConclusionStat
-          label="Conversions"
+          label={collecting ? "Minimum conversions" : "Conversions"}
           info
           achieved={formatNumber(campaign.uniqueConversions)}
           rest={
             collecting
-              ? `/ ${formatNumber(CONCLUSION_MIN_CONVERSIONS)} minimum`
+              ? `/ ${formatNumber(CONCLUSION_MIN_CONVERSIONS)}`
               : `/ ${formatNumber(r.requiredConversions)} required`
           }
         />

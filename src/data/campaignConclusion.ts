@@ -8,7 +8,7 @@ export const CONCLUSION_MIN_RUNTIME_DAYS = 5;
  * Full statistical targets remain report.requiredVisitors / requiredConversions.
  */
 export const CONCLUSION_MIN_VISITORS = 1000;
-export const CONCLUSION_MIN_CONVERSIONS = 40;
+export const CONCLUSION_MIN_CONVERSIONS = 1;
 
 /** Winner | Baseline — listing shows “Best performer” chrome. */
 export function hasDeclaredWinner(decision: Decision): boolean {

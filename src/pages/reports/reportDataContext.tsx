@@ -154,7 +154,7 @@ function buildOverview(
     heading = `Current standings on ${metric.toLowerCase()}`;
   } else if (kind === "inconclusive") {
     headline = "No clear winner";
-    body = `Results for ${metric.toLowerCase()} are inconclusive — no variation clearly outperformed the others.`;
+    body = `Results for ${metric.toLowerCase()} are inconclusive. No variation clearly outperformed the others.`;
     heading = `No clear leader on ${metric.toLowerCase()}`;
   } else if (kind === "baseline") {
     headline = `${control.name} remains the best choice`;

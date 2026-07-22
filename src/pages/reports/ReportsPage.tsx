@@ -81,7 +81,7 @@ const PREVIEW_HERO = [
   },
   {
     headline: "Start testing in 30 seconds",
-    sub: "Launch your first experiment today—no complex setup required.",
+    sub: "Launch your first experiment today. No complex setup required.",
     cta: "Start testing free",
   },
   {

@@ -605,24 +605,28 @@ function ResultsFilterPanel({
 function ConclusionBanner({
   conclusion,
   variantName,
+  embedded,
 }: {
   conclusion: ReportConclusionSnapshot;
   variantName: string;
+  /** When true, sits inside the results/table card (no outer border/radius). */
+  embedded?: boolean;
 }) {
   const { kind, title, progress } = conclusion;
-  const shell =
-    "overflow-hidden rounded-lg border border-border bg-background shadow-sm";
+  const shell = embedded
+    ? "bg-background"
+    : "overflow-hidden rounded-lg border border-border bg-background shadow-sm";
 
   if (kind === "collecting") {
     return (
       <div className={cn(shell, "px-6 py-4")}>
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Too early for a conclusion — wait for the minimum runtime and sample.
+          Too early for a conclusion. Wait for the minimum runtime and sample.
         </p>
         <div className="mt-3 grid grid-cols-3 gap-4">
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Duration</div>
+            <div className="text-xs text-muted-foreground">Minimum duration</div>
             <div className="mt-1 tabular-nums">
               <span className="text-base font-semibold text-foreground">
                 {progress.elapsedDays}
@@ -633,24 +637,24 @@ function ConclusionBanner({
             </div>
           </div>
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Unique visitors</div>
+            <div className="text-xs text-muted-foreground">Minimum unique visitors</div>
             <div className="mt-1 tabular-nums">
               <span className="text-base font-semibold text-foreground">
                 {formatNumber(progress.visitors)}
               </span>{" "}
               <span className="text-sm text-muted-foreground">
-                / {formatNumber(progress.minVisitors)} minimum
+                / {formatNumber(progress.minVisitors)}
               </span>
             </div>
           </div>
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Conversions</div>
+            <div className="text-xs text-muted-foreground">Minimum conversions</div>
             <div className="mt-1 tabular-nums">
               <span className="text-base font-semibold text-foreground">
                 {formatNumber(progress.uniqueConversions)}
               </span>{" "}
               <span className="text-sm text-muted-foreground">
-                / {formatNumber(progress.minConversions)} minimum
+                / {formatNumber(progress.minConversions)}
               </span>
             </div>
           </div>
@@ -706,7 +710,7 @@ function ConclusionBanner({
     return (
       <div className={cn(shell, "flex items-center gap-3.5 px-6 py-4")}>
         <p className="text-sm font-medium leading-snug text-muted-foreground">
-          No clear winner — results are inconclusive across variations
+          No clear winner. Results are inconclusive across variations.
         </p>
       </div>
     );
@@ -714,11 +718,18 @@ function ConclusionBanner({
 
   const decisionTail =
     kind === "baseline"
-      ? "remains better or equivalent to every variation — the strongest choice to keep as baseline."
-      : "is better or equivalent to baseline and gives the highest improvement — the strongest choice to roll out.";
+      ? "remains better or equivalent to every variation, the strongest choice to keep as baseline."
+      : "is better or equivalent to baseline and gives the highest improvement, the strongest choice to roll out.";
 
   return (
-    <div className="flex items-center gap-4 overflow-hidden rounded-xl border border-report-green-border bg-gradient-to-r from-report-green-badge/70 via-report-green-tint to-report-green-tint px-6 py-5 shadow-sm">
+    <div
+      className={cn(
+        "flex items-center gap-4 overflow-hidden bg-gradient-to-r from-report-green-badge/70 via-report-green-tint to-report-green-tint px-6 py-5",
+        embedded
+          ? "border-0"
+          : "rounded-xl border border-report-green-border shadow-sm"
+      )}
+    >
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-report-green-border bg-background shadow-sm">
         <Award className="h-5 w-5 text-decision-winner-fg" aria-hidden />
       </span>
@@ -4910,7 +4921,7 @@ export default function ResultsTab({
         />
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1120px] space-y-8 px-12 py-8">
+        <div className="mx-auto max-w-[1120px] space-y-8 px-12 pb-8 pt-12">
           <ViewSettingsDialog
             open={viewSettingsOpen}
             onOpenChange={setViewSettingsOpen}
@@ -4920,12 +4931,6 @@ export default function ResultsTab({
             }}
           />
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
-          {!compareMode ? (
-            <ConclusionBanner
-              conclusion={conclusion}
-              variantName={best.name}
-            />
-          ) : null}
           <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
             <>
@@ -4956,19 +4961,24 @@ export default function ResultsTab({
               />
             </>
           ) : (
-            <div className="rounded-lg border border-border bg-background shadow-sm">
-              <div className="border-b border-border px-6 py-4">
-                <MetricHeader
-                  campaign={campaign}
-                  metric={selectedMetric}
-                  isPrimary={selectedMetric === campaign.primaryMetric}
-                  onOpenSettings={() => setViewSettingsOpen(true)}
-                  onOpenLearnings={() => setLearningsOpen(true)}
-                  onViewVitalsDetails={onNavigateToVitals}
-                />
-              </div>
-              <ResultsFilterPanel campaignId={campaign.id} embedded />
-              <div className="overflow-hidden bg-background">
+            <>
+              <ResultsFilterPanel campaignId={campaign.id} />
+              <MetricHeader
+                campaign={campaign}
+                metric={selectedMetric}
+                isPrimary={selectedMetric === campaign.primaryMetric}
+                onOpenSettings={() => setViewSettingsOpen(true)}
+                onOpenLearnings={() => setLearningsOpen(true)}
+                onViewVitalsDetails={onNavigateToVitals}
+              />
+              <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+                <div className="border-b border-border">
+                  <ConclusionBanner
+                    conclusion={conclusion}
+                    variantName={best.name}
+                    embedded
+                  />
+                </div>
                 {isStatisticsPreset ? (
                   <StatisticsPresetEmptyState metricName={selectedMetric} />
                 ) : viewSettings.layout === "graphs-first" ? (
@@ -5014,7 +5024,7 @@ export default function ResultsTab({
                   </div>
                 )}
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
