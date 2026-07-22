@@ -1,21 +1,24 @@
-import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useConfigStore } from "../../store/config";
+import type { SectionId } from "../../config/configSections";
 
 // Shared collapsible wrapper for the optional config sections
-// (Additional Settings / QA Assistant). Default CLOSED.
+// (Additional Settings / QA Assistant). Default CLOSED. Open state lives in the
+// store so the DotNav can open a section when its nav item is clicked.
 export default function CollapsibleSection({
   id,
   title,
   optional,
   children,
 }: {
-  id: string;
+  id: SectionId;
   title: string;
   optional?: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const open = useConfigStore((s) => s.openSections[id] ?? false);
+  const toggleSection = useConfigStore((s) => s.toggleSection);
 
   return (
     <div id={`section-${id}`} className="scroll-mt-20">
@@ -23,11 +26,11 @@ export default function CollapsibleSection({
         role="button"
         tabIndex={0}
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => toggleSection(id)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setOpen((o) => !o);
+            toggleSection(id);
           }
         }}
         className="flex cursor-pointer select-none items-center gap-2 py-2"

@@ -272,6 +272,13 @@ type ConfigState = {
   setViewMode: (mode: "scroll" | "guided") => void;
   activeStepId: SectionId;
   setActiveStepId: (stepId: SectionId) => void;
+  // NOTE: session-only view state — open/closed state of the collapsible config
+  // sections (Additional Settings / QA Assistant), keyed by SectionId. Lifted
+  // out of the section component so the DotNav can open a section when its nav
+  // item is clicked. Outside CampaignConfig so it never marks the config dirty.
+  openSections: Partial<Record<SectionId, boolean>>;
+  setSectionOpen: (sectionId: SectionId, open: boolean) => void;
+  toggleSection: (sectionId: SectionId) => void;
   // NOTE: session-only view state — ids of connected third-party integrations.
   // Deliberately OUTSIDE CampaignConfig so connecting/disconnecting never marks
   // the config dirty (not part of the saved snapshot comparison).
@@ -348,6 +355,13 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   setViewMode: (mode) => set((s) => ({ viewMode: mode, dockState: s.dockPrefs[mode] })),
   activeStepId: "main",
   setActiveStepId: (stepId) => set({ activeStepId: stepId }),
+  openSections: {},
+  setSectionOpen: (sectionId, open) =>
+    set((s) => ({ openSections: { ...s.openSections, [sectionId]: open } })),
+  toggleSection: (sectionId) =>
+    set((s) => ({
+      openSections: { ...s.openSections, [sectionId]: !s.openSections[sectionId] },
+    })),
   connectedIntegrations: [],
   connectIntegration: (integrationId) =>
     set((s) =>
