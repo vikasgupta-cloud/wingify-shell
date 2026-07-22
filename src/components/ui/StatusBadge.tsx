@@ -1,6 +1,6 @@
-import { HeartPulse } from "lucide-react";
 import type { Campaign, CampaignStatus } from "../../data/campaigns";
 import { cn } from "../../lib/utils";
+import vitalsIcon from "@/assets/icons/vitals.png";
 
 // The only place (with VitalsIcon below) that uses the colored status tokens.
 const STATUS_CLASSES: Record<CampaignStatus, string> = {
@@ -36,13 +36,49 @@ export default function StatusBadge({
   );
 }
 
+/**
+ * Heart + pulse vitals glyph. Color via currentColor (text-vitals-* / text-foreground).
+ */
+export function VitalsGlyph({
+  className,
+  size = 20,
+  title,
+}: {
+  className?: string;
+  size?: number;
+  title?: string;
+}) {
+  return (
+    <span
+      role={title ? "img" : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+      title={title}
+      className={cn("inline-block shrink-0 bg-current", className)}
+      style={{
+        width: size,
+        height: size,
+        maskImage: `url(${vitalsIcon})`,
+        WebkitMaskImage: `url(${vitalsIcon})`,
+        maskSize: "contain",
+        WebkitMaskSize: "contain",
+        maskRepeat: "no-repeat",
+        WebkitMaskRepeat: "no-repeat",
+        maskPosition: "center",
+        WebkitMaskPosition: "center",
+      }}
+    />
+  );
+}
+
 export function VitalsIcon({ vitals }: { vitals: Campaign["vitals"] }) {
   if (vitals === null) return <span className="text-sm text-muted-foreground">–</span>;
+  const label = vitals === "healthy" ? "Vitals healthy" : "Vitals unhealthy";
   return (
-    <HeartPulse
-      aria-label={vitals === "healthy" ? "Vitals healthy" : "Vitals unhealthy"}
+    <VitalsGlyph
+      size={16}
+      title={label}
       className={cn(
-        "h-4 w-4",
         vitals === "healthy" ? "text-vitals-healthy" : "text-vitals-unhealthy"
       )}
     />

@@ -11,7 +11,6 @@ import {
   ChevronDown,
   Compass,
   Copy,
-  HelpCircle,
   Maximize2,
   Minimize2,
   MinusCircle,
@@ -25,7 +24,16 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -542,12 +550,39 @@ function CustomLogicBuilder({
   blocks,
   setBlocks,
   onSave,
+  onAddFilter,
 }: {
   blocks: FilterBlock[];
   setBlocks: Dispatch<SetStateAction<FilterBlock[]>>;
-  onSave: () => void;
+  onSave: (name: string) => boolean;
+  onAddFilter: () => void;
 }) {
+  const [wandzOpen, setWandzOpen] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [segmentName, setSegmentName] = useState("");
+  const [nameError, setNameError] = useState("");
   const totalConditions = blocks.reduce((n, b) => n + b.conditions.length, 0);
+
+  const openSave = () => {
+    setSegmentName("");
+    setNameError("");
+    setSaveOpen(true);
+  };
+
+  const confirmSave = () => {
+    const trimmed = segmentName.trim();
+    if (!trimmed) {
+      setNameError("Enter a segment name.");
+      return;
+    }
+    if (!onSave(trimmed)) {
+      setNameError("This name is already used by a built-in segment.");
+      return;
+    }
+    setSaveOpen(false);
+    setSegmentName("");
+    setNameError("");
+  };
 
   const changeCondition = (blockId: string, condId: string, next: Condition) =>
     setBlocks((prev) =>
@@ -602,7 +637,44 @@ function CustomLogicBuilder({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
-        <p className="text-sm font-medium text-foreground">All visitors…</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-medium text-foreground">All visitors…</p>
+          <button
+            type="button"
+            onClick={() => setWandzOpen((o) => !o)}
+            aria-expanded={wandzOpen}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium transition-colors",
+              wandzOpen
+                ? "bg-muted text-foreground"
+                : "bg-background text-foreground hover:bg-muted/60"
+            )}
+          >
+            Do it with
+            <Sparkles className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+            Wandz AI
+          </button>
+        </div>
+
+        {wandzOpen ? (
+          <div className="rounded-lg border border-border bg-muted/40 p-4">
+            <p className="text-sm font-medium text-foreground">
+              Describe the segment you want
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Wandz will turn your prompt into custom logic conditions.
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <Input
+                placeholder="e.g. Only mobile visitors from paid search"
+                className="h-9 flex-1"
+              />
+              <Button type="button" size="sm">
+                Generate
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         {blocks.map((block, bi) => (
           <Fragment key={block.id}>
@@ -635,18 +707,54 @@ function CustomLogicBuilder({
       <div className="flex items-center justify-between border-t border-border px-6 py-3">
         <button
           type="button"
-          onClick={onSave}
+          onClick={openSave}
           className="text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
         >
           Save Segment
         </button>
-        <Button
-          variant="outline"
-          onClick={() => setBlocks((prev) => [...prev, newBlock()])}
-        >
+        <Button variant="outline" onClick={onAddFilter}>
           Add another filter
         </Button>
       </div>
+
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save segment</DialogTitle>
+            <DialogDescription>
+              Name this segment to keep it in My Segments for later use.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="segment-name">Segment name</Label>
+            <Input
+              id="segment-name"
+              value={segmentName}
+              onChange={(e) => {
+                setSegmentName(e.target.value);
+                if (nameError) setNameError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmSave();
+                }
+              }}
+              placeholder="e.g. Mobile paid search"
+              autoFocus
+            />
+            {nameError ? (
+              <p className="text-sm text-danger-fg">{nameError}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSaveOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -673,7 +781,6 @@ function useSegmentsState(value: string[]) {
     setSearch("");
     setFocused(next[0] ?? ALL_SEGMENTS[0]!.name);
     setBlocks([newBlock()]);
-    setSavedCustoms({});
   };
 
   const toggle = (name: string) =>
@@ -684,9 +791,34 @@ function useSegmentsState(value: string[]) {
   const isCustom = (name: string) =>
     name in savedCustoms || /^Custom \d+$/.test(name);
 
-  const saveSegment = () => {
-    const used = Object.keys(savedCustoms).length;
-    const name = `Custom ${used + 1}`;
+  const nextCustomName = () => {
+    let n = 1;
+    while (
+      `Custom ${n}` in savedCustoms ||
+      draft.includes(`Custom ${n}`)
+    ) {
+      n += 1;
+    }
+    return `Custom ${n}`;
+  };
+
+  // Persist to My Segments only — does not select or apply the filter.
+  const saveSegment = (name: string): boolean => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    if (findSegment(trimmed)) return false;
+    setSavedCustoms((prev) => ({ ...prev, [trimmed]: blocks }));
+    setBlocks([newBlock()]);
+    setLeftTab("all");
+    setCategory("mine");
+    setFocused(trimmed);
+    return true;
+  };
+
+  // Commit current logic as a selected filter and start a fresh block —
+  // same behaviour Save Segment used to have.
+  const addAnotherFilter = () => {
+    const name = nextCustomName();
     setSavedCustoms((prev) => ({ ...prev, [name]: blocks }));
     setDraft((prev) => (prev.includes(name) ? prev : [...prev, name]));
     setBlocks([newBlock()]);
@@ -700,16 +832,36 @@ function useSegmentsState(value: string[]) {
 
   const visibleGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (leftTab === "custom" || category === "mine") return [];
+    if (leftTab === "custom") return [];
+    if (category === "mine") {
+      const items = Object.keys(savedCustoms)
+        .filter((name) => !/^Custom \d+$/.test(name))
+        .filter((name) => name.toLowerCase().includes(q))
+        .map((name) => ({
+          name,
+          description:
+            "Custom segment you saved from Custom Logic.",
+        }));
+      return items.length
+        ? [{ id: "mine", pill: "My Segments", section: "My Segments", items }]
+        : [];
+    }
     return SEGMENT_GROUPS.filter((g) => category === "all" || g.id === category)
       .map((g) => ({
         ...g,
         items: g.items.filter((s) => s.name.toLowerCase().includes(q)),
       }))
       .filter((g) => g.items.length > 0);
-  }, [category, search, leftTab]);
+  }, [category, search, leftTab, savedCustoms]);
 
-  const focusedSegment = findSegment(focused);
+  const focusedSegment =
+    findSegment(focused) ??
+    (focused in savedCustoms
+      ? {
+          name: focused,
+          description: "Custom segment you saved from Custom Logic.",
+        }
+      : undefined);
 
   return {
     draft,
@@ -727,10 +879,12 @@ function useSegmentsState(value: string[]) {
     toggle,
     isCustom,
     saveSegment,
+    addAnotherFilter,
     editSegment,
     visibleGroups,
     focusedSegment,
     resetFromValue,
+    savedCustoms,
   };
 }
 
@@ -765,11 +919,16 @@ function SegmentsPickerPanel({
     toggle,
     isCustom,
     saveSegment,
+    addAnotherFilter,
     editSegment,
     visibleGroups,
     focusedSegment,
+    savedCustoms,
   } = seg;
   const hasResults = visibleGroups.length > 0;
+  const mySegmentCount = Object.keys(savedCustoms).filter(
+    (name) => !/^Custom \d+$/.test(name)
+  ).length;
 
   const Title =
     titleAs === "dialog" ? DialogPrimitive.Title : "h2";
@@ -806,11 +965,6 @@ function SegmentsPickerPanel({
       <div className="flex min-h-0 flex-1">
         {/* Left rail */}
         <div className="flex w-[180px] shrink-0 flex-col gap-1 border-r border-border p-2">
-          <div className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground">
-            <Sparkles className="h-4 w-4 text-muted-foreground" aria-hidden />
-            VWO AI
-            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-          </div>
           <LeftTab
             active={leftTab === "all"}
             onClick={() => setLeftTab("all")}
@@ -831,6 +985,7 @@ function SegmentsPickerPanel({
               blocks={blocks}
               setBlocks={setBlocks}
               onSave={saveSegment}
+              onAddFilter={addAnotherFilter}
             />
           ) : (
             <>
@@ -859,7 +1014,7 @@ function SegmentsPickerPanel({
                     active={category === "mine"}
                     onClick={() => setCategory("mine")}
                   >
-                    My Segments
+                    My Segments{mySegmentCount > 0 ? ` (${mySegmentCount})` : ""}
                   </CategoryPill>
                   {SEGMENT_GROUPS.map((g) => (
                     <CategoryPill
@@ -917,7 +1072,9 @@ function SegmentsPickerPanel({
                       <div className="mt-auto flex items-center gap-1.5 pt-4 text-sm text-muted-foreground">
                         <MousePointerClick className="h-4 w-4" aria-hidden />
                         Created by
-                        <span className="font-medium text-foreground">VWO</span>
+                        <span className="font-medium text-foreground">
+                          {focusedSegment.name in savedCustoms ? "You" : "VWO"}
+                        </span>
                       </div>
                     </>
                   ) : (
@@ -1026,7 +1183,7 @@ export function SegmentsSelector({
       ? "Segments"
       : value.length === 1
         ? value[0]
-        : `${value[0]} +${value.length - 1}`;
+        : `Segments(${value.length})`;
 
   const apply = () => {
     onChange(seg.draft);
@@ -1072,7 +1229,9 @@ export function SegmentsSelector({
             type="button"
             className={cn(
               "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-              value.length > 0 ? "text-foreground" : "text-foreground/80"
+              value.length > 0
+                ? "border-foreground/30 bg-accent/40 text-foreground"
+                : "text-foreground/80"
             )}
           >
             <Compass className="h-3.5 w-3.5" aria-hidden />

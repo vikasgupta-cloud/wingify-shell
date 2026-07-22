@@ -25,8 +25,10 @@ function DirtyDot() {
 export default function ViewBar() {
   const views = useViewsStore((s) => s.views);
   const activeViewId = useViewsStore((s) => s.activeViewId);
+  const defaultViewId = useViewsStore((s) => s.defaultViewId);
   const drafts = useViewsStore((s) => s.drafts);
   const setActiveView = useViewsStore((s) => s.setActiveView);
+  const setDefaultView = useViewsStore((s) => s.setDefaultView);
   const saveDraftToActiveView = useViewsStore((s) => s.saveDraftToActiveView);
   const saveDraftAsNewView = useViewsStore((s) => s.saveDraftAsNewView);
   const discardActiveViewDraft = useViewsStore((s) => s.discardActiveViewDraft);
@@ -95,19 +97,63 @@ export default function ViewBar() {
         {hasStrip ? (
           <div className="flex items-end">
             {/* "All" tab */}
-            <button
-              type="button"
-              onClick={() => setActiveView(BASE_VIEW_ID)}
+            <div
               className={cn(
-                "-mb-px flex items-center border-b-2 px-3 py-2 text-sm transition-colors",
+                "group relative -mb-px flex items-center border-b-2 transition-colors",
                 activeViewId === BASE_VIEW_ID
                   ? "border-foreground text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              All
-              {dirtyFor(BASE_VIEW_ID) && <DirtyDot />}
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveView(BASE_VIEW_ID)}
+                className="flex items-center py-2 pl-3 pr-1 text-sm"
+              >
+                All
+                {defaultViewId === BASE_VIEW_ID && (
+                  <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Default
+                  </span>
+                )}
+                {dirtyFor(BASE_VIEW_ID) && <DirtyDot />}
+              </button>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="All view options"
+                    className={cn(
+                      "mr-1.5 h-auto w-auto p-1 text-muted-foreground hover:text-foreground focus-visible:opacity-100 [&_svg]:size-3.5",
+                      activeViewId === BASE_VIEW_ID
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
+                    )}
+                  >
+                    <MoreVertical className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    align="end"
+                    sideOffset={4}
+                    className="z-50 min-w-[140px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+                  >
+                    <DropdownMenu.Item
+                      disabled={defaultViewId === BASE_VIEW_ID}
+                      onSelect={() => setDefaultView(BASE_VIEW_ID)}
+                      className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                    >
+                      {defaultViewId === BASE_VIEW_ID
+                        ? "Default view"
+                        : "Make default"}
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
 
             {views.map((view, index) => {
               const active = view.id === activeViewId;
@@ -163,6 +209,11 @@ export default function ViewBar() {
                       className="flex items-center py-2 pl-3 pr-1 text-sm"
                     >
                       {view.name}
+                      {defaultViewId === view.id && (
+                        <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          Default
+                        </span>
+                      )}
                       {dirtyFor(view.id) && <DirtyDot />}
                     </button>
                   )}
@@ -196,6 +247,15 @@ export default function ViewBar() {
                             className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
                           >
                             Rename
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item
+                            disabled={defaultViewId === view.id}
+                            onSelect={() => setDefaultView(view.id)}
+                            className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                          >
+                            {defaultViewId === view.id
+                              ? "Default view"
+                              : "Make default"}
                           </DropdownMenu.Item>
                           <DropdownMenu.Item
                             onSelect={() => setDeleteId(view.id)}

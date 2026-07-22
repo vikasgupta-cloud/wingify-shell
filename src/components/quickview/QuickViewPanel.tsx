@@ -16,10 +16,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  campaignBestVariant,
+  conclusionTitle,
+  hasDeclaredWinner,
+} from "../../data/campaignConclusion";
+import {
   hasReport,
   type Campaign,
   type CampaignType,
-  type Variant,
 } from "../../data/campaigns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
@@ -89,10 +93,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 function ConclusionCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
-  const title =
-    campaign.status === "Ended"
-      ? "Ended without a conclusion"
-      : `Conclusion in ${r.requiredDays - r.elapsedDays} days`;
+  const title = conclusionTitle(campaign);
   return (
     <div className="rounded-lg border border-border p-4">
       <div className="text-xl font-semibold text-foreground">{title}</div>
@@ -127,14 +128,7 @@ function ConclusionCard({ campaign }: { campaign: Campaign }) {
 function ResultsCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
   const dec = campaign.decision;
-  // The best variant is the one flagged isBest; for Inconclusive none is, so fall
-  // back to the variation with the highest confidence.
-  const best: Variant =
-    r.variants.find((v) => v.isBest) ??
-    [...r.variants]
-      .filter((v) => v.confidence !== null)
-      .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0] ??
-    r.variants[0];
+  const best = campaignBestVariant(campaign);
 
   const confidence = best.confidence;
   const uplift = best.uplift;
@@ -147,7 +141,7 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
           {best.label}
         </span>
         <span className="text-base font-medium text-foreground">{best.name}</span>
-        {(dec === "Winner" || dec === "Baseline") && (
+        {hasDeclaredWinner(dec) && (
           <span className="inline-flex items-center gap-1 rounded-full bg-success-fg/10 px-2 py-0.5 text-xs font-medium text-success-fg">
             <Award className="h-3 w-3" />
             Best performer

@@ -341,7 +341,9 @@ function generateReport(
       isBest: false,
     },
   ];
-  for (let v = 1; v < variations; v++) {
+  // listing `variations` = count of non-control variants; report always
+  // includes Control + that many Variation N rows.
+  for (let v = 1; v <= variations; v++) {
     const uplift = Number((rng(-120, 350) / 10).toFixed(1)); // -12.0 .. 35.0
     const convRate = Number((controlRate * (1 + uplift / 100)).toFixed(2));
     variants.push({
@@ -425,6 +427,34 @@ export const CAMPAIGNS: Campaign[] = BASE.map((row, i) => {
     decision = pick === 0 ? "Winner" : pick === 1 ? "Baseline" : "Inconclusive";
   }
 
+  const report = generateReport(
+    id,
+    decision,
+    variations,
+    visitors,
+    uniqueConversions,
+    primaryMetric,
+    startedOn
+  );
+  // Derive from report + decision (avoid circular import with campaignConclusion).
+  let leadingVariation = "—";
+  if (started) {
+    if (decision === "Baseline") {
+      leadingVariation = "Control";
+    } else {
+      const flagged = report.variants.find((v) => v.isBest);
+      if (flagged) {
+        leadingVariation = flagged.name;
+      } else if (decision === "Winner") {
+        const byConf = [...report.variants]
+          .filter((v) => v.confidence !== null)
+          .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0];
+        leadingVariation = (byConf ?? report.variants[0]!).name;
+      }
+      // Inconclusive / No decision stay "—"
+    }
+  }
+
   return {
     id,
     name: row.name,
@@ -441,12 +471,12 @@ export const CAMPAIGNS: Campaign[] = BASE.map((row, i) => {
     startedOn,
     expectedImprovement: (((i * 137) % 400) - 80) / 10,
     primaryMetric,
-    leadingVariation: started ? (i % 3 === 0 ? "Control" : `Variation ${i % 3}`) : "—",
+    leadingVariation,
     hypothesis: HYPOTHESES[i % HYPOTHESES.length],
     addresses: ADDRESSES[i % ADDRESSES.length],
     labels: row.labels,
     lastUpdated: addDays(startedOn ?? createdOn, (i % 30) + 1),
     phases,
-    report: generateReport(id, decision, variations, visitors, uniqueConversions, primaryMetric, startedOn),
+    report,
   };
 });
