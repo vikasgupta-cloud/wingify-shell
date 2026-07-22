@@ -97,7 +97,14 @@ function sanitizeDateRange(
   };
 }
 
-function mergePresetPartial(p: Partial<ReportViewState> | undefined): ReportViewState {
+// A patch may carry only some view settings / date-range fields, so those two
+// nested objects are deep-partial (the rest of the state stays shallow-partial).
+type ReportViewPatch = Partial<Omit<ReportViewState, "viewSettings" | "dateRange">> & {
+  viewSettings?: Partial<ReportViewSettings>;
+  dateRange?: Partial<ReportDateRange>;
+};
+
+function mergePresetPartial(p: ReportViewPatch | undefined): ReportViewState {
   const base = createDefaultReportViewState();
   if (!p) return base;
   return {
@@ -146,7 +153,7 @@ function clonePresets(
 
 function applyPresetPatch(
   current: ReportViewState,
-  patch: Partial<ReportViewState>
+  patch: ReportViewPatch
 ): ReportViewState {
   return mergePresetPartial({
     ...current,
@@ -347,7 +354,7 @@ type ReportViewsState = {
   /** Patches the active view draft; does not persist until save. */
   updateActivePreset: (
     campaignId: string,
-    patch: Partial<ReportViewState>
+    patch: ReportViewPatch
   ) => void;
   setResultsTableColumnsDraft: (
     campaignId: string,

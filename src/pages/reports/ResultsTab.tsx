@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   Award,
   CalendarClock,
@@ -2589,7 +2589,6 @@ function DataRow({
   index,
   metricName,
   filters,
-  dataMode,
   columns,
   edgeShadows,
   rowDensity,
@@ -3266,9 +3265,7 @@ function DensitySeriesLegend({
 }
 
 function ExpectedConversionRateChart({
-  campaign,
   metricName,
-  filters,
   visible,
   onVisibleChange,
 }: {
@@ -3463,9 +3460,7 @@ function ExpectedConversionRateChart({
 }
 
 function ExpectedImprovementChart({
-  campaign,
   metricName,
-  filters,
   visible,
   onVisibleChange,
 }: {
@@ -4543,8 +4538,6 @@ function CompareTable({
   campaign,
   metrics,
   groupBy,
-  filters,
-  dataMode = "visitors",
 }: {
   campaign: Campaign;
   metrics: CompareMetric[];
