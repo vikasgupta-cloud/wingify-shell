@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Eye,
   Info,
@@ -6,6 +6,7 @@ import {
   Search,
   Shield,
   Star,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -187,6 +188,26 @@ export default function MetricPicker({
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Collapse the open (empty) search back to an icon when the user clicks
+  // outside it. A document listener rather than the input's onBlur, which Radix
+  // Popover's focus trap swallows.
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(e.target as Node) &&
+        !query.trim()
+      ) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [searchOpen, query]);
   const [activeCategory, setActiveCategory] = useState<MetricCategory | "All">("All");
   const [draft, setDraft] = useState<string[]>([]);
   const [hoveredMetric, setHoveredMetric] = useState<string | null>(null);
@@ -206,6 +227,7 @@ export default function MetricPicker({
       setDraft(config.protectionMetrics);
     }
     setQuery("");
+    setSearchOpen(false);
     setActiveCategory("All");
     setHoveredMetric(null);
   }, [open, mode, config]);
@@ -271,7 +293,6 @@ export default function MetricPicker({
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{meta.description}</p>
         </div>
 
         <Tabs defaultValue="metrics" className="flex min-h-0 flex-1 flex-col">
@@ -284,50 +305,79 @@ export default function MetricPicker({
 
           {/* METRICS TAB */}
           <TabsContent value="metrics" className="mt-0 flex min-h-0 flex-1 flex-col">
-            <div className="shrink-0 px-6 py-4">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search metrics and funnels"
-                  className="pl-9"
-                />
-              </div>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap gap-2 px-6 pb-4">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "rounded-full",
-                  activeCategory === "All" && "border-accent bg-accent text-foreground"
-                )}
-                onClick={() => setActiveCategory("All")}
-              >
-                All
-              </Button>
-              {METRIC_CATEGORIES.map((c) => {
-                const Icon = categoryIcon(c);
-                return (
+            {/* Search collapses to an icon that sits before the "All" pill.
+                Opening it swaps the category pills for the input; it collapses
+                again on Clear or on blur while empty. */}
+            <div className="flex shrink-0 flex-wrap items-center gap-2 px-6 py-4">
+              {searchOpen ? (
+                <div ref={searchRef} className="relative w-full">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    autoFocus
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search metrics and funnels"
+                    className="pl-9 pr-9"
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      aria-label="Clear search"
+                      onClick={() => {
+                        setQuery("");
+                        setSearchOpen(false);
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <>
                   <Button
-                    key={c}
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Search metrics"
+                    className="h-9 w-9 shrink-0 rounded-full"
+                    onClick={() => setSearchOpen(true)}
+                  >
+                    <Search />
+                  </Button>
+                  <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className={cn(
                       "rounded-full",
-                      activeCategory === c && "border-accent bg-accent text-foreground"
+                      activeCategory === "All" && "border-accent bg-accent text-foreground"
                     )}
-                    onClick={() => setActiveCategory(c)}
+                    onClick={() => setActiveCategory("All")}
                   >
-                    <Icon />
-                    {c} ({counts.get(c) ?? 0})
+                    All
                   </Button>
-                );
-              })}
+                  {METRIC_CATEGORIES.map((c) => {
+                    const Icon = categoryIcon(c);
+                    return (
+                      <Button
+                        key={c}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "rounded-full",
+                          activeCategory === c && "border-accent bg-accent text-foreground"
+                        )}
+                        onClick={() => setActiveCategory(c)}
+                      >
+                        <Icon />
+                        {c} ({counts.get(c) ?? 0})
+                      </Button>
+                    );
+                  })}
+                </>
+              )}
             </div>
 
             <div className="grid min-h-0 flex-1 grid-cols-[1fr_1fr] border-t border-border">
