@@ -7,17 +7,23 @@ import { useWandzStore } from "./wandz";
 type QuickViewState = {
   openId: string | null;
   open: (id: string) => void;
+  toggle: (id: string) => void;
   close: () => void;
   setId: (id: string) => void;
 };
 
-export const useQuickViewStore = create<QuickViewState>((set) => ({
+export const useQuickViewStore = create<QuickViewState>((set, get) => ({
   openId: null,
   // Mutual exclusion with the Wandz panel — opening one closes the other. Called
   // via getState() at runtime (not a top-level use) to keep the import cycle safe.
   open: (id) => {
     useWandzStore.getState().closeWandz();
     set({ openId: id });
+  },
+  // Clicking the same campaign's Quick view icon again closes the panel.
+  toggle: (id) => {
+    if (get().openId === id) set({ openId: null });
+    else get().open(id);
   },
   close: () => set({ openId: null }),
   setId: (id) => set({ openId: id }),

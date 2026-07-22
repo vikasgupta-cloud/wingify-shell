@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
 import { useCustomSegmentsStore } from "../../store/customSegments";
 import {
+  describeCustomSegment,
   MY_SEGMENTS,
   STANDARD_COUNT,
   STANDARD_SEGMENTS,
@@ -30,21 +31,38 @@ import {
 } from "../../config/segments";
 import CustomSegmentDrawer from "./CustomSegmentDrawer";
 
+// Shape shown in the picker's right-hand definition panel.
+type SegmentDef = { label: string; description?: string; example?: string };
+
+// Look up a standard / my-segment definition by its display label.
+function findDefByLabel(label: string): SegmentDef | null {
+  for (const c of STANDARD_SEGMENTS) {
+    const a = c.attributes.find((x) => x.label === label);
+    if (a) return a;
+  }
+  const m = MY_SEGMENTS.find((x) => x.label === label);
+  return m ?? null;
+}
+
 // One selectable attribute row (used inside categories and for My Segments).
 function AttributeRow({
   attribute,
   selected,
   onSelect,
+  onHover,
 }: {
   attribute: SegmentAttribute;
   selected: boolean;
   onSelect: () => void;
+  onHover?: () => void;
 }) {
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={onSelect}
+      onMouseEnter={onHover}
+      onFocus={onHover}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -86,11 +104,13 @@ function CategoryRow({
   selectedLabel,
   forceOpen,
   onSelect,
+  onHover,
 }: {
   category: SegmentCategory;
   selectedLabel: string;
   forceOpen: boolean;
   onSelect: (label: string) => void;
+  onHover: (attribute: SegmentAttribute) => void;
 }) {
   const hasSelection = category.attributes.some((a) => a.label === selectedLabel);
   const [open, setOpen] = useState(hasSelection);
@@ -128,6 +148,7 @@ function CategoryRow({
               attribute={a}
               selected={a.label === selectedLabel}
               onSelect={() => onSelect(a.label)}
+              onHover={() => onHover(a)}
             />
           ))}
         </div>
@@ -158,6 +179,9 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<TabValue>("all");
+  // The segment whose definition shows on the right — driven by hover/focus,
+  // falling back to the currently selected segment.
+  const [hoverDef, setHoverDef] = useState<SegmentDef | null>(null);
 
   const value = config?.segment ?? "";
   const applied = config?.customSegment ?? null;
@@ -165,6 +189,13 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
   // saved to the library — once saved it moves down into "My Segments".
   const appliedUnsaved =
     applied && !savedCustom.some((s) => s.id === applied.id) ? applied : null;
+
+  // Right-panel definition: hovered segment, else the selected one.
+  const selectedDef: SegmentDef | null =
+    applied && value === applied.label
+      ? { label: applied.label, description: describeCustomSegment(applied.conditions) }
+      : findDefByLabel(value);
+  const displayDef = hoverDef ?? selectedDef;
 
   const q = query.trim().toLowerCase();
   const searching = q.length > 0;
@@ -211,7 +242,13 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) setHoverDef(null);
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             type="button"
@@ -229,7 +266,7 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="flex max-h-[420px] w-[464px] flex-col p-0"
+          className="flex max-h-[440px] w-[700px] flex-col p-0"
         >
           {/* Search. */}
           <div className="shrink-0 border-b border-border p-3">
@@ -268,8 +305,9 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
             </Tabs>
           </div>
 
-          {/* Body. */}
-          <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
+          {/* Body + definition panel. */}
+          <div className="flex min-h-0 flex-1">
+          <div className="min-h-0 flex-1 overflow-y-auto border-r border-border p-1.5">
             {empty ? (
               <div className="px-2 py-8 text-center text-sm text-muted-foreground">
                 No segments found.
@@ -283,6 +321,12 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
                       role="button"
                       tabIndex={0}
                       onClick={() => setOpen(false)}
+                      onMouseEnter={() =>
+                        setHoverDef({
+                          label: appliedUnsaved.label,
+                          description: describeCustomSegment(appliedUnsaved.conditions),
+                        })
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
@@ -324,6 +368,7 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
                         selectedLabel={value}
                         forceOpen={searching}
                         onSelect={pickLabel}
+                        onHover={setHoverDef}
                       />
                     ))}
                   </div>
@@ -344,12 +389,53 @@ export default function SegmentPicker({ campaignId }: { campaignId: string }) {
                         onSelect={() =>
                           a.def ? pickCustom(a.def) : pickLabel(a.label)
                         }
+                        onHover={() =>
+                          setHoverDef(
+                            a.def
+                              ? {
+                                  label: a.def.label,
+                                  description: describeCustomSegment(a.def.conditions),
+                                }
+                              : a
+                          )
+                        }
                       />
                     ))}
                   </div>
                 )}
               </>
             )}
+          </div>
+
+            {/* Definition panel — mirrors the URL-condition picker. */}
+            <div className="w-[240px] shrink-0 overflow-y-auto p-4">
+              {displayDef ? (
+                <>
+                  <div className="text-sm font-medium text-foreground">
+                    {displayDef.label}
+                  </div>
+                  {displayDef.description && (
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {displayDef.description}
+                    </div>
+                  )}
+                  {displayDef.example && (
+                    <div className="mt-4 rounded-md bg-muted p-3">
+                      <div className="text-xs font-medium text-foreground">
+                        For example
+                      </div>
+                      <div className="mt-1 break-words text-xs text-muted-foreground">
+                        {displayDef.example}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  Hover over a segment to see its definition.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer. */}

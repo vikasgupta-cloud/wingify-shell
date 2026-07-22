@@ -6,6 +6,16 @@ export type CampaignStatus =
   | "In Analysis"
   | "Paused"
   | "Ended";
+// All statuses in lifecycle order — for status pickers / filters.
+export const CAMPAIGN_STATUSES: CampaignStatus[] = [
+  "Draft",
+  "In QA",
+  "Ready to launch",
+  "Running",
+  "In Analysis",
+  "Paused",
+  "Ended",
+];
 export type Decision = "Winner" | "Baseline" | "Inconclusive" | "No decision";
 export type CampaignType = "A/B" | "MVT" | "Split URL" | "Multipage";
 export type Phase = { status: CampaignStatus; from: string /*ISO*/; to: string | null /*null = ongoing*/ };
@@ -37,6 +47,22 @@ export type Report = {
 export const REPORTABLE_STATUSES: CampaignStatus[] = ["Running", "In Analysis", "Ended"];
 export const hasReport = (status: CampaignStatus): boolean =>
   REPORTABLE_STATUSES.includes(status);
+
+// Where clicking a campaign name lands: post-launch statuses open Reports directly;
+// pre-launch statuses (Draft, In QA, Ready to launch) open Configuration.
+const REPORTS_LANDING_STATUSES: CampaignStatus[] = [
+  "Running",
+  "Paused",
+  "In Analysis",
+  "Ended",
+];
+export const campaignLandingPath = (c: {
+  id: string;
+  status: CampaignStatus;
+}): string =>
+  REPORTS_LANDING_STATUSES.includes(c.status)
+    ? `/web-experiment/c/${c.id}/reports`
+    : `/web-experiment/c/${c.id}`;
 
 export type Campaign = {
   id: string;
@@ -280,19 +306,41 @@ const todayStartISO = (): string => {
   return d.toISOString();
 };
 
-// Phases to render for a campaign. If rows.setStatus overrode c.status so it no
-// longer matches the last generated phase, close that phase at today and append
-// the current status. The Gantt MUST use this, not c.phases directly.
+// Phases to render for a campaign. The Gantt MUST use this, not c.phases directly.
+//
+// Each pill boundary is the real date the status changed (the generated per-hop
+// `from`s). The TERMINAL pill is what varies:
+//   • Ended      → a short, bounded pill sitting on the date the campaign ended;
+//                  it does NOT run to today (the campaign's life is over).
+//   • everything → the current pill runs open-ended (to: null → today) so a live
+//     else         campaign's state always reaches the present.
+// If rows.setStatus overrode c.status so it no longer matches the last generated
+// phase, that generated tail is closed at today and the current status appended as
+// the new terminal pill (its change date is "now").
+const ENDED_PILL_DAYS = 1; // short marker pill; widens to the Gantt's MIN_BAR floor
 export function phasesFor(c: Campaign): Phase[] {
-  const { phases } = c;
+  const { phases, status } = c;
   const last = phases[phases.length - 1];
-  if (last.status === c.status) return phases;
   const today = todayStartISO();
-  return [
-    ...phases.slice(0, -1),
-    { ...last, to: today },
-    { status: c.status, from: today, to: null },
-  ];
+
+  // Historical chain carrying real change-dates, ending in the current status.
+  const chain: Phase[] =
+    last.status === status
+      ? phases
+      : [
+          ...phases.slice(0, -1),
+          { ...last, to: today },
+          { status, from: today, to: today },
+        ];
+
+  const idx = chain.length - 1;
+  const tail = chain[idx];
+  const terminal: Phase =
+    status === "Ended"
+      ? { ...tail, to: addDays(tail.from, ENDED_PILL_DAYS) }
+      : { ...tail, to: null };
+
+  return [...chain.slice(0, idx), terminal];
 }
 
 // Deterministic report generator — seeded off the id (no Math.random), so every

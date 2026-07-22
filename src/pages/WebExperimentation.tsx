@@ -10,6 +10,7 @@ import LayoutSwitcher, { getLayouts } from "../components/table/LayoutSwitcher";
 import BoardColumnConfig from "../components/kanban/BoardColumnConfig";
 import KanbanBoard from "../components/kanban/KanbanBoard";
 import GanttChart from "../components/gantt/GanttChart";
+import GanttControls from "../components/gantt/GanttControls";
 import QuickViewPanel from "../components/quickview/QuickViewPanel";
 import WandzPanel from "../components/wandz/WandzPanel";
 import PageHeader from "../components/layout/PageHeader";
@@ -97,6 +98,7 @@ export default function WebExperimentation() {
           <div className="ml-auto flex items-center gap-2">
             {layout === "table" && <ColumnConfig />}
             {layout === "kanban" && <BoardColumnConfig />}
+            {layout === "gantt" && <GanttControls />}
             {layouts.length > 1 && <LayoutSwitcher layouts={layouts} />}
           </div>
         </div>

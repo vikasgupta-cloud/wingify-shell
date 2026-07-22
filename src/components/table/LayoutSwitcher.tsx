@@ -6,7 +6,7 @@ import { cn } from "../../lib/utils";
 
 // Config-driven so other sections can opt into layouts later.
 export const LAYOUTS_BY_PATH: Record<string, Array<Layout>> = {
-  "/web-experiment": ["table", "kanban", "gantt"],
+  "/web-experiment": ["table", "gantt", "kanban"],
 };
 
 export function getLayouts(pathname: string): Layout[] {
@@ -15,8 +15,8 @@ export function getLayouts(pathname: string): Layout[] {
 
 const OPTIONS: { layout: Layout; label: string; icon: LucideIcon }[] = [
   { layout: "table", label: "Table", icon: Table },
-  { layout: "kanban", label: "Kanban", icon: Columns3 },
   { layout: "gantt", label: "Gantt", icon: GanttChartSquare },
+  { layout: "kanban", label: "Kanban", icon: Columns3 },
 ];
 
 export default function LayoutSwitcher({ layouts }: { layouts: Layout[] }) {
