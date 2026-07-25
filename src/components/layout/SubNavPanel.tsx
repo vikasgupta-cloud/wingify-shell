@@ -33,7 +33,7 @@ export default function SubNavPanel({
       )}
     >
       <div className="flex items-center justify-between gap-2 px-5 pb-4">
-        <div className="truncate text-sm font-semibold text-foreground">
+        <div className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {item.label}
         </div>
         {item.pinnable && pinnedPaths.includes(item.path) && (
