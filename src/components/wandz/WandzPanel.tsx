@@ -1,5 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowUp, RotateCcw, Sparkles, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import {
+  ArrowUp,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -65,116 +73,91 @@ function ThinkingRow({ reduced }: { reduced: boolean }) {
   );
 }
 
-export default function WandzPanel() {
-  const context = useWandzStore((s) => s.context);
-  const threads = useWandzStore((s) => s.threads);
-  const pending = useWandzStore((s) => s.pending);
-  const closeWandz = useWandzStore((s) => s.closeWandz);
-  const clearThread = useWandzStore((s) => s.clearThread);
-  const send = useWandzStore((s) => s.send);
+/**
+ * Cap the docked panel to the space between its live top edge and the bottom of
+ * the scroll viewport (usually <main>). Same approach as Quick View.
+ */
+function useViewportCappedMaxHeight(
+  rootRef: React.RefObject<HTMLDivElement | null>,
+  active: boolean
+) {
+  const [maxHeight, setMaxHeight] = useState<number>();
 
-  const campaigns = useVisibleCampaigns();
-  const reduced = usePrefersReducedMotion();
-
-  const [draft, setDraft] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const key = context ? contextKey(context) : null;
-  const messages = key ? threads[key] ?? [] : [];
-
-  // Auto-grow the composer with its content (capped by max-h-32).
   useLayoutEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [draft]);
-
-  // Auto-scroll to the newest message and when thinking starts.
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, pending]);
-
-  if (!context || !key) return null;
-
-  const campaignName =
-    context.kind === "campaign" || context.kind === "section"
-      ? campaigns.find((c) => c.id === context.campaignId)?.name
-      : undefined;
-  const line = contextLine(context, campaignName);
-
-  const submit = () => {
-    if (!draft.trim() || pending) return;
-    send(draft);
-    setDraft("");
-  };
-
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submit();
+    if (!active) {
+      setMaxHeight(undefined);
+      return;
     }
-  };
 
+    const update = () => {
+      const el = rootRef.current;
+      if (!el) return;
+      const scroller = el.closest("main");
+      const top = el.getBoundingClientRect().top;
+      const bottom = scroller
+        ? scroller.getBoundingClientRect().bottom
+        : window.innerHeight;
+      const avail = Math.floor(bottom - top - 16);
+      if (avail > 160) setMaxHeight(avail);
+    };
+
+    update();
+    const scroller = rootRef.current?.closest("main");
+    scroller?.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    const ro = scroller ? new ResizeObserver(update) : null;
+    if (scroller) ro?.observe(scroller);
+    return () => {
+      scroller?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      ro?.disconnect();
+    };
+  }, [active, rootRef]);
+
+  return maxHeight;
+}
+
+function ChatMessages({
+  messages,
+  pending,
+  reduced,
+  listRef,
+  wide,
+}: {
+  messages: { id: string; role: "user" | "assistant"; body: string }[];
+  pending: boolean;
+  reduced: boolean;
+  listRef: React.RefObject<HTMLDivElement | null>;
+  wide?: boolean;
+}) {
   return (
-    <div className="sticky top-6 flex max-h-[calc(100vh-56px-3rem)] w-[480px] shrink-0 animate-fade-in-up flex-col overflow-hidden rounded-lg border border-border bg-background duration-200">
-      <style>{DOTS_CSS}</style>
-
-      {/* Header */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-        <Sparkles className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
-        <span className="text-sm font-medium text-foreground">Wandz</span>
-        {line && (
-          <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground" title={line}>
-            {line}
-          </span>
+    <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={cn(
+          "flex flex-col gap-4",
+          wide ? "px-8 pb-6 pt-6" : "px-4 pb-4 pt-5"
         )}
-        <div className={cn("flex items-center gap-0.5", !line && "ml-auto")}>
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Clear conversation"
-                  className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
-                  onClick={() => clearThread(key)}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Clear conversation</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Close Wandz"
-            className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
-            onClick={closeWandz}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+      >
         {messages.map((msg) =>
           msg.role === "assistant" ? (
-            <div key={msg.id} className="flex gap-3">
+            <div key={msg.id} className={cn("flex gap-3", wide && "mx-auto w-full max-w-4xl")}>
               <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">
                 <Sparkles className="h-3 w-3 text-muted-foreground" aria-hidden />
               </div>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              <p
+                className={cn(
+                  "whitespace-pre-wrap leading-relaxed text-foreground",
+                  wide ? "text-[15px]" : "text-sm"
+                )}
+              >
                 {msg.body}
               </p>
             </div>
           ) : (
-            <div key={msg.id} className="flex justify-end gap-3">
+            <div
+              key={msg.id}
+              className={cn("flex justify-end gap-3", wide && "mx-auto w-full max-w-4xl")}
+            >
               <p className="max-w-[80%] whitespace-pre-wrap rounded-lg bg-muted px-3 py-2 text-sm text-foreground">
                 {msg.body}
               </p>
@@ -186,15 +169,49 @@ export default function WandzPanel() {
             </div>
           )
         )}
-        {pending && <ThinkingRow reduced={reduced} />}
-        <div ref={bottomRef} />
+        {pending && (
+          <div className={cn(wide && "mx-auto w-full max-w-4xl")}>
+            <ThinkingRow reduced={reduced} />
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
 
-      {/* Footer */}
-      <div className="shrink-0 border-t border-border p-3">
+function ChatComposer({
+  draft,
+  setDraft,
+  pending,
+  onSubmit,
+  textareaRef,
+  wide,
+}: {
+  draft: string;
+  setDraft: (v: string) => void;
+  pending: boolean;
+  onSubmit: () => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  wide?: boolean;
+}) {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "shrink-0 border-t border-border",
+        wide ? "px-8 py-4" : "p-3"
+      )}
+    >
+      <div className={cn(wide && "mx-auto w-full max-w-4xl")}>
         <Textarea
           ref={textareaRef}
-          rows={1}
+          rows={wide ? 2 : 1}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
@@ -211,12 +228,202 @@ export default function WandzPanel() {
             aria-label="Send"
             className="h-8 w-8 p-0"
             disabled={!draft.trim() || pending}
-            onClick={submit}
+            onClick={onSubmit}
           >
             <ArrowUp className="h-4 w-4" />
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PanelHeader({
+  line,
+  threadKey,
+  fullPreview,
+}: {
+  line: string;
+  threadKey: string;
+  fullPreview: boolean;
+}) {
+  const closeWandz = useWandzStore((s) => s.closeWandz);
+  const clearThread = useWandzStore((s) => s.clearThread);
+  const setFullPreview = useWandzStore((s) => s.setFullPreview);
+
+  return (
+    <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3">
+      <Sparkles className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
+      <span className="text-sm font-medium text-foreground">Wandz</span>
+      {line && (
+        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground" title={line}>
+          {line}
+        </span>
+      )}
+      <div className={cn("flex items-center gap-0.5", !line && "ml-auto")}>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Clear conversation"
+                className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => clearThread(threadKey)}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Clear conversation</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={fullPreview ? "Exit full preview" : "Full preview"}
+                className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => setFullPreview(!fullPreview)}
+              >
+                {fullPreview ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {fullPreview ? "Exit full preview" : "Full preview"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Close Wandz"
+          className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
+          onClick={closeWandz}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export default function WandzPanel({ className }: { className?: string }) {
+  const context = useWandzStore((s) => s.context);
+  const threads = useWandzStore((s) => s.threads);
+  const pending = useWandzStore((s) => s.pending);
+  const fullPreview = useWandzStore((s) => s.fullPreview);
+  const setFullPreview = useWandzStore((s) => s.setFullPreview);
+  const send = useWandzStore((s) => s.send);
+
+  const campaigns = useVisibleCampaigns();
+  const reduced = usePrefersReducedMotion();
+
+  const [draft, setDraft] = useState("");
+  const rootRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const key = context ? contextKey(context) : null;
+  const messages = key ? threads[key] ?? [] : [];
+  const maxHeight = useViewportCappedMaxHeight(
+    rootRef,
+    Boolean(context && key && !fullPreview)
+  );
+
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draft, fullPreview]);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length, pending, fullPreview]);
+
+  // Escape exits full preview first, then closes (handled by close button).
+  useEffect(() => {
+    if (!fullPreview) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setFullPreview(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullPreview, setFullPreview]);
+
+  if (!context || !key) return null;
+
+  const campaignName =
+    context.kind === "campaign" || context.kind === "section"
+      ? campaigns.find((c) => c.id === context.campaignId)?.name
+      : undefined;
+  const line = contextLine(context, campaignName);
+
+  const submit = () => {
+    if (!draft.trim() || pending) return;
+    send(draft);
+    setDraft("");
+  };
+
+  const chat = (
+    <>
+      <style>{DOTS_CSS}</style>
+      <PanelHeader line={line} threadKey={key} fullPreview={fullPreview} />
+      <ChatMessages
+        messages={messages}
+        pending={pending}
+        reduced={reduced}
+        listRef={listRef}
+        wide={fullPreview}
+      />
+      <ChatComposer
+        draft={draft}
+        setDraft={setDraft}
+        pending={pending}
+        onSubmit={submit}
+        textareaRef={textareaRef}
+        wide={fullPreview}
+      />
+    </>
+  );
+
+  if (fullPreview) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background duration-200 animate-in fade-in-0"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Wandz full preview"
+      >
+        {chat}
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div
+      ref={rootRef}
+      style={maxHeight ? { maxHeight, height: maxHeight } : undefined}
+      className={cn(
+        "flex w-[480px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
+        "sticky top-6 max-h-[calc(100dvh-8rem)]",
+        className
+      )}
+    >
+      {chat}
     </div>
   );
 }

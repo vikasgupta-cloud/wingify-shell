@@ -179,12 +179,88 @@ function createDefaultPresets(): Record<ReportPresetId, ReportViewState> {
   });
 }
 
+/** Campaign-level filters — shared across table views; never part of Save view. */
+export type CampaignSharedFilters = {
+  dateRange: ReportDateRange;
+  segments: string[];
+  dimensions: string[];
+};
+
 type CampaignSlice = {
   activePresetId: ReportPresetId;
   presets: Record<ReportPresetId, ReportViewState>;
   customViews: ReportCustomView[];
   activeCustomViewId: string | null;
+  sharedFilters: CampaignSharedFilters;
 };
+
+function cloneSharedFilters(
+  filters: CampaignSharedFilters
+): CampaignSharedFilters {
+  return {
+    dateRange: { ...filters.dateRange },
+    segments: [...filters.segments],
+    dimensions: [...filters.dimensions],
+  };
+}
+
+function defaultSharedFilters(
+  dateRange?: ReportDateRange
+): CampaignSharedFilters {
+  return {
+    dateRange: dateRange
+      ? { ...dateRange }
+      : { ...REPORT_BASE_FILTERS.dateRange },
+    segments: [],
+    dimensions: [],
+  };
+}
+
+function sanitizeSharedFilters(
+  value: unknown,
+  fallback: CampaignSharedFilters
+): CampaignSharedFilters {
+  if (!value || typeof value !== "object") return cloneSharedFilters(fallback);
+  const v = value as Partial<CampaignSharedFilters>;
+  return {
+    dateRange: sanitizeDateRange(v.dateRange ?? fallback.dateRange),
+    segments: Array.isArray(v.segments) ? [...v.segments] : [...fallback.segments],
+    dimensions: Array.isArray(v.dimensions)
+      ? [...v.dimensions]
+      : [...fallback.dimensions],
+  };
+}
+
+/** Only table columns + row density count as unsaved view changes. */
+function isTableLayoutDirty(
+  draft: ReportViewState,
+  saved: ReportViewState
+): boolean {
+  const dCols = sanitizeResultsTableColumns(
+    draft.viewSettings.resultsTableColumns
+  );
+  const sCols = sanitizeResultsTableColumns(
+    saved.viewSettings.resultsTableColumns
+  );
+  if (dCols.length !== sCols.length || dCols.some((id, i) => id !== sCols[i])) {
+    return true;
+  }
+  return (
+    sanitizeResultsRowDensity(draft.viewSettings.rowDensity) !==
+    sanitizeResultsRowDensity(saved.viewSettings.rowDensity)
+  );
+}
+
+function tableLayoutPatchFromDraft(
+  draft: ReportViewState
+): Pick<ReportViewSettings, "resultsTableColumns" | "rowDensity"> {
+  return {
+    resultsTableColumns: sanitizeResultsTableColumns(
+      draft.viewSettings.resultsTableColumns
+    ),
+    rowDensity: sanitizeResultsRowDensity(draft.viewSettings.rowDensity),
+  };
+}
 
 function activeViewDraftKey(sl: CampaignSlice): string {
   if (sl.activeCustomViewId) return sl.activeCustomViewId;
@@ -243,13 +319,6 @@ function savedStateFromSlice(sl: CampaignSlice): ReportViewState {
 
 /** Session-only full view drafts — keyed by preset:* or custom view id. */
 type DraftsByCampaign = Record<string, Record<string, ReportViewState>>;
-
-function isReportStateDirty(
-  draft: ReportViewState,
-  saved: ReportViewState
-): boolean {
-  return JSON.stringify(draft) !== JSON.stringify(saved);
-}
 
 function normalizeDraftValue(
   value: unknown,
@@ -325,6 +394,7 @@ const EMPTY_SLICE: CampaignSlice = {
   presets: clonePresets(DEFAULT_PRESETS),
   customViews: [],
   activeCustomViewId: null,
+  sharedFilters: defaultSharedFilters(),
 };
 
 type CampaignReportUi = {
@@ -351,10 +421,16 @@ type ReportViewsState = {
   ) => void;
   setActivePreset: (campaignId: string, presetId: ReportPresetId) => void;
   setActiveCustomView: (campaignId: string, viewId: string) => void;
-  /** Patches the active view draft; does not persist until save. */
+  /** Patches the active view draft; does not persist until save.
+   *  Only table columns / row density mark the view dirty. */
   updateActivePreset: (
     campaignId: string,
     patch: ReportViewPatch
+  ) => void;
+  /** Campaign-level filters — applied immediately, never saved as a view. */
+  updateSharedFilters: (
+    campaignId: string,
+    patch: Partial<CampaignSharedFilters>
   ) => void;
   setResultsTableColumnsDraft: (
     campaignId: string,
@@ -440,7 +516,17 @@ function normalizeSlice(raw: unknown): CampaignSlice {
     customViews.some((v) => v.id === r.activeCustomViewId)
       ? r.activeCustomViewId
       : null;
-  return { activePresetId: active, presets, customViews, activeCustomViewId };
+  const seedFilters =
+    "sharedFilters" in r && r.sharedFilters
+      ? sanitizeSharedFilters(r.sharedFilters, defaultSharedFilters())
+      : defaultSharedFilters(presets[active].dateRange);
+  return {
+    activePresetId: active,
+    presets,
+    customViews,
+    activeCustomViewId,
+    sharedFilters: seedFilters,
+  };
 }
 
 function cloneCampaignSlice(sl: CampaignSlice): CampaignSlice {
@@ -454,6 +540,7 @@ function cloneCampaignSlice(sl: CampaignSlice): CampaignSlice {
       state: cloneReportViewState(v.state),
     })),
     activeCustomViewId: sl.activeCustomViewId,
+    sharedFilters: cloneSharedFilters(sl.sharedFilters),
   };
 }
 
@@ -500,6 +587,7 @@ export const useReportViewsStore = create<ReportViewsState>()(
                 presets: createCampaignPresets(seed.dateRange, seed.primaryMetric),
                 customViews: [],
                 activeCustomViewId: null,
+                sharedFilters: defaultSharedFilters(seed.dateRange),
               };
             }
 
@@ -536,6 +624,91 @@ export const useReportViewsStore = create<ReportViewsState>()(
           }),
 
         updateActivePreset: (campaignId, patch) => {
+          // Filters and metric are not table-view state — never draft them.
+          if (
+            patch.dateRange !== undefined ||
+            patch.segments !== undefined ||
+            patch.dimensions !== undefined
+          ) {
+            get().updateSharedFilters(campaignId, {
+              dateRange: patch.dateRange,
+              segments: patch.segments,
+              dimensions: patch.dimensions,
+            });
+          }
+          if (patch.selectedMetric !== undefined) {
+            get().setSelectedMetric(campaignId, patch.selectedMetric);
+          }
+
+          const viewSettingsPatch = patch.viewSettings;
+          if (!viewSettingsPatch) return;
+
+          const hasTableLayoutChange =
+            viewSettingsPatch.resultsTableColumns !== undefined ||
+            viewSettingsPatch.rowDensity !== undefined;
+          const hasOtherSettings = Object.keys(viewSettingsPatch).some(
+            (k) => k !== "resultsTableColumns" && k !== "rowDensity"
+          );
+
+          // Non-column view settings commit immediately (View Settings dialog).
+          if (hasOtherSettings) {
+            const { resultsTableColumns: _c, rowDensity: _d, ...rest } =
+              viewSettingsPatch;
+            if (Object.keys(rest).length > 0) {
+              const current = slice(campaignId);
+              const applyLive = (state: ReportViewState) =>
+                applyPresetPatch(state, { viewSettings: rest });
+              patchSlice(campaignId, (prev) => {
+                if (prev.activeCustomViewId) {
+                  return {
+                    ...prev,
+                    customViews: prev.customViews.map((v) =>
+                      v.id === prev.activeCustomViewId
+                        ? { ...v, state: applyLive(v.state) }
+                        : v
+                    ),
+                  };
+                }
+                const id = prev.activePresetId;
+                return {
+                  ...prev,
+                  presets: {
+                    ...prev.presets,
+                    [id]: applyLive(prev.presets[id]!),
+                  },
+                };
+              });
+              // Keep any open column draft in sync with the live settings.
+              const key = activeViewDraftKey(current);
+              set((s) => {
+                const existing = s.draftsByCampaign[campaignId]?.[key];
+                if (!existing) return s;
+                const saved = savedStateFromSlice(slice(campaignId));
+                const next = applyPresetPatch(
+                  normalizeDraftValue(existing, saved),
+                  { viewSettings: rest }
+                );
+                const campaignDrafts = {
+                  ...(s.draftsByCampaign[campaignId] ?? {}),
+                };
+                if (!isTableLayoutDirty(next, saved)) {
+                  delete campaignDrafts[key];
+                } else {
+                  campaignDrafts[key] = next;
+                }
+                const nextDrafts = { ...s.draftsByCampaign };
+                if (Object.keys(campaignDrafts).length === 0) {
+                  delete nextDrafts[campaignId];
+                } else {
+                  nextDrafts[campaignId] = campaignDrafts;
+                }
+                return { draftsByCampaign: nextDrafts };
+              });
+            }
+          }
+
+          if (!hasTableLayoutChange) return;
+
           const current = slice(campaignId);
           const key = activeViewDraftKey(current);
           const saved = savedStateFromSlice(current);
@@ -544,11 +717,16 @@ export const useReportViewsStore = create<ReportViewsState>()(
             const base = existing
               ? normalizeDraftValue(existing, saved)
               : cloneReportViewState(saved);
-            const next = applyPresetPatch(base, patch);
+            const next = applyPresetPatch(base, {
+              viewSettings: {
+                resultsTableColumns: viewSettingsPatch.resultsTableColumns,
+                rowDensity: viewSettingsPatch.rowDensity,
+              },
+            });
             const campaignDrafts = {
               ...(s.draftsByCampaign[campaignId] ?? {}),
             };
-            if (!isReportStateDirty(next, saved)) {
+            if (!isTableLayoutDirty(next, saved)) {
               delete campaignDrafts[key];
             } else {
               campaignDrafts[key] = next;
@@ -564,6 +742,28 @@ export const useReportViewsStore = create<ReportViewsState>()(
               lastSaveHint: null,
             };
           });
+        },
+
+        updateSharedFilters: (campaignId, patch) => {
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            sharedFilters: {
+              dateRange: patch.dateRange
+                ? sanitizeDateRange({
+                    ...prev.sharedFilters.dateRange,
+                    ...patch.dateRange,
+                  })
+                : prev.sharedFilters.dateRange,
+              segments:
+                patch.segments !== undefined
+                  ? [...patch.segments]
+                  : prev.sharedFilters.segments,
+              dimensions:
+                patch.dimensions !== undefined
+                  ? [...patch.dimensions]
+                  : prev.sharedFilters.dimensions,
+            },
+          }));
         },
 
         setResultsTableColumnsDraft: (campaignId, columns) => {
@@ -589,15 +789,22 @@ export const useReportViewsStore = create<ReportViewsState>()(
           if (!rawDraft) return;
           const saved = savedStateFromSlice(current);
           const draft = normalizeDraftValue(rawDraft, saved);
+          if (!isTableLayoutDirty(draft, saved)) {
+            get().discardActiveViewDraft(campaignId);
+            return;
+          }
+          const layout = tableLayoutPatchFromDraft(draft);
           const customViewId = current.activeCustomViewId;
           const presetId = current.activePresetId;
+          const applyLayout = (state: ReportViewState) =>
+            applyPresetPatch(state, { viewSettings: layout });
           patchSlice(campaignId, (prev) => {
             if (prev.activeCustomViewId) {
               return {
                 ...prev,
                 customViews: prev.customViews.map((v) =>
                   v.id === prev.activeCustomViewId
-                    ? { ...v, state: cloneReportViewState(draft) }
+                    ? { ...v, state: applyLayout(v.state) }
                     : v
                 ),
               };
@@ -607,7 +814,7 @@ export const useReportViewsStore = create<ReportViewsState>()(
               ...prev,
               presets: {
                 ...prev.presets,
-                [id]: cloneReportViewState(draft),
+                [id]: applyLayout(prev.presets[id]!),
               },
             };
           });
@@ -642,9 +849,16 @@ export const useReportViewsStore = create<ReportViewsState>()(
           const key = activeViewDraftKey(current);
           const rawDraft = get().draftsByCampaign[campaignId]?.[key];
           const base = savedStateFromSlice(current);
-          const state = rawDraft
+          const withDraft = rawDraft
             ? normalizeDraftValue(rawDraft, base)
             : cloneReportViewState(base);
+          // Custom views store table layout only — filters/metrics stay campaign-level.
+          const state = mergePresetPartial({
+            viewSettings: {
+              ...withDraft.viewSettings,
+              ...tableLayoutPatchFromDraft(withDraft),
+            },
+          });
           const id = crypto.randomUUID();
           const trimmed = name.trim() || "New view";
           patchSlice(campaignId, (prev) => ({
@@ -770,7 +984,27 @@ export const useReportViewsStore = create<ReportViewsState>()(
         clearSaveHint: () => set({ lastSaveHint: null }),
 
         setSelectedMetric: (campaignId, metric) => {
-          get().updateActivePreset(campaignId, { selectedMetric: metric });
+          set((s) => {
+            const ui = s.uiByCampaign[campaignId];
+            if (!ui) {
+              return {
+                uiByCampaign: {
+                  ...s.uiByCampaign,
+                  [campaignId]: {
+                    selectedMetric: metric,
+                    metricsNavCollapsed: false,
+                  },
+                },
+              };
+            }
+            if (ui.selectedMetric === metric) return s;
+            return {
+              uiByCampaign: {
+                ...s.uiByCampaign,
+                [campaignId]: { ...ui, selectedMetric: metric },
+              },
+            };
+          });
         },
 
         setMetricsNavCollapsed: (campaignId, collapsed) =>
@@ -888,11 +1122,33 @@ export function useIsReportViewDirty(campaignId: string): boolean {
       const sl = s.byCampaign[campaignId];
       if (!sl) return false;
       const key = activeViewDraftKeyFromRaw(sl);
-      return Boolean(s.draftsByCampaign[campaignId]?.[key]);
+      const rawDraft = s.draftsByCampaign[campaignId]?.[key];
+      if (!rawDraft) return false;
+      const saved = savedStateFromSlice(normalizeSlice(sl));
+      const draft = normalizeDraftValue(rawDraft, saved);
+      return isTableLayoutDirty(draft, saved);
     },
     [campaignId]
   );
   return useReportViewsStore(selector);
+}
+
+export function useCampaignSharedFilters(
+  campaignId: string
+): CampaignSharedFilters {
+  return useReportViewsStore((s) => {
+    const raw = s.byCampaign[campaignId];
+    if (
+      raw &&
+      typeof raw === "object" &&
+      raw.sharedFilters &&
+      typeof raw.sharedFilters === "object" &&
+      raw.sharedFilters.dateRange
+    ) {
+      return raw.sharedFilters;
+    }
+    return EMPTY_SLICE.sharedFilters;
+  });
 }
 
 export function useReportCustomViews(campaignId: string): ReportCustomView[] {
@@ -911,13 +1167,15 @@ export function useReportSelectedMetric(
   campaignId: string,
   primaryMetric: string
 ): [string, (metric: string) => void] {
-  const fromView = useActiveReportPresetState(campaignId).selectedMetric;
+  const fromUi = useReportViewsStore(
+    (s) => s.uiByCampaign[campaignId]?.selectedMetric
+  );
   const setSelectedMetric = useReportViewsStore((s) => s.setSelectedMetric);
   const setMetric = useCallback(
     (metric: string) => setSelectedMetric(campaignId, metric),
     [campaignId, setSelectedMetric]
   );
-  return [fromView || primaryMetric, setMetric];
+  return [fromUi || primaryMetric, setMetric];
 }
 
 export function useReportMetricsNavCollapsed(

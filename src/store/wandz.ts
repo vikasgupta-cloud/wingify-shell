@@ -1,6 +1,8 @@
 import { create } from "zustand";
-import { useQuickViewStore } from "./quickView";
+import { CAMPAIGNS, type Campaign } from "../data/campaigns";
 import { greetingFor, replyFor } from "../data/wandzReplies";
+import { useQuickViewStore } from "./quickView";
+import { useRowsStore } from "./rows";
 
 export type ChatRole = "user" | "assistant";
 export type ChatMessage = { id: string; role: ChatRole; body: string; at: string /* ISO */ };
@@ -33,14 +35,33 @@ const assistantMsg = (body: string): ChatMessage => ({
   at: new Date().toISOString(),
 });
 
+function resolveCampaign(campaignId: string): Campaign | null {
+  const { added, archivedIds, deletedIds, statusOverrides } =
+    useRowsStore.getState();
+  const hidden = new Set([...archivedIds, ...deletedIds]);
+  if (hidden.has(campaignId)) return null;
+  const found =
+    added.find((c) => c.id === campaignId) ??
+    CAMPAIGNS.find((c) => c.id === campaignId) ??
+    null;
+  if (!found) return null;
+  const status = statusOverrides[campaignId];
+  return status ? { ...found, status } : found;
+}
+
 type WandzState = {
   open: boolean;
+  /** Side panel vs full-screen preview overlay. */
+  fullPreview: boolean;
   context: WandzContext | null;
   threads: Record<string /* contextKey */, ChatMessage[]>;
   pending: boolean;
   openWandz: (context: WandzContext) => void;
+  /** Opens Wandz and immediately asks a question (e.g. campaign summary). */
+  openWandzAndAsk: (context: WandzContext, prompt: string) => void;
   toggleWandz: (context: WandzContext) => void;
   closeWandz: () => void;
+  setFullPreview: (fullPreview: boolean) => void;
   send: (body: string) => void;
   clearThread: (key: string) => void;
 };
@@ -51,6 +72,7 @@ type WandzState = {
 // if Wandz were thinking. Session-only: a reload clears every thread.
 export const useWandzStore = create<WandzState>((set, get) => ({
   open: false,
+  fullPreview: false,
   context: null,
   threads: {},
   pending: false,
@@ -68,17 +90,25 @@ export const useWandzStore = create<WandzState>((set, get) => ({
     }));
   },
 
+  openWandzAndAsk: (context, prompt) => {
+    get().openWandz(context);
+    // Let the greeting paint, then send so the reply shows the thinking state.
+    window.setTimeout(() => get().send(prompt), 80);
+  },
+
   // Clicking the same context's Wandz icon again closes the panel.
   toggleWandz: (context) => {
     const s = get();
     if (s.open && s.context && contextKey(s.context) === contextKey(context)) {
-      set({ open: false });
+      set({ open: false, fullPreview: false });
     } else {
       get().openWandz(context);
     }
   },
 
-  closeWandz: () => set({ open: false }),
+  closeWandz: () => set({ open: false, fullPreview: false }),
+
+  setFullPreview: (fullPreview) => set({ fullPreview }),
 
   send: (body) => {
     const text = body.trim();
@@ -96,10 +126,15 @@ export const useWandzStore = create<WandzState>((set, get) => ({
       threads: { ...s.threads, [key]: [...(s.threads[key] ?? []), userMsg] },
     }));
 
+    const campaign =
+      ctx.kind === "campaign" || ctx.kind === "section"
+        ? resolveCampaign(ctx.campaignId)
+        : null;
+
     // Deterministic "thinking" delay derived from message length (700–1100ms).
     const delay = 700 + (text.length % 5) * 100;
     setTimeout(() => {
-      const reply = assistantMsg(replyFor(ctx, text));
+      const reply = assistantMsg(replyFor(ctx, text, campaign));
       set((s) => ({
         pending: false,
         threads: { ...s.threads, [key]: [...(s.threads[key] ?? []), reply] },

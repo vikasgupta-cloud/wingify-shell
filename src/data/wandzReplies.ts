@@ -1,4 +1,9 @@
 import type { WandzContext } from "../store/wandz";
+import type { Campaign } from "./campaigns";
+import {
+  campaignBestVariant,
+  conclusionTitle,
+} from "./campaignConclusion";
 
 // NOTE: Everything here is scripted. No model, no network — replyFor() hashes
 // the user's message and picks a plausible, context-shaped response so the same
@@ -63,9 +68,89 @@ function pick(pool: string[], seed: string): string {
   return pool[hash(seed) % pool.length];
 }
 
-export function replyFor(ctx: WandzContext, userMessage: string): string {
+function formatCount(n: number): string {
+  return n.toLocaleString("en-US");
+}
+
+/** Narrative campaign briefing — used by Campaign summary → Wandz. */
+export function campaignSummaryFor(campaign: Campaign): string {
+  const best = campaignBestVariant(campaign);
+  const variants = campaign.report.variants;
+  const variationLines = variants
+    .map((v, i) => {
+      const tag = v.isControl
+        ? "baseline"
+        : v.isBest
+          ? "leading"
+          : v.uplift !== null && v.uplift < 0
+            ? "behind"
+            : "challenger";
+      const uplift =
+        v.isControl || v.uplift === null
+          ? "—"
+          : `${v.uplift >= 0 ? "+" : ""}${v.uplift.toFixed(1)}% uplift`;
+      const conf =
+        v.confidence === null ? "—" : `${Math.round(v.confidence)}% confidence`;
+      return `  ${i}. ${v.name} (${tag}) — ${uplift}, ${conf}`;
+    })
+    .join("\n");
+
+  const hypothesis =
+    campaign.hypothesis.trim().length > 0
+      ? `I expect that ${campaign.hypothesis}${
+          campaign.addresses ? ` Will address: ${campaign.addresses}` : ""
+        }`
+      : "No hypothesis recorded yet.";
+
+  const nextStep =
+    campaign.decision === "Winner" || campaign.decision === "Baseline"
+      ? `Consider rolling out ${best.name} and capturing the learning before the next test.`
+      : campaign.decision === "Inconclusive"
+        ? "Results are mixed — review segments or run a follow-up with a sharper hypothesis."
+        : campaign.status === "Running" || campaign.status === "In Analysis"
+          ? "Keep collecting until sample and runtime targets are met, then re-check the conclusion."
+          : "Confirm targeting, success metric, and traffic split before the next push.";
+
+  return [
+    `Here's a quick read on ${campaign.name}.`,
+    "",
+    `• Status: ${campaign.status} · Decision: ${campaign.decision}`,
+    `• Type: ${campaign.type} · Primary metric: ${campaign.primaryMetric}`,
+    `• Sample: ${formatCount(campaign.visitors)} visitors · ${formatCount(campaign.uniqueConversions)} unique conversions`,
+    `• Runtime: ${campaign.report.elapsedDays} of ${campaign.report.requiredDays || "—"} planned days`,
+    "",
+    "Conclusion",
+    conclusionTitle(campaign),
+    "",
+    "Hypothesis",
+    hypothesis,
+    "",
+    "Variations",
+    variationLines || "  No variations yet.",
+    "",
+    "What I'd do next",
+    nextStep,
+    "",
+    "Ask me to dig into a variation, the metric setup, or what to test next.",
+  ].join("\n");
+}
+
+export function replyFor(
+  ctx: WandzContext,
+  userMessage: string,
+  campaign?: Campaign | null
+): string {
   const m = userMessage.toLowerCase();
   const seed = contextSeed(ctx) + "|" + userMessage;
+
+  if (
+    campaign &&
+    /summar|campaign summary|brief me|overview of (this|the) campaign|how is (this|the) campaign/.test(
+      m
+    )
+  ) {
+    return campaignSummaryFor(campaign);
+  }
 
   if (/hypothes/.test(m)) return pick(HYPOTHESIS_POOL, seed);
   if (/metric|conversion|goal/.test(m)) return pick(METRIC_POOL, seed);

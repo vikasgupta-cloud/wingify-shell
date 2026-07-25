@@ -398,7 +398,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
 
   return (
     <>
-      <div className="mb-0 flex min-h-[36px] items-end justify-between gap-4 border-b border-border">
+      <div className="mb-0 flex min-h-[36px] items-end justify-between gap-4">
         <div ref={containerRef} className="relative min-w-0 flex-1 overflow-visible">
           {/* Offscreen measure row — same tab chrome, used only for widths */}
           <div
@@ -572,8 +572,8 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
               Create new view
             </Dialog.Title>
             <Dialog.Description className="mt-1.5 text-sm text-muted-foreground">
-              Saves your current filters, columns, and layout into a new custom
-              view.
+              Saves your current table columns and density into a new custom
+              view. Filters and metrics are not included.
             </Dialog.Description>
             <form
               onSubmit={(e) => {

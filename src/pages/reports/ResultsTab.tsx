@@ -86,11 +86,13 @@ import {
   useActiveReportPresetState,
   useActiveResultsRowDensity,
   useActiveResultsTableColumns,
+  useCampaignSharedFilters,
   useReportMetricsNavCollapsed,
   useReportSelectedMetric,
   useReportViewsStore,
   type ReportDateRange,
 } from "../../store/reportViews";
+import { useWandzStore } from "../../store/wandz";
 import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
 import {
@@ -117,7 +119,7 @@ import {
 
 const WINNER_THRESHOLD = 95;
 
-type ResultsGroupBy = "variation" | "segment";
+type ResultsGroupBy = "variation" | "segment" | "none";
 
 const RESULTS_TABLE_COLUMN_META: Record<
   ResultsTableColumnId,
@@ -345,11 +347,7 @@ function MultiSelectFilterChip({
   maxSelections?: number;
 }) {
   const summary =
-    value.length === 0
-      ? label
-      : value.length === 1
-        ? value[0]
-        : `${label}(${value.length})`;
+    value.length === 0 ? label : value.join(", ");
 
   const toggle = (option: string) => {
     const isSelected = value.includes(option);
@@ -366,13 +364,14 @@ function MultiSelectFilterChip({
       <PopoverTrigger asChild>
         <button
           type="button"
+          title={summary}
           className={cn(
             "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
             value.length > 0 ? "text-foreground" : "text-foreground/80"
           )}
         >
           {icon}
-          <span className="max-w-[140px] truncate">{summary}</span>
+          <span className="max-w-[180px] truncate">{summary}</span>
           <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
         </button>
       </PopoverTrigger>
@@ -457,8 +456,8 @@ function FilterBar({
   right?: ReactNode;
 }) {
   const { dateRange, segments, dimensions } =
-    useActiveReportPresetState(campaignId);
-  const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
+    useCampaignSharedFilters(campaignId);
+  const updateSharedFilters = useReportViewsStore((s) => s.updateSharedFilters);
   const showTrailing = Boolean(right);
 
   return (
@@ -472,14 +471,16 @@ function FilterBar({
           variant="filter"
           value={storedToDateRange(dateRange)}
           onChange={(range) =>
-            updateActivePreset(campaignId, {
+            updateSharedFilters(campaignId, {
               dateRange: dateRangeToStored(range),
             })
           }
         />
         <SegmentsSelector
           value={segments}
-          onChange={(next) => updateActivePreset(campaignId, { segments: next })}
+          onChange={(next) =>
+            updateSharedFilters(campaignId, { segments: next })
+          }
         />
         <MultiSelectFilterChip
           icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
@@ -487,13 +488,13 @@ function FilterBar({
           options={REPORT_DIMENSION_OPTIONS}
           value={dimensions}
           onChange={(next) =>
-            updateActivePreset(campaignId, { dimensions: next })
+            updateSharedFilters(campaignId, { dimensions: next })
           }
           maxSelections={MAX_VISITOR_DIMENSIONS}
         />
       </div>
       {showTrailing && (
-        <div className="flex shrink-0 items-center gap-2 self-center">
+        <div className="flex shrink-0 items-center gap-2 self-start pt-0.5">
           {right}
         </div>
       )}
@@ -510,26 +511,26 @@ function AppliedSegmentChip({
 }) {
   const isCustom = /^Custom \d+$/.test(name);
   return (
-    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-background pl-3 pr-2 text-sm text-foreground">
-      <span className="max-w-[160px] truncate">{name}</span>
+    <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-md border border-border bg-background pl-2 pr-1 text-xs text-foreground">
+      <span className="max-w-[140px] truncate">{name}</span>
       {isCustom && (
-        <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
+        <Pencil className="h-2.5 w-2.5 shrink-0 text-muted-foreground" aria-hidden />
       )}
       <button
         type="button"
         onClick={onRemove}
         aria-label={`Remove ${name}`}
-        className="flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="flex h-3.5 w-3.5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
-        <X className="h-3.5 w-3.5" aria-hidden />
+        <X className="h-3 w-3" aria-hidden />
       </button>
     </span>
   );
 }
 
 function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
-  const { segments } = useActiveReportPresetState(campaignId);
-  const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
+  const { segments } = useCampaignSharedFilters(campaignId);
+  const updateSharedFilters = useReportViewsStore((s) => s.updateSharedFilters);
   if (segments.length === 0) return null;
 
   return (
@@ -550,7 +551,7 @@ function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
             key={name}
             name={name}
             onRemove={() =>
-              updateActivePreset(campaignId, {
+              updateSharedFilters(campaignId, {
                 segments: segments.filter((s) => s !== name),
               })
             }
@@ -559,50 +560,8 @@ function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
       </div>
       <button
         type="button"
-        onClick={() => updateActivePreset(campaignId, { segments: [] })}
-        className="inline-flex shrink-0 items-center gap-1 self-center pt-1 text-sm font-medium text-foreground hover:underline"
-      >
-        <X className="h-3.5 w-3.5" aria-hidden />
-        Clear All
-      </button>
-    </div>
-  );
-}
-
-function AppliedDimensionsRow({ campaignId }: { campaignId: string }) {
-  const { dimensions } = useActiveReportPresetState(campaignId);
-  const updateActivePreset = useReportViewsStore((s) => s.updateActivePreset);
-  if (dimensions.length === 0) return null;
-
-  return (
-    <div
-      className={cn(
-        filterPanelRowClass,
-        "border-t border-border",
-        filterPanelInsetClass
-      )}
-    >
-      <span className={filterPanelLabelClass}>
-        <Layers className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        Dimensions :
-      </span>
-      <div className={filterPanelChipsClass}>
-        {dimensions.map((name) => (
-          <AppliedSegmentChip
-            key={name}
-            name={name}
-            onRemove={() =>
-              updateActivePreset(campaignId, {
-                dimensions: dimensions.filter((d) => d !== name),
-              })
-            }
-          />
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => updateActivePreset(campaignId, { dimensions: [] })}
-        className="inline-flex shrink-0 items-center gap-1 self-center pt-1 text-sm font-medium text-foreground hover:underline"
+        onClick={() => updateSharedFilters(campaignId, { segments: [] })}
+        className="inline-flex shrink-0 items-center gap-1 self-start pt-0.5 text-xs font-medium text-foreground hover:underline"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
         Clear All
@@ -633,7 +592,6 @@ function ResultsFilterPanel({
         <FilterBar campaignId={campaignId} right={right} />
       </div>
       <AppliedSegmentsRow campaignId={campaignId} />
-      <AppliedDimensionsRow campaignId={campaignId} />
     </div>
   );
 }
@@ -1301,6 +1259,7 @@ function MetricHeader({
   onOpenLearnings: () => void;
   onViewVitalsDetails: () => void;
 }) {
+  const openWandzAndAsk = useWandzStore((s) => s.openWandzAndAsk);
   const metricTitleClass =
     "border-b border-dashed border-muted-foreground text-lg font-semibold leading-tight tracking-tight text-foreground";
 
@@ -1386,6 +1345,12 @@ function MetricHeader({
           size="sm"
           className="h-9 gap-1.5 rounded-md font-medium"
           aria-label="Campaign summary"
+          onClick={() =>
+            openWandzAndAsk(
+              { kind: "campaign", campaignId: campaign.id },
+              "Summarise this campaign for me"
+            )
+          }
         >
           <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
           Campaign summary
@@ -2199,7 +2164,7 @@ function ReportResultsColumnConfig({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        align="start"
+        align="end"
         sideOffset={6}
         className="w-[280px] p-3 text-sm"
       >
@@ -2374,41 +2339,27 @@ function TableHeader({
           <div
             className={cn(
               stickyNestedHeaderClass(edgeShadows.left),
-              "flex min-w-0 items-center justify-between gap-2 px-4 pb-1.5 pt-3"
+              "flex min-w-0 items-center gap-1.5 px-4 pb-1.5 pt-3"
             )}
           >
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span
-                className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}
-              >
-                {nestedTitle}
-              </span>
-              <FunnelIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+            <span
+              className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}
+            >
+              {nestedTitle}
             </span>
-            <ReportResultsColumnConfig
-              columns={columns}
-              onColumnsChange={onColumnsChange}
-              rowDensity={rowDensity}
-              onRowDensityChange={onRowDensityChange}
-            />
+            <FunnelIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
           </div>
         </>
       ) : (
         <div
           className={cn(
             stickyVariationsHeaderClass(edgeShadows.left),
-            "flex min-w-0 items-center justify-between gap-2 px-4 pb-1.5 pt-3"
+            "flex min-w-0 items-center px-4 pb-1.5 pt-3"
           )}
         >
           <span className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}>
             Variations
           </span>
-          <ReportResultsColumnConfig
-            columns={columns}
-            onColumnsChange={onColumnsChange}
-            rowDensity={rowDensity}
-            onRowDensityChange={onRowDensityChange}
-          />
         </div>
       )}
       {columns.map((id) => {
@@ -2447,9 +2398,16 @@ function TableHeader({
       <div
         className={cn(
           stickyActionsHeaderClass(edgeShadows.right),
-          "pb-1.5 pt-3"
+          "flex items-center justify-center pb-1.5 pt-3"
         )}
-      />
+      >
+        <ReportResultsColumnConfig
+          columns={columns}
+          onColumnsChange={onColumnsChange}
+          rowDensity={rowDensity}
+          onRowDensityChange={onRowDensityChange}
+        />
+      </div>
 
       {/* Subhead row — shared baseline across columns */}
       {isGrouped ? (
@@ -3112,7 +3070,7 @@ function GroupedResultsBlock({
   edgeShadows,
   children,
 }: {
-  groupBy: ResultsGroupBy;
+  groupBy: Exclude<ResultsGroupBy, "none">;
   groupLabel: string;
   groupNode: ReactNode;
   rowCount: number;
@@ -3173,7 +3131,7 @@ function ResultsTable({
 }) {
   const variants = campaign.report.variants;
   const selectedSegments = filters.segments;
-  const isGrouped = selectedSegments.length > 0;
+  const isGrouped = selectedSegments.length > 0 && groupBy !== "none";
   const minWidth = resultsTableMinWidth(columns, isGrouped);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [edgeShadows, setEdgeShadows] =
@@ -4948,6 +4906,7 @@ function ResultsGroupByControl({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="none">None</SelectItem>
           <SelectItem value="variation">Variations</SelectItem>
           <SelectItem value="segment">Segments</SelectItem>
         </SelectContent>
@@ -5328,7 +5287,6 @@ export default function ResultsTab({
             }}
           />
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
-          <ReportViewBar campaignId={campaign.id} />
           {compareMode ? (
             <>
               <ResultsFilterPanel
@@ -5385,6 +5343,9 @@ export default function ResultsTab({
                     variantName={best.name}
                     embedded
                   />
+                </div>
+                <div className="border-b border-border px-4 pt-1">
+                  <ReportViewBar campaignId={campaign.id} />
                 </div>
                 {isStatisticsPreset ? (
                   <StatisticsPresetEmptyState metricName={selectedMetric} />

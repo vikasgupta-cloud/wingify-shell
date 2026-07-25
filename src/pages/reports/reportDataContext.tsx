@@ -18,7 +18,7 @@ import {
 import {
   REPORT_PRESET_IDS,
   useActiveReportPresetId,
-  useActiveReportPresetState,
+  useCampaignSharedFilters,
   useReportViewsStore,
 } from "../../store/reportViews";
 import { campaignReportDateRange } from "./reportCampaignDefaults";
@@ -232,7 +232,10 @@ export function ReportDataProvider({
   children: ReactNode;
 }) {
   const initCampaign = useReportViewsStore((s) => s.initCampaign);
-  const viewState = useActiveReportPresetState(campaign.id);
+  const sharedFilters = useCampaignSharedFilters(campaign.id);
+  const selectedMetricFromUi = useReportViewsStore(
+    (s) => s.uiByCampaign[campaign.id]?.selectedMetric
+  );
   const activePresetId = useActiveReportPresetId(campaign.id);
 
   useLayoutEffect(() => {
@@ -251,12 +254,12 @@ export function ReportDataProvider({
 
   const value = useMemo<ReportData>(() => {
     const filters: ReportFilterContext = {
-      segments: viewState.segments,
-      dimensions: viewState.dimensions,
-      dateRange: viewState.dateRange,
+      segments: sharedFilters.segments,
+      dimensions: sharedFilters.dimensions,
+      dateRange: sharedFilters.dateRange,
     };
     const selectedMetric =
-      viewState.selectedMetric || campaign.primaryMetric;
+      selectedMetricFromUi || campaign.primaryMetric;
     const dataMode: ReportDataMode =
       activePresetId === REPORT_PRESET_IDS.sessions ? "sessions" : "visitors";
 
@@ -324,10 +327,10 @@ export function ReportDataProvider({
     };
   }, [
     campaign,
-    viewState.segments,
-    viewState.dimensions,
-    viewState.dateRange,
-    viewState.selectedMetric,
+    sharedFilters.segments,
+    sharedFilters.dimensions,
+    sharedFilters.dateRange,
+    selectedMetricFromUi,
     activePresetId,
   ]);
 

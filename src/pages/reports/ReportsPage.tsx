@@ -25,6 +25,8 @@ import { ReportDataProvider, useReportData } from "./reportDataContext";
 import ResultsTab from "./ResultsTab";
 import VitalsTab from "./VitalsTab";
 import vwoMark from "./vwo-mark.svg";
+import WandzPanel from "../../components/wandz/WandzPanel";
+import { useWandzStore } from "../../store/wandz";
 
 // ---------------------------------------------------------------------------
 // Overview UI — numbers always come from ReportDataProvider (one reactive source).
@@ -666,6 +668,8 @@ function ReportsChrome({
   tabsBarHeight: string;
 }) {
   const { campaign, overview } = useReportData();
+  const wandzOpen = useWandzStore((s) => s.open);
+  const wandzFullPreview = useWandzStore((s) => s.fullPreview);
 
   return (
     <div
@@ -706,32 +710,53 @@ function ReportsChrome({
           </div>
         </div>
 
-        <TabsContent value="overview" className="mt-0 flex-1 focus-visible:outline-none">
-          <ReportsOverview
-            onViewFullStats={() => setActiveTab("results")}
-            onViewVitalsDetails={() => setActiveTab("vitals")}
-          />
-        </TabsContent>
-        <TabsContent value="results" className="mt-0 flex-1 focus-visible:outline-none">
-          <ResultsTab
-            key={campaign.id}
-            campaign={campaign}
-            onNavigateToVitals={() => setActiveTab("vitals")}
-          />
-        </TabsContent>
-        <TabsContent value="behaviour" className="mt-0 flex-1 focus-visible:outline-none">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Behaviour coming soon.
+        <div className="flex min-h-0 min-w-0 flex-1 items-start">
+          <div className="min-w-0 flex-1">
+            <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+              <ReportsOverview
+                onViewFullStats={() => setActiveTab("results")}
+                onViewVitalsDetails={() => setActiveTab("vitals")}
+              />
+            </TabsContent>
+            <TabsContent value="results" className="mt-0 focus-visible:outline-none">
+              <ResultsTab
+                key={campaign.id}
+                campaign={campaign}
+                onNavigateToVitals={() => setActiveTab("vitals")}
+              />
+            </TabsContent>
+            <TabsContent value="behaviour" className="mt-0 focus-visible:outline-none">
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                Behaviour coming soon.
+              </div>
+            </TabsContent>
+            <TabsContent value="live-hits" className="mt-0 focus-visible:outline-none">
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                Live hits coming soon.
+              </div>
+            </TabsContent>
+            <TabsContent
+              value="vitals"
+              className="mt-0 bg-background focus-visible:outline-none"
+            >
+              <VitalsTab key={campaign.id} campaign={campaign} />
+            </TabsContent>
           </div>
-        </TabsContent>
-        <TabsContent value="live-hits" className="mt-0 flex-1 focus-visible:outline-none">
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-            Live hits coming soon.
-          </div>
-        </TabsContent>
-        <TabsContent value="vitals" className="mt-0 flex-1 bg-background focus-visible:outline-none">
-          <VitalsTab key={campaign.id} campaign={campaign} />
-        </TabsContent>
+          {wandzOpen && wandzFullPreview ? <WandzPanel /> : null}
+          {wandzOpen && !wandzFullPreview ? (
+            <div
+              className="sticky z-30 shrink-0 self-start pl-2 pr-4"
+              style={
+                {
+                  top: "calc(var(--reports-tabs-height) + 1rem)",
+                } as CSSProperties
+              }
+            >
+              {/* static: outer wrapper owns sticky; panel measures its own max height. */}
+              <WandzPanel className="static top-auto" />
+            </div>
+          ) : null}
+        </div>
       </Tabs>
     </div>
   );
