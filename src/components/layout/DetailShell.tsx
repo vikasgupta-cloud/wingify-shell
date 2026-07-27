@@ -203,16 +203,23 @@ function SaveButton({ entityId }: { entityId?: string }) {
   const dirty = useIsConfigDirty(entityId ?? "");
   const save = useConfigStore((s) => s.save);
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      disabled={!dirty}
-      onClick={() => entityId && save(entityId)}
-      className="transition-opacity duration-200"
-    >
-      <Save className="h-4 w-4" />
-      Save
-    </Button>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!dirty}
+            aria-label="Save"
+            onClick={() => entityId && save(entityId)}
+            className="h-8 w-8 transition-opacity duration-200"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Save</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -451,9 +458,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex shrink-0 flex-col bg-background">
-        {/* Row 1: breadcrumb (left) + actions (right) */}
-        <div className="flex h-14 items-center justify-between gap-4 px-4">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <button
             type="button"
@@ -630,23 +635,24 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           </div>
         </div>
 
-        {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
-            the list pages only. Status + kebab need a real campaign. */}
-        <div className="flex shrink-0 items-center gap-2">
-          <SaveButton entityId={entityId} />
-          {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
-          {campaign && <KebabMenu campaign={campaign} />}
-        </div>
-        </div>
-
-        {/* Row 2: Configure/Reports tabs on their own line, centered, with the
-            border-b acting as the baseline the active tab's underline touches. */}
-        <div className="flex justify-center border-b border-border px-4">
+        {/* Center switcher: Configure/Reports tabs bottom-aligned to the bar so
+            the active underline sits on the header's own bottom border. Middle
+            column of the three-column bar → stays centered while the breadcrumb
+            truncates in its own column. */}
+        <div className="flex shrink-0 items-end justify-center self-stretch">
           <SurfaceTabs
             basePath={basePath}
             entityId={entityId}
             showViewToggle={Boolean(campaign) && !pathname.endsWith("/reports")}
           />
+        </div>
+
+        {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
+            the list pages only. Status + kebab need a real campaign. */}
+        <div className="flex flex-1 items-center justify-end gap-2">
+          <SaveButton entityId={entityId} />
+          {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
+          {campaign && <KebabMenu campaign={campaign} />}
         </div>
       </header>
 
