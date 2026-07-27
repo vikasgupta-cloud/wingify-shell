@@ -130,17 +130,6 @@ function formatDayLabel(d: Date) {
   return `${MONTHS[d.getUTCMonth()]} ${day}, ${d.getUTCFullYear()}`;
 }
 
-/** Sidebar order for quick ranges (Custom is rendered separately). */
-const PRESET_ORDER = [
-  "today",
-  "yesterday",
-  "last-7",
-  "last-14",
-  "last-15",
-  "last-30",
-  "campaign",
-] as const;
-
 /** Inline filter-bar presets shown before the custom range picker. */
 const FILTER_BAR_PRESET_IDS = [
   "today",
@@ -181,21 +170,6 @@ function matchPreset(
   );
 }
 
-function orderPresets(presets: DateRange[]): DateRange[] {
-  const byId = new Map(presets.map((p) => [p.id, p]));
-  const ordered: DateRange[] = [];
-  for (const id of PRESET_ORDER) {
-    const preset = byId.get(id);
-    if (preset) ordered.push(preset);
-  }
-  for (const preset of presets) {
-    if (!PRESET_ORDER.includes(preset.id as (typeof PRESET_ORDER)[number])) {
-      ordered.push(preset);
-    }
-  }
-  return ordered;
-}
-
 function toDraftRange(range: DateRange): DayPickerRange {
   return { from: toPickerDay(range.from), to: toPickerDay(range.to) };
 }
@@ -224,7 +198,6 @@ export default function DateRangeDropdown({
     () => presets.find((p) => p.id === defaultPresetId) ?? presets[0],
     [presets, defaultPresetId]
   );
-  const sidebarPresets = useMemo(() => orderPresets(presets), [presets]);
   const filterBarPresets = useMemo(() => {
     const byId = new Map(presets.map((p) => [p.id, p]));
     return FILTER_BAR_PRESET_IDS.flatMap((id) => {
@@ -244,13 +217,11 @@ export default function DateRangeDropdown({
   const [draft, setDraft] = useState<DayPickerRange>(() =>
     toDraftRange(selected)
   );
-  const [draftPresetId, setDraftPresetId] = useState(selected.id);
   const [month, setMonth] = useState(() => toPickerDay(selected.to));
 
   useEffect(() => {
     if (!open) return;
     setDraft(toDraftRange(selected));
-    setDraftPresetId(selected.id);
     setMonth(toPickerDay(selected.to));
   }, [open, selected]);
 
@@ -266,7 +237,6 @@ export default function DateRangeDropdown({
       ? fromPickerDay(draft.from)
       : null;
   const canApply = draftFrom !== null && draftTo !== null;
-  const isCustomMode = draftPresetId === CUSTOM_RANGE_ID;
 
   const applyDraft = () => {
     if (!draftFrom || !draftTo) return;
@@ -289,126 +259,63 @@ export default function DateRangeDropdown({
     setOpen(false);
   };
 
-  const enterCustomMode = () => {
-    setDraftPresetId(CUSTOM_RANGE_ID);
-  };
-
   const onCalendarSelect = (range: DayPickerRange | undefined) => {
     if (!range?.from) {
       setDraft({ from: undefined, to: undefined });
-      setDraftPresetId(CUSTOM_RANGE_ID);
       return;
     }
     setDraft(range);
-    if (range.from && range.to) {
-      const from = fromPickerDay(range.from);
-      const to = fromPickerDay(range.to);
-      const matched = matchPreset(presets, from, to);
-      setDraftPresetId(matched?.id ?? CUSTOM_RANGE_ID);
-    } else {
-      setDraftPresetId(CUSTOM_RANGE_ID);
-    }
   };
 
+  // Calendar-only picker — quick ranges live on the filter bar outside.
   const pickerPanel = (
     <PopoverContent
       align="start"
       className="w-auto max-w-[calc(100vw-2rem)] p-0"
     >
-      <div className="flex flex-col sm:flex-row">
-        {/* Presets — GA / Mixpanel style sidebar */}
-        <div className="flex w-full shrink-0 flex-col border-b border-border sm:w-[168px] sm:border-b-0 sm:border-r">
-          <p className="px-3 pb-1 pt-3 text-xs font-medium text-muted-foreground">
-            Quick ranges
-          </p>
-          <ul
-            role="listbox"
-            aria-label="Date range presets"
-            className="flex flex-row gap-0.5 overflow-x-auto p-1.5 sm:flex-col sm:overflow-visible"
-          >
-            {sidebarPresets.map((preset) => {
-              const active = !isCustomMode && draftPresetId === preset.id;
-              return (
-                <li key={preset.id} className="shrink-0 sm:shrink">
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    className={cn(
-                      "w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                      active && "bg-accent font-medium text-foreground"
-                    )}
-                    onClick={() => selectPreset(preset)}
-                  >
-                    {preset.label}
-                  </button>
-                </li>
-              );
-            })}
-            <li className="shrink-0 sm:shrink">
-              <button
-                type="button"
-                role="option"
-                aria-selected={isCustomMode}
-                className={cn(
-                  "w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                  isCustomMode && "bg-accent font-medium text-foreground"
-                )}
-                onClick={enterCustomMode}
-              >
-                Custom
-              </button>
-            </li>
-          </ul>
+      <div className="flex min-w-0 flex-col">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Selected range</p>
+            <p className="truncate text-sm font-medium text-foreground">
+              {draftFrom && draftTo
+                ? `${formatDayLabel(draftFrom)} – ${formatDayLabel(draftTo)}`
+                : draftFrom
+                  ? `${formatDayLabel(draftFrom)} – …`
+                  : "Pick a start date"}
+            </p>
+          </div>
         </div>
 
-        {/* Dual-month calendar */}
-        <div className="flex min-w-0 flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Selected range</p>
-              <p className="truncate text-sm font-medium text-foreground">
-                {draftFrom && draftTo
-                  ? `${formatDayLabel(draftFrom)} – ${formatDayLabel(draftTo)}`
-                  : draftFrom
-                    ? `${formatDayLabel(draftFrom)} – …`
-                    : "Pick a start date"}
-              </p>
-            </div>
-          </div>
+        <Calendar
+          mode="range"
+          numberOfMonths={2}
+          month={month}
+          onMonthChange={setMonth}
+          selected={draft}
+          onSelect={onCalendarSelect}
+          defaultMonth={toPickerDay(selected.to)}
+          className="p-3"
+        />
 
-          <Calendar
-            mode="range"
-            numberOfMonths={2}
-            month={month}
-            onMonthChange={setMonth}
-            selected={draft}
-            onSelect={onCalendarSelect}
-            defaultMonth={toPickerDay(selected.to)}
-            className="p-3"
-          />
+        <Separator />
 
-          <Separator />
-
-          {isCustomMode && (
-            <div className="flex items-center justify-end gap-2 px-3 py-2.5">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                disabled={!canApply}
-                onClick={applyDraft}
-                className="rounded-md px-5 shadow"
-              >
-                Apply
-              </Button>
-            </div>
-          )}
+        <div className="flex items-center justify-end gap-2 px-3 py-2.5">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={!canApply}
+            onClick={applyDraft}
+            className="rounded-md px-5 shadow"
+          >
+            Apply
+          </Button>
         </div>
       </div>
     </PopoverContent>

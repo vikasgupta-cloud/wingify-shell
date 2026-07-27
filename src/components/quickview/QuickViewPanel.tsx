@@ -16,14 +16,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  allVariationsDisabled,
   campaignBestVariant,
-  CONCLUSION_MIN_CONVERSIONS,
-  CONCLUSION_MIN_RUNTIME_DAYS,
-  CONCLUSION_MIN_VISITORS,
+  campaignBestVariantIndex,
+  COLLECT_MIN_CONVERSIONS,
+  COLLECT_MIN_VISITORS,
   conclusionKind,
-  conclusionTitle,
   hasDeclaredWinner,
+  reportFiltersActive,
+  variationCollecting,
 } from "../../data/campaignConclusion";
+import { conclusionCopy } from "../../data/conclusionCopy";
+import ConclusionStateIcon from "../reports/ConclusionStateIcon";
+import type { ReportFilterContext } from "../../pages/reports/reportFilters";
 import {
   hasReport,
   type Campaign,
@@ -95,19 +100,60 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ConclusionCard({ campaign }: { campaign: Campaign }) {
+/** Quick view applies no segment/dimension filters of its own. */
+const QUICKVIEW_FILTERS: ReportFilterContext = {
+  segments: [],
+  dimensions: [],
+  dateRange: { id: "campaign", label: "", from: "", to: "" },
+};
+
+/** Animated-dots "Collecting data" inline glyph, reusing the shared icon. */
+function CollectingInline() {
+  return (
+    <span className="inline-flex items-center gap-2 text-muted-foreground">
+      <ConclusionStateIcon kind="collecting" size={14} />
+      <span className="text-sm">Collecting data</span>
+    </span>
+  );
+}
+
+/** Grayscale info card for the report-only override states. */
+function InfoCard({ body }: { body: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border p-4">
+      <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+      <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
+/** Header shared by collecting / progress cards — state icon + map title. */
+function StateCardHeader({
+  kind,
+  title,
+  body,
+}: {
+  kind: "collecting" | "progress";
+  title?: string;
+  body: string;
+}) {
+  return (
+    <>
+      <div className="flex items-center gap-2.5">
+        <ConclusionStateIcon kind={kind} size={18} />
+        <div className="text-xl font-semibold text-foreground">{title}</div>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+    </>
+  );
+}
+
+function CollectingCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
-  const title = conclusionTitle(campaign);
-  const kind = conclusionKind(campaign);
-  const collecting = kind === "collecting";
+  const { title, body } = conclusionCopy("collecting");
   return (
     <div className="rounded-lg border border-border p-4">
-      <div className="text-xl font-semibold text-foreground">{title}</div>
-      {collecting ? (
-        <p className="mt-1 text-sm text-muted-foreground">
-          Too early for a conclusion. Wait for the minimum runtime and sample.
-        </p>
-      ) : null}
+      <StateCardHeader kind="collecting" title={title} body={body} />
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
         {campaign.startedOn && <span>Started on : {formatDate(campaign.startedOn)}</span>}
         {r.estimatedEndDate && (
@@ -116,64 +162,106 @@ function ConclusionCard({ campaign }: { campaign: Campaign }) {
       </div>
       <div className="mt-4 grid grid-cols-3 gap-4">
         <ConclusionStat
-          label={collecting ? "Minimum duration" : "Duration"}
+          label="Duration"
           achieved={`${r.elapsedDays}`}
-          rest={
-            collecting
-              ? `/ ${CONCLUSION_MIN_RUNTIME_DAYS} days`
-              : `/ ${r.requiredDays} days`
-          }
+          rest={r.elapsedDays === 1 ? "day" : "days"}
         />
         <ConclusionStat
-          label={collecting ? "Minimum unique visitors" : "Unique visitors"}
+          label="Minimum unique visitors"
           achieved={formatNumber(campaign.visitors)}
-          rest={
-            collecting
-              ? `/ ${formatNumber(CONCLUSION_MIN_VISITORS)}`
-              : `/ ${formatNumber(r.requiredVisitors)} required`
-          }
+          rest={`/ ${formatNumber(COLLECT_MIN_VISITORS)}`}
         />
         <ConclusionStat
-          label={collecting ? "Minimum conversions" : "Conversions"}
+          label="Minimum conversions"
           info
           achieved={formatNumber(campaign.uniqueConversions)}
-          rest={
-            collecting
-              ? `/ ${formatNumber(CONCLUSION_MIN_CONVERSIONS)}`
-              : `/ ${formatNumber(r.requiredConversions)} required`
-          }
+          rest={`/ ${formatNumber(COLLECT_MIN_CONVERSIONS)}`}
         />
       </div>
     </div>
   );
 }
 
-function ResultsCard({ campaign }: { campaign: Campaign }) {
+function ProgressCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
-  const dec = campaign.decision;
+  const remainingDays = Math.max(0, r.requiredDays - r.elapsedDays);
+  const { title, body } = conclusionCopy("progress", { days: remainingDays });
+  return (
+    <div className="rounded-lg border border-border p-4">
+      <StateCardHeader kind="progress" title={title} body={body} />
+      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        {campaign.startedOn && <span>Started on : {formatDate(campaign.startedOn)}</span>}
+        {r.estimatedEndDate && (
+          <span>Estimated end date : {formatDate(r.estimatedEndDate)}</span>
+        )}
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-4">
+        <ConclusionStat
+          label="Duration"
+          achieved={`${r.elapsedDays}`}
+          rest={`/ ${r.requiredDays} days`}
+        />
+        <ConclusionStat
+          label="Unique visitors"
+          achieved={formatNumber(campaign.visitors)}
+          rest={`/ ${formatNumber(r.requiredVisitors)} required`}
+        />
+        <ConclusionStat
+          label="Conversions"
+          info
+          achieved={formatNumber(campaign.uniqueConversions)}
+          rest={`/ ${formatNumber(r.requiredConversions)} required`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DecidedCard({
+  campaign,
+  kind,
+}: {
+  campaign: Campaign;
+  kind: "winner" | "baseline" | "inconclusive";
+}) {
+  const r = campaign.report;
   const best = campaignBestVariant(campaign);
+  const control = r.variants[0]!;
+  const bestCollecting = variationCollecting(campaign, campaignBestVariantIndex(campaign));
+
+  const { title, body } = conclusionCopy(kind, {
+    variation: best.name,
+    control: control.name,
+  });
 
   const confidence = best.confidence;
   const uplift = best.uplift;
+  const isWinner = kind === "winner";
 
   return (
     <div className="space-y-4 rounded-lg border border-border p-4">
-      {/* Header row */}
+      {/* State header — map copy + shared icon */}
+      <div className="flex items-start gap-2.5">
+        <ConclusionStateIcon kind={kind} size={18} />
+        <div className="min-w-0 space-y-1">
+          <div className="text-base font-semibold text-foreground">{title}</div>
+          <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+        </div>
+      </div>
+
+      {/* Best/pick variant row — winner is the only one with the badge */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground">
           {best.label}
         </span>
         <span className="text-base font-medium text-foreground">{best.name}</span>
-        {hasDeclaredWinner(dec) && (
+        {isWinner && (
           <span className="inline-flex items-center gap-1 rounded-full bg-success-fg/10 px-2 py-0.5 text-xs font-medium text-success-fg">
             <Award className="h-3 w-3" />
             Best performer
           </span>
         )}
       </div>
-      {dec === "Inconclusive" && (
-        <div className="text-sm text-muted-foreground">No clear winner</div>
-      )}
 
       {/* Primary metric */}
       <div>
@@ -188,7 +276,11 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
       {/* Uplift */}
       <div>
         <div className="text-sm text-muted-foreground">Uplift</div>
-        {uplift === null ? (
+        {bestCollecting ? (
+          <div className="mt-1">
+            <CollectingInline />
+          </div>
+        ) : uplift === null ? (
           <div className="text-2xl font-semibold text-muted-foreground">No improvement</div>
         ) : (
           <div
@@ -205,6 +297,11 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
       {/* Confidence */}
       <div>
         <div className="text-sm text-muted-foreground">Confidence</div>
+        {bestCollecting ? (
+          <div className="mt-1">
+            <CollectingInline />
+          </div>
+        ) : (
         <div className="mt-1 flex items-center gap-3">
           <span
             className={cn(
@@ -237,6 +334,7 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Other metrics */}
@@ -279,6 +377,24 @@ function ResultsCard({ campaign }: { campaign: Campaign }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Top card — mirrors the report banner precedence exactly:
+ * allDisabled > filtersActive > conclusion.kind. Quick view applies no filters,
+ * so filtersActive is wired through the same helper but is effectively false.
+ */
+function ConclusionStateCard({ campaign }: { campaign: Campaign }) {
+  if (allVariationsDisabled(campaign)) {
+    return <InfoCard body={conclusionCopy("allDisabled").body} />;
+  }
+  if (reportFiltersActive(QUICKVIEW_FILTERS)) {
+    return <InfoCard body={conclusionCopy("filtersApplied").body} />;
+  }
+  const kind = conclusionKind(campaign);
+  if (kind === "collecting") return <CollectingCard campaign={campaign} />;
+  if (kind === "progress") return <ProgressCard campaign={campaign} />;
+  return <DecidedCard campaign={campaign} kind={kind} />;
 }
 
 export default function QuickViewPanel() {
@@ -362,12 +478,8 @@ export default function QuickViewPanel() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* A) Top card — conclusion or results, by decision */}
-            {campaign.decision === "No decision" ? (
-              <ConclusionCard campaign={campaign} />
-            ) : (
-              <ResultsCard campaign={campaign} />
-            )}
+            {/* A) Top card — kind-driven, mirrors report banner precedence */}
+            <ConclusionStateCard campaign={campaign} />
 
             {/* TODO variants section — next prompt */}
 

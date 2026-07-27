@@ -108,6 +108,15 @@ import { SegmentsSelector } from "./SegmentsDrawer";
 import { filterMetricSeedSuffix, type ReportFilterContext } from "./reportFilters";
 import { useReportData } from "./reportDataContext";
 import type { ReportConclusionSnapshot } from "./reportDataContext";
+import ConclusionStateIcon from "@/components/reports/ConclusionStateIcon";
+import { conclusionCopy } from "../../data/conclusionCopy";
+import {
+  COLLECT_MIN_CONVERSIONS,
+  COLLECT_MIN_VISITORS,
+  allVariationsDisabled,
+  reportFiltersActive,
+  variationCollecting,
+} from "../../data/campaignConclusion";
 import {
   formatNumber,
   hashMetricSeed,
@@ -125,27 +134,27 @@ const RESULTS_TABLE_COLUMN_META: Record<
   { label: string; gridWidth: string; minWidthPx: number }
 > = {
   "unique-conversions": {
-    label: "Unique conversions",
+    label: "Conversions (v)",
     gridWidth: "minmax(152px, 1fr)",
     minWidthPx: 152,
   },
   "total-visitors": {
-    label: "Total visitors",
+    label: "Visitors",
     gridWidth: "minmax(132px, 1fr)",
     minWidthPx: 132,
   },
   "expected-improvement": {
-    label: "Expected improvement(v)",
+    label: "Improvement % (v)",
     gridWidth: "minmax(200px, 1.2fr)",
     minWidthPx: 200,
   },
   probability: {
-    label: "Probability of Better or Equivalent (v)",
-    gridWidth: "minmax(320px, 1.5fr)",
-    minWidthPx: 320,
+    label: "Probability to be Better",
+    gridWidth: "minmax(280px, 1.5fr)",
+    minWidthPx: 280,
   },
   "conversion-rate": {
-    label: "Conversion rate",
+    label: "Conversion Rate (v)",
     gridWidth: "minmax(148px, 1fr)",
     minWidthPx: 148,
   },
@@ -153,6 +162,46 @@ const RESULTS_TABLE_COLUMN_META: Record<
     label: "Revenue per visitor",
     gridWidth: "minmax(184px, 1fr)",
     minWidthPx: 184,
+  },
+  "conversions-per-visitor": {
+    label: "Conversions Per Visitor",
+    gridWidth: "minmax(188px, 1fr)",
+    minWidthPx: 188,
+  },
+  "conversions-per-visitor-improvement": {
+    label: "Conversions Per Visitor Improvement %",
+    gridWidth: "minmax(260px, 1.2fr)",
+    minWidthPx: 260,
+  },
+  "conversion-gain": {
+    label: "Conversion Gain (v)",
+    gridWidth: "minmax(168px, 1fr)",
+    minWidthPx: 168,
+  },
+  "traffic-split": {
+    label: "Traffic Split %",
+    gridWidth: "minmax(140px, 1fr)",
+    minWidthPx: 140,
+  },
+  "total-conversions-sessions": {
+    label: "Total Conversions (s)",
+    gridWidth: "minmax(176px, 1fr)",
+    minWidthPx: 176,
+  },
+  sessions: {
+    label: "Sessions",
+    gridWidth: "minmax(120px, 1fr)",
+    minWidthPx: 120,
+  },
+  "conversion-rate-sessions": {
+    label: "Conversion Rate (s)",
+    gridWidth: "minmax(156px, 1fr)",
+    minWidthPx: 156,
+  },
+  "improvement-sessions": {
+    label: "Improvement % (s)",
+    gridWidth: "minmax(156px, 1fr)",
+    minWidthPx: 156,
   },
 };
 
@@ -542,7 +591,7 @@ function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
     <div
       className={cn(
         filterPanelRowClass,
-        "border-t border-border",
+        "border-t border-surface-border",
         filterPanelInsetClass
       )}
     >
@@ -575,6 +624,123 @@ function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
   );
 }
 
+/* @undo Kept for reference — applied filters now live only in ResultsFilterPanel.
+function RemovableFilterChip({
+  icon,
+  label,
+  onRemove,
+}: {
+  icon: ReactNode;
+  label: string;
+  onRemove: () => void;
+}) {
+  return (
+    <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-md border border-border bg-background pl-2 pr-1 text-xs text-foreground">
+      {icon}
+      <span className="max-w-[160px] truncate">{label}</span>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${label}`}
+        className="flex h-3.5 w-3.5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <X className="h-3 w-3" aria-hidden />
+      </button>
+    </span>
+  );
+}
+
+// Inline summary of every applied filter — date (when not the default campaign
+// range), segments, and dimensions — each individually removable, plus a Clear
+// all. Rendered next to the "not applicable on filtered data" banner so the
+// filters suppressing the conclusion are always visible and clearable from the
+// same spot; clearing them all makes the banner disappear. Self-hides when no
+// filter is applied.
+function AppliedFiltersInline({ campaignId }: { campaignId: string }) {
+  const { dateRange, segments, dimensions } =
+    useCampaignSharedFilters(campaignId);
+  const updateSharedFilters = useReportViewsStore((s) => s.updateSharedFilters);
+  const dateApplied = dateRange.id !== REPORT_BASE_FILTERS.dateRange.id;
+
+  if (!dateApplied && segments.length === 0 && dimensions.length === 0) {
+    return null;
+  }
+
+  const resetDate = () =>
+    updateSharedFilters(campaignId, {
+      dateRange: { ...REPORT_BASE_FILTERS.dateRange },
+    });
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-medium text-muted-foreground">
+        Applied filters:
+      </span>
+      {dateApplied && (
+        <RemovableFilterChip
+          icon={
+            <CalendarRange
+              className="h-3 w-3 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+          }
+          label={dateRange.label}
+          onRemove={resetDate}
+        />
+      )}
+      {segments.map((name) => (
+        <RemovableFilterChip
+          key={`segment-${name}`}
+          icon={
+            <Compass
+              className="h-3 w-3 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+          }
+          label={name}
+          onRemove={() =>
+            updateSharedFilters(campaignId, {
+              segments: segments.filter((s) => s !== name),
+            })
+          }
+        />
+      ))}
+      {dimensions.map((name) => (
+        <RemovableFilterChip
+          key={`dimension-${name}`}
+          icon={
+            <Columns3
+              className="h-3 w-3 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+          }
+          label={name}
+          onRemove={() =>
+            updateSharedFilters(campaignId, {
+              dimensions: dimensions.filter((d) => d !== name),
+            })
+          }
+        />
+      ))}
+      <button
+        type="button"
+        onClick={() =>
+          updateSharedFilters(campaignId, {
+            segments: [],
+            dimensions: [],
+            dateRange: { ...REPORT_BASE_FILTERS.dateRange },
+          })
+        }
+        className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-foreground hover:underline"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden />
+        Clear all
+      </button>
+    </div>
+  );
+}
+*/
+
 function ResultsFilterPanel({
   campaignId,
   right,
@@ -604,129 +770,219 @@ function ResultsFilterPanel({
 // ---------------------------------------------------------------------------
 // Conclusion banner — mirrors listing / quickview decision
 
+/** One "current / target" stat used by the collecting + progress banners. */
+/** Compact label/value row used inside the progress conclusion info tooltip. */
+function ConclusionStatRow({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <span className="whitespace-nowrap text-sm text-muted-foreground">
+        {label}
+      </span>
+      <span className="whitespace-nowrap text-right text-sm tabular-nums">
+        <span className="font-semibold text-foreground">{value}</span>{" "}
+        <span className="text-muted-foreground">{sub}</span>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Small (i) trigger + light-surface tooltip, shared by the conclusion banners
+ * and the per-row "Collecting data" cell. Content is passed as children so each
+ * caller supplies its own copy; the shell (border / bg / padding) is uniform.
+ */
+function ConclusionInfoTooltip({
+  children,
+  label = "More information",
+  iconSize = 16,
+  contentClassName,
+}: {
+  children: ReactNode;
+  label?: string;
+  iconSize?: number;
+  contentClassName?: string;
+}) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={label}
+            className="inline-flex shrink-0 align-middle text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Info style={{ width: iconSize, height: iconSize }} aria-hidden />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="bottom"
+          align="start"
+          sideOffset={8}
+          className={cn(
+            "w-80 rounded-lg border border-border bg-background p-0 text-left text-foreground shadow-lg",
+            contentClassName
+          )}
+        >
+          {children}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function ConclusionBanner({
   conclusion,
   variantName,
+  controlName,
   embedded,
 }: {
   conclusion: ReportConclusionSnapshot;
   variantName: string;
+  controlName: string;
   /** When true, sits inside the results/table card (no outer border/radius). */
   embedded?: boolean;
 }) {
-  const { kind, title, progress } = conclusion;
+  const { kind, progress, filtersActive, allDisabled } = conclusion;
   const shell = embedded
     ? "bg-background"
     : "overflow-hidden rounded-lg border border-border bg-background shadow-sm";
 
+  // Report-only override info banners — grayscale, Info icon.
+  // Precedence: allDisabled > filtersActive > kind.
+  if (allDisabled || filtersActive) {
+    const body = allDisabled
+      ? conclusionCopy("allDisabled").body
+      : conclusionCopy("filtersApplied").body;
+    return (
+      <div className={cn(shell, "px-6 py-5")}>
+        <div className="flex items-start gap-3">
+          <Info
+            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+          <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+        </div>
+        {/* @undo Applied filters chips moved to the top ResultsFilterPanel.
+        {filtersActive && (
+          <div className="mt-3 pl-7">
+            <AppliedFiltersInline campaignId={campaignId} />
+          </div>
+        )}
+        */}
+      </div>
+    );
+  }
+
+  const remainingDays = Math.max(
+    0,
+    progress.requiredDays - progress.elapsedDays
+  );
+  const { title, body } = conclusionCopy(kind, {
+    variation: variantName,
+    control: controlName,
+    days: remainingDays,
+  });
+
+  // Collecting — no stats shown: those figures (duration / progress toward the
+  // thresholds) only become meaningful once the sample thresholds are met, so
+  // instead of the stat trio we surface an info tooltip explaining when duration
+  // and recommendations appear.
   if (kind === "collecting") {
     return (
       <div className={cn(shell, "px-8 py-6")}>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Too early for a conclusion. Wait for the minimum runtime and sample.
-        </p>
-        <div className="mt-6 grid grid-cols-3 gap-x-10 gap-y-4">
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Minimum duration</div>
-            <div className="mt-2 tabular-nums">
-              <span className="text-base font-semibold text-foreground">
-                {progress.elapsedDays}
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                / {progress.minRuntimeDays} days
-              </span>
-            </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Minimum unique visitors</div>
-            <div className="mt-2 tabular-nums">
-              <span className="text-base font-semibold text-foreground">
-                {formatNumber(progress.visitors)}
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                / {formatNumber(progress.minVisitors)}
-              </span>
-            </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Minimum conversions</div>
-            <div className="mt-2 tabular-nums">
-              <span className="text-base font-semibold text-foreground">
-                {formatNumber(progress.uniqueConversions)}
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                / {formatNumber(progress.minConversions)}
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2.5">
+          <ConclusionStateIcon kind={kind} size={18} />
+          <p className="text-sm font-semibold text-foreground">{title}</p>
         </div>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {body}
+        </p>
       </div>
     );
   }
 
+  // Progress — the stat trio (Duration / visitors / conversions toward required
+  // targets) now lives behind an info tooltip beside the title, so the banner
+  // body stays to just the title + explanatory line.
   if (kind === "progress") {
     return (
       <div className={cn(shell, "px-6 py-4")}>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <div className="mt-3 grid grid-cols-3 gap-4">
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Duration</div>
-            <div className="mt-1 tabular-nums">
-              <span className="text-base font-semibold text-foreground">
-                {progress.elapsedDays}
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                / {progress.requiredDays} days
-              </span>
-            </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Unique visitors</div>
-            <div className="mt-1 tabular-nums">
-              <span className="text-base font-semibold text-foreground">
-                {formatNumber(progress.visitors)}
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                / {formatNumber(progress.requiredVisitors)} required
-              </span>
-            </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Conversions</div>
-            <div className="mt-1 tabular-nums">
-              <span className="text-base font-semibold text-foreground">
-                {formatNumber(progress.uniqueConversions)}
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                / {formatNumber(progress.requiredConversions)} required
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2.5">
+          <ConclusionStateIcon kind={kind} size={18} />
+          <p className="text-sm font-semibold text-foreground">{title}</p>
         </div>
-      </div>
-    );
-  }
-
-  if (kind === "inconclusive") {
-    return (
-      <div className={cn(shell, "flex items-center gap-3.5 px-6 py-4")}>
-        <p className="text-sm font-medium leading-snug text-muted-foreground">
-          No clear winner. Results are inconclusive across variations.
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+          {body}{" "}
+          <ConclusionInfoTooltip
+            label="How this conclusion is calculated"
+            contentClassName="w-[22rem]"
+          >
+            <div className="space-y-3 px-4 py-3.5">
+              <ConclusionStatRow
+                label="Duration"
+                value={String(progress.elapsedDays)}
+                sub={`/ ${progress.requiredDays} days`}
+              />
+              <ConclusionStatRow
+                label="Unique visitors"
+                value={formatNumber(progress.visitors)}
+                sub={`/ ${formatNumber(progress.requiredVisitors)} required`}
+              />
+              <ConclusionStatRow
+                label="Conversions"
+                value={formatNumber(progress.uniqueConversions)}
+                sub={`/ ${formatNumber(progress.requiredConversions)} required`}
+              />
+            </div>
+            <div className="border-t border-border px-4 py-3.5">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Duration has been estimated using statistical parameters.{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    /* stub — wiring to the calculation explainer comes later */
+                  }}
+                  className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
+                >
+                  See how it is calculated
+                </button>
+              </p>
+            </div>
+          </ConclusionInfoTooltip>
         </p>
       </div>
     );
   }
 
-  const decisionTail =
-    kind === "baseline"
-      ? "remains better or equivalent to every variation, the strongest choice to keep as baseline."
-      : "is better or equivalent to baseline and gives the highest improvement, the strongest choice to roll out.";
+  // Baseline + inconclusive — grayscale, single-line copy with state icon.
+  if (kind === "baseline" || kind === "inconclusive") {
+    return (
+      <div className={cn(shell, "flex items-start gap-3.5 px-6 py-5")}>
+        <ConclusionStateIcon kind={kind} size={18} />
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+        </div>
+      </div>
+    );
+  }
 
+  // Winner — keep the existing decision-accent treatment. "Rollout" in the body
+  // is a stub link (rollout flow wires up later); split around the word so the
+  // copy stays centralized in conclusionCopy.
+  const [rolloutPre, ...rolloutRest] = body.split("Rollout");
   return (
     <div
       className={cn(
-        "flex items-center gap-4 overflow-hidden bg-gradient-to-r from-report-green-badge/70 via-report-green-tint to-report-green-tint px-6 py-5",
+        "flex items-start gap-4 overflow-hidden bg-gradient-to-r from-report-green-badge/70 via-report-green-tint to-report-green-tint px-6 py-3.5",
         embedded
           ? "border-0"
           : "rounded-xl border border-report-green-border shadow-sm"
@@ -735,16 +991,34 @@ function ConclusionBanner({
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-report-green-border bg-background shadow-sm">
         <Award className="h-5 w-5 text-decision-winner-fg" aria-hidden />
       </span>
-      <p className="min-w-0 text-sm leading-relaxed text-foreground/80">
-        <span className="font-semibold text-foreground">{variantName}</span>{" "}
-        {decisionTail}
-      </p>
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-sm leading-relaxed text-foreground/80">
+          {rolloutRest.length === 0 ? (
+            body
+          ) : (
+            <>
+              {rolloutPre}
+              <button
+                type="button"
+                onClick={() => {
+                  /* stub — rollout flow wires up later */
+                }}
+                className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
+              >
+                Rollout
+              </button>
+              {rolloutRest.join("Rollout")}
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// View settings dialog
+// View settings dropdown (compact popover from the table-header gear)
 
 function SettingsHelp({ label }: { label: string }) {
   return (
@@ -766,293 +1040,350 @@ function SettingsHelp({ label }: { label: string }) {
   );
 }
 
-function LayoutOptionCard({
-  value,
-  selected,
-  title,
-  linesFirst,
+/* @undo Graphical LayoutOptionCard removed — layout is now simple radio options.
+function LayoutOptionCard(...) { ... }
+*/
+
+function ViewSettingsMenu({
+  settings,
+  onSettingsChange,
+  columns,
+  onColumnsChange,
+  rowDensity,
+  onRowDensityChange,
+  children,
 }: {
-  value: ResultsLayout;
-  selected: boolean;
-  title: string;
-  linesFirst: boolean;
+  settings: ReportViewSettings;
+  onSettingsChange: (settings: ReportViewSettings) => void;
+  columns: ResultsTableColumnId[];
+  onColumnsChange: (next: ResultsTableColumnId[]) => void;
+  rowDensity: ResultsRowDensity;
+  onRowDensityChange: (next: ResultsRowDensity) => void;
+  children: ReactNode;
 }) {
-  const tablePreview = (
-    <div className="grid grid-cols-5 gap-1.5">
-      {Array.from({ length: 10 }).map((_, index) => (
-        <span
-          key={index}
-          className={cn(
-            "h-2 rounded-sm",
-            index % 3 === 0 ? "bg-report-purple-bg" : "bg-muted"
-          )}
-        />
-      ))}
-    </div>
+  const [open, setOpen] = useState(false);
+  const viewSettingsOpenNonce = useReportViewsStore(
+    (s) => s.viewSettingsOpenNonce
   );
 
-  const graphPreview = (
-    <div className="rounded-md bg-report-purple-bg/60 px-2 py-2">
-      <svg viewBox="0 0 120 48" className="h-12 w-full">
-        <path
-          d={
-            linesFirst
-              ? "M4 36 L22 26 L38 32 L58 18 L78 22 L102 10"
-              : "M4 30 L22 34 L40 22 L58 26 L78 18 L102 12"
-          }
-          fill="none"
-          stroke="hsl(var(--report-brand))"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d={
-            linesFirst
-              ? "M4 24 L22 34 L40 28 L58 32 L78 24 L102 16"
-              : "M4 36 L22 24 L40 34 L58 20 L78 28 L102 22"
-          }
-          fill="none"
-          stroke="hsl(var(--report-purple-border))"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  );
+  useEffect(() => {
+    if (viewSettingsOpenNonce > 0) setOpen(true);
+  }, [viewSettingsOpenNonce]);
+
+  const patchSettings = (partial: Partial<ReportViewSettings>) =>
+    onSettingsChange({ ...settings, ...partial });
+
+  const restoreDefaults = () => {
+    onSettingsChange({ ...DEFAULT_REPORT_VIEW_SETTINGS });
+    onColumnsChange([...DEFAULT_RESULTS_TABLE_COLUMNS]);
+    onRowDensityChange("default");
+  };
 
   return (
-    <label
-      className={cn(
-        "flex cursor-pointer flex-col gap-3 rounded-lg border p-3 transition-colors",
-        selected
-          ? "border-report-brand shadow-[inset_0_0_0_1px_hsl(var(--report-brand))]"
-          : "border-border bg-muted/20 hover:border-muted-foreground/30"
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <RadioGroupItem value={value} />
-        <span className="text-sm font-medium text-foreground">{title}</span>
-      </div>
-      <div className="rounded-md border border-report-brand/35 bg-background p-2.5">
-        <div className="space-y-2">
-          {linesFirst ? (
-            <>
-              {graphPreview}
-              {tablePreview}
-            </>
-          ) : (
-            <>
-              {tablePreview}
-              {graphPreview}
-            </>
-          )}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        collisionPadding={16}
+        className="flex w-[min(360px,var(--radix-popover-content-available-width,calc(100vw-2rem)))] max-h-[min(560px,var(--radix-popover-content-available-height,70vh))] flex-col overflow-hidden p-0"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="shrink-0 border-b border-border bg-background px-4 py-3">
+          <p className="text-sm font-semibold text-foreground">View settings</p>
         </div>
-      </div>
-    </label>
+
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Row height
+              </p>
+              <div className="inline-flex items-center rounded-md bg-muted p-0.5">
+                {REPORT_ROW_DENSITIES.map((d) => (
+                  <button
+                    key={d.key}
+                    type="button"
+                    title={d.title}
+                    aria-label={`${d.title} row height`}
+                    onClick={() => onRowDensityChange(d.key)}
+                    className={cn(
+                      "rounded-[5px] px-2.5 py-0.5 text-xs transition-colors",
+                      rowDensity === d.key
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <TableColumnsOptions
+            columns={columns}
+            onColumnsChange={onColumnsChange}
+          />
+
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Bayesian ranges
+              </p>
+              <SettingsHelp label="Show Bayesian ranges next to absolute numbers." />
+            </div>
+            <label className="flex items-center gap-2.5">
+              <Checkbox
+                checked={settings.showExpectedConversionRateRange}
+                onCheckedChange={(checked) =>
+                  patchSettings({
+                    showExpectedConversionRateRange: checked === true,
+                  })
+                }
+              />
+              <span className="text-sm text-foreground">
+                Expected Conversion Rate
+              </span>
+            </label>
+            <label className="flex items-center gap-2.5">
+              <Checkbox
+                checked={settings.showExpectedImprovementRange}
+                onCheckedChange={(checked) =>
+                  patchSettings({
+                    showExpectedImprovementRange: checked === true,
+                  })
+                }
+              />
+              <span className="text-sm text-foreground">Expected Improvement</span>
+            </label>
+          </div>
+
+          <div className="space-y-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Other
+            </p>
+            <label className="flex items-center gap-2.5">
+              <Checkbox
+                checked={settings.showTotalRow}
+                onCheckedChange={(checked) =>
+                  patchSettings({ showTotalRow: checked === true })
+                }
+              />
+              <span className="flex items-center gap-1.5 text-sm text-foreground">
+                Show total row
+                <SettingsHelp label="Show the aggregate totals row at the bottom of the table." />
+              </span>
+            </label>
+            <label className="flex items-center gap-2.5">
+              <Checkbox
+                checked={settings.showDisabledVariationRows}
+                onCheckedChange={(checked) =>
+                  patchSettings({
+                    showDisabledVariationRows: checked === true,
+                  })
+                }
+              />
+              <span className="text-sm text-foreground">
+                Show disabled variations
+              </span>
+            </label>
+          </div>
+
+          <div className="h-px bg-border" />
+
+          <div className="space-y-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Layout
+            </p>
+            <RadioGroup
+              value={settings.layout}
+              onValueChange={(value) =>
+                patchSettings({ layout: value as ResultsLayout })
+              }
+              className="gap-2"
+            >
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <RadioGroupItem value="table-first" />
+                <span className="text-sm text-foreground">Table first</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <RadioGroupItem value="graphs-first" />
+                <span className="text-sm text-foreground">Graphs first</span>
+              </label>
+            </RadioGroup>
+          </div>
+
+          <div className="space-y-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Default graph
+            </p>
+            <RadioGroup
+              value={settings.defaultGraph}
+              onValueChange={(value) =>
+                patchSettings({ defaultGraph: value as ResultsGraphDefault })
+              }
+              className="gap-2"
+            >
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <RadioGroupItem value="date-range" />
+                <span className="text-sm text-foreground">Date Range</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <RadioGroupItem value="expected-conversion-rate" />
+                <span className="text-sm text-foreground">
+                  Expected Conversion Rate
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <RadioGroupItem value="expected-improvement" />
+                <span className="text-sm text-foreground">
+                  Expected Improvement
+                </span>
+              </label>
+              <label className="flex cursor-not-allowed items-center gap-2.5 opacity-45">
+                <RadioGroupItem value="funnel-graph" disabled />
+                <span className="text-sm text-foreground">Funnel Graph</span>
+              </label>
+            </RadioGroup>
+          </div>
+        </div>
+
+        <div className="shrink-0 border-t border-border bg-background px-4 py-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+            onClick={restoreDefaults}
+          >
+            Restore defaults
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
-function ViewSettingsDialog({
-  open,
-  onOpenChange,
-  settings,
-  onSave,
+function TableColumnsOptions({
+  columns,
+  onColumnsChange,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  settings: ReportViewSettings;
-  onSave: (settings: ReportViewSettings) => void;
+  columns: ResultsTableColumnId[];
+  onColumnsChange: (next: ResultsTableColumnId[]) => void;
 }) {
-  const [draft, setDraft] = useState(settings);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const available = RESULTS_TABLE_COLUMN_IDS.filter((id) => !columns.includes(id));
 
-  useEffect(() => {
-    if (open) setDraft(settings);
-  }, [open, settings]);
+  const endDrag = () => {
+    setDragIndex(null);
+    setDropIndex(null);
+  };
+
+  const toggleColumn = (id: ResultsTableColumnId) => {
+    if (columns.includes(id)) {
+      if (columns.length <= 1) return;
+      onColumnsChange(columns.filter((c) => c !== id));
+      return;
+    }
+    onColumnsChange([...columns, id]);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1006px] gap-0 overflow-hidden p-0">
-        <DialogHeader className="border-b border-border px-10 py-6">
-          <DialogTitle className="text-[18px] font-semibold text-foreground">
-            View Settings
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Configure the results report layout, graph, and table display options.
-          </DialogDescription>
-        </DialogHeader>
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Columns
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          title="Reset columns to default"
+          aria-label="Reset columns to default"
+          onClick={() => onColumnsChange([...DEFAULT_RESULTS_TABLE_COLUMNS])}
+          className="h-auto gap-1 px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="h-3 w-3" aria-hidden />
+          Reset
+        </Button>
+      </div>
 
-        <div className="grid gap-12 px-10 py-8 md:grid-cols-[1.05fr_1fr]">
-          <section className="space-y-8">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-[13px] font-semibold text-foreground">Layout options</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Report layout</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Select a layout order based on your preference
-                  </p>
-                </div>
-                <RadioGroup
-                  value={draft.layout}
-                  onValueChange={(value) =>
-                    setDraft((prev) => ({ ...prev, layout: value as ResultsLayout }))
-                  }
-                  className="grid grid-cols-2 gap-3"
-                >
-                  <LayoutOptionCard
-                    value="table-first"
-                    selected={draft.layout === "table-first"}
-                    title="Table first"
-                    linesFirst={false}
-                  />
-                  <LayoutOptionCard
-                    value="graphs-first"
-                    selected={draft.layout === "graphs-first"}
-                    title="Graphs first"
-                    linesFirst={true}
-                  />
-                </RadioGroup>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-foreground">Default graph</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Select the graph you want to see first on the report
-                </p>
-              </div>
-              <RadioGroup
-                value={draft.defaultGraph}
-                onValueChange={(value) =>
-                  setDraft((prev) => ({ ...prev, defaultGraph: value as ResultsGraphDefault }))
+      <div className="rounded-md border border-border bg-muted/30 p-1.5">
+        <div className="flex flex-col">
+          {columns.map((id, index) => (
+            <div
+              key={id}
+              draggable
+              onDragStart={(e) => {
+                setDragIndex(index);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragOver={(e) => {
+                if (dragIndex === null) return;
+                e.preventDefault();
+                setDropIndex(index);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragIndex !== null && dropIndex !== null) {
+                  onColumnsChange(
+                    reorderResultsColumns(columns, dragIndex, dropIndex)
+                  );
                 }
-                className="gap-4"
-              >
-                <label className="flex cursor-pointer items-center gap-3">
-                  <RadioGroupItem value="date-range" />
-                  <span className="text-sm text-foreground">Date Range</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-3">
-                  <RadioGroupItem value="expected-conversion-rate" />
-                  <span className="text-sm text-foreground">Expected Conversion Rate</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-3">
-                  <RadioGroupItem value="expected-improvement" />
-                  <span className="text-sm text-foreground">Expected Improvement</span>
-                </label>
-                <label className="flex cursor-not-allowed items-center gap-3 opacity-45">
-                  <RadioGroupItem value="funnel-graph" disabled />
-                  <span className="text-sm text-foreground">Funnel Graph</span>
-                </label>
-              </RadioGroup>
+                endDrag();
+              }}
+              onDragEnd={endDrag}
+              className={cn(
+                "relative flex cursor-grab items-center gap-2 rounded-sm px-1.5 py-1 text-sm hover:bg-background",
+                dragIndex === index && "opacity-50"
+              )}
+            >
+              {dragIndex !== null && dropIndex === index && (
+                <div className="pointer-events-none absolute inset-x-0 -top-px h-0.5 bg-foreground" />
+              )}
+              <Checkbox
+                checked
+                onCheckedChange={() => toggleColumn(id)}
+                className={REPORT_COLUMN_CHECKBOX_CLASS}
+              />
+              <span className="flex-1 truncate">
+                {RESULTS_TABLE_COLUMN_META[id].label}
+              </span>
+              <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             </div>
-          </section>
-
-          <section className="space-y-8">
-            <div className="space-y-4">
-              <h3 className="text-[13px] font-semibold text-foreground">Table options</h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-foreground">Bayesian ranges</p>
-                    <SettingsHelp label="Choose which rows display Bayesian ranges." />
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Select table items for which you want to see Bayesian ranges along with
-                    absolute numbers
-                  </p>
-                </div>
-                <label className="flex items-center gap-3">
-                  <Checkbox
-                    checked={draft.showExpectedConversionRateRange}
-                    onCheckedChange={(checked) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        showExpectedConversionRateRange: checked === true,
-                      }))
-                    }
-                  />
-                  <span className="text-sm text-foreground">Expected Conversion Rate</span>
-                </label>
-                <label className="flex items-center gap-3">
-                  <Checkbox
-                    checked={draft.showExpectedImprovementRange}
-                    onCheckedChange={(checked) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        showExpectedImprovementRange: checked === true,
-                      }))
-                    }
-                  />
-                  <span className="text-sm text-foreground">Expected Improvement</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-foreground">Other options</p>
-              <label className="flex items-center gap-3">
-                <Checkbox
-                  checked={draft.showTotalRow}
-                  onCheckedChange={(checked) =>
-                    setDraft((prev) => ({ ...prev, showTotalRow: checked === true }))
-                  }
-                />
-                <span className="flex items-center gap-1.5 text-sm text-foreground">
-                  Show 'total' row
-                  <SettingsHelp label="Show the aggregate totals row at the bottom of the table." />
-                </span>
-              </label>
-              <label className="flex items-center gap-3">
-                <Checkbox
-                  checked={draft.showDisabledVariationRows}
-                  onCheckedChange={(checked) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      showDisabledVariationRows: checked === true,
-                    }))
-                  }
-                />
-                <span className="text-sm text-foreground">
-                  Show rows for disabled variations
-                </span>
-              </label>
-            </div>
-          </section>
+          ))}
         </div>
 
-        <DialogFooter className="border-t border-border px-10 py-5 sm:justify-between sm:space-x-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setDraft(DEFAULT_REPORT_VIEW_SETTINGS)}
-          >
-            Restore Defaults
-          </Button>
-          <div className="flex items-center justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="border-report-brand text-report-brand hover:bg-report-brand-tint hover:text-report-brand-fg"
-              onClick={() => {
-                onSave(draft);
-                onOpenChange(false);
-              }}
-            >
-              Save
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {available.length > 0 ? (
+          <>
+            <div className="my-1.5 h-px bg-border" />
+            <p className="px-1.5 pb-0.5 text-[11px] font-medium text-muted-foreground">
+              Available
+            </p>
+            <div className="flex flex-col">
+              {available.map((id) => (
+                <label
+                  key={id}
+                  className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1 text-sm hover:bg-background"
+                >
+                  <Checkbox
+                    checked={false}
+                    onCheckedChange={() => toggleColumn(id)}
+                    className={REPORT_COLUMN_CHECKBOX_CLASS}
+                  />
+                  <span className="flex-1 truncate">
+                    {RESULTS_TABLE_COLUMN_META[id].label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -1112,17 +1443,20 @@ function StatConfigRow({
   valueBold?: boolean;
 }) {
   return (
-    <div className="flex items-baseline gap-1 text-sm leading-5">
+    <>
       <span className="text-muted-foreground">{label}</span>
       <span
         className={cn(
-          "ml-auto text-foreground",
+          "min-w-0 text-foreground",
           valueBold ? "font-semibold" : "font-medium"
         )}
       >
-        : {value}
+        <span className="select-none text-muted-foreground" aria-hidden>
+          :{" "}
+        </span>
+        {value}
       </span>
-    </div>
+    </>
   );
 }
 
@@ -1150,7 +1484,7 @@ function StatisticalConfigurationTooltip({
           className="absolute -top-2 right-6 h-4 w-4 rotate-45 border-l border-t border-border bg-background"
           aria-hidden
         />
-        <div className="space-y-5 px-5 py-4">
+        <div className="space-y-5 px-5 py-5">
           <div className="space-y-1.5">
             <p className="text-base font-semibold text-foreground">
               Statistical Configuration
@@ -1162,7 +1496,7 @@ function StatisticalConfigurationTooltip({
           </div>
 
           <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+            <div className="flex items-center justify-between gap-3 border-b border-border pb-2.5">
               <h3 className="text-sm font-semibold text-foreground">
                 Campaign Specific
               </h3>
@@ -1173,7 +1507,7 @@ function StatisticalConfigurationTooltip({
                 <Pencil className="h-3.5 w-3.5" />
               </span>
             </div>
-            <div className="space-y-2">
+            <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] items-start gap-x-4 gap-y-2.5 text-sm leading-5">
               <StatConfigRow
                 label="Statistical Model"
                 value={config.statisticalModel}
@@ -1190,7 +1524,7 @@ function StatisticalConfigurationTooltip({
           </section>
 
           <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+            <div className="flex items-center justify-between gap-3 border-b border-border pb-2.5">
               <h3 className="text-sm font-semibold text-foreground">
                 Metric Specific
               </h3>
@@ -1212,7 +1546,7 @@ function StatisticalConfigurationTooltip({
               </span>
             </div>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] items-start gap-x-4 gap-y-2.5 text-sm leading-5">
               <StatConfigRow
                 label="Testing Objective"
                 value={config.testingObjective}
@@ -1253,14 +1587,12 @@ function MetricHeader({
   campaign,
   metric,
   isPrimary,
-  onOpenSettings,
   onOpenLearnings,
   onViewVitalsDetails,
 }: {
   campaign: Campaign;
   metric: string;
   isPrimary: boolean;
-  onOpenSettings: () => void;
   onOpenLearnings: () => void;
   onViewVitalsDetails: () => void;
 }) {
@@ -1336,6 +1668,7 @@ function MetricHeader({
             Download CSV Summary
           </TooltipContent>
         </Tooltip>
+        {/* @undo Settings moved to the table-header gear (View Settings).
         <button
           type="button"
           onClick={onOpenSettings}
@@ -1344,6 +1677,7 @@ function MetricHeader({
         >
           <Settings className="h-[18px] w-[18px]" aria-hidden />
         </button>
+        */}
         <Button
           type="button"
           variant="outline"
@@ -2025,8 +2359,8 @@ function TableColumnHelp({
 function UniqueConversionsHelp() {
   return (
     <TableColumnHelp
-      title="Unique conversions"
-      ariaLabel="What are unique conversions"
+      title="Conversions (v)"
+      ariaLabel="What are conversions (v)"
       body="The number of distinct visitors who recorded at least one conversion for this metric in the selected date range. Each visitor is counted once, even if they convert multiple times."
     />
   );
@@ -2035,8 +2369,8 @@ function UniqueConversionsHelp() {
 function TotalVisitorsHelp() {
   return (
     <TableColumnHelp
-      title="Total visitors"
-      ariaLabel="What is total visitors"
+      title="Visitors"
+      ariaLabel="What are visitors"
       body="The number of visitors who were exposed to each variation for this metric during the selected date range. Used as the denominator when interpreting conversion counts and rates."
     />
   );
@@ -2045,8 +2379,8 @@ function TotalVisitorsHelp() {
 function ExpectedImprovementHelp() {
   return (
     <TableColumnHelp
-      title="Expected improvement (v)"
-      ariaLabel="What is expected improvement"
+      title="Improvement % (v)"
+      ariaLabel="What is improvement percent (v)"
       body="Estimated relative lift of the variation compared to the control (baseline), shown as a percentage. The mini chart positions the estimate on a scale from −6% to +6% relative to no change."
     />
   );
@@ -2055,8 +2389,8 @@ function ExpectedImprovementHelp() {
 function ProbabilityBetterOrEquivalentHelp() {
   return (
     <TableColumnHelp
-      title="Probability of Better or Equivalent (v)"
-      ariaLabel="What is probability of better or equivalent"
+      title="Probability to be Better"
+      ariaLabel="What is probability to be better"
       body="The probability that this variation performs at least as well as the control, given your data and statistical settings (MDE, ROPE, statistical power, and false positive rate). Higher values indicate stronger evidence in favor of the variation."
     />
   );
@@ -2085,9 +2419,9 @@ function ResultsTableColumnHelp({ columnId }: { columnId: ResultsTableColumnId }
     case "conversion-rate":
       return (
         <TableColumnHelp
-          title="Conversion rate"
-          ariaLabel="What is conversion rate"
-          body="Unique conversions divided by total visitors for the variation, expressed as a percentage for the selected metric and date range."
+          title="Conversion Rate (v)"
+          ariaLabel="What is conversion rate (v)"
+          body="Visitor conversions divided by visitors for the variation, expressed as a percentage for the selected metric and date range."
         />
       );
     case "revenue-per-visitor":
@@ -2096,6 +2430,70 @@ function ResultsTableColumnHelp({ columnId }: { columnId: ResultsTableColumnId }
           title="Revenue per visitor"
           ariaLabel="What is revenue per visitor"
           body="Average revenue attributed to each visitor in the variation for the selected metric window. Useful when the success metric is tied to monetary value."
+        />
+      );
+    case "conversions-per-visitor":
+      return (
+        <TableColumnHelp
+          title="Conversions Per Visitor"
+          ariaLabel="What is conversions per visitor"
+          body="Average number of conversions attributed to each visitor in the variation for the selected metric and date range."
+        />
+      );
+    case "conversions-per-visitor-improvement":
+      return (
+        <TableColumnHelp
+          title="Conversions Per Visitor Improvement %"
+          ariaLabel="What is conversions per visitor improvement"
+          body="Relative change in conversions per visitor for this variation compared to the control (baseline), shown as a percentage."
+        />
+      );
+    case "conversion-gain":
+      return (
+        <TableColumnHelp
+          title="Conversion Gain (v)"
+          ariaLabel="What is conversion gain"
+          body="Estimated additional visitor conversions this variation produced versus applying the control conversion rate to the same visitor volume."
+        />
+      );
+    case "traffic-split":
+      return (
+        <TableColumnHelp
+          title="Traffic Split %"
+          ariaLabel="What is traffic split"
+          body="Share of traffic allocated to this variation, shown as a percentage of all visitors in the campaign."
+        />
+      );
+    case "total-conversions-sessions":
+      return (
+        <TableColumnHelp
+          title="Total Conversions (s)"
+          ariaLabel="What are total conversions (s)"
+          body="Session-based conversion count for this variation in the selected metric and date range."
+        />
+      );
+    case "sessions":
+      return (
+        <TableColumnHelp
+          title="Sessions"
+          ariaLabel="What are sessions"
+          body="Number of sessions attributed to this variation for the selected metric and date range."
+        />
+      );
+    case "conversion-rate-sessions":
+      return (
+        <TableColumnHelp
+          title="Conversion Rate (s)"
+          ariaLabel="What is conversion rate (s)"
+          body="Session conversions divided by sessions for the variation, expressed as a percentage."
+        />
+      );
+    case "improvement-sessions":
+      return (
+        <TableColumnHelp
+          title="Improvement % (s)"
+          ariaLabel="What is improvement percent (s)"
+          body="Relative lift of the variation versus control using session-based conversion rates, shown as a percentage."
         />
       );
     default:
@@ -2123,189 +2521,30 @@ function reorderResultsColumns(
   return next;
 }
 
-function ReportResultsColumnConfig({
-  columns,
-  onColumnsChange,
-  rowDensity,
-  onRowDensityChange,
-}: {
-  columns: ResultsTableColumnId[];
-  onColumnsChange: (next: ResultsTableColumnId[]) => void;
-  rowDensity: ResultsRowDensity;
-  onRowDensityChange: (next: ResultsRowDensity) => void;
-}) {
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dropIndex, setDropIndex] = useState<number | null>(null);
-  const available = RESULTS_TABLE_COLUMN_IDS.filter((id) => !columns.includes(id));
-
-  const endDrag = () => {
-    setDragIndex(null);
-    setDropIndex(null);
-  };
-
-  const toggleColumn = (id: ResultsTableColumnId) => {
-    if (columns.includes(id)) {
-      if (columns.length <= 1) return;
-      onColumnsChange(columns.filter((c) => c !== id));
-      return;
-    }
-    onColumnsChange([...columns, id]);
-  };
-
-  const resetColumns = () => {
-    onColumnsChange([...DEFAULT_RESULTS_TABLE_COLUMNS]);
-  };
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          title="Configure columns"
-          aria-label="Configure columns"
-          className="inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-        >
-          <Columns3 className="size-3.5" aria-hidden />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={6}
-        className="w-[280px] p-3 text-sm"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Row height</span>
-          <div className="inline-flex items-center rounded-md bg-muted p-0.5">
-            {REPORT_ROW_DENSITIES.map((d) => (
-              <button
-                key={d.key}
-                type="button"
-                title={d.title}
-                aria-label={`${d.title} row height`}
-                onClick={() => onRowDensityChange(d.key)}
-                className={cn(
-                  "rounded-[5px] px-2 py-0.5 text-xs transition-colors",
-                  rowDensity === d.key
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="my-2 h-px bg-border" />
-
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">
-            Active view
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            title="Reset to default"
-            aria-label="Reset to default"
-            onClick={resetColumns}
-            className="h-auto w-auto p-1 text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-        </div>
-
-        <div className="mt-1.5 flex flex-col">
-          {columns.map((id, index) => (
-            <div
-              key={id}
-              draggable
-              onDragStart={(e) => {
-                setDragIndex(index);
-                e.dataTransfer.effectAllowed = "move";
-              }}
-              onDragOver={(e) => {
-                if (dragIndex === null) return;
-                e.preventDefault();
-                setDropIndex(index);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (dragIndex !== null && dropIndex !== null) {
-                  onColumnsChange(
-                    reorderResultsColumns(columns, dragIndex, dropIndex)
-                  );
-                }
-                endDrag();
-              }}
-              onDragEnd={endDrag}
-              className={cn(
-                "relative flex cursor-grab items-center gap-2 rounded-sm px-1.5 py-1.5 hover:bg-muted",
-                dragIndex === index && "opacity-50"
-              )}
-            >
-              {dragIndex !== null && dropIndex === index && (
-                <div className="pointer-events-none absolute inset-x-0 -top-px h-0.5 bg-foreground" />
-              )}
-              <Checkbox
-                checked
-                onCheckedChange={() => toggleColumn(id)}
-                className={REPORT_COLUMN_CHECKBOX_CLASS}
-              />
-              <span className="flex-1 truncate">
-                {RESULTS_TABLE_COLUMN_META[id].label}
-              </span>
-              <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            </div>
-          ))}
-        </div>
-
-        {available.length > 0 ? (
-          <>
-            <div className="my-2 h-px bg-border" />
-            <span className="text-xs font-medium text-muted-foreground">
-              Available Columns
-            </span>
-            <div className="mt-1.5 flex flex-col">
-              {available.map((id) => (
-                <label
-                  key={id}
-                  className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1.5 hover:bg-muted"
-                >
-                  <Checkbox
-                    checked={false}
-                    onCheckedChange={() => toggleColumn(id)}
-                    className={REPORT_COLUMN_CHECKBOX_CLASS}
-                  />
-                  <span className="flex-1 truncate">
-                    {RESULTS_TABLE_COLUMN_META[id].label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </>
-        ) : null}
-      </PopoverContent>
-    </Popover>
-  );
-}
+/* @undo Column/row-height popover merged into ViewSettingsDialog Table options.
+function ReportResultsColumnConfig(...) { ... }
+*/
 
 function TableHeader({
   columns,
-  onColumnsChange,
-  rowDensity,
-  onRowDensityChange,
   edgeShadows,
   grouped,
   groupBy,
+  settings,
+  onSettingsChange,
+  onColumnsChange,
+  rowDensity,
+  onRowDensityChange,
 }: {
   columns: ResultsTableColumnId[];
-  onColumnsChange: (next: ResultsTableColumnId[]) => void;
-  rowDensity: ResultsRowDensity;
-  onRowDensityChange: (next: ResultsRowDensity) => void;
   edgeShadows: StickyEdgeShadows;
   grouped?: boolean;
   groupBy?: ResultsGroupBy;
+  settings: ReportViewSettings;
+  onSettingsChange: (settings: ReportViewSettings) => void;
+  onColumnsChange: (next: ResultsTableColumnId[]) => void;
+  rowDensity: ResultsRowDensity;
+  onRowDensityChange: (next: ResultsRowDensity) => void;
 }) {
   const isGrouped = Boolean(grouped);
   const gridStyle = {
@@ -2406,12 +2645,23 @@ function TableHeader({
           "flex items-center justify-center pb-1.5 pt-3"
         )}
       >
-        <ReportResultsColumnConfig
+        <ViewSettingsMenu
+          settings={settings}
+          onSettingsChange={onSettingsChange}
           columns={columns}
           onColumnsChange={onColumnsChange}
           rowDensity={rowDensity}
           onRowDensityChange={onRowDensityChange}
-        />
+        >
+          <button
+            type="button"
+            title="View settings"
+            aria-label="View settings"
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          >
+            <Settings className="size-3.5" aria-hidden />
+          </button>
+        </ViewSettingsMenu>
       </div>
 
       {/* Subhead row — shared baseline across columns */}
@@ -2468,8 +2718,7 @@ function TableHeader({
               key={`sub-${id}`}
               className={cn(
                 resultsTableMetricCellClass,
-                subheadCellClass,
-                "flex-col gap-0.5 px-4"
+                "flex flex-col items-start gap-0.5 overflow-visible bg-muted/50 px-5 pb-1 pt-1"
               )}
             >
               <div className="flex min-w-0 items-center gap-1">
@@ -2481,11 +2730,29 @@ function TableHeader({
                   aria-hidden
                 />
               </div>
-              <div className="flex items-center gap-1">
-                <span className={resultsTableSubheadClass}>
-                  Winner threshold: {WINNER_THRESHOLD}%
-                </span>
-                <WinnerThresholdHelp />
+              {/* "95%" centered on the dashed divider; label + help share its baseline. */}
+              <div className="relative h-4 w-full overflow-visible">
+                <div
+                  className="absolute top-0"
+                  style={{ left: `${WINNER_THRESHOLD}%` }}
+                >
+                  <div className="relative flex -translate-x-1/2 items-end whitespace-nowrap">
+                    <span
+                      className={cn(
+                        resultsTableSubheadClass,
+                        "absolute right-full bottom-0 pr-0.5"
+                      )}
+                    >
+                      Winner threshold:
+                    </span>
+                    <span className={resultsTableSubheadClass}>
+                      {WINNER_THRESHOLD}%
+                    </span>
+                    <span className="absolute bottom-0 left-full ml-1 flex items-end">
+                      <WinnerThresholdHelp />
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           );
@@ -2522,6 +2789,77 @@ function revenuePerVisitor(
   return base + lift;
 }
 
+function resultsColumnExtras(
+  campaign: Campaign,
+  metricName: string,
+  variant: Variant,
+  index: number,
+  filters: ReportFilterContext
+) {
+  const visitorStats = metricRowStats(
+    campaign,
+    metricName,
+    variant,
+    index,
+    filters,
+    "visitors"
+  );
+  const sessionStats = metricRowStats(
+    campaign,
+    metricName,
+    variant,
+    index,
+    filters,
+    "sessions"
+  );
+  const control = campaign.report.variants[0]!;
+  const controlVisitorStats = metricRowStats(
+    campaign,
+    metricName,
+    control,
+    0,
+    filters,
+    "visitors"
+  );
+  const conversionsPerVisitor =
+    visitorStats.visitors > 0
+      ? visitorStats.conversions / visitorStats.visitors
+      : 0;
+  const controlCpv =
+    controlVisitorStats.visitors > 0
+      ? controlVisitorStats.conversions / controlVisitorStats.visitors
+      : 0;
+  const conversionsPerVisitorImprovement =
+    index === 0 || controlCpv <= 0
+      ? null
+      : ((conversionsPerVisitor - controlCpv) / controlCpv) * 100;
+  const conversionGain =
+    index === 0
+      ? null
+      : visitorStats.visitors *
+        ((visitorStats.conversionRate - controlVisitorStats.conversionRate) /
+          100);
+  const totalVisitors = campaign.report.variants.reduce((sum, v, i) => {
+    return (
+      sum +
+      metricRowStats(campaign, metricName, v, i, filters, "visitors").visitors
+    );
+  }, 0);
+  const trafficSplitPct =
+    totalVisitors > 0 ? (visitorStats.visitors / totalVisitors) * 100 : 0;
+
+  return {
+    conversionsPerVisitor,
+    conversionsPerVisitorImprovement,
+    conversionGain,
+    trafficSplitPct,
+    sessionConversions: sessionStats.conversions,
+    sessions: sessionStats.visitors,
+    sessionConversionRate: sessionStats.conversionRate,
+    sessionUplift: sessionStats.uplift,
+  };
+}
+
 function ResultsMetricCell({
   columnId,
   isControl,
@@ -2531,7 +2869,17 @@ function ResultsMetricCell({
   uplift,
   confidence,
   revenuePerVisitorValue,
+  conversionsPerVisitor,
+  conversionsPerVisitorImprovement,
+  conversionGain,
+  trafficSplitPct,
+  sessionConversions,
+  sessions,
+  sessionConversionRate,
+  sessionUplift,
   rowDensity,
+  collecting = false,
+  suppressConclusion = false,
 }: {
   columnId: ResultsTableColumnId;
   isControl: boolean;
@@ -2541,38 +2889,35 @@ function ResultsMetricCell({
   uplift: number | null;
   confidence: number | null;
   revenuePerVisitorValue: number;
+  conversionsPerVisitor: number;
+  conversionsPerVisitorImprovement: number | null;
+  conversionGain: number | null;
+  trafficSplitPct: number;
+  sessionConversions: number;
+  sessions: number;
+  sessionConversionRate: number;
+  sessionUplift: number | null;
   rowDensity: ResultsRowDensity;
+  /** This variation hasn't cleared 500 visitors + 1 conversion yet. */
+  collecting?: boolean;
+  /** allDisabled/filtersActive — show "—" rather than a fabricated value. */
+  suppressConclusion?: boolean;
 }) {
   const metricCell = cn(
     resultsTableMetricCellClass,
     "overflow-hidden bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]"
   );
   const rowH = RESULTS_ROW_H[rowDensity];
+  const numericCell = cn(
+    metricCell,
+    rowH,
+    "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
+  );
   switch (columnId) {
     case "unique-conversions":
-      return (
-        <div
-          className={cn(
-            metricCell,
-            rowH,
-            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
-          )}
-        >
-          {formatNumber(conversions)}
-        </div>
-      );
+      return <div className={numericCell}>{formatNumber(conversions)}</div>;
     case "total-visitors":
-      return (
-        <div
-          className={cn(
-            metricCell,
-            rowH,
-            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
-          )}
-        >
-          {formatNumber(visitors)}
-        </div>
-      );
+      return <div className={numericCell}>{formatNumber(visitors)}</div>;
     case "expected-improvement":
       return (
         <div className={cn(metricCell, "overflow-visible")}>
@@ -2585,35 +2930,62 @@ function ResultsMetricCell({
     case "probability":
       return (
         <div className={metricCell}>
-          <ProbabilityCell
-            value={isControl ? null : confidence}
-            rowDensity={rowDensity}
-          />
-        </div>
-      );
-    case "conversion-rate": {
-      return (
-        <div
-          className={cn(
-            metricCell,
-            rowH,
-            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
+          {suppressConclusion ? (
+            <ProbabilityCell value={null} rowDensity={rowDensity} />
+          ) : collecting && !isControl ? (
+            <ProbabilityCollectingCell rowDensity={rowDensity} />
+          ) : (
+            <ProbabilityCell
+              value={isControl ? null : confidence}
+              rowDensity={rowDensity}
+            />
           )}
-        >
-          {conversionRate.toFixed(2)}%
         </div>
       );
-    }
+    case "conversion-rate":
+      return <div className={numericCell}>{conversionRate.toFixed(2)}%</div>;
     case "revenue-per-visitor":
       return (
-        <div
-          className={cn(
-            metricCell,
-            rowH,
-            "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
-          )}
-        >
-          ${revenuePerVisitorValue.toFixed(2)}
+        <div className={numericCell}>${revenuePerVisitorValue.toFixed(2)}</div>
+      );
+    case "conversions-per-visitor":
+      return (
+        <div className={numericCell}>{conversionsPerVisitor.toFixed(3)}</div>
+      );
+    case "conversions-per-visitor-improvement":
+      return (
+        <div className={numericCell}>
+          {isControl || conversionsPerVisitorImprovement === null
+            ? "—"
+            : `${conversionsPerVisitorImprovement > 0 ? "+" : ""}${conversionsPerVisitorImprovement.toFixed(1)}%`}
+        </div>
+      );
+    case "conversion-gain":
+      return (
+        <div className={numericCell}>
+          {isControl || conversionGain === null
+            ? "—"
+            : `${conversionGain > 0 ? "+" : ""}${formatNumber(Math.round(conversionGain))}`}
+        </div>
+      );
+    case "traffic-split":
+      return <div className={numericCell}>{trafficSplitPct.toFixed(1)}%</div>;
+    case "total-conversions-sessions":
+      return (
+        <div className={numericCell}>{formatNumber(sessionConversions)}</div>
+      );
+    case "sessions":
+      return <div className={numericCell}>{formatNumber(sessions)}</div>;
+    case "conversion-rate-sessions":
+      return (
+        <div className={numericCell}>{sessionConversionRate.toFixed(2)}%</div>
+      );
+    case "improvement-sessions":
+      return (
+        <div className={numericCell}>
+          {isControl || sessionUplift === null
+            ? "—"
+            : `${sessionUplift > 0 ? "+" : ""}${Math.round(sessionUplift)}%`}
         </div>
       );
     default:
@@ -2625,11 +2997,19 @@ function ResultsTotalMetricCell({
   columnId,
   conversions,
   visitors,
+  conversionsPerVisitor,
+  trafficSplitPct,
+  sessionConversions,
+  sessions,
   rowDensity,
 }: {
   columnId: ResultsTableColumnId;
   conversions: number;
   visitors: number;
+  conversionsPerVisitor: number;
+  trafficSplitPct: number;
+  sessionConversions: number;
+  sessions: number;
   rowDensity: ResultsRowDensity;
 }) {
   const cell = cn(
@@ -2638,22 +3018,17 @@ function ResultsTotalMetricCell({
     "flex items-center border-b border-border",
     STICKY_HEADER_BG
   );
+  const numeric = cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground");
   switch (columnId) {
     case "unique-conversions":
-      return (
-        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
-          {formatNumber(conversions)}
-        </div>
-      );
+      return <div className={numeric}>{formatNumber(conversions)}</div>;
     case "total-visitors":
-      return (
-        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
-          {formatNumber(visitors)}
-        </div>
-      );
+      return <div className={numeric}>{formatNumber(visitors)}</div>;
     case "expected-improvement":
       return (
-        <div className={cn(cell, "justify-center text-sm text-foreground/70")}>-</div>
+        <div className={cn(cell, "justify-center text-sm text-foreground/70")}>
+          -
+        </div>
       );
     case "probability":
       return (
@@ -2661,18 +3036,28 @@ function ResultsTotalMetricCell({
       );
     case "conversion-rate": {
       const rate = visitors > 0 ? (conversions / visitors) * 100 : 0;
-      return (
-        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
-          {rate.toFixed(2)}%
-        </div>
-      );
+      return <div className={numeric}>{rate.toFixed(2)}%</div>;
     }
     case "revenue-per-visitor":
-      return (
-        <div className={cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground")}>
-          —
-        </div>
-      );
+      return <div className={numeric}>—</div>;
+    case "conversions-per-visitor":
+      return <div className={numeric}>{conversionsPerVisitor.toFixed(3)}</div>;
+    case "conversions-per-visitor-improvement":
+      return <div className={numeric}>—</div>;
+    case "conversion-gain":
+      return <div className={numeric}>—</div>;
+    case "traffic-split":
+      return <div className={numeric}>{trafficSplitPct.toFixed(1)}%</div>;
+    case "total-conversions-sessions":
+      return <div className={numeric}>{formatNumber(sessionConversions)}</div>;
+    case "sessions":
+      return <div className={numeric}>{formatNumber(sessions)}</div>;
+    case "conversion-rate-sessions": {
+      const rate = sessions > 0 ? (sessionConversions / sessions) * 100 : 0;
+      return <div className={numeric}>{rate.toFixed(2)}%</div>;
+    }
+    case "improvement-sessions":
+      return <div className={numeric}>—</div>;
     default:
       return null;
   }
@@ -2779,6 +3164,22 @@ function ExpectedImprovementCell({
   );
 }
 
+/** Vertical dashed mark at the winner threshold (95%), centered on that %. */
+function WinnerThresholdMark({ rowDensity }: { rowDensity: ResultsRowDensity }) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute top-[-26px] -translate-x-1/2",
+        RESULTS_CHART_H[rowDensity]
+      )}
+      style={{ left: `${WINNER_THRESHOLD}%` }}
+    >
+      <div className="h-full border-l border-dashed border-input" />
+    </div>
+  );
+}
+
 // The horizontal probability bar. Track spans 0..100%; winner threshold marked.
 function ProbabilityCell({
   value,
@@ -2792,11 +3193,14 @@ function ProbabilityCell({
     return (
       <div
         className={cn(
-          "flex items-center border-b border-border px-5",
+          "relative flex items-center overflow-hidden border-b border-border px-5",
           heightClass
         )}
       >
-        <span className="text-sm font-medium text-foreground/70">-</span>
+        <div className="relative h-[15px] w-full">
+          <span className="text-sm font-medium text-foreground/70">-</span>
+          <WinnerThresholdMark rowDensity={rowDensity} />
+        </div>
       </div>
     );
   }
@@ -2833,15 +3237,44 @@ function ProbabilityCell({
         >
           {value}%
         </span>
-        {/* winner-threshold divider spanning the row */}
-        <div
-          className={cn(
-            "absolute top-[-26px] border-r border-dashed border-border",
-            RESULTS_CHART_H[rowDensity]
-          )}
-          style={{ left: `${WINNER_THRESHOLD}%` }}
-        />
+        <WinnerThresholdMark rowDensity={rowDensity} />
       </div>
+    </div>
+  );
+}
+
+/** Per-row "Collecting data" treatment for the probability column. */
+function ProbabilityCollectingCell({
+  rowDensity,
+}: {
+  rowDensity: ResultsRowDensity;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 border-b border-border px-5",
+        RESULTS_CHART_H[rowDensity]
+      )}
+    >
+      <ConclusionStateIcon kind="collecting" size={14} />
+      <span className="text-sm text-muted-foreground">Collecting data</span>
+      <ConclusionInfoTooltip
+        label="Why statistical data is not shown yet"
+        iconSize={14}
+      >
+        <div className="space-y-2.5 px-4 py-3.5">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            The data under 'Expected Conversion' and 'Improvement' is factual.
+            Statistical data will be calculated and shown once there are at least{" "}
+            {formatNumber(COLLECT_MIN_VISITORS)} visitors and{" "}
+            {formatNumber(COLLECT_MIN_CONVERSIONS)} conversion on the baseline
+            and this variation.
+          </p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Statistics based on lesser data may not be reliable.
+          </p>
+        </div>
+      </ConclusionInfoTooltip>
     </div>
   );
 }
@@ -2873,6 +3306,16 @@ function DataRow({
   const isControl = index === 0;
   const gridStyle = buildResultsGrid(columns);
   const rpv = revenuePerVisitor(campaign, metricName, variant, index, filters);
+  const extras = resultsColumnExtras(
+    campaign,
+    metricName,
+    variant,
+    index,
+    filters
+  );
+  const suppressConclusion =
+    reportFiltersActive(filters) || allVariationsDisabled(campaign);
+  const collecting = variationCollecting(campaign, index);
 
   return (
     <div
@@ -2907,7 +3350,19 @@ function DataRow({
           uplift={uplift}
           confidence={confidence}
           revenuePerVisitorValue={rpv}
+          conversionsPerVisitor={extras.conversionsPerVisitor}
+          conversionsPerVisitorImprovement={
+            extras.conversionsPerVisitorImprovement
+          }
+          conversionGain={extras.conversionGain}
+          trafficSplitPct={extras.trafficSplitPct}
+          sessionConversions={extras.sessionConversions}
+          sessions={extras.sessions}
+          sessionConversionRate={extras.sessionConversionRate}
+          sessionUplift={extras.sessionUplift}
           rowDensity={rowDensity}
+          collecting={collecting}
+          suppressConclusion={suppressConclusion}
         />
       ))}
       <RowActionsCell edgeShadows={edgeShadows} rowDensity={rowDensity} />
@@ -2918,12 +3373,20 @@ function DataRow({
 function TotalRow({
   conversions,
   visitors,
+  conversionsPerVisitor,
+  trafficSplitPct,
+  sessionConversions,
+  sessions,
   columns,
   edgeShadows,
   rowDensity,
 }: {
   conversions: number;
   visitors: number;
+  conversionsPerVisitor: number;
+  trafficSplitPct: number;
+  sessionConversions: number;
+  sessions: number;
   columns: ResultsTableColumnId[];
   edgeShadows: StickyEdgeShadows;
   rowDensity: ResultsRowDensity;
@@ -2954,6 +3417,10 @@ function TotalRow({
           columnId={columnId}
           conversions={conversions}
           visitors={visitors}
+          conversionsPerVisitor={conversionsPerVisitor}
+          trafficSplitPct={trafficSplitPct}
+          sessionConversions={sessionConversions}
+          sessions={sessions}
           rowDensity={rowDensity}
         />
       ))}
@@ -3045,7 +3512,18 @@ function GroupedMetricCells({
   const { uplift, confidence, conversions, conversionRate, visitors } =
     metricRowStats(campaign, metricName, variant, index, filters, dataMode);
   const rpv = revenuePerVisitor(campaign, metricName, variant, index, filters);
+  const extras = resultsColumnExtras(
+    campaign,
+    metricName,
+    variant,
+    index,
+    filters
+  );
   const isControl = index === 0;
+  // Grouped view is only reachable with segments applied (filters active), so
+  // the probability column is suppressed rather than fabricated.
+  const suppressConclusion =
+    reportFiltersActive(filters) || allVariationsDisabled(campaign);
   return (
     <>
       {columns.map((columnId) => (
@@ -3059,7 +3537,18 @@ function GroupedMetricCells({
           uplift={uplift}
           confidence={confidence}
           revenuePerVisitorValue={rpv}
+          conversionsPerVisitor={extras.conversionsPerVisitor}
+          conversionsPerVisitorImprovement={
+            extras.conversionsPerVisitorImprovement
+          }
+          conversionGain={extras.conversionGain}
+          trafficSplitPct={extras.trafficSplitPct}
+          sessionConversions={extras.sessionConversions}
+          sessions={extras.sessions}
+          sessionConversionRate={extras.sessionConversionRate}
+          sessionUplift={extras.sessionUplift}
           rowDensity={rowDensity}
+          suppressConclusion={suppressConclusion}
         />
       ))}
     </>
@@ -3118,10 +3607,12 @@ function ResultsTable({
   dataMode,
   showTotalRow,
   columns,
-  onColumnsChange,
   rowDensity,
-  onRowDensityChange,
   groupBy,
+  settings,
+  onSettingsChange,
+  onColumnsChange,
+  onRowDensityChange,
 }: {
   campaign: Campaign;
   metricName: string;
@@ -3129,10 +3620,12 @@ function ResultsTable({
   dataMode: "visitors" | "sessions";
   showTotalRow: boolean;
   columns: ResultsTableColumnId[];
-  onColumnsChange: (next: ResultsTableColumnId[]) => void;
   rowDensity: ResultsRowDensity;
-  onRowDensityChange: (next: ResultsRowDensity) => void;
   groupBy: ResultsGroupBy;
+  settings: ReportViewSettings;
+  onSettingsChange: (settings: ReportViewSettings) => void;
+  onColumnsChange: (next: ResultsTableColumnId[]) => void;
+  onRowDensityChange: (next: ResultsRowDensity) => void;
 }) {
   const variants = campaign.report.variants;
   const selectedSegments = filters.segments;
@@ -3170,6 +3663,8 @@ function ResultsTable({
   const variationTotals = (() => {
     let conversions = 0;
     let visitors = 0;
+    let sessionConversions = 0;
+    let sessions = 0;
     for (let i = 0; i < variants.length; i++) {
       const stats = metricRowStats(
         campaign,
@@ -3179,10 +3674,27 @@ function ResultsTable({
         filters,
         dataMode
       );
+      const sessionStats = metricRowStats(
+        campaign,
+        metricName,
+        variants[i]!,
+        i,
+        filters,
+        "sessions"
+      );
       conversions += stats.conversions;
       visitors += stats.visitors;
+      sessionConversions += sessionStats.conversions;
+      sessions += sessionStats.visitors;
     }
-    return { conversions, visitors };
+    return {
+      conversions,
+      visitors,
+      sessionConversions,
+      sessions,
+      conversionsPerVisitor: visitors > 0 ? conversions / visitors : 0,
+      trafficSplitPct: 100,
+    };
   })();
 
   return (
@@ -3194,12 +3706,14 @@ function ResultsTable({
       <div style={{ minWidth }}>
         <TableHeader
           columns={columns}
-          onColumnsChange={onColumnsChange}
-          rowDensity={rowDensity}
-          onRowDensityChange={onRowDensityChange}
           edgeShadows={edgeShadows}
           grouped={isGrouped}
           groupBy={groupBy}
+          settings={settings}
+          onSettingsChange={onSettingsChange}
+          onColumnsChange={onColumnsChange}
+          rowDensity={rowDensity}
+          onRowDensityChange={onRowDensityChange}
         />
 
         {!isGrouped ? (
@@ -3222,6 +3736,10 @@ function ResultsTable({
               <TotalRow
                 conversions={variationTotals.conversions}
                 visitors={variationTotals.visitors}
+                conversionsPerVisitor={variationTotals.conversionsPerVisitor}
+                trafficSplitPct={variationTotals.trafficSplitPct}
+                sessionConversions={variationTotals.sessionConversions}
+                sessions={variationTotals.sessions}
                 columns={columns}
                 edgeShadows={edgeShadows}
                 rowDensity={rowDensity}
@@ -4910,7 +5428,7 @@ function ResultsGroupByControl({
         value={value}
         onValueChange={(v) => onChange(v as ResultsGroupBy)}
       >
-        <SelectTrigger className="h-7 w-[130px] gap-1 rounded-md border-border text-sm">
+        <SelectTrigger className="h-7 w-[130px] gap-1 rounded-md border-border bg-background text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -5215,7 +5733,6 @@ export default function ResultsTab({
   const [groupBy, setGroupBy] = useState<GroupBy>("variation");
   const [resultsGroupBy, setResultsGroupBy] =
     useState<ResultsGroupBy>("variation");
-  const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [learningsOpen, setLearningsOpen] = useState(false);
   const [metricsNavCollapsed, setMetricsNavCollapsed] =
     useReportMetricsNavCollapsed(campaign.id);
@@ -5286,14 +5803,6 @@ export default function ResultsTab({
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[1120px] space-y-8 px-12 pb-8 pt-12">
-          <ViewSettingsDialog
-            open={viewSettingsOpen}
-            onOpenChange={setViewSettingsOpen}
-            settings={viewSettings}
-            onSave={(next) => {
-              updateActivePreset(campaign.id, { viewSettings: next });
-            }}
-          />
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           {compareMode ? (
             <>
@@ -5303,7 +5812,7 @@ export default function ResultsTab({
                   <>
                     <span className="text-sm text-muted-foreground">Group by :</span>
                     <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupBy)}>
-                      <SelectTrigger className="h-7 w-[122px] gap-1 rounded-md border-border text-sm">
+                      <SelectTrigger className="h-7 w-[122px] gap-1 rounded-md border-border bg-background text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -5341,7 +5850,6 @@ export default function ResultsTab({
                   campaign={campaign}
                   metric={selectedMetric}
                   isPrimary={selectedMetric === campaign.primaryMetric}
-                  onOpenSettings={() => setViewSettingsOpen(true)}
                   onOpenLearnings={() => setLearningsOpen(true)}
                   onViewVitalsDetails={onNavigateToVitals}
                 />
@@ -5350,10 +5858,11 @@ export default function ResultsTab({
                   <ConclusionBanner
                     conclusion={conclusion}
                     variantName={best.name}
+                    controlName={campaign.report.variants[0]?.name ?? "Control"}
                     embedded
                   />
                 </div>
-                <div className="border-b border-border px-4 pt-1">
+                <div className="border-b border-border px-4 pb-0 pt-4">
                   <ReportViewBar campaignId={campaign.id} />
                 </div>
                 {isStatisticsPreset ? (
@@ -5374,10 +5883,14 @@ export default function ResultsTab({
                       dataMode={dataMode}
                       showTotalRow={viewSettings.showTotalRow}
                       columns={resultsTableColumns}
-                      onColumnsChange={setResultsTableColumns}
                       rowDensity={resultsRowDensity}
-                      onRowDensityChange={setResultsRowDensity}
                       groupBy={resultsGroupBy}
+                      settings={viewSettings}
+                      onSettingsChange={(next) => {
+                        updateActivePreset(campaign.id, { viewSettings: next });
+                      }}
+                      onColumnsChange={setResultsTableColumns}
+                      onRowDensityChange={setResultsRowDensity}
                     />
                   </div>
                 ) : (
@@ -5389,10 +5902,14 @@ export default function ResultsTab({
                       dataMode={dataMode}
                       showTotalRow={viewSettings.showTotalRow}
                       columns={resultsTableColumns}
-                      onColumnsChange={setResultsTableColumns}
                       rowDensity={resultsRowDensity}
-                      onRowDensityChange={setResultsRowDensity}
                       groupBy={resultsGroupBy}
+                      settings={viewSettings}
+                      onSettingsChange={(next) => {
+                        updateActivePreset(campaign.id, { viewSettings: next });
+                      }}
+                      onColumnsChange={setResultsTableColumns}
+                      onRowDensityChange={setResultsRowDensity}
                     />
                     <GraphPanel
                       campaign={campaign}

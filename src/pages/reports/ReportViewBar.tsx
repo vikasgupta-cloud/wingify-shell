@@ -53,16 +53,18 @@ function DirtyDot() {
   );
 }
 
-function CustomViewMenu({
-  view,
+function ViewMenu({
+  label,
   active,
+  onEdit,
   onRename,
   onDelete,
 }: {
-  view: ReportCustomView;
+  label: string;
   active: boolean;
-  onRename: () => void;
-  onDelete: () => void;
+  onEdit: () => void;
+  onRename?: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <DropdownMenu.Root>
@@ -71,10 +73,10 @@ function CustomViewMenu({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={`${view.name} options`}
+          aria-label={`${label} options`}
           className={cn(
-            "mr-0.5 h-auto w-auto p-1 text-muted-foreground hover:text-foreground focus-visible:opacity-100 [&_svg]:size-3.5",
-            active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            "h-auto w-auto shrink-0 p-1 text-muted-foreground hover:text-foreground focus-visible:opacity-100 [&_svg]:size-3.5",
+            active ? "opacity-100" : "opacity-70 hover:opacity-100"
           )}
         >
           <MoreVertical className="h-3.5 w-3.5" />
@@ -87,17 +89,27 @@ function CustomViewMenu({
           className="z-50 min-w-[140px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
         >
           <DropdownMenu.Item
-            onSelect={onRename}
+            onSelect={onEdit}
             className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
           >
-            Rename
+            Edit
           </DropdownMenu.Item>
-          <DropdownMenu.Item
-            onSelect={onDelete}
-            className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
-          >
-            Delete
-          </DropdownMenu.Item>
+          {onRename ? (
+            <DropdownMenu.Item
+              onSelect={onRename}
+              className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
+            >
+              Rename
+            </DropdownMenu.Item>
+          ) : null}
+          {onDelete ? (
+            <DropdownMenu.Item
+              onSelect={onDelete}
+              className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
+            >
+              Delete
+            </DropdownMenu.Item>
+          ) : null}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -114,6 +126,9 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const deleteCustomView = useReportViewsStore((s) => s.deleteCustomView);
   const reorderCustomViews = useReportViewsStore((s) => s.reorderCustomViews);
   const saveAsNew = useReportViewsStore((s) => s.saveReportViewAsNew);
+  const requestOpenViewSettings = useReportViewsStore(
+    (s) => s.requestOpenViewSettings
+  );
   const columnDrafts = useReportViewsStore(
     (s) => s.draftsByCampaign[campaignId]
   );
@@ -347,15 +362,19 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
         )}
 
         {!renaming && !opts.measuring && (
-          <CustomViewMenu
-            view={view}
+          <ViewMenu
+            label={view.name}
             active={active}
+            onEdit={() => {
+              setActiveCustomView(campaignId, view.id);
+              requestOpenViewSettings();
+            }}
             onRename={() => startRename(view.id, view.name)}
             onDelete={() => setDeleteId(view.id)}
           />
         )}
         {!renaming && opts.measuring && (
-          <span className="mr-0.5 inline-flex p-1 opacity-0" aria-hidden>
+          <span className="inline-flex p-1 opacity-0" aria-hidden>
             <MoreVertical className="h-3.5 w-3.5" />
           </span>
         )}
@@ -369,25 +388,43 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   ) => {
     const active = isItemActive(item);
     return (
-      <button
+      <div
         key={item.key}
-        type="button"
-        tabIndex={opts.measuring ? -1 : undefined}
-        onClick={
-          opts.measuring
-            ? undefined
-            : () => setActivePreset(campaignId, item.id)
-        }
         className={cn(
-          "relative shrink-0 px-1 pb-2 text-sm transition-colors",
+          "group relative -mb-px flex shrink-0 items-center border-b-2 transition-colors",
           active
-            ? activeTabClass
-            : "text-foreground/70 hover:text-foreground"
+            ? "border-foreground text-foreground"
+            : "border-transparent text-foreground/70 hover:text-foreground"
         )}
       >
-        {item.label}
-        {active && dirtyForViewKey(item.key) ? <DirtyDot /> : null}
-      </button>
+        <button
+          type="button"
+          tabIndex={opts.measuring ? -1 : undefined}
+          onClick={
+            opts.measuring
+              ? undefined
+              : () => setActivePreset(campaignId, item.id)
+          }
+          className="relative flex items-center py-2 pl-1 pr-1 text-sm"
+        >
+          {item.label}
+          {active && dirtyForViewKey(item.key) ? <DirtyDot /> : null}
+        </button>
+        {!opts.measuring ? (
+          <ViewMenu
+            label={item.label}
+            active={active}
+            onEdit={() => {
+              setActivePreset(campaignId, item.id);
+              requestOpenViewSettings();
+            }}
+          />
+        ) : (
+          <span className="inline-flex p-1 opacity-0" aria-hidden>
+            <MoreVertical className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </div>
     );
   };
 
@@ -459,28 +496,41 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                     const active = isItemActive(item);
                     if (item.kind === "preset") {
                       return (
-                        <button
+                        <div
                           key={item.key}
-                          type="button"
-                          onClick={() => {
-                            setActivePreset(campaignId, item.id);
-                            setMoreOpen(false);
-                          }}
-                          className={cn(
-                            "relative flex w-full items-center rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent",
-                            active
-                              ? "font-medium text-foreground"
-                              : "text-foreground/80"
-                          )}
+                          className="flex items-center gap-1 rounded-sm hover:bg-accent"
                         >
-                          {item.label}
-                          {active && dirtyForViewKey(item.key) ? (
-                            <span
-                              aria-hidden
-                              className="ml-2 h-1.5 w-1.5 rounded-full bg-muted-foreground"
-                            />
-                          ) : null}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActivePreset(campaignId, item.id);
+                              setMoreOpen(false);
+                            }}
+                            className={cn(
+                              "relative min-w-0 flex-1 truncate px-3 py-2 text-left text-sm",
+                              active
+                                ? "font-medium text-foreground"
+                                : "text-foreground/80"
+                            )}
+                          >
+                            {item.label}
+                            {active && dirtyForViewKey(item.key) ? (
+                              <span
+                                aria-hidden
+                                className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground align-middle"
+                              />
+                            ) : null}
+                          </button>
+                          <ViewMenu
+                            label={item.label}
+                            active
+                            onEdit={() => {
+                              setActivePreset(campaignId, item.id);
+                              setMoreOpen(false);
+                              requestOpenViewSettings();
+                            }}
+                          />
+                        </div>
                       );
                     }
                     if (renamingId === item.view.id) {
@@ -530,9 +580,14 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                             />
                           ) : null}
                         </button>
-                        <CustomViewMenu
-                          view={item.view}
+                        <ViewMenu
+                          label={item.view.name}
                           active
+                          onEdit={() => {
+                            setActiveCustomView(campaignId, item.id);
+                            setMoreOpen(false);
+                            requestOpenViewSettings();
+                          }}
                           onRename={() =>
                             startRename(item.view.id, item.view.name)
                           }

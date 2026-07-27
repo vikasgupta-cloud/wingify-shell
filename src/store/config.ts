@@ -1,7 +1,10 @@
 import { create } from "zustand";
 import { IP_OPERATORS, NAMED_OPERATORS } from "../config/qaOperators";
 import type { CustomSegmentDef } from "../config/segments";
+import { DEFAULT_SEGMENT_LABEL } from "../config/segments";
 import type { SectionId } from "../config/configSections";
+import type { Campaign } from "../data/campaigns";
+import { campaignToConfig } from "./campaignToConfig";
 
 // NOTE: Session-only by design. This store is NOT persisted — a reload wipes
 // every campaign's config and its saved snapshot. The one exception is the
@@ -171,7 +174,7 @@ export function defaultConfig(name: string): CampaignConfig {
       },
     ],
     trafficAllocation: 100,
-    segment: "All Traffic",
+    segment: DEFAULT_SEGMENT_LABEL,
     customSegment: null,
     trigger: "Page Viewed",
     frequency: "Always",
@@ -253,8 +256,15 @@ type ConfigState = {
   // Deliberately OUTSIDE CampaignConfig so toggling it never marks the config
   // dirty (it is not part of the saved snapshot comparison).
   workflowOpen: Record<string /* campaignId */, boolean>;
+  // Snapshot of the config taken when Workflow Mode opens, so Discard can revert
+  // any edits made inside Workflow Mode back to that point. View state only —
+  // outside CampaignConfig so it never affects the saved-dirty comparison.
+  workflowSnapshot: Record<string /* campaignId */, CampaignConfig>;
   openWorkflow: (id: string) => void;
+  // Commit path (the "Done" CTA): keep the edits, just close.
   closeWorkflow: (id: string) => void;
+  // Revert path (the "Discard" CTA): restore the config captured at open, close.
+  discardWorkflow: (id: string) => void;
   // NOTE: view state only — how the config step navigator (DotNav) is shown.
   // 'undocked' = hover-dots flyout; 'docked' = persistent left panel. Tracked
   // per view mode (`dockPrefs`) and persisted to localStorage; `dockState` is
@@ -285,7 +295,7 @@ type ConfigState = {
   connectedIntegrations: string[];
   connectIntegration: (integrationId: string) => void;
   disconnectIntegration: (integrationId: string) => void;
-  ensureConfig: (id: string, name: string) => void;
+  ensureConfig: (id: string, name: string, campaign?: Campaign) => void;
   patch: (id: string, partial: Partial<CampaignConfig>) => void;
   save: (id: string) => void;
   addRule: (campaignId: string, groupId: string) => void;
@@ -336,10 +346,37 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   configs: {},
   saved: {},
   workflowOpen: {},
+  workflowSnapshot: {},
   openWorkflow: (id) =>
-    set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: true } })),
+    set((s) => ({
+      workflowOpen: { ...s.workflowOpen, [id]: true },
+      // Capture the current config so Discard can restore it. configs are
+      // replaced immutably on every edit, so holding this reference is a safe
+      // point-in-time snapshot.
+      workflowSnapshot: s.configs[id]
+        ? { ...s.workflowSnapshot, [id]: s.configs[id] }
+        : s.workflowSnapshot,
+    })),
   closeWorkflow: (id) =>
-    set((s) => ({ workflowOpen: { ...s.workflowOpen, [id]: false } })),
+    set((s) => {
+      const { [id]: _snap, ...restSnapshot } = s.workflowSnapshot;
+      return {
+        workflowOpen: { ...s.workflowOpen, [id]: false },
+        workflowSnapshot: restSnapshot,
+      };
+    }),
+  discardWorkflow: (id) =>
+    set((s) => {
+      const snapshot = s.workflowSnapshot[id];
+      const { [id]: _snap, ...restSnapshot } = s.workflowSnapshot;
+      return {
+        workflowOpen: { ...s.workflowOpen, [id]: false },
+        workflowSnapshot: restSnapshot,
+        configs: snapshot
+          ? { ...s.configs, [id]: snapshot }
+          : s.configs,
+      };
+    }),
   dockPrefs: readDockPrefs(),
   // Initial viewMode is "scroll", so the effective dock state starts from the
   // scroll-view preference.
@@ -375,9 +412,15 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         (i) => i !== integrationId
       ),
     })),
-  ensureConfig: (id, name) => {
+  ensureConfig: (id, name, campaign) => {
     if (get().configs[id]) return;
-    const seed = defaultConfig(name);
+    // Open path (campaign given): overlay the record-mirroring fields onto the
+    // blank seed. Create path (no campaign): stay blank. configs and saved point
+    // at the SAME hydrated object, so a freshly opened, unedited campaign is not
+    // marked dirty.
+    const seed = campaign
+      ? { ...defaultConfig(name), ...campaignToConfig(campaign) }
+      : defaultConfig(name);
     set((s) => ({
       configs: { ...s.configs, [id]: seed },
       saved: { ...s.saved, [id]: seed },

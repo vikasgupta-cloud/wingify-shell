@@ -21,7 +21,7 @@ export type ColumnDef = {
   /** Always visible, never leaves the first position. */
   locked?: boolean;
   sortable: boolean;
-  align?: "left" | "right";
+  align?: "left" | "right" | "center";
   /** Default width in px; a view's columnWidths override takes precedence. */
   width: number;
 };
@@ -29,8 +29,8 @@ export type ColumnDef = {
 export const COLUMNS: ColumnDef[] = [
   { id: "name", label: "Campaign name", locked: true, sortable: true, width: 320 },
   { id: "status", label: "Status", sortable: true, width: 140 },
-  { id: "conclusion", label: "Conclusion", sortable: true, width: 140 },
-  { id: "vitals", label: "Vitals", sortable: true, width: 90 },
+  { id: "conclusion", label: "Conclusion", sortable: true, align: "center", width: 140 },
+  { id: "vitals", label: "Vitals", sortable: true, align: "center", width: 90 },
   { id: "variations", label: "Variations", sortable: true, align: "right", width: 110 },
   { id: "visitors", label: "Visitors", sortable: true, align: "right", width: 110 },
   { id: "uniqueConversion", label: "Unique Conversion", sortable: true, align: "right", width: 150 },

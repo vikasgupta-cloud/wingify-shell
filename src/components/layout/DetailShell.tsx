@@ -67,14 +67,9 @@ import PrimaryRail from "./PrimaryRail";
 
 // The utility rail on the RIGHT of a detail surface: Ask Wandz (stub) at the top
 // and Help pinned to the bottom. Configure/Reports now live in the header tabs.
-function UtilityRail({
-  entityId,
-  belowTabs,
-}: {
-  entityId?: string;
-  /** Reports: sit below the sticky tab bar so icons align with the metrics rail. */
-  belowTabs?: boolean;
-}) {
+// On Reports, DetailShell positions this absolutely below the sticky tab bar so
+// the tabs themselves stay edge-to-edge.
+function UtilityRail({ entityId }: { entityId?: string }) {
   const wandzOpen = useWandzStore((s) => s.open);
 
   const railButton = (active: boolean) =>
@@ -94,12 +89,7 @@ function UtilityRail({
   return (
     <TooltipProvider delayDuration={200}>
       <nav
-        className={cn(
-          "flex shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4",
-          belowTabs
-            ? "mt-14 h-[calc(100%-3.5rem)] self-start"
-            : "h-full"
-        )}
+        className="flex h-full shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4"
         style={{ width: UTILITY_RAIL_WIDTH }}
       >
         <Tooltip>
@@ -681,18 +671,31 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         <main
           className={cn(
             "min-h-0 flex-1",
-            onReports ? "flex overflow-hidden" : "overflow-y-auto"
+            // Both branches make <main> a flex container so the inner flex-1
+            // wrapper resolves to a real height. Without flex here the inner
+            // flex-1 collapses to content height, which left full-height
+            // children like Workflow Mode with no room to render.
+            // Reports: relative so the utility rail can sit below the full-bleed
+            // sticky tabs without shrinking the tab bar.
+            onReports ? "relative overflow-hidden" : "flex flex-col overflow-y-auto"
           )}
         >
           <div
             className={cn(
-              "min-h-0 flex-1",
-              onReports ? "overflow-y-auto" : undefined
+              "min-h-0",
+              onReports ? "h-full overflow-y-auto" : "flex-1"
             )}
           >
             {children}
           </div>
-          {onReports ? <UtilityRail entityId={entityId} belowTabs /> : null}
+          {onReports ? (
+            <div
+              className="absolute bottom-0 right-0 top-14 z-30"
+              style={{ width: UTILITY_RAIL_WIDTH }}
+            >
+              <UtilityRail entityId={entityId} />
+            </div>
+          ) : null}
         </main>
         {!onReports ? <UtilityRail entityId={entityId} /> : null}
       </div>

@@ -184,7 +184,7 @@ export default function KanbanCard({
         </span>
         {started && (
           <span className="shrink-0">
-            <VitalsIcon vitals={campaign.vitals} />
+            <VitalsIcon campaign={campaign} />
           </span>
         )}
         {/* Hover/focus-revealed actions, right-aligned */}

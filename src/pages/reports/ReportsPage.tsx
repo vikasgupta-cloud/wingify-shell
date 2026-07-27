@@ -21,7 +21,16 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VitalsGlyph } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
+import { UTILITY_RAIL_WIDTH } from "../../lib/nav";
 import { ReportDataProvider, useReportData } from "./reportDataContext";
+import type { ReportConclusionSnapshot } from "./reportDataContext";
+import ConclusionStateIcon from "@/components/reports/ConclusionStateIcon";
+import { conclusionCopy } from "../../data/conclusionCopy";
+import {
+  COLLECT_MIN_CONVERSIONS,
+  COLLECT_MIN_VISITORS,
+} from "../../data/campaignConclusion";
+import { formatNumber } from "./reportMetrics";
 import ResultsTab from "./ResultsTab";
 import VitalsTab from "./VitalsTab";
 import vwoMark from "./vwo-mark.svg";
@@ -159,54 +168,200 @@ function LinkButton({ children }: { children: ReactNode }) {
   );
 }
 
-function DecisionBanner({
-  overview,
-  onViewFullStats,
-}: {
-  overview: OverviewData;
-  onViewFullStats: () => void;
-}) {
+type BannerStat = { value: string; label: string; accent: boolean };
+type ProgressStat = { label: string; value: string; sub: string };
+
+/** Winner-style value/label stat row (used by winner / baseline / inconclusive). */
+function BannerStatRow({ stats }: { stats: BannerStat[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-6">
+      {stats.map((stat, i) => (
+        <div key={stat.label} className="flex items-center gap-6">
+          {i > 0 && (
+            <Separator orientation="vertical" className="h-10 bg-border" />
+          )}
+          <div>
+            <p
+              className={cn(
+                "text-2xl font-semibold tabular-nums",
+                stat.accent ? "text-success-fg" : "text-foreground"
+              )}
+            >
+              {stat.value}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** "current / target" trio used by progress + collecting. */
+function BannerProgressRow({ items }: { items: ProgressStat[] }) {
+  return (
+    <div className="grid max-w-2xl grid-cols-3 gap-x-10 gap-y-4">
+      {items.map((it) => (
+        <div key={it.label} className="min-w-0">
+          <div className="text-xs text-muted-foreground">{it.label}</div>
+          <div className="mt-2 tabular-nums">
+            <span className="text-base font-semibold text-foreground">
+              {it.value}
+            </span>{" "}
+            <span className="text-sm text-muted-foreground">{it.sub}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Plain grayscale info banner for the two report-only override states. */
+function InfoBanner({ body, fullWidth }: { body: string; fullWidth: boolean }) {
   return (
     <Card
       className={cn(
         overviewRadius,
-        "border-border bg-background shadow-none lg:col-span-2"
+        "border-border bg-background shadow-none",
+        fullWidth ? "lg:col-span-3" : "lg:col-span-2"
+      )}
+    >
+      <div className="flex items-start gap-3 px-8 py-8">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{body}</p>
+      </div>
+    </Card>
+  );
+}
+
+function DecisionBanner({
+  overview,
+  conclusion,
+  onViewFullStats,
+  fullWidth,
+}: {
+  overview: OverviewData;
+  conclusion: ReportConclusionSnapshot;
+  onViewFullStats: () => void;
+  /** True when the winner-only Revenue card is hidden (banner spans full row). */
+  fullWidth: boolean;
+}) {
+  // Precedence: allDisabled > filtersActive > kind.
+  if (conclusion.allDisabled) {
+    return (
+      <InfoBanner body={conclusionCopy("allDisabled").body} fullWidth={fullWidth} />
+    );
+  }
+  if (conclusion.filtersActive) {
+    return (
+      <InfoBanner
+        body={conclusionCopy("filtersApplied").body}
+        fullWidth={fullWidth}
+      />
+    );
+  }
+
+  const { kind, progress } = conclusion;
+  const [conversionStat, confidenceStat] = overview.stats;
+  const lastUpdatedStat: BannerStat = {
+    value: overview.lastUpdated,
+    label: "Last updated",
+    accent: false,
+  };
+
+  let statsBlock: ReactNode = null;
+  if (kind === "winner") {
+    statsBlock = <BannerStatRow stats={overview.stats} />;
+  } else if (kind === "baseline" || kind === "inconclusive") {
+    statsBlock = (
+      <BannerStatRow stats={[confidenceStat!, lastUpdatedStat]} />
+    );
+  } else if (kind === "progress") {
+    statsBlock = (
+      <BannerProgressRow
+        items={[
+          {
+            label: "Duration",
+            value: String(progress.elapsedDays),
+            sub: `/ ${progress.requiredDays} days`,
+          },
+          {
+            label: "Unique visitors",
+            value: formatNumber(progress.visitors),
+            sub: `/ ${formatNumber(progress.requiredVisitors)} required`,
+          },
+          {
+            label: "Conversions",
+            value: formatNumber(progress.uniqueConversions),
+            sub: `/ ${formatNumber(progress.requiredConversions)} required`,
+          },
+        ]}
+      />
+    );
+  } else {
+    // collecting — data-threshold floors only, no runtime.
+    statsBlock = (
+      <BannerProgressRow
+        items={[
+          {
+            label: "Duration",
+            value: String(progress.elapsedDays),
+            sub: progress.elapsedDays === 1 ? "day" : "days",
+          },
+          {
+            label: "Unique visitors",
+            value: formatNumber(progress.visitors),
+            sub: `/ ${formatNumber(COLLECT_MIN_VISITORS)}`,
+          },
+          {
+            label: "Conversions",
+            value: formatNumber(progress.uniqueConversions),
+            sub: `/ ${formatNumber(COLLECT_MIN_CONVERSIONS)}`,
+          },
+        ]}
+      />
+    );
+  }
+
+  return (
+    <Card
+      className={cn(
+        overviewRadius,
+        "border-border bg-background shadow-none",
+        fullWidth ? "lg:col-span-3" : "lg:col-span-2"
       )}
     >
       <div className="flex h-full flex-col gap-6 px-8 py-8">
         <div className="space-y-3">
-          <h3 className="text-2xl font-semibold tracking-tight text-foreground">
-            {overview.headline}
-          </h3>
+          <div className="flex items-center gap-2.5">
+            <ConclusionStateIcon kind={kind} size={20} />
+            <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+              {overview.headline}
+            </h3>
+          </div>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             {overview.body}
           </p>
         </div>
 
         <div className="mt-auto space-y-6">
-          <div className="flex flex-wrap items-center gap-6">
-            {overview.stats.map((stat, i) => (
-              <div key={stat.label} className="flex items-center gap-6">
-                {i > 0 && (
-                  <Separator orientation="vertical" className="h-10 bg-border" />
-                )}
-                <div>
-                  <p
-                    className={cn(
-                      "text-2xl font-semibold tabular-nums",
-                      stat.accent ? "text-success-fg" : "text-foreground"
-                    )}
-                  >
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {statsBlock}
 
           <div className="flex items-center gap-6">
-            <Button className="rounded-md px-5">Rollout variation</Button>
+            {kind === "winner" && (
+              <Button className="rounded-md px-5">Rollout variation</Button>
+            )}
+            {kind === "inconclusive" && (
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-md"
+                // TODO: wire up clone & modify flow
+                onClick={() => {}}
+              >
+                Clone &amp; modify
+              </Button>
+            )}
             <Button
               type="button"
               variant="link"
@@ -643,12 +798,23 @@ function ReportsOverview({
   onViewVitalsDetails: () => void;
 }) {
   const overview = useOverviewData();
+  const { conclusion } = useReportData();
+  // Revenue + Rollout are winner-only, and never under an override.
+  const showWinnerLayout =
+    conclusion.kind === "winner" &&
+    !conclusion.filtersActive &&
+    !conclusion.allDisabled;
   return (
     <div className="mx-auto max-w-[1384px] space-y-10 px-12 pb-12 pt-8">
       <VitalsBreachSection onViewDetails={onViewVitalsDetails} />
       <div className="grid gap-4 lg:grid-cols-3">
-        <DecisionBanner overview={overview} onViewFullStats={onViewFullStats} />
-        <RevenueImpactCard overview={overview} />
+        <DecisionBanner
+          overview={overview}
+          conclusion={conclusion}
+          onViewFullStats={onViewFullStats}
+          fullWidth={!showWinnerLayout}
+        />
+        {showWinnerLayout && <RevenueImpactCard overview={overview} />}
       </div>
       <HypothesisSection overview={overview} />
       <VariationComparison overview={overview} />
@@ -710,7 +876,10 @@ function ReportsChrome({
           </div>
         </div>
 
-        <div className="flex min-h-0 min-w-0 flex-1 items-start">
+        <div
+          className="flex min-h-0 min-w-0 flex-1 items-start"
+          style={{ paddingRight: UTILITY_RAIL_WIDTH }}
+        >
           <div className="min-w-0 flex-1">
             <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
               <ReportsOverview

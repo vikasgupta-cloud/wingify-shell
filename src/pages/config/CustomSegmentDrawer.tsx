@@ -17,9 +17,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -30,6 +28,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { SegmentConditionControls } from "@/components/segments/SegmentConditionControls";
 import { useConfigStore } from "../../store/config";
 import { useCustomSegmentsStore } from "../../store/customSegments";
 import {
@@ -39,12 +38,7 @@ import {
   STANDARD_SEGMENTS,
   type SegmentCondition,
 } from "../../config/segments";
-import {
-  ATTRIBUTE_CATEGORIES,
-  findAttribute,
-  findOperator,
-  operatorsFor,
-} from "../../config/segmentAttributes";
+import { findAttribute, findOperator } from "../../config/segmentAttributes";
 
 // Canned prompt suggestions for the (visual-only) Wandz assistant.
 const WANDZ_SUGGESTIONS = [
@@ -111,81 +105,9 @@ function WandzBanner() {
   );
 }
 
-// Value control for a single condition, per the VALUE RENDERING RULE.
-function ValueField({
-  condition,
-  onChange,
-}: {
-  condition: SegmentCondition;
-  onChange: (patch: Partial<SegmentCondition>) => void;
-}) {
-  const attr = findAttribute(condition.attribute);
-  const op = attr ? findOperator(attr, condition.operator) : undefined;
-
-  if (op?.valueless) return null;
-
-  if (op?.valueType === "number") {
-    return (
-      <div className="flex flex-1 items-center gap-2">
-        <Input
-          type="number"
-          value={condition.value}
-          onChange={(e) => onChange({ value: e.target.value })}
-          placeholder="0"
-          className="h-9 w-full tabular-nums"
-        />
-        {op.valueSuffix && (
-          <span className="shrink-0 text-sm text-muted-foreground">
-            {op.valueSuffix}
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  const vt = attr?.valueType;
-
-  if (vt === "select") {
-    return (
-      <Select
-        value={condition.value}
-        onValueChange={(v) => onChange({ value: v })}
-      >
-        <SelectTrigger className="h-9 flex-1">
-          <SelectValue placeholder="Select value" />
-        </SelectTrigger>
-        <SelectContent>
-          {(attr?.options ?? []).map((opt) => (
-            <SelectItem key={opt} value={opt}>
-              {opt}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  }
-
-  if (vt === "number") {
-    return (
-      <Input
-        type="number"
-        value={condition.value}
-        onChange={(e) => onChange({ value: e.target.value })}
-        placeholder="0"
-        className="h-9 flex-1 tabular-nums"
-      />
-    );
-  }
-
-  return (
-    <Input
-      value={condition.value}
-      onChange={(e) => onChange({ value: e.target.value })}
-      placeholder="Value"
-      className="h-9 flex-1"
-    />
-  );
-}
+// Value control for a single condition — see SegmentConditionControls.
+/* @undo inlined ValueField / attribute-operator row moved to
+   src/components/segments/SegmentConditionControls.tsx for reports reuse. */
 
 function ConditionCard({
   condition,
@@ -200,71 +122,13 @@ function ConditionCard({
   onRemove: () => void;
   onDuplicate: () => void;
 }) {
-  const attr = findAttribute(condition.attribute);
-  const ops = attr ? operatorsFor(attr) : [];
-  const op = (attr && findOperator(attr, condition.operator)) || ops[0];
-
-  // Attribute change resets the operator to the set's first and clears value.
-  const changeAttribute = (newId: string) => {
-    const newAttr = findAttribute(newId);
-    onChange({
-      attribute: newId,
-      operator: newAttr ? operatorsFor(newAttr)[0].id : condition.operator,
-      value: "",
-    });
-  };
-
-  // Operator change clears the value when moving to a valueless operator.
-  const changeOperator = (newId: string) => {
-    const newOp = ops.find((o) => o.id === newId);
-    onChange(newOp?.valueless ? { operator: newId, value: "" } : { operator: newId });
-  };
-
   return (
     <div className="flex items-stretch gap-2">
       <div className="relative flex-1 rounded-lg border border-border bg-background p-3 pt-4">
         <span className="absolute -top-2 left-3 bg-background px-1 text-[11px] text-muted-foreground">
           where
         </span>
-        <div className="flex items-center gap-2">
-          {/* Attribute — grouped by category. */}
-          <Select value={condition.attribute} onValueChange={changeAttribute}>
-            <SelectTrigger className="w-[240px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ATTRIBUTE_CATEGORIES.map((cat) => (
-                <SelectGroup key={cat.id}>
-                  <SelectLabel>{cat.label}</SelectLabel>
-                  {cat.attributes.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Operator — trigger shows only the symbol, driven from state. */}
-          <Select value={condition.operator} onValueChange={changeOperator}>
-            <SelectTrigger className="w-16" aria-label="Operator">
-              <span className="w-6 text-center">{op?.symbol}</span>
-            </SelectTrigger>
-            <SelectContent>
-              {ops.map((o) => (
-                <SelectItem key={o.id} value={o.id}>
-                  <span className="flex items-center">
-                    <span className="w-6 text-center">{o.symbol}</span>
-                    <span>{o.label}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <ValueField condition={condition} onChange={onChange} />
-        </div>
+        <SegmentConditionControls condition={condition} onChange={onChange} />
       </div>
 
       {/* Remove (top) + clone (below) on one vertical axis, centered to row. */}

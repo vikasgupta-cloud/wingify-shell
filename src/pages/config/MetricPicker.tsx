@@ -346,7 +346,7 @@ export default function MetricPicker({
         align={align}
         sideOffset={6}
         collisionPadding={16}
-        className="flex max-h-[min(80vh,640px)] w-[680px] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0"
+        className="flex max-h-[min(640px,var(--radix-popover-content-available-height,100vh))] w-[min(680px,var(--radix-popover-content-available-width,calc(100vw-2rem)))] flex-col gap-0 overflow-hidden p-0"
       >
         {/* Header */}
         <div className="shrink-0 px-6 pb-0 pt-5">
@@ -451,10 +451,10 @@ export default function MetricPicker({
             )}
           </div>
 
-          <div className="flex h-[360px] min-h-0 border-t border-border">
+          <div className="flex min-h-0 flex-1 border-t border-border">
             <div
               ref={metricsListRef}
-              className="w-[320px] shrink-0 overflow-y-auto border-r border-border p-2"
+              className="min-h-0 w-[min(320px,45%)] shrink-0 overflow-y-auto border-r border-border p-2"
             >
               {grouped.length === 0 && funnels.length === 0 ? (
                 <div className="flex h-full items-center justify-center">

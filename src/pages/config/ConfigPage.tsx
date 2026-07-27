@@ -148,7 +148,9 @@ export default function ConfigPage() {
   const wasWorkflowOpen = useRef(false);
 
   useEffect(() => {
-    if (campaign) ensureConfig(campaign.id, campaign.name);
+    // Open path: pass the campaign so ensureConfig hydrates the config from its
+    // report record (Direction A). Create path (rows.ts) omits it → blank seed.
+    if (campaign) ensureConfig(campaign.id, campaign.name, campaign);
   }, [campaign, ensureConfig]);
 
   // Always land on the first step when the campaign changes. activeStepId is

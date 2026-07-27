@@ -29,7 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { campaignLandingPath, type Campaign, type CampaignType } from "../../data/campaigns";
+import { campaignLandingPath, hasReport, type Campaign, type CampaignType } from "../../data/campaigns";
+import { conclusionKind } from "../../data/campaignConclusion";
+import ConclusionStateIcon from "../reports/ConclusionStateIcon";
 import { COLUMNS, type ColumnDef, type ColumnId } from "../../config/columns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
@@ -41,7 +43,6 @@ import { useWandzStore } from "../../store/wandz";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
-import DecisionIcon from "../ui/DecisionIcon";
 
 const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
   "A/B": Columns2,
@@ -229,14 +230,17 @@ function renderCell(c: Campaign, column: ColumnDef) {
       // StatusMenu is standalone and can be reused in the level-2 detail top bar later.
       return <StatusMenu campaign={c} />;
     case "conclusion":
-      return (
-        <div className="flex items-center gap-2">
-          <DecisionIcon decision={c.decision} />
-          <span className="text-foreground">{c.decision}</span>
+      // Only reportable campaigns have an intrinsic conclusion state. The two
+      // report-only overrides (filtersApplied / allDisabled) never surface here.
+      return hasReport(c.status) ? (
+        <div className="flex items-center justify-center">
+          <ConclusionStateIcon kind={conclusionKind(c)} />
         </div>
+      ) : (
+        NULL_DASH
       );
     case "vitals":
-      return <VitalsIcon vitals={c.vitals} />;
+      return <VitalsIcon campaign={c} />;
     case "variations":
       return <span className="tabular-nums">{formatNumber(c.variations)}</span>;
     case "visitors":
@@ -511,7 +515,8 @@ export default function CampaignTable() {
             col.id === "name" ? "relative" : "overflow-hidden",
             DENSITY_PAD[rowDensity],
             col.id === "name" && STICKY_NAME_BODY,
-            col.align === "right" && "text-right tabular-nums"
+            col.align === "right" && "text-right tabular-nums",
+            col.align === "center" && "text-center"
           )}
         >
           {renderCell(c, col)}
@@ -600,7 +605,8 @@ export default function CampaignTable() {
                     className={cn(
                       "relative whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
                       col.id === "name" && STICKY_NAME_HEAD,
-                      col.align === "right" && "text-right"
+                      col.align === "right" && "text-right",
+                      col.align === "center" && "text-center"
                     )}
                   >
                     {col.id === "name" && (

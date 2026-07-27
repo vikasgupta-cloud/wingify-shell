@@ -187,7 +187,7 @@ function GanttRow({
               {c.name}
             </Link>
             <span className="shrink-0">
-              <VitalsIcon vitals={c.vitals} />
+              <VitalsIcon campaign={c} />
             </span>
           </div>
           <div className="truncate text-xs text-muted-foreground">{c.url}</div>

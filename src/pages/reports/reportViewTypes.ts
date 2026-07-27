@@ -11,22 +11,40 @@ export type ResultsTableColumnId =
   | "expected-improvement"
   | "probability"
   | "conversion-rate"
-  | "revenue-per-visitor";
+  | "revenue-per-visitor"
+  | "conversions-per-visitor"
+  | "conversions-per-visitor-improvement"
+  | "conversion-gain"
+  | "traffic-split"
+  | "total-conversions-sessions"
+  | "sessions"
+  | "conversion-rate-sessions"
+  | "improvement-sessions";
 
 export const RESULTS_TABLE_COLUMN_IDS: ResultsTableColumnId[] = [
-  "unique-conversions",
   "total-visitors",
-  "expected-improvement",
-  "probability",
+  "unique-conversions",
   "conversion-rate",
+  "expected-improvement",
+  "conversions-per-visitor",
+  "conversions-per-visitor-improvement",
+  "conversion-gain",
+  "traffic-split",
+  "total-conversions-sessions",
+  "sessions",
+  "conversion-rate-sessions",
+  "probability",
+  "improvement-sessions",
   "revenue-per-visitor",
 ];
 
 export const DEFAULT_RESULTS_TABLE_COLUMNS: ResultsTableColumnId[] = [
-  "unique-conversions",
   "total-visitors",
+  "unique-conversions",
+  "conversion-rate",
   "expected-improvement",
-  "probability",
+  "conversions-per-visitor",
+  "conversions-per-visitor-improvement",
 ];
 
 const RESULTS_TABLE_COLUMN_ID_SET = new Set<string>(RESULTS_TABLE_COLUMN_IDS);

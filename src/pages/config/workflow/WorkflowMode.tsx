@@ -8,7 +8,6 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConfigStore } from "../../../store/config";
 import EditorBar from "./EditorBar";
@@ -33,6 +32,7 @@ const canvasVars = {
 export default function WorkflowMode({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
   const closeWorkflow = useConfigStore((s) => s.closeWorkflow);
+  const discardWorkflow = useConfigStore((s) => s.discardWorkflow);
 
   // Node positions and layout are LOCAL, derived from the config, never
   // persisted. react-flow owns node internals (position + measured size) so
@@ -92,15 +92,18 @@ export default function WorkflowMode({ id }: { id: string }) {
     <div className="flex h-full flex-col bg-canvas">
       <div className="flex shrink-0 items-center justify-between px-6 py-4">
         <h2 className="text-lg font-semibold text-foreground">Workflow Mode</h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Close Workflow Mode"
-          onClick={() => closeWorkflow(id)}
-        >
-          <X />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => discardWorkflow(id)}
+          >
+            Discard
+          </Button>
+          <Button type="button" onClick={() => closeWorkflow(id)}>
+            Done
+          </Button>
+        </div>
       </div>
 
       <div className="relative m-6 mt-0 min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-background">

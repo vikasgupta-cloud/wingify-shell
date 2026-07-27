@@ -155,22 +155,30 @@ export default function PrimaryRail({
     const Icon = item.icon;
     const isActive =
       pathname === item.path || pathname.startsWith(item.path + "/");
+    // Profile (and any flyoutOnly item with sections) still gets a SubNav flyout —
+    // flyoutOnly only suppresses click-navigation for leaf items like Activity/Help.
+    const hasSections = !!item.sections;
+    const tooltipOnly = !!item.flyoutOnly && !hasSections;
     const button = (
       <button
         type="button"
         aria-label={item.label}
         onClick={
-          item.flyoutOnly
+          tooltipOnly
             ? undefined
             : () => {
                 onMoreSelectedChange?.(false);
                 navigate(firstChildPath(item));
               }
         }
-        onMouseEnter={item.flyoutOnly ? undefined : (e) => openFlyout(item, e.currentTarget)}
-        onMouseLeave={item.flyoutOnly ? undefined : scheduleClose}
-        onFocus={item.flyoutOnly ? undefined : (e) => openFlyout(item, e.currentTarget)}
-        onBlur={item.flyoutOnly ? undefined : scheduleClose}
+        onMouseEnter={
+          tooltipOnly ? undefined : (e) => openFlyout(item, e.currentTarget)
+        }
+        onMouseLeave={tooltipOnly ? undefined : scheduleClose}
+        onFocus={
+          tooltipOnly ? undefined : (e) => openFlyout(item, e.currentTarget)
+        }
+        onBlur={tooltipOnly ? undefined : scheduleClose}
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rail-foreground transition-colors hover:bg-accent",
           isActive &&
@@ -192,9 +200,9 @@ export default function PrimaryRail({
       </button>
     );
 
-    // Flyout-only items (Profile, Activity, Help): no navigation, no sub-nav
-    // flyout — just a plain tooltip naming the item.
-    if (item.flyoutOnly) {
+    // Leaf flyout-only items (Activity, Help): no navigation, no sub-nav flyout —
+    // just a plain tooltip naming the item.
+    if (tooltipOnly) {
       return (
         <Tooltip.Root key={item.path}>
           <Tooltip.Trigger asChild>{button}</Tooltip.Trigger>
@@ -208,7 +216,7 @@ export default function PrimaryRail({
     }
 
     // Items with a flyout panel reveal their name there — no tooltip needed.
-    if (item.sections) {
+    if (hasSections) {
       return <span key={item.path}>{button}</span>;
     }
 

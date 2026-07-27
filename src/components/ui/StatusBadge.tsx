@@ -1,5 +1,12 @@
 import type { Campaign, CampaignStatus } from "../../data/campaigns";
+import { breachedVitalFor } from "../../data/campaignConclusion";
 import { cn } from "../../lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import vitalsIcon from "@/assets/icons/vitals.png";
 
 // The only place (with VitalsIcon below) that uses the colored status tokens.
@@ -71,16 +78,29 @@ export function VitalsGlyph({
   );
 }
 
-export function VitalsIcon({ vitals }: { vitals: Campaign["vitals"] }) {
+export function VitalsIcon({ campaign }: { campaign: Campaign }) {
+  const vitals = campaign.vitals;
+  // null vitals (pre-launch) render as today — a muted dash, no tooltip.
   if (vitals === null) return <span className="text-sm text-muted-foreground">–</span>;
-  const label = vitals === "healthy" ? "Vitals healthy" : "Vitals unhealthy";
+  const label =
+    vitals === "healthy"
+      ? "Vitals healthy"
+      : `Vitals breach: ${breachedVitalFor(campaign)}`;
   return (
-    <VitalsGlyph
-      size={16}
-      title={label}
-      className={cn(
-        vitals === "healthy" ? "text-vitals-healthy" : "text-vitals-unhealthy"
-      )}
-    />
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex" aria-label={label}>
+            <VitalsGlyph
+              size={16}
+              className={cn(
+                vitals === "healthy" ? "text-vitals-healthy" : "text-vitals-unhealthy"
+              )}
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

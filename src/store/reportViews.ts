@@ -453,6 +453,9 @@ type ReportViewsState = {
   setSelectedMetric: (campaignId: string, metric: string) => void;
   setMetricsNavCollapsed: (campaignId: string, collapsed: boolean) => void;
   clearSaveHint: () => void;
+  /** Bump to open the Results view-settings popover (session-only). */
+  viewSettingsOpenNonce: number;
+  requestOpenViewSettings: () => void;
 };
 
 function createCampaignPresets(
@@ -573,6 +576,7 @@ export const useReportViewsStore = create<ReportViewsState>()(
         uiByCampaign: {},
         draftsByCampaign: {},
         lastSaveHint: null,
+        viewSettingsOpenNonce: 0,
 
         initCampaign: (campaignId, seed) =>
           set((s) => {
@@ -984,6 +988,11 @@ export const useReportViewsStore = create<ReportViewsState>()(
           }),
 
         clearSaveHint: () => set({ lastSaveHint: null }),
+
+        requestOpenViewSettings: () =>
+          set((s) => ({
+            viewSettingsOpenNonce: s.viewSettingsOpenNonce + 1,
+          })),
 
         setSelectedMetric: (campaignId, metric) => {
           set((s) => {
