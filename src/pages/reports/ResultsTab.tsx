@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Popover,
+  PopoverArrow,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -69,6 +70,7 @@ import {
 } from "@/components/ui/select";
 import {
   Tooltip,
+  TooltipArrow,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
@@ -1476,14 +1478,11 @@ function StatisticalConfigurationTooltip({
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent
         side="bottom"
-        align="end"
-        sideOffset={10}
+        align="center"
+        sideOffset={8}
         className="relative w-[min(100vw-2rem,420px)] overflow-visible rounded-xl border border-border bg-background p-0 text-left text-foreground shadow-xl"
       >
-        <span
-          className="absolute -top-2 right-6 h-4 w-4 rotate-45 border-l border-t border-border bg-background"
-          aria-hidden
-        />
+        <TooltipArrow className="fill-background" />
         <div className="space-y-5 px-5 py-5">
           <div className="space-y-1.5">
             <p className="text-base font-semibold text-foreground">
@@ -2073,14 +2072,16 @@ function ExperimentVitalsPopover({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        align="end"
+        align="center"
+        side="bottom"
         sideOffset={8}
-        className="w-[min(100vw-2rem,420px)] rounded-xl border border-border p-0 shadow-xl"
+        className="w-[min(100vw-2rem,420px)] overflow-visible rounded-xl border border-border bg-popover p-0 shadow-xl"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
         onMouseEnter={openPanel}
         onMouseLeave={scheduleClose}
       >
+        <PopoverArrow className="fill-popover" />
         <div className="space-y-3 border-b border-border px-5 pb-4 pt-5">
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-base font-semibold text-foreground">
@@ -2317,11 +2318,15 @@ function TableColumnHelp({
   title,
   body,
   ariaLabel,
+  variant = "default",
 }: {
   title: string;
   body: string;
   ariaLabel: string;
+  /** Compact card used next to graph tabs (narrower, side pointer). */
+  variant?: "default" | "compact";
 }) {
+  const compact = variant === "compact";
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
@@ -2335,20 +2340,35 @@ function TableColumnHelp({
           </button>
         </TooltipTrigger>
         <TooltipContent
-          side="top"
+          side={compact ? "right" : "top"}
           align="center"
-          sideOffset={12}
-          className="relative max-w-[640px] overflow-visible rounded-xl border border-border bg-background px-8 py-7 text-left text-foreground shadow-xl"
+          sideOffset={compact ? 8 : 12}
+          className={cn(
+            "relative overflow-visible rounded-xl border border-border bg-background text-left text-foreground shadow-xl",
+            compact
+              ? "max-w-[280px] px-4 py-3.5"
+              : "max-w-[640px] px-8 py-7"
+          )}
         >
-          <span
-            className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-b border-r border-border bg-background"
-            aria-hidden
-          />
-          <div className="space-y-3">
-            <p className="text-[18px] font-semibold leading-tight text-foreground">
+          <TooltipArrow className="fill-background" />
+          <div className={cn("space-y-2", !compact && "space-y-3")}>
+            <p
+              className={cn(
+                "font-semibold leading-tight text-foreground",
+                compact ? "text-sm" : "text-[18px]"
+              )}
+            >
               {title}
             </p>
-            <p className="text-[14px] leading-6 text-foreground/80">{body}</p>
+            <p
+              className={cn(
+                compact
+                  ? "text-sm leading-5 text-muted-foreground"
+                  : "text-[14px] leading-6 text-foreground/80"
+              )}
+            >
+              {body}
+            </p>
           </div>
         </TooltipContent>
       </Tooltip>
@@ -4821,6 +4841,7 @@ function GraphPanel({
               title={helpTitle}
               body={helpBody}
               ariaLabel={helpAria}
+              variant="compact"
             />
           </div>
         ))}

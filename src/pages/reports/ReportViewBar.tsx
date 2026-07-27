@@ -5,9 +5,8 @@ import {
   useState,
 } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { MoreVertical, Plus } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -20,6 +19,7 @@ import {
   useActiveCustomViewId,
   useActiveReportPresetId,
   useIsReportViewDirty,
+  useReportCampaignSlice,
   useReportCustomViews,
   useReportViewsStore,
   type ReportCustomView,
@@ -59,12 +59,14 @@ function ViewMenu({
   onEdit,
   onRename,
   onDelete,
+  deleteDisabled,
 }: {
   label: string;
   active: boolean;
   onEdit: () => void;
   onRename?: () => void;
   onDelete?: () => void;
+  deleteDisabled?: boolean;
 }) {
   return (
     <DropdownMenu.Root>
@@ -104,8 +106,9 @@ function ViewMenu({
           ) : null}
           {onDelete ? (
             <DropdownMenu.Item
+              disabled={deleteDisabled}
               onSelect={onDelete}
-              className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
+              className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-accent"
             >
               Delete
             </DropdownMenu.Item>
@@ -120,12 +123,14 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const activePresetId = useActiveReportPresetId(campaignId);
   const activeCustomViewId = useActiveCustomViewId(campaignId);
   const customViews = useReportCustomViews(campaignId);
+  const campaignSlice = useReportCampaignSlice(campaignId);
   const setActivePreset = useReportViewsStore((s) => s.setActivePreset);
   const setActiveCustomView = useReportViewsStore((s) => s.setActiveCustomView);
   const renameCustomView = useReportViewsStore((s) => s.renameCustomView);
   const deleteCustomView = useReportViewsStore((s) => s.deleteCustomView);
+  const renamePreset = useReportViewsStore((s) => s.renamePreset);
+  const deletePreset = useReportViewsStore((s) => s.deletePreset);
   const reorderCustomViews = useReportViewsStore((s) => s.reorderCustomViews);
-  const saveAsNew = useReportViewsStore((s) => s.saveReportViewAsNew);
   const requestOpenViewSettings = useReportViewsStore(
     (s) => s.requestOpenViewSettings
   );
@@ -136,9 +141,11 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createName, setCreateName] = useState("New view");
+  const [deleteTarget, setDeleteTarget] = useState<
+    | { kind: "custom"; id: string; name: string }
+    | { kind: "preset"; id: ReportPresetId; name: string }
+    | null
+  >(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(() =>
@@ -150,18 +157,6 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const moreMeasureRef = useRef<HTMLSpanElement>(null);
-  const addMeasureRef = useRef<HTMLSpanElement>(null);
-
-  const openCreateView = () => {
-    const nextIndex = customViews.length + 1;
-    setCreateName(`New view ${nextIndex}`);
-    setCreateOpen(true);
-  };
-
-  const commitCreateView = () => {
-    saveAsNew(campaignId, createName);
-    setCreateOpen(false);
-  };
 
   const openMore = () => {
     if (moreCloseTimer.current) {
@@ -178,14 +173,17 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
 
   const dirtyForViewKey = (key: string) => Boolean(columnDrafts?.[key]);
 
-  const items: TabItem[] = useMemo(
-    () => [
-      ...REPORT_PRESET_TABS.map((tab) => ({
-        kind: "preset" as const,
-        key: `preset:${tab.id}`,
-        id: tab.id as ReportPresetId,
-        label: tab.label,
-      })),
+  const items: TabItem[] = useMemo(() => {
+    const presets = REPORT_PRESET_TABS.filter(
+      (tab) => !campaignSlice.hiddenPresetIds.includes(tab.id)
+    ).map((tab) => ({
+      kind: "preset" as const,
+      key: `preset:${tab.id}`,
+      id: tab.id as ReportPresetId,
+      label: campaignSlice.presetLabels[tab.id] ?? tab.label,
+    }));
+    return [
+      ...presets,
       ...customViews.map((view, index) => ({
         kind: "custom" as const,
         key: view.id,
@@ -194,16 +192,28 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
         view,
         index,
       })),
-    ],
-    [customViews]
-  );
+    ];
+  }, [
+    customViews,
+    campaignSlice.hiddenPresetIds,
+    campaignSlice.presetLabels,
+  ]);
+
+  const canDeleteTab = items.length > 1;
 
   const startRename = (id: string, name: string) => {
     setRenamingId(id);
     setRenameValue(name);
   };
   const commitRename = () => {
-    if (renamingId) renameCustomView(campaignId, renamingId, renameValue);
+    if (renamingId) {
+      if (renamingId.startsWith("preset:")) {
+        const presetId = renamingId.slice("preset:".length) as ReportPresetId;
+        renamePreset(campaignId, presetId, renameValue);
+      } else {
+        renameCustomView(campaignId, renamingId, renameValue);
+      }
+    }
     setRenamingId(null);
     setMoreOpen(false);
   };
@@ -226,10 +236,9 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
     const sync = () => {
       const available = container.clientWidth;
       const moreWidth = moreMeasureRef.current?.offsetWidth ?? 40;
-      const addWidth = addMeasureRef.current?.offsetWidth ?? 28;
       const children = Array.from(measureRow.children) as HTMLElement[];
-      // Last two children are More + Add measure spans.
-      const tabEls = children.slice(0, -2);
+      // Last child is the More measure span.
+      const tabEls = children.slice(0, -1);
       const widths = tabEls.map((el) => el.offsetWidth);
 
       if (widths.length === 0) {
@@ -241,17 +250,13 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
         widths.reduce((sum, w) => sum + w, 0) +
         TAB_GAP_PX * Math.max(0, widths.length - 1);
 
-      // Always leave room for the + control.
-      if (tabsTotal + TAB_GAP_PX + addWidth <= available) {
+      if (tabsTotal <= available) {
         setVisibleCount(widths.length);
         return;
       }
 
-      // Overflowing — also reserve More.
-      const budget = Math.max(
-        0,
-        available - addWidth - TAB_GAP_PX - moreWidth - TAB_GAP_PX
-      );
+      // Overflowing — reserve More.
+      const budget = Math.max(0, available - moreWidth - TAB_GAP_PX);
       let used = 0;
       let count = 0;
       for (let i = 0; i < widths.length; i++) {
@@ -278,7 +283,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
   const moreActive = overflowItems.some(isItemActive);
   const renamingInOverflow =
     renamingId !== null &&
-    overflowItems.some((item) => item.kind === "custom" && item.id === renamingId);
+    overflowItems.some((item) => item.key === renamingId);
 
   const renderCustomTab = (
     item: Extract<TabItem, { kind: "custom" }>,
@@ -370,7 +375,14 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
               requestOpenViewSettings();
             }}
             onRename={() => startRename(view.id, view.name)}
-            onDelete={() => setDeleteId(view.id)}
+            onDelete={() =>
+              setDeleteTarget({
+                kind: "custom",
+                id: view.id,
+                name: view.name,
+              })
+            }
+            deleteDisabled={!canDeleteTab}
           />
         )}
         {!renaming && opts.measuring && (
@@ -387,6 +399,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
     opts: { measuring?: boolean } = {}
   ) => {
     const active = isItemActive(item);
+    const renaming = renamingId === item.key;
     return (
       <div
         key={item.key}
@@ -397,20 +410,36 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
             : "border-transparent text-foreground/70 hover:text-foreground"
         )}
       >
-        <button
-          type="button"
-          tabIndex={opts.measuring ? -1 : undefined}
-          onClick={
-            opts.measuring
-              ? undefined
-              : () => setActivePreset(campaignId, item.id)
-          }
-          className="relative flex items-center py-2 pl-1 pr-1 text-sm"
-        >
-          {item.label}
-          {active && dirtyForViewKey(item.key) ? <DirtyDot /> : null}
-        </button>
-        {!opts.measuring ? (
+        {renaming && !opts.measuring ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onFocus={(e) => e.currentTarget.select()}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename();
+              if (e.key === "Escape") setRenamingId(null);
+            }}
+            size={Math.max(renameValue.length, 4)}
+            className="my-1 ml-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none"
+          />
+        ) : (
+          <button
+            type="button"
+            tabIndex={opts.measuring ? -1 : undefined}
+            onClick={
+              opts.measuring
+                ? undefined
+                : () => setActivePreset(campaignId, item.id)
+            }
+            className="relative flex items-center py-2 pl-1 pr-1 text-sm"
+          >
+            {item.label}
+            {active && dirtyForViewKey(item.key) ? <DirtyDot /> : null}
+          </button>
+        )}
+        {!renaming && !opts.measuring ? (
           <ViewMenu
             label={item.label}
             active={active}
@@ -418,8 +447,18 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
               setActivePreset(campaignId, item.id);
               requestOpenViewSettings();
             }}
+            onRename={() => startRename(item.key, item.label)}
+            onDelete={() =>
+              setDeleteTarget({
+                kind: "preset",
+                id: item.id,
+                name: item.label,
+              })
+            }
+            deleteDisabled={!canDeleteTab}
           />
-        ) : (
+        ) : null}
+        {!renaming && opts.measuring && (
           <span className="inline-flex p-1 opacity-0" aria-hidden>
             <MoreVertical className="h-3.5 w-3.5" />
           </span>
@@ -446,12 +485,6 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
             {items.map((item) => renderTab(item, { measuring: true }))}
             <span ref={moreMeasureRef} className="shrink-0 px-1 pb-2 text-sm">
               More
-            </span>
-            <span
-              ref={addMeasureRef}
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center"
-            >
-              <Plus className="h-4 w-4" />
             </span>
           </div>
 
@@ -495,6 +528,27 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                   {overflowItems.map((item) => {
                     const active = isItemActive(item);
                     if (item.kind === "preset") {
+                      if (renamingId === item.key) {
+                        return (
+                          <div key={item.key} className="px-3 py-1.5">
+                            <input
+                              autoFocus
+                              value={renameValue}
+                              onFocus={(e) => e.currentTarget.select()}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onBlur={commitRename}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") commitRename();
+                                if (e.key === "Escape") {
+                                  setRenamingId(null);
+                                  setMoreOpen(false);
+                                }
+                              }}
+                              className="w-full border-0 bg-transparent p-0 text-sm text-foreground outline-none"
+                            />
+                          </div>
+                        );
+                      }
                       return (
                         <div
                           key={item.key}
@@ -529,6 +583,15 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                               setMoreOpen(false);
                               requestOpenViewSettings();
                             }}
+                            onRename={() => startRename(item.key, item.label)}
+                            onDelete={() =>
+                              setDeleteTarget({
+                                kind: "preset",
+                                id: item.id,
+                                name: item.label,
+                              })
+                            }
+                            deleteDisabled={!canDeleteTab}
                           />
                         </div>
                       );
@@ -591,7 +654,14 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                           onRename={() =>
                             startRename(item.view.id, item.view.name)
                           }
-                          onDelete={() => setDeleteId(item.view.id)}
+                          onDelete={() =>
+                            setDeleteTarget({
+                              kind: "custom",
+                              id: item.view.id,
+                              name: item.view.name,
+                            })
+                          }
+                          deleteDisabled={!canDeleteTab}
                         />
                       </div>
                     );
@@ -599,15 +669,6 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                 </PopoverContent>
               </Popover>
             ) : null}
-            <button
-              type="button"
-              onClick={openCreateView}
-              className="mb-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-              aria-label="Create new view"
-              title="Create new view"
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-            </button>
           </div>
         </div>
         <div className="flex h-9 min-w-[11.5rem] shrink-0 items-center justify-end self-end">
@@ -619,51 +680,9 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
         </div>
       </div>
 
-      <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl">
-            <Dialog.Title className="text-sm font-medium text-foreground">
-              Create new view
-            </Dialog.Title>
-            <Dialog.Description className="mt-1.5 text-sm text-muted-foreground">
-              Saves your current table columns and density into a new custom
-              view. Filters and metrics are not included.
-            </Dialog.Description>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                commitCreateView();
-              }}
-            >
-              <label className="mt-4 block text-xs font-medium text-muted-foreground">
-                View name
-              </label>
-              <input
-                autoFocus
-                value={createName}
-                onFocus={(e) => e.currentTarget.select()}
-                onChange={(e) => setCreateName(e.target.value)}
-                className="mt-1.5 w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-foreground"
-              />
-              <div className="mt-5 flex justify-end gap-2">
-                <Dialog.Close asChild>
-                  <Button type="button" variant="outline" size="sm">
-                    Cancel
-                  </Button>
-                </Dialog.Close>
-                <Button type="submit" size="sm">
-                  Create view
-                </Button>
-              </div>
-            </form>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-
       <AlertDialog.Root
-        open={deleteId !== null}
-        onOpenChange={(open) => !open && setDeleteId(null)}
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
       >
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
@@ -672,7 +691,7 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
               Delete view?
             </AlertDialog.Title>
             <AlertDialog.Description className="mt-1.5 text-sm text-muted-foreground">
-              “{customViews.find((v) => v.id === deleteId)?.name}” will be removed.
+              “{deleteTarget?.name}” will be removed from this campaign.
               This can&apos;t be undone.
             </AlertDialog.Description>
             <div className="mt-5 flex justify-end gap-2">
@@ -686,8 +705,12 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
                   type="button"
                   size="sm"
                   onClick={() => {
-                    if (deleteId) deleteCustomView(campaignId, deleteId);
-                    setDeleteId(null);
+                    if (deleteTarget?.kind === "custom") {
+                      deleteCustomView(campaignId, deleteTarget.id);
+                    } else if (deleteTarget?.kind === "preset") {
+                      deletePreset(campaignId, deleteTarget.id);
+                    }
+                    setDeleteTarget(null);
                   }}
                 >
                   Delete
