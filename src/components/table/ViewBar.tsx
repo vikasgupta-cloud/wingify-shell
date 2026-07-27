@@ -1,15 +1,20 @@
 import { useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { Bookmark, GripVertical, Plus, Trash2, X } from "lucide-react";
+import { ChevronRight, MoreVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  BASE_VIEW_ID,
+  LAYOUT_LABEL,
+  OVERVIEW_ID,
   isDirtyIgnoringLayout,
   useIsActiveViewDirty,
+  useIsActiveViewUnsaved,
   useViewsStore,
+  type Layout,
 } from "../../store/views";
 import { cn } from "../../lib/utils";
+
+const LAYOUTS: Layout[] = ["table", "gantt", "kanban"];
 
 function DirtyDot() {
   return (
@@ -20,8 +25,18 @@ function DirtyDot() {
   );
 }
 
+const TAB_BASE =
+  "group relative -mb-px flex items-center border-b-2 transition-colors";
+const KEBAB_BASE =
+  "mr-1.5 h-auto w-auto p-1 text-muted-foreground hover:text-foreground focus-visible:opacity-100 [&_svg]:size-3.5";
+const MENU_CONTENT =
+  "z-50 min-w-[180px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg";
+const MENU_ITEM =
+  "cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent data-[disabled]:cursor-default data-[disabled]:opacity-50";
+
 export default function ViewBar() {
   const views = useViewsStore((s) => s.views);
+  const draftViews = useViewsStore((s) => s.draftViews);
   const activeViewId = useViewsStore((s) => s.activeViewId);
   const defaultViewId = useViewsStore((s) => s.defaultViewId);
   const drafts = useViewsStore((s) => s.drafts);
@@ -30,36 +45,30 @@ export default function ViewBar() {
   const saveDraftToActiveView = useViewsStore((s) => s.saveDraftToActiveView);
   const saveDraftAsNewView = useViewsStore((s) => s.saveDraftAsNewView);
   const discardActiveViewDraft = useViewsStore((s) => s.discardActiveViewDraft);
+  const createDraftView = useViewsStore((s) => s.createDraftView);
+  const saveInNewLayout = useViewsStore((s) => s.saveInNewLayout);
   const renameView = useViewsStore((s) => s.renameView);
   const deleteView = useViewsStore((s) => s.deleteView);
   const reorderViews = useViewsStore((s) => s.reorderViews);
   const isDirty = useIsActiveViewDirty();
+  const isUnsaved = useIsActiveViewUnsaved();
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [saveAsOpen, setSaveAsOpen] = useState(false);
-  const [saveAsName, setSaveAsName] = useState("New saved filter");
-  const [manageOpen, setManageOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
-  const hasSaved = views.length > 0;
-  const activeView = views.find((v) => v.id === activeViewId);
-  const onSavedFilter = activeViewId !== BASE_VIEW_ID && Boolean(activeView);
-
-  // Show the bar when there are saved filters or unsaved filter/metric edits.
-  if (!hasSaved && !isDirty) return null;
+  const activeView =
+    views.find((v) => v.id === activeViewId) ??
+    draftViews.find((v) => v.id === activeViewId);
+  const canDelete = views.length > 1;
 
   const dirtyFor = (id: string) => {
     const draft = drafts[id];
     if (!draft) return false;
-    const saved =
-      id === BASE_VIEW_ID
-        ? undefined
-        : views.find((v) => v.id === id)?.state;
-    if (!saved) return false;
-    return isDirtyIgnoringLayout(draft, saved);
+    const saved = views.find((v) => v.id === id)?.state;
+    return saved ? isDirtyIgnoringLayout(draft, saved) : true;
   };
 
   const startRename = (id: string, name: string) => {
@@ -70,36 +79,61 @@ export default function ViewBar() {
     if (renamingId) renameView(renamingId, renameValue);
     setRenamingId(null);
   };
-
-  const openSaveAs = () => {
-    const nextIndex = views.length + 1;
-    setSaveAsName(`Saved filter ${nextIndex}`);
-    setSaveAsOpen(true);
-  };
-  const submitSaveAs = () => {
-    saveDraftAsNewView(saveAsName.trim() || "New saved filter");
-    setSaveAsOpen(false);
-  };
+  // Enter edit mode once the tab that owns the name is mounted. Deferred a tick so
+  // the dropdown that triggered it finishes closing and doesn't reclaim focus.
+  const startRenameSoon = (id: string, name: string) =>
+    setTimeout(() => startRename(id, name), 0);
 
   const endDrag = () => {
     setDragIndex(null);
     setOverIndex(null);
   };
 
+  // Shared inline name editor: type to rename, Enter / click-out commits, Esc reverts.
+  const renameInput = (
+    <input
+      autoFocus
+      value={renameValue}
+      onFocus={(e) => e.currentTarget.select()}
+      onChange={(e) => setRenameValue(e.target.value)}
+      onBlur={commitRename}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commitRename();
+        if (e.key === "Escape") setRenamingId(null);
+      }}
+      size={Math.max(renameValue.length, 4)}
+      className="my-1 ml-3 border-0 bg-transparent p-0 text-sm text-foreground outline-none"
+    />
+  );
+
+  const showSaveControls = isUnsaved || isDirty;
+
   return (
     <>
-      <div className="mb-4 flex min-h-10 flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
-        <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
-          <Bookmark className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="font-medium text-foreground">Saved filter</span>
-        </div>
+      <div className="mb-4 flex min-h-[36px] items-end justify-between gap-4 border-b border-border">
+        <div className="flex items-end">
+          {/* Overview — fixed lead tab, not a view */}
+          <div
+            className={cn(
+              TAB_BASE,
+              activeViewId === OVERVIEW_ID
+                ? "border-foreground text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveView(OVERVIEW_ID)}
+              className="flex items-center py-2 px-3 text-sm"
+            >
+              Overview
+            </button>
+          </div>
 
-        <div className="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden />
-
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {views.map((view, index) => {
             const active = view.id === activeViewId;
             const renaming = renamingId === view.id;
+            const otherLayouts = LAYOUTS.filter((l) => l !== view.state.layout);
             return (
               <div
                 key={view.id}
@@ -115,253 +149,249 @@ export default function ViewBar() {
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  if (dragIndex !== null && overIndex !== null) {
+                  if (dragIndex !== null && overIndex !== null)
                     reorderViews(dragIndex, overIndex);
-                  }
                   endDrag();
                 }}
                 onDragEnd={endDrag}
                 className={cn(
-                  "group relative inline-flex max-w-full items-center rounded-full border text-sm transition-colors",
+                  TAB_BASE,
                   active
-                    ? "border-foreground bg-background font-medium text-foreground"
-                    : "border-border bg-background text-foreground hover:bg-muted/60"
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
                 {dragIndex !== null && overIndex === index && (
-                  <span className="pointer-events-none absolute inset-y-1 left-0 w-0.5 rounded-full bg-foreground" />
+                  <span className="pointer-events-none absolute inset-y-1 left-0 w-0.5 bg-foreground" />
                 )}
                 {renaming ? (
-                  <input
-                    autoFocus
-                    value={renameValue}
-                    onFocus={(e) => e.currentTarget.select()}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onBlur={commitRename}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") commitRename();
-                      if (e.key === "Escape") setRenamingId(null);
-                    }}
-                    size={Math.max(renameValue.length, 4)}
-                    className="my-0.5 ml-3 mr-1 max-w-[180px] border-0 bg-transparent p-0 text-sm text-foreground outline-none"
-                  />
+                  renameInput
                 ) : (
                   <button
                     type="button"
                     onClick={() => setActiveView(view.id)}
-                    className="inline-flex max-w-[200px] items-center truncate px-3 py-1"
+                    onDoubleClick={() => startRename(view.id, view.name)}
+                    className="flex items-center py-2 pl-3 pr-1 text-sm"
                   >
-                    <span className="truncate">{view.name}</span>
-                    {dirtyFor(view.id) ? <DirtyDot /> : null}
+                    {view.name}
+                    {dirtyFor(view.id) && <DirtyDot />}
+                  </button>
+                )}
+
+                {!renaming && (
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`${view.name} options`}
+                        className={cn(
+                          KEBAB_BASE,
+                          active
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100"
+                        )}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        align="end"
+                        sideOffset={4}
+                        className={MENU_CONTENT}
+                      >
+                        <DropdownMenu.Item
+                          onSelect={() => startRenameSoon(view.id, view.name)}
+                          className={MENU_ITEM}
+                        >
+                          Rename
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                          disabled={defaultViewId === view.id}
+                          onSelect={() => setDefaultView(view.id)}
+                          className={MENU_ITEM}
+                        >
+                          {defaultViewId === view.id
+                            ? "Default view"
+                            : "Make default"}
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                          disabled={!canDelete}
+                          onSelect={() => {
+                            if (canDelete) setDeleteId(view.id);
+                          }}
+                          className={MENU_ITEM}
+                        >
+                          Delete
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Sub>
+                          <DropdownMenu.SubTrigger
+                            className={cn(
+                              MENU_ITEM,
+                              "flex items-center justify-between gap-2"
+                            )}
+                          >
+                            Save in new layout
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </DropdownMenu.SubTrigger>
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.SubContent
+                              sideOffset={4}
+                              className={MENU_CONTENT}
+                            >
+                              {otherLayouts.map((l) => (
+                                <DropdownMenu.Item
+                                  key={l}
+                                  onSelect={() => saveInNewLayout(view.id, l)}
+                                  className={MENU_ITEM}
+                                >
+                                  {LAYOUT_LABEL[l]}
+                                </DropdownMenu.Item>
+                              ))}
+                            </DropdownMenu.SubContent>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Sub>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Unsaved draft views spawned from "+" — inline-named, no kebab. */}
+          {draftViews.map((view) => {
+            const active = view.id === activeViewId;
+            const renaming = renamingId === view.id;
+            return (
+              <div
+                key={view.id}
+                className={cn(
+                  TAB_BASE,
+                  active
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {renaming ? (
+                  renameInput
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveView(view.id)}
+                    onDoubleClick={() => startRename(view.id, view.name)}
+                    className="flex items-center py-2 px-3 text-sm italic"
+                  >
+                    {view.name}
+                    <DirtyDot />
                   </button>
                 )}
               </div>
             );
           })}
 
-          {isDirty ? (
-            <div className="flex flex-wrap items-center gap-2">
+          {/* "+" — create a new draft view locked to the chosen layout, named inline */}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-muted-foreground"
-                onClick={discardActiveViewDraft}
+                size="icon"
+                aria-label="New view"
+                className="mb-1 ml-1 h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground [&_svg]:size-4"
               >
-                Discard
+                <Plus className="h-4 w-4" />
               </Button>
-              {onSavedFilter ? (
-                <>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-2 font-medium text-foreground"
-                    onClick={() => saveDraftToActiveView()}
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="start"
+                sideOffset={4}
+                className={MENU_CONTENT}
+                // Keep focus on the freshly-mounted rename input instead of
+                // letting Radix return it to the trigger (which would blur and
+                // commit the name immediately).
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
+                {LAYOUTS.map((l) => (
+                  <DropdownMenu.Item
+                    key={l}
+                    onSelect={() => {
+                      const id = createDraftView(l);
+                      startRenameSoon(id, `${LAYOUT_LABEL[l]} view`);
+                    }}
+                    className={MENU_ITEM}
                   >
-                    Save “{activeView?.name}”
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-2 font-medium text-foreground"
-                    onClick={openSaveAs}
-                  >
-                    <Plus className="h-3.5 w-3.5" aria-hidden />
-                    Save as new filter
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 font-medium text-foreground"
-                  onClick={openSaveAs}
-                >
-                  <Plus className="h-3.5 w-3.5" aria-hidden />
-                  Save current filter
-                </Button>
-              )}
-            </div>
-          ) : null}
+                    {LAYOUT_LABEL[l]}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </div>
 
-        {hasSaved ? (
-          <button
-            type="button"
-            onClick={() => setManageOpen(true)}
-            className="shrink-0 text-sm font-medium text-foreground underline-offset-2 hover:underline"
-          >
-            Manage filters
-          </button>
-        ) : null}
+        {/* SAVE CONTROLS — right-aligned, while the active view is dirty or unsaved */}
+        {showSaveControls && (
+          <div className="mb-1 flex shrink-0 animate-fade-in items-center gap-2 duration-150">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={discardActiveViewDraft}
+            >
+              Discard
+            </Button>
+            {isUnsaved ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => saveDraftAsNewView(activeView?.name ?? "New view")}
+              >
+                Save view
+              </Button>
+            ) : (
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <Button type="button" size="sm">
+                    Save view
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    align="end"
+                    sideOffset={4}
+                    className={cn(MENU_CONTENT, "min-w-[200px]")}
+                    // "Save as new view" opens the inline name editor — don't let
+                    // Radix pull focus back to the trigger and blur it.
+                    onCloseAutoFocus={(e) => e.preventDefault()}
+                  >
+                    <DropdownMenu.Item
+                      onSelect={() => saveDraftToActiveView()}
+                      className={MENU_ITEM}
+                    >
+                      Save changes to “{activeView?.name}”
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onSelect={() => {
+                        const copyName = `${activeView?.name ?? "View"} copy`;
+                        const id = saveDraftAsNewView(copyName);
+                        startRenameSoon(id, copyName);
+                      }}
+                      className={MENU_ITEM}
+                    >
+                      Save as new view
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Manage saved filters */}
-      <Dialog.Root open={manageOpen} onOpenChange={setManageOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[440px] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <Dialog.Title className="text-sm font-medium text-foreground">
-                  Manage saved filters
-                </Dialog.Title>
-                <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-                  Rename, reorder, set a default, or delete saved filters. Each
-                  filter stores your filters and selected columns.
-                </Dialog.Description>
-              </div>
-              <Dialog.Close asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </Dialog.Close>
-            </div>
-
-            <ul className="mt-4 max-h-[320px] space-y-1 overflow-y-auto">
-              {views.map((view, index) => {
-                const isDefault = defaultViewId === view.id;
-                const renaming = renamingId === view.id;
-                return (
-                  <li
-                    key={view.id}
-                    onDragOver={(e) => {
-                      if (dragIndex === null) return;
-                      e.preventDefault();
-                      setOverIndex(index);
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (dragIndex !== null) {
-                        reorderViews(dragIndex, index);
-                      }
-                      endDrag();
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-md border border-border px-2 py-2",
-                      dragIndex !== null &&
-                        overIndex === index &&
-                        "border-foreground"
-                    )}
-                  >
-                    <button
-                      type="button"
-                      draggable={!renaming}
-                      aria-label={`Reorder ${view.name}`}
-                      title="Drag to reorder"
-                      onDragStart={(e) => {
-                        setDragIndex(index);
-                        e.dataTransfer.effectAllowed = "move";
-                        e.dataTransfer.setData("text/plain", view.id);
-                      }}
-                      onDragEnd={endDrag}
-                      className="inline-flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground active:cursor-grabbing"
-                    >
-                      <GripVertical className="h-4 w-4" aria-hidden />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveView(view.id);
-                        setManageOpen(false);
-                      }}
-                      className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground"
-                    >
-                      {renaming ? (
-                        <input
-                          autoFocus
-                          value={renameValue}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.currentTarget.select()}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onBlur={commitRename}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") commitRename();
-                            if (e.key === "Escape") setRenamingId(null);
-                          }}
-                          className="w-full border-0 bg-transparent p-0 text-sm outline-none"
-                        />
-                      ) : (
-                        <>
-                          {view.name}
-                          {isDefault ? (
-                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                              Default
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </button>
-                    {!renaming ? (
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => startRename(view.id, view.name)}
-                        >
-                          Rename
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          disabled={isDefault}
-                          onClick={() => setDefaultView(view.id)}
-                        >
-                          {isDefault ? "Default" : "Make default"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground"
-                          aria-label={`Delete ${view.name}`}
-                          onClick={() => setDeleteId(view.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-
+      {/* Delete confirmation */}
       <AlertDialog.Root
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
@@ -370,75 +400,37 @@ export default function ViewBar() {
           <AlertDialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
           <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl">
             <AlertDialog.Title className="text-sm font-medium text-foreground">
-              Delete saved filter?
+              Delete view?
             </AlertDialog.Title>
             <AlertDialog.Description className="mt-1.5 text-sm text-muted-foreground">
-              “{views.find((v) => v.id === deleteId)?.name}” will be removed.
-              This can&apos;t be undone.
+              “{views.find((v) => v.id === deleteId)?.name}” will be removed. This
+              can't be undone.
             </AlertDialog.Description>
             <div className="mt-5 flex justify-end gap-2">
               <AlertDialog.Cancel asChild>
-                <Button type="button" variant="outline" size="sm">
+                <button
+                  type="button"
+                  className="rounded-md border border-input px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+                >
                   Cancel
-                </Button>
+                </button>
               </AlertDialog.Cancel>
               <AlertDialog.Action asChild>
-                <Button
+                <button
                   type="button"
-                  size="sm"
                   onClick={() => {
                     if (deleteId) deleteView(deleteId);
                     setDeleteId(null);
                   }}
+                  className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
                 >
                   Delete
-                </Button>
+                </button>
               </AlertDialog.Action>
             </div>
           </AlertDialog.Content>
         </AlertDialog.Portal>
       </AlertDialog.Root>
-
-      <Dialog.Root open={saveAsOpen} onOpenChange={setSaveAsOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl">
-            <Dialog.Title className="text-sm font-medium text-foreground">
-              Save filter
-            </Dialog.Title>
-            <Dialog.Description className="mt-1.5 text-sm text-muted-foreground">
-              Saves your current filters and selected table columns.
-            </Dialog.Description>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitSaveAs();
-              }}
-            >
-              <label className="mt-4 block text-xs font-medium text-muted-foreground">
-                Filter name
-              </label>
-              <input
-                autoFocus
-                value={saveAsName}
-                onFocus={(e) => e.currentTarget.select()}
-                onChange={(e) => setSaveAsName(e.target.value)}
-                className="mt-1.5 w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-foreground"
-              />
-              <div className="mt-5 flex justify-end gap-2">
-                <Dialog.Close asChild>
-                  <Button type="button" variant="outline" size="sm">
-                    Cancel
-                  </Button>
-                </Dialog.Close>
-                <Button type="submit" size="sm">
-                  Save
-                </Button>
-              </div>
-            </form>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
     </>
   );
 }

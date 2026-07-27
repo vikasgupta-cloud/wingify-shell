@@ -14,7 +14,6 @@ import {
   FileBarChart,
   GalleryVerticalEnd,
   HelpCircle,
-  type LucideIcon,
   ListFilter,
   MoreHorizontal,
   PenLine,
@@ -66,14 +65,9 @@ import {
 } from "../../data/campaigns";
 import PrimaryRail from "./PrimaryRail";
 
-// The vertical icon rail on the left of a detail surface: Ask Wandz (stub),
-// Configure, and Reports. Split out so DetailShell's body stays readable.
-function IconRail({ basePath, entityId }: { basePath: string; entityId?: string }) {
-  const { pathname } = useLocation();
-  const configPath = `${basePath}/c/${entityId}`;
-  const reportsPath = `${configPath}/reports`;
-  const onReports = pathname.endsWith("/reports");
-  const onConfigure = !onReports;
+// The utility rail on the RIGHT of a detail surface: Ask Wandz (stub) at the top
+// and Help pinned to the bottom. Configure/Reports now live in the header tabs.
+function UtilityRail({ entityId }: { entityId?: string }) {
   const wandzOpen = useWandzStore((s) => s.open);
   const openWandz = useWandzStore((s) => s.openWandz);
 
@@ -86,7 +80,7 @@ function IconRail({ basePath, entityId }: { basePath: string; entityId?: string 
   return (
     <TooltipProvider delayDuration={200}>
       <nav
-        className="flex h-full shrink-0 flex-col items-center gap-3 border-r border-border bg-rail py-4"
+        className="flex h-full shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4"
         style={{ width: RAIL_WIDTH }}
       >
         <Tooltip>
@@ -100,27 +94,7 @@ function IconRail({ basePath, entityId }: { basePath: string; entityId?: string 
               <Sparkles className="h-[18px] w-[18px]" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">Ask Wandz</TooltipContent>
-        </Tooltip>
-
-        <div className="h-px w-10 bg-panel-border" aria-hidden />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link to={configPath} aria-label="Configure" className={railButton(onConfigure)}>
-              <PenLine className="h-[18px] w-[18px]" />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right">Configure</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link to={reportsPath} aria-label="Reports" className={railButton(onReports)}>
-              <FileBarChart className="h-[18px] w-[18px]" />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right">Reports</TooltipContent>
+          <TooltipContent side="left">Ask Wandz</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -129,65 +103,97 @@ function IconRail({ basePath, entityId }: { basePath: string; entityId?: string 
               <HelpCircle className="h-[18px] w-[18px]" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">Help</TooltipContent>
+          <TooltipContent side="left">Help</TooltipContent>
         </Tooltip>
       </nav>
     </TooltipProvider>
   );
 }
 
-// Scroll/Guided view toggle for the config surface. A two-option segmented
-// control matching the Web Experimentation LayoutSwitcher pattern; bound to the
-// session-only viewMode. Grayscale — reuses the segmented-control tokens (muted
-// track, background-filled active pill).
-const VIEW_OPTIONS: {
-  value: "scroll" | "guided";
-  label: string;
-  tooltip: string;
-  icon: LucideIcon;
-}[] = [
-  { value: "scroll", label: "Scroll", tooltip: "Single scroll", icon: Rows3 },
-  {
-    value: "guided",
-    label: "Guided",
-    tooltip: "Guided (one step at a time)",
-    icon: GalleryVerticalEnd,
-  },
-];
+// The Configure/Reports switcher, now horizontal underline tabs in the header
+// centre. The Scroll/Guided view toggle rides just ahead of the Configure tab
+// (config surface only, per showViewToggle).
+function SurfaceTabs({
+  basePath,
+  entityId,
+  showViewToggle,
+}: {
+  basePath: string;
+  entityId?: string;
+  showViewToggle: boolean;
+}) {
+  const { pathname } = useLocation();
+  const configPath = `${basePath}/c/${entityId}`;
+  const reportsPath = `${configPath}/reports`;
+  const onReports = pathname.endsWith("/reports");
+  const onConfigure = !onReports;
 
+  // Own-row tabs: py keeps the underline close under the label, and -mb-px drops
+  // the border-b-2 onto the row's baseline so the active indicator hugs the label
+  // and sits on the row's bottom line at the same time.
+  const tab = (active: boolean) =>
+    cn(
+      "flex items-center gap-1.5 border-b-2 px-0.5 py-2 -mb-px text-sm font-medium transition-colors",
+      active
+        ? "border-foreground text-foreground"
+        : "border-transparent text-muted-foreground hover:text-foreground"
+    );
+
+  return (
+    <div className="flex items-stretch gap-4">
+      {/* Reserve the toggle slot on every surface so the tabs never shift when
+          switching Configure↔Reports; it's hidden (not unmounted) off-config. */}
+      <div className={cn("flex items-center", !showViewToggle && "invisible")}>
+        <ViewToggle />
+      </div>
+      <Link
+        to={configPath}
+        aria-label="Configure"
+        aria-current={onConfigure ? "page" : undefined}
+        className={tab(onConfigure)}
+      >
+        <PenLine className="h-4 w-4" />
+        Configure
+      </Link>
+      <Link
+        to={reportsPath}
+        aria-label="Reports"
+        aria-current={onReports ? "page" : undefined}
+        className={tab(onReports)}
+      >
+        <FileBarChart className="h-4 w-4" />
+        Reports
+      </Link>
+    </div>
+  );
+}
+
+// Scroll/Guided view toggle for the config surface. A single icon that previews
+// the view you'll switch TO (so the header stays compact); bound to the
+// session-only viewMode. Grayscale — a muted ghost icon button.
 function ViewToggle() {
   const viewMode = useConfigStore((s) => s.viewMode);
   const setViewMode = useConfigStore((s) => s.setViewMode);
+  const target = viewMode === "scroll" ? "guided" : "scroll";
+  const TargetIcon = target === "guided" ? GalleryVerticalEnd : Rows3;
+  const label = target === "guided" ? "Switch to Guided view" : "Switch to Scroll view";
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="inline-flex items-center gap-0.5 rounded-md bg-muted p-0.5">
-        {VIEW_OPTIONS.map(({ value, label, tooltip, icon: Icon }) => {
-          const active = viewMode === value;
-          return (
-            <Tooltip key={value}>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={label}
-                  aria-pressed={active}
-                  onClick={() => setViewMode(value)}
-                  className={cn(
-                    "h-auto w-auto rounded-md p-1.5 transition-all duration-150",
-                    active
-                      ? "bg-background text-foreground shadow-sm hover:bg-background"
-                      : "text-muted-foreground hover:bg-transparent hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{tooltip}</TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={label}
+            onClick={() => setViewMode(target)}
+            className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <TargetIcon className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">{label}</TooltipContent>
+      </Tooltip>
     </TooltipProvider>
   );
 }
@@ -445,8 +451,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
-        <div className="flex min-w-0 items-center gap-2">
+      <header className="flex shrink-0 flex-col bg-background">
+        {/* Row 1: breadcrumb (left) + actions (right) */}
+        <div className="flex h-14 items-center justify-between gap-4 px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <button
             type="button"
             aria-label="Go to Home dashboard"
@@ -619,13 +627,6 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               </Popover.Portal>
             </Popover.Root>
 
-            {/* View toggle sits beside the campaign name; config-surface only,
-                hidden on Reports. */}
-            {campaign && !pathname.endsWith("/reports") && (
-              <div className="ml-1 shrink-0">
-                <ViewToggle />
-              </div>
-            )}
           </div>
         </div>
 
@@ -636,11 +637,22 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
           {campaign && <KebabMenu campaign={campaign} />}
         </div>
+        </div>
+
+        {/* Row 2: Configure/Reports tabs on their own line, centered, with the
+            border-b acting as the baseline the active tab's underline touches. */}
+        <div className="flex justify-center border-b border-border px-4">
+          <SurfaceTabs
+            basePath={basePath}
+            entityId={entityId}
+            showViewToggle={Boolean(campaign) && !pathname.endsWith("/reports")}
+          />
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <IconRail basePath={basePath} entityId={entityId} />
         <main className="flex-1 overflow-y-auto">{children}</main>
+        <UtilityRail entityId={entityId} />
       </div>
 
       {/* Edge-reveal hotzone: dwell on the left viewport edge to open the nav overlay. */}

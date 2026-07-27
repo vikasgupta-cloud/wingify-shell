@@ -78,7 +78,8 @@ export function campaignSummaryFor(campaign: Campaign): string {
   const variants = campaign.report.variants;
   const variationLines = variants
     .map((v, i) => {
-      const tag = v.isControl
+      const isControl = v.label === "C";
+      const tag = isControl
         ? "baseline"
         : v.isBest
           ? "leading"
@@ -86,7 +87,7 @@ export function campaignSummaryFor(campaign: Campaign): string {
             ? "behind"
             : "challenger";
       const uplift =
-        v.isControl || v.uplift === null
+        isControl || v.uplift === null
           ? "—"
           : `${v.uplift >= 0 ? "+" : ""}${v.uplift.toFixed(1)}% uplift`;
       const conf =

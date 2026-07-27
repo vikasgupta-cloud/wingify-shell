@@ -6,7 +6,6 @@ import CampaignTable from "../components/table/CampaignTable";
 import ColumnConfig from "../components/table/ColumnConfig";
 import FilterBar from "../components/table/FilterBar";
 import ViewBar from "../components/table/ViewBar";
-import LayoutSwitcher, { getLayouts } from "../components/table/LayoutSwitcher";
 import BoardColumnConfig from "../components/kanban/BoardColumnConfig";
 import KanbanBoard from "../components/kanban/KanbanBoard";
 import GanttChart from "../components/gantt/GanttChart";
@@ -16,7 +15,7 @@ import WandzPanel from "../components/wandz/WandzPanel";
 import PageHeader from "../components/layout/PageHeader";
 import { iconForPath, pageLabel } from "../lib/nav";
 import { useTableStore } from "../store/table";
-import { useActiveViewState } from "../store/views";
+import { OVERVIEW_ID, useActiveViewState, useViewsStore } from "../store/views";
 import { useQuickViewStore } from "../store/quickView";
 import { useWandzStore } from "../store/wandz";
 
@@ -24,7 +23,7 @@ export default function WebExperimentation() {
   const { search, setSearch } = useTableStore();
   const { pathname } = useLocation();
   const { layout, filters, groupBy } = useActiveViewState();
-  const layouts = getLayouts(pathname);
+  const isOverview = useViewsStore((s) => s.activeViewId === OVERVIEW_ID);
   const openId = useQuickViewStore((s) => s.openId);
   const closeQuickView = useQuickViewStore((s) => s.close);
   const wandzOpen = useWandzStore((s) => s.open);
@@ -82,6 +81,16 @@ export default function WebExperimentation() {
       */}
       <div className="px-12 pb-12 pt-8">
         <ViewBar />
+        {isOverview ? (
+          // Overview is a fixed lead tab, not a view: no toolbar, no data grid.
+          <div className="flex min-h-[360px] flex-col items-center justify-center rounded-lg border border-border bg-background text-center">
+            <p className="text-sm font-medium text-foreground">Coming soon</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              An overview of your Web Experimentation activity will live here.
+            </p>
+          </div>
+        ) : (
+          <>
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="flex w-72 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -94,12 +103,12 @@ export default function WebExperimentation() {
             />
           </div>
           <FilterBar />
-          {/* Right cluster, aligned to the table's right edge. */}
+          {/* Right cluster, aligned to the table's right edge. Layout is fixed per
+              view, so there is no layout switcher — just the layout's own config. */}
           <div className="ml-auto flex items-center gap-2">
             {layout === "table" && <ColumnConfig />}
             {layout === "kanban" && <BoardColumnConfig />}
             {layout === "gantt" && <GanttControls />}
-            {layouts.length > 1 && <LayoutSwitcher layouts={layouts} />}
           </div>
         </div>
 
@@ -130,6 +139,8 @@ export default function WebExperimentation() {
           {/* The stores close each other, so at most one panel ever renders. */}
           {wandzOpen && <WandzPanel />}
         </div>
+          </>
+        )}
       </div>
     </>
   );

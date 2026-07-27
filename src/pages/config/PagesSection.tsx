@@ -4,6 +4,7 @@ import {
   ChevronsUpDown,
   MinusCircle,
   PlusCircle,
+  RotateCcw,
   Save,
   Settings,
 } from "lucide-react";
@@ -36,6 +37,11 @@ import {
 } from "../../store/config";
 import { useWandzStore } from "../../store/wandz";
 import { PAGE_GROUPS } from "../../config/urlPredicates";
+import {
+  ELIGIBILITY_MESSAGE,
+  evaluateEligibility,
+  type EligibilityResult,
+} from "../../lib/urlEligibility";
 import AskWandzButton from "./AskWandzButton";
 import PredicatePicker from "./PredicatePicker";
 
@@ -334,6 +340,133 @@ function GroupBlock({
   );
 }
 
+// One editable test-URL row, plus its last validation outcome (null until the
+// user clicks Validate; cleared again as soon as the URL is edited).
+type TestRow = { id: string; value: string; result: EligibilityResult | null };
+
+let testRowSeq = 0;
+const newTestRow = (): TestRow => ({
+  id: `test-url-${++testRowSeq}`,
+  value: "https://",
+  result: null,
+});
+
+// The "Test campaign eligibility for a URL" tool: type one or more URLs and,
+// on Validate, see whether the current include/exclude rules would run on each.
+function EligibilityTester({ groups }: { groups: PageGroup[] }) {
+  const [rows, setRows] = useState<TestRow[]>(() => [newTestRow()]);
+
+  const validate = () =>
+    setRows((rs) =>
+      rs.map((r) => ({ ...r, result: evaluateEligibility(r.value, groups) }))
+    );
+  const reset = () => setRows([newTestRow()]);
+  const addRow = () => setRows((rs) => [...rs, newTestRow()]);
+  const removeRow = (rowId: string) =>
+    setRows((rs) => rs.filter((r) => r.id !== rowId));
+  // Editing a URL invalidates its stale result.
+  const editRow = (rowId: string, value: string) =>
+    setRows((rs) =>
+      rs.map((r) => (r.id === rowId ? { ...r, value, result: null } : r))
+    );
+
+  return (
+    <div className="px-6 pb-5">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">
+          Verify if URLs are part of campaign
+        </span>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto p-0 font-medium"
+            onClick={validate}
+          >
+            Validate
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-auto gap-1.5 p-0 font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
+            onClick={reset}
+          >
+            <RotateCcw />
+            Reset
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-4">
+        {rows.map((row) => {
+          const ok = row.result === "run";
+          const bad = row.result !== null && row.result !== "run";
+          return (
+            <div key={row.id}>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="https://"
+                  value={row.value}
+                  onChange={(e) => editRow(row.id, e.target.value)}
+                  className={cn(
+                    ok &&
+                      "border-success-fg focus-visible:ring-success-fg",
+                    bad && "border-danger-fg focus-visible:ring-danger-fg"
+                  )}
+                />
+                {rows.length > 1 && (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remove"
+                          className="shrink-0 text-muted-foreground"
+                          onClick={() => removeRow(row.id)}
+                        >
+                          <MinusCircle />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Remove</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              {row.result && (
+                <p
+                  className={cn(
+                    "mt-1.5 text-xs",
+                    ok ? "text-success-fg" : "text-danger-fg"
+                  )}
+                >
+                  {ELIGIBILITY_MESSAGE[row.result]}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-4">
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          className="h-auto p-0 font-medium"
+          onClick={addRow}
+        >
+          <PlusCircle />
+          Add URL
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function PagesSection({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
   const openWandz = useWandzStore((s) => s.openWandz);
@@ -401,12 +534,7 @@ export default function PagesSection({ id }: { id: string }) {
               Test campaign eligibility for a URL
             </span>
           </button>
-          {testOpen && (
-            <div className="px-6 pb-4 text-sm text-muted-foreground">
-              {/* TODO */}
-              Coming later.
-            </div>
-          )}
+          {testOpen && <EligibilityTester groups={config.pageGroups} />}
         </div>
       </div>
     </section>

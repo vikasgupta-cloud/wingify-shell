@@ -780,7 +780,9 @@ export const useReportViewsStore = create<ReportViewsState>()(
             patch.dimensions !== undefined
           ) {
             get().updateSharedFilters(campaignId, {
-              dateRange: patch.dateRange,
+              // updateSharedFilters merges a partial dateRange into the current
+              // one (see its impl), so a Partial is safe here.
+              dateRange: patch.dateRange as ReportDateRange | undefined,
               segments: patch.segments,
               dimensions: patch.dimensions,
             });

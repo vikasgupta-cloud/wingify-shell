@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Eye,
+  Filter,
   Info,
   PlusCircle,
   Search,
@@ -13,7 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
 import {
@@ -208,10 +208,18 @@ export default function MetricPicker({
     document.addEventListener("pointerdown", onDown, true);
     return () => document.removeEventListener("pointerdown", onDown, true);
   }, [searchOpen, query]);
-  const [activeCategory, setActiveCategory] = useState<MetricCategory | "All">("All");
+  const [activeCat, setActiveCat] = useState<MetricCategory | "All" | "funnels">(
+    "All"
+  );
   const [draft, setDraft] = useState<string[]>([]);
-  const [hoveredMetric, setHoveredMetric] = useState<string | null>(null);
-  const [funnelId, setFunnelId] = useState<string>(FUNNELS[0]?.id ?? "");
+  // The item whose definition shows in the right pane — a metric or a funnel,
+  // since funnels are now just another category in the same list.
+  const [hovered, setHovered] = useState<
+    { kind: "metric" | "funnel"; id: string } | null
+  >(null);
+  const metricsListRef = useRef<HTMLDivElement>(null);
+  const catRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const funnelsRef = useRef<HTMLDivElement>(null);
 
   const meta = MODE_META[mode];
   const multi = mode !== "success";
@@ -228,8 +236,8 @@ export default function MetricPicker({
     }
     setQuery("");
     setSearchOpen(false);
-    setActiveCategory("All");
-    setHoveredMetric(null);
+    setActiveCat("All");
+    setHovered(null);
   }, [open, mode, config]);
 
   const counts = useMemo(() => {
@@ -239,22 +247,80 @@ export default function MetricPicker({
     return map;
   }, []);
 
-  const filtered = useMemo(() => {
+  // Metrics grouped by category (each an anchored section); search filters
+  // within groups and drops empty ones.
+  const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return METRICS.filter((m) => {
-      if (activeCategory !== "All" && m.category !== activeCategory) return false;
-      if (q && !m.name.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [query, activeCategory]);
+    return METRIC_CATEGORIES.map((cat) => ({
+      cat,
+      metrics: METRICS.filter(
+        (m) => m.category === cat && (!q || m.name.toLowerCase().includes(q))
+      ),
+    })).filter((g) => g.metrics.length > 0);
+  }, [query]);
+  const firstMetricId = grouped[0]?.metrics[0]?.id ?? null;
 
+  // Funnels are just another category, filtered by the same search query.
+  const funnels = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return FUNNELS.filter((f) => !q || f.name.toLowerCase().includes(q));
+  }, [query]);
+
+  // The right-pane detail follows the hovered item; with nothing hovered it
+  // falls back to the selected/first metric.
+  const activeFunnel =
+    hovered?.kind === "funnel" ? funnelById(hovered.id) : undefined;
   const activeMetricId =
-    hoveredMetric ??
-    (mode === "success" ? draft[0] : undefined) ??
-    filtered[0]?.id ??
-    null;
-  const activeMetric = activeMetricId ? metricById(activeMetricId) : undefined;
-  const activeFunnel = funnelById(funnelId);
+    hovered?.kind === "metric"
+      ? hovered.id
+      : (mode === "success" ? draft[0] : undefined) ?? firstMetricId ?? null;
+  const activeMetric =
+    !activeFunnel && activeMetricId ? metricById(activeMetricId) : undefined;
+
+  // Scroll-spy: highlight the category pill for the group under a reading line.
+  useEffect(() => {
+    const el = metricsListRef.current;
+    if (!el) return;
+    const compute = () => {
+      const line = el.getBoundingClientRect().top + 48;
+      let next: MetricCategory | "All" | "funnels" = "All";
+      for (const g of grouped) {
+        const ref = catRefs.current[g.cat];
+        if (ref && ref.getBoundingClientRect().top <= line) next = g.cat;
+      }
+      if (
+        funnels.length > 0 &&
+        funnelsRef.current &&
+        funnelsRef.current.getBoundingClientRect().top <= line
+      )
+        next = "funnels";
+      if (el.scrollTop < 4) next = "All";
+      setActiveCat(next);
+    };
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(compute);
+    };
+    compute();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [open, grouped, funnels]);
+
+  const scrollToCat = (cat: MetricCategory | "All" | "funnels") => {
+    setActiveCat(cat);
+    const el = metricsListRef.current;
+    if (!el) return;
+    if (cat === "All") {
+      el.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const ref = cat === "funnels" ? funnelsRef.current : catRefs.current[cat];
+    if (ref) el.scrollTo({ top: ref.offsetTop - el.offsetTop, behavior: "smooth" });
+  };
 
   if (!config) return null;
 
@@ -280,7 +346,7 @@ export default function MetricPicker({
         align={align}
         sideOffset={6}
         collisionPadding={16}
-        className="flex max-h-[min(80vh,640px)] w-[880px] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0"
+        className="flex max-h-[min(80vh,640px)] w-[680px] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0"
       >
         {/* Header */}
         <div className="shrink-0 px-6 pb-0 pt-5">
@@ -295,178 +361,199 @@ export default function MetricPicker({
           </div>
         </div>
 
-        <Tabs defaultValue="metrics" className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 px-6 pt-4">
-            <TabsList>
-              <TabsTrigger value="metrics">Metrics ({METRICS.length})</TabsTrigger>
-              <TabsTrigger value="funnels">Funnels ({FUNNELS.length})</TabsTrigger>
-            </TabsList>
+        <div className="flex min-h-0 flex-1 flex-col">
+          {/* Search collapses to an icon that sits before the "All" pill.
+              Opening it swaps the category pills for the input; it collapses
+              again on Clear or on blur while empty. Funnels are just another
+              category pill here, not a separate mode. */}
+          <div className="flex shrink-0 flex-wrap items-center gap-2 px-6 py-4">
+            {searchOpen ? (
+              <div ref={searchRef} className="relative w-full">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search metrics and funnels"
+                  className="pl-9 pr-9"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => {
+                      setQuery("");
+                      setSearchOpen(false);
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Search metrics"
+                  className="h-9 w-9 shrink-0 rounded-full"
+                  onClick={() => setSearchOpen(true)}
+                >
+                  <Search />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "rounded-full",
+                    activeCat === "All" && "border-accent bg-accent text-foreground"
+                  )}
+                  onClick={() => scrollToCat("All")}
+                >
+                  All
+                </Button>
+                {METRIC_CATEGORIES.map((c) => {
+                  const Icon = categoryIcon(c);
+                  return (
+                    <Button
+                      key={c}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "rounded-full",
+                        activeCat === c && "border-accent bg-accent text-foreground"
+                      )}
+                      onClick={() => scrollToCat(c)}
+                    >
+                      <Icon />
+                      {c} ({counts.get(c) ?? 0})
+                    </Button>
+                  );
+                })}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "rounded-full",
+                    activeCat === "funnels" && "border-accent bg-accent text-foreground"
+                  )}
+                  onClick={() => scrollToCat("funnels")}
+                >
+                  <Filter />
+                  Funnels ({FUNNELS.length})
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* METRICS TAB */}
-          <TabsContent value="metrics" className="mt-0 flex min-h-0 flex-1 flex-col">
-            {/* Search collapses to an icon that sits before the "All" pill.
-                Opening it swaps the category pills for the input; it collapses
-                again on Clear or on blur while empty. */}
-            <div className="flex shrink-0 flex-wrap items-center gap-2 px-6 py-4">
-              {searchOpen ? (
-                <div ref={searchRef} className="relative w-full">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    autoFocus
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search metrics and funnels"
-                    className="pl-9 pr-9"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      aria-label="Clear search"
-                      onClick={() => {
-                        setQuery("");
-                        setSearchOpen(false);
-                      }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
+          <div className="flex h-[360px] min-h-0 border-t border-border">
+            <div
+              ref={metricsListRef}
+              className="w-[320px] shrink-0 overflow-y-auto border-r border-border p-2"
+            >
+              {grouped.length === 0 && funnels.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-sm text-muted-foreground">No metrics found.</p>
                 </div>
               ) : (
                 <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    aria-label="Search metrics"
-                    className="h-9 w-9 shrink-0 rounded-full"
-                    onClick={() => setSearchOpen(true)}
-                  >
-                    <Search />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "rounded-full",
-                      activeCategory === "All" && "border-accent bg-accent text-foreground"
-                    )}
-                    onClick={() => setActiveCategory("All")}
-                  >
-                    All
-                  </Button>
-                  {METRIC_CATEGORIES.map((c) => {
-                    const Icon = categoryIcon(c);
+                  {grouped.map((g) => {
+                    const Icon = categoryIcon(g.cat);
                     return (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "rounded-full",
-                          activeCategory === c && "border-accent bg-accent text-foreground"
-                        )}
-                        onClick={() => setActiveCategory(c)}
+                      <div
+                        key={g.cat}
+                        ref={(node) => {
+                          catRefs.current[g.cat] = node;
+                        }}
                       >
-                        <Icon />
-                        {c} ({counts.get(c) ?? 0})
-                      </Button>
+                        <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {g.cat}
+                        </div>
+                        {g.metrics.map((m) => {
+                          const selected = draft.includes(m.id);
+                          return (
+                            <div
+                              key={m.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() =>
+                                mode === "success" ? pickSuccess(m.id) : toggleMulti(m.id)
+                              }
+                              onMouseEnter={() =>
+                                setHovered({ kind: "metric", id: m.id })
+                              }
+                              onFocus={() => setHovered({ kind: "metric", id: m.id })}
+                              className={cn(
+                                "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 hover:bg-muted",
+                                mode === "success" && selected && "bg-muted"
+                              )}
+                            >
+                              {multi && (
+                                <Checkbox
+                                  checked={selected}
+                                  onCheckedChange={() => toggleMulti(m.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              )}
+                              <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span className="text-sm text-foreground">{m.name}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     );
                   })}
+
+                  {funnels.length > 0 && (
+                    <div ref={funnelsRef}>
+                      <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Funnels
+                      </div>
+                      {funnels.map((f) => (
+                        <div
+                          key={f.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setHovered({ kind: "funnel", id: f.id })}
+                          onMouseEnter={() => setHovered({ kind: "funnel", id: f.id })}
+                          onFocus={() => setHovered({ kind: "funnel", id: f.id })}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 hover:bg-muted",
+                            hovered?.kind === "funnel" &&
+                              hovered.id === f.id &&
+                              "bg-muted"
+                          )}
+                        >
+                          <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="text-sm text-foreground">{f.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>
 
-            <div className="grid min-h-0 flex-1 grid-cols-[1fr_1fr] border-t border-border">
-              <div className="overflow-y-auto border-r border-border p-2">
-                {filtered.length === 0 ? (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-sm text-muted-foreground">No metrics found.</p>
-                  </div>
-                ) : (
-                  filtered.map((m) => {
-                    const Icon = categoryIcon(m.category);
-                    const selected = draft.includes(m.id);
-                    return (
-                      <div
-                        key={m.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() =>
-                          mode === "success" ? pickSuccess(m.id) : toggleMulti(m.id)
-                        }
-                        onMouseEnter={() => setHoveredMetric(m.id)}
-                        onFocus={() => setHoveredMetric(m.id)}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 hover:bg-muted",
-                          mode === "success" && selected && "bg-muted"
-                        )}
-                      >
-                        {multi && (
-                          <Checkbox
-                            checked={selected}
-                            onCheckedChange={() => toggleMulti(m.id)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        )}
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{m.name}</span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              <div className="overflow-y-auto p-6">
-                {activeMetric ? (
-                  <MetricDetail metric={activeMetric} />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-sm text-muted-foreground">
-                      Select a metric to see its details.
-                    </p>
-                  </div>
-                )}
-              </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+              {activeFunnel ? (
+                <FunnelDetail funnel={activeFunnel} />
+              ) : activeMetric ? (
+                <MetricDetail metric={activeMetric} />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-sm text-muted-foreground">
+                    Select a metric to see its details.
+                  </p>
+                </div>
+              )}
             </div>
-          </TabsContent>
-
-          {/* FUNNELS TAB */}
-          <TabsContent value="funnels" className="mt-0 flex min-h-0 flex-1 flex-col">
-            <div className="grid min-h-0 flex-1 grid-cols-[1fr_1fr] border-t border-border">
-              <div className="overflow-y-auto border-r border-border p-2">
-                {FUNNELS.map((f) => (
-                  <div
-                    key={f.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setFunnelId(f.id)}
-                    onMouseEnter={() => setFunnelId(f.id)}
-                    onFocus={() => setFunnelId(f.id)}
-                    className={cn(
-                      "flex cursor-pointer items-center rounded-md px-3 py-2.5 text-sm text-foreground hover:bg-muted",
-                      f.id === funnelId && "bg-muted"
-                    )}
-                  >
-                    {f.name}
-                  </div>
-                ))}
-              </div>
-              <div className="overflow-y-auto p-6">
-                {activeFunnel ? (
-                  <FunnelDetail funnel={activeFunnel} />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-sm text-muted-foreground">No funnels yet.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
 
         {/* Footer */}
         <div className="flex shrink-0 items-center justify-between border-t border-border px-6 py-3">
