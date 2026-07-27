@@ -69,13 +69,20 @@ import PrimaryRail from "./PrimaryRail";
 // and Help pinned to the bottom. Configure/Reports now live in the header tabs.
 function UtilityRail({ entityId }: { entityId?: string }) {
   const wandzOpen = useWandzStore((s) => s.open);
-  const openWandz = useWandzStore((s) => s.openWandz);
 
   const railButton = (active: boolean) =>
     cn(
       "flex h-9 w-9 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted",
       active && "bg-accent text-foreground"
     );
+
+  // Always close when already open (even if context is a section), so the rail
+  // icon acts as a true toggle for the panel.
+  const handleAskWandz = () => {
+    const { open, closeWandz, openWandz } = useWandzStore.getState();
+    if (open) closeWandz();
+    else openWandz({ kind: "campaign", campaignId: entityId ?? "" });
+  };
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -88,7 +95,8 @@ function UtilityRail({ entityId }: { entityId?: string }) {
             <button
               type="button"
               aria-label="Ask Wandz"
-              onClick={() => openWandz({ kind: "campaign", campaignId: entityId ?? "" })}
+              aria-pressed={wandzOpen}
+              onClick={handleAskWandz}
               className={railButton(wandzOpen)}
             >
               <Sparkles className="h-[18px] w-[18px]" />

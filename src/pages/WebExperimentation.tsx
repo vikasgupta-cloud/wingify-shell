@@ -125,12 +125,17 @@ export default function WebExperimentation() {
             {layout === "gantt" && <GanttChart />}
           </div>
           {openId && (
-            // Height is measured live (see panelMaxH) so the footer stays in view at
-            // any screen size or scroll position; the vh-based value is a first-paint
-            // fallback until the layout effect runs.
+            // Height is measured live (see panelMaxH) so the panel always fills
+            // the space from its sticky top to the viewport bottom — empty and
+            // data-rich campaigns look the same height; overflow scrolls inside.
+            // The vh-based max-h is a first-paint fallback until the layout effect runs.
             <div
               ref={panelRef}
-              style={panelMaxH ? { maxHeight: panelMaxH } : undefined}
+              style={
+                panelMaxH
+                  ? { height: panelMaxH, maxHeight: panelMaxH }
+                  : undefined
+              }
               className="sticky top-6 flex max-h-[calc(100vh-56px-3rem)] w-[480px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background"
             >
               <QuickViewPanel />

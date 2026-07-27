@@ -50,6 +50,7 @@ import {
 import { useWandzStore } from "../../store/wandz";
 import { TRIGGERS, FREQUENCIES } from "../../config/configOptions";
 import AskWandzButton from "./AskWandzButton";
+import SectionTitle from "./SectionTitle";
 import SegmentPicker from "./SegmentPicker";
 
 // The header + card wrapper shared by all three sub-blocks.
@@ -897,7 +898,7 @@ export default function VariationsSection({ id }: { id: string }) {
           title and the Workflow Mode CTA (see ConfigPage). */}
       <div data-section-heading className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <h2 className="text-lg font-semibold text-foreground">Target and Variation</h2>
+          <SectionTitle sectionId="variations" className="text-lg" />
           <AskWandzButton
             onClick={() =>
               openWandz({

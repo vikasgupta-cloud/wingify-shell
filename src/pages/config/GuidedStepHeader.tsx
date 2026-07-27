@@ -1,9 +1,10 @@
 import { type ReactNode } from "react";
 import { type Section } from "../../config/configSections";
+import SectionTitle from "./SectionTitle";
 
-// Guided-only header above a focused step: the step title and its one-line
-// description, with an optional action rendered beside the title (e.g. the
-// variations step's "Workflow Mode" CTA). Rendered ONLY in guided mode.
+// Guided-only header above a focused step: the step title (description on
+// hover) with an optional action beside it (e.g. variations "Workflow Mode").
+// Rendered ONLY in guided mode.
 export default function GuidedStepHeader({
   section,
   action,
@@ -13,10 +14,11 @@ export default function GuidedStepHeader({
 }) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-semibold text-foreground">{section.label}</h2>
-        <p className="text-sm text-muted-foreground">{section.description}</p>
-      </div>
+      <SectionTitle
+        label={section.label}
+        description={section.description}
+        className="text-2xl"
+      />
       {action}
     </div>
   );

@@ -7,6 +7,7 @@ import {
   Files,
   GitBranch,
   Grid2x2,
+  Save,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -66,7 +67,14 @@ function SectionBody({
       return guided ? (
         <AdditionalSettings id={id} />
       ) : (
-        <CollapsibleSection id="additional" title="Additional Settings" optional>
+        <CollapsibleSection
+          id="additional"
+          title="Additional Settings"
+          description={
+            SECTIONS.find((s) => s.id === "additional")?.description ?? ""
+          }
+          optional
+        >
           <AdditionalSettings id={id} />
         </CollapsibleSection>
       );
@@ -74,7 +82,12 @@ function SectionBody({
       return guided ? (
         <QaAssistant id={id} />
       ) : (
-        <CollapsibleSection id="qa" title="QA Assistant" optional>
+        <CollapsibleSection
+          id="qa"
+          title="QA Assistant"
+          description={SECTIONS.find((s) => s.id === "qa")?.description ?? ""}
+          optional
+        >
           <QaAssistant id={id} />
         </CollapsibleSection>
       );
@@ -279,6 +292,16 @@ export default function ConfigPage() {
                       onClick={() => openWorkflow(id)}
                     >
                       Workflow Mode
+                    </Button>
+                  ) : activeStepId === "pages" ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      // TODO: save for future use
+                    >
+                      <Save />
+                      Save as page group
                     </Button>
                   ) : undefined
                 }

@@ -1,15 +1,10 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useConfigStore } from "../../store/config";
 import { INTEGRATIONS, monogram } from "../../data/integrations";
 import IntegrationsBrowseSheet from "./IntegrationsBrowseSheet";
+import SectionTitle from "./SectionTitle";
 
 // Neutral grayscale monogram tile — deliberately NOT a real brand logo.
 function MonogramTile({ name, className }: { name: string; className?: string }) {
@@ -39,18 +34,7 @@ export default function IntegrationsSection({ id }: { id: string }) {
     <section>
       {/* Heading. */}
       <div className="mb-6">
-        <TooltipProvider delayDuration={150}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <h2 className="w-fit cursor-default text-lg font-semibold text-foreground">
-                Integrations
-              </h2>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              Integrate with third-party products.
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <SectionTitle sectionId="integrations" className="text-lg" />
       </div>
 
       {connected.length === 0 ? (
