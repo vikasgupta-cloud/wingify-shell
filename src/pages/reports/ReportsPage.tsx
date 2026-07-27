@@ -262,7 +262,7 @@ function DecisionBanner({
   }
 
   const { kind, progress } = conclusion;
-  const [conversionStat, confidenceStat] = overview.stats;
+  const [, confidenceStat] = overview.stats;
   const lastUpdatedStat: BannerStat = {
     value: overview.lastUpdated,
     label: "Last updated",

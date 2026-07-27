@@ -16,7 +16,6 @@ import {
   Minimize2,
   MinusCircle,
   MoreHorizontal,
-  Pencil,
   Plus,
   Search,
   Sparkles,

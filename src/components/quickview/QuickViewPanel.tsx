@@ -22,7 +22,6 @@ import {
   COLLECT_MIN_CONVERSIONS,
   COLLECT_MIN_VISITORS,
   conclusionKind,
-  hasDeclaredWinner,
   reportFiltersActive,
   variationCollecting,
 } from "../../data/campaignConclusion";
