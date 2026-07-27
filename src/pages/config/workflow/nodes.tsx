@@ -34,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../../store/config";
 import { TRIGGERS, FREQUENCIES } from "../../../config/configOptions";
-import { ALL_SEGMENT_LABELS } from "../../../config/segments";
+import SegmentPicker from "../SegmentPicker";
 
 type NodeData = { campaignId: string; variationId?: string };
 
@@ -105,21 +105,7 @@ function TargetNode({ data, selected }: NodeProps) {
 
       <div className="mt-3 flex flex-col gap-1">
         <span className="text-sm text-muted-foreground">Segment</span>
-        <Select
-          value={config.segment}
-          onValueChange={(v) => patch(campaignId, { segment: v })}
-        >
-          <SelectTrigger className="nodrag">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ALL_SEGMENT_LABELS.map((o) => (
-              <SelectItem key={o} value={o}>
-                {o}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SegmentPicker campaignId={campaignId} triggerClassName="w-full" />
       </div>
 
       <div
