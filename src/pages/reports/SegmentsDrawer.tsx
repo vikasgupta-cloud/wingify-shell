@@ -253,7 +253,7 @@ function CategoryPill({
       className={cn(
         "inline-flex h-7 shrink-0 items-center rounded-full px-3 text-sm transition-colors",
         active
-          ? "bg-foreground font-medium text-background"
+          ? "border border-foreground font-medium text-foreground"
           : "border border-border text-foreground/80 hover:bg-muted/60"
       )}
     >

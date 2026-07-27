@@ -117,7 +117,10 @@ export const useViewsStore = create<ViewsState>()(
           set((s) => {
             const { [prevActive]: _removed, ...restDrafts } = s.drafts;
             return {
-              views: [...s.views, { id, name: name.trim() || "New view", state }],
+              views: [
+                ...s.views,
+                { id, name: name.trim() || "New saved filter", state },
+              ],
               activeViewId: id,
               drafts: restDrafts,
             };

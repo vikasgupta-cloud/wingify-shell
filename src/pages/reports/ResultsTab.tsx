@@ -95,6 +95,7 @@ import {
 import { useWandzStore } from "../../store/wandz";
 import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
+import SavedFilterBar from "./SavedFilterBar";
 import {
   DEFAULT_REPORT_VIEW_SETTINGS,
   type ReportViewSettings,
@@ -5289,6 +5290,7 @@ export default function ResultsTab({
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           {compareMode ? (
             <>
+              <SavedFilterBar campaignId={campaign.id} />
               <ResultsFilterPanel
                 campaignId={campaign.id}
                 right={
@@ -5317,6 +5319,7 @@ export default function ResultsTab({
             </>
           ) : (
             <>
+              <SavedFilterBar campaignId={campaign.id} />
               <ResultsFilterPanel
                 campaignId={campaign.id}
                 right={

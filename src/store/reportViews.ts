@@ -179,11 +179,24 @@ function createDefaultPresets(): Record<ReportPresetId, ReportViewState> {
   });
 }
 
-/** Campaign-level filters — shared across table views; never part of Save view. */
+/** Campaign-level filters — shared across table views. */
 export type CampaignSharedFilters = {
   dateRange: ReportDateRange;
   segments: string[];
   dimensions: string[];
+};
+
+/** Named snapshot of filters + metric (Saved filter bar). */
+export type ReportSavedFilter = {
+  id: string;
+  name: string;
+  filters: CampaignSharedFilters;
+  selectedMetric: string;
+};
+
+export type FilterMetricSnapshot = {
+  filters: CampaignSharedFilters;
+  selectedMetric: string;
 };
 
 type CampaignSlice = {
@@ -192,6 +205,8 @@ type CampaignSlice = {
   customViews: ReportCustomView[];
   activeCustomViewId: string | null;
   sharedFilters: CampaignSharedFilters;
+  savedFilters: ReportSavedFilter[];
+  activeSavedFilterId: string | null;
 };
 
 function cloneSharedFilters(
@@ -228,6 +243,61 @@ function sanitizeSharedFilters(
     dimensions: Array.isArray(v.dimensions)
       ? [...v.dimensions]
       : [...fallback.dimensions],
+  };
+}
+
+function cloneFilterMetricSnapshot(
+  snap: FilterMetricSnapshot
+): FilterMetricSnapshot {
+  return {
+    filters: cloneSharedFilters(snap.filters),
+    selectedMetric: snap.selectedMetric,
+  };
+}
+
+export function filterMetricSnapshotsEqual(
+  a: FilterMetricSnapshot,
+  b: FilterMetricSnapshot
+): boolean {
+  return (
+    a.selectedMetric === b.selectedMetric &&
+    a.filters.dateRange.id === b.filters.dateRange.id &&
+    a.filters.dateRange.from === b.filters.dateRange.from &&
+    a.filters.dateRange.to === b.filters.dateRange.to &&
+    a.filters.dateRange.label === b.filters.dateRange.label &&
+    a.filters.segments.length === b.filters.segments.length &&
+    a.filters.segments.every((s, i) => s === b.filters.segments[i]) &&
+    a.filters.dimensions.length === b.filters.dimensions.length &&
+    a.filters.dimensions.every((d, i) => d === b.filters.dimensions[i])
+  );
+}
+
+function sanitizeSavedFilters(value: unknown): ReportSavedFilter[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (v): v is ReportSavedFilter =>
+        Boolean(v) &&
+        typeof v === "object" &&
+        typeof (v as ReportSavedFilter).id === "string" &&
+        typeof (v as ReportSavedFilter).name === "string" &&
+        typeof (v as ReportSavedFilter).selectedMetric === "string" &&
+        Boolean((v as ReportSavedFilter).filters)
+    )
+    .map((v) => ({
+      id: v.id,
+      name: v.name,
+      selectedMetric: v.selectedMetric,
+      filters: sanitizeSharedFilters(v.filters, defaultSharedFilters()),
+    }));
+}
+
+function cloneSavedFilter(f: ReportSavedFilter): ReportSavedFilter {
+  return {
+    id: f.id,
+    name: f.name,
+    selectedMetric: f.selectedMetric,
+    filters: cloneSharedFilters(f.filters),
   };
 }
 
@@ -395,6 +465,8 @@ const EMPTY_SLICE: CampaignSlice = {
   customViews: [],
   activeCustomViewId: null,
   sharedFilters: defaultSharedFilters(),
+  savedFilters: [],
+  activeSavedFilterId: null,
 };
 
 type CampaignReportUi = {
@@ -413,6 +485,11 @@ type ReportViewsState = {
   uiByCampaign: Record<string, CampaignReportUi>;
   /** Session-only view drafts — not persisted. */
   draftsByCampaign: DraftsByCampaign;
+  /**
+   * Baseline filters+metric when no saved filter is active.
+   * Used for dirty detection / Discard. Session-only.
+   */
+  filterBaselinesByCampaign: Record<string, FilterMetricSnapshot>;
   /** Transient UI feedback after an explicit save — not persisted. */
   lastSaveHint: SaveHint | null;
   initCampaign: (
@@ -427,7 +504,7 @@ type ReportViewsState = {
     campaignId: string,
     patch: ReportViewPatch
   ) => void;
-  /** Campaign-level filters — applied immediately, never saved as a view. */
+  /** Campaign-level filters — applied immediately. */
   updateSharedFilters: (
     campaignId: string,
     patch: Partial<CampaignSharedFilters>
@@ -453,7 +530,52 @@ type ReportViewsState = {
   setSelectedMetric: (campaignId: string, metric: string) => void;
   setMetricsNavCollapsed: (campaignId: string, collapsed: boolean) => void;
   clearSaveHint: () => void;
+  applySavedFilter: (campaignId: string, filterId: string) => void;
+  saveActiveSavedFilter: (campaignId: string) => void;
+  saveAsNewSavedFilter: (campaignId: string, name: string) => string;
+  discardSavedFilterChanges: (campaignId: string) => void;
+  renameSavedFilter: (campaignId: string, filterId: string, name: string) => void;
+  deleteSavedFilter: (campaignId: string, filterId: string) => void;
+  reorderSavedFilters: (campaignId: string, from: number, to: number) => void;
 };
+
+function liveFilterMetricSnapshot(
+  campaignId: string,
+  get: () => ReportViewsState
+): FilterMetricSnapshot {
+  const sl = get().byCampaign[campaignId]
+    ? normalizeSlice(get().byCampaign[campaignId])
+    : cloneCampaignSlice(EMPTY_SLICE);
+  const metric = get().uiByCampaign[campaignId]?.selectedMetric ?? "";
+  return {
+    filters: cloneSharedFilters(sl.sharedFilters),
+    selectedMetric: metric,
+  };
+}
+
+function committedFilterMetricSnapshot(
+  campaignId: string,
+  get: () => ReportViewsState
+): FilterMetricSnapshot {
+  const sl = get().byCampaign[campaignId]
+    ? normalizeSlice(get().byCampaign[campaignId])
+    : cloneCampaignSlice(EMPTY_SLICE);
+  if (sl.activeSavedFilterId) {
+    const saved = sl.savedFilters.find((f) => f.id === sl.activeSavedFilterId);
+    if (saved) {
+      return {
+        filters: cloneSharedFilters(saved.filters),
+        selectedMetric: saved.selectedMetric,
+      };
+    }
+  }
+  const baseline = get().filterBaselinesByCampaign[campaignId];
+  if (baseline) return cloneFilterMetricSnapshot(baseline);
+  return {
+    filters: cloneSharedFilters(sl.sharedFilters),
+    selectedMetric: get().uiByCampaign[campaignId]?.selectedMetric ?? "",
+  };
+}
 
 function createCampaignPresets(
   dateRange: ReportDateRange,
@@ -520,12 +642,20 @@ function normalizeSlice(raw: unknown): CampaignSlice {
     "sharedFilters" in r && r.sharedFilters
       ? sanitizeSharedFilters(r.sharedFilters, defaultSharedFilters())
       : defaultSharedFilters(presets[active].dateRange);
+  const savedFilters = sanitizeSavedFilters(r.savedFilters);
+  const activeSavedFilterId =
+    typeof r.activeSavedFilterId === "string" &&
+    savedFilters.some((f) => f.id === r.activeSavedFilterId)
+      ? r.activeSavedFilterId
+      : null;
   return {
     activePresetId: active,
     presets,
     customViews,
     activeCustomViewId,
     sharedFilters: seedFilters,
+    savedFilters,
+    activeSavedFilterId,
   };
 }
 
@@ -541,6 +671,8 @@ function cloneCampaignSlice(sl: CampaignSlice): CampaignSlice {
     })),
     activeCustomViewId: sl.activeCustomViewId,
     sharedFilters: cloneSharedFilters(sl.sharedFilters),
+    savedFilters: sl.savedFilters.map(cloneSavedFilter),
+    activeSavedFilterId: sl.activeSavedFilterId,
   };
 }
 
@@ -572,22 +704,27 @@ export const useReportViewsStore = create<ReportViewsState>()(
         byCampaign: {},
         uiByCampaign: {},
         draftsByCampaign: {},
+        filterBaselinesByCampaign: {},
         lastSaveHint: null,
 
         initCampaign: (campaignId, seed) =>
           set((s) => {
             const hasPresets = Boolean(s.byCampaign[campaignId]);
             const hasUi = Boolean(s.uiByCampaign[campaignId]);
-            if (hasPresets && hasUi) return s;
+            const hasBaseline = Boolean(s.filterBaselinesByCampaign[campaignId]);
+            if (hasPresets && hasUi && hasBaseline) return s;
 
             const nextByCampaign = { ...s.byCampaign };
+            const initialFilters = defaultSharedFilters(seed.dateRange);
             if (!hasPresets) {
               nextByCampaign[campaignId] = {
                 activePresetId: REPORT_PRESET_IDS.visitors,
                 presets: createCampaignPresets(seed.dateRange, seed.primaryMetric),
                 customViews: [],
                 activeCustomViewId: null,
-                sharedFilters: defaultSharedFilters(seed.dateRange),
+                sharedFilters: initialFilters,
+                savedFilters: [],
+                activeSavedFilterId: null,
               };
             }
 
@@ -599,9 +736,21 @@ export const useReportViewsStore = create<ReportViewsState>()(
               };
             }
 
+            const nextBaselines = { ...s.filterBaselinesByCampaign };
+            if (!hasBaseline) {
+              nextBaselines[campaignId] = {
+                filters: cloneSharedFilters(
+                  nextByCampaign[campaignId]?.sharedFilters ?? initialFilters
+                ),
+                selectedMetric:
+                  nextUi[campaignId]?.selectedMetric ?? seed.primaryMetric,
+              };
+            }
+
             return {
               byCampaign: nextByCampaign,
               uiByCampaign: nextUi,
+              filterBaselinesByCampaign: nextBaselines,
             };
           }),
 
@@ -983,6 +1132,119 @@ export const useReportViewsStore = create<ReportViewsState>()(
 
         clearSaveHint: () => set({ lastSaveHint: null }),
 
+        applySavedFilter: (campaignId, filterId) => {
+          const current = slice(campaignId);
+          const saved = current.savedFilters.find((f) => f.id === filterId);
+          if (!saved) return;
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            sharedFilters: cloneSharedFilters(saved.filters),
+            activeSavedFilterId: filterId,
+          }));
+          get().setSelectedMetric(campaignId, saved.selectedMetric);
+        },
+
+        saveActiveSavedFilter: (campaignId) => {
+          const current = slice(campaignId);
+          const id = current.activeSavedFilterId;
+          if (!id) return;
+          const live = liveFilterMetricSnapshot(campaignId, get);
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            savedFilters: prev.savedFilters.map((f) =>
+              f.id === id
+                ? {
+                    ...f,
+                    filters: cloneSharedFilters(live.filters),
+                    selectedMetric: live.selectedMetric,
+                  }
+                : f
+            ),
+          }));
+        },
+
+        saveAsNewSavedFilter: (campaignId, name) => {
+          const id = crypto.randomUUID();
+          const live = liveFilterMetricSnapshot(campaignId, get);
+          const trimmed = name.trim() || "New saved filter";
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            savedFilters: [
+              ...prev.savedFilters,
+              {
+                id,
+                name: trimmed,
+                filters: cloneSharedFilters(live.filters),
+                selectedMetric: live.selectedMetric,
+              },
+            ],
+            activeSavedFilterId: id,
+          }));
+          set((s) => ({
+            filterBaselinesByCampaign: {
+              ...s.filterBaselinesByCampaign,
+              [campaignId]: cloneFilterMetricSnapshot(live),
+            },
+          }));
+          return id;
+        },
+
+        discardSavedFilterChanges: (campaignId) => {
+          const committed = committedFilterMetricSnapshot(campaignId, get);
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            sharedFilters: cloneSharedFilters(committed.filters),
+          }));
+          get().setSelectedMetric(campaignId, committed.selectedMetric);
+        },
+
+        renameSavedFilter: (campaignId, filterId, name) => {
+          const trimmed = name.trim();
+          if (!trimmed) return;
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            savedFilters: prev.savedFilters.map((f) =>
+              f.id === filterId ? { ...f, name: trimmed } : f
+            ),
+          }));
+        },
+
+        deleteSavedFilter: (campaignId, filterId) => {
+          const current = slice(campaignId);
+          const wasActive = current.activeSavedFilterId === filterId;
+          const live = liveFilterMetricSnapshot(campaignId, get);
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            savedFilters: prev.savedFilters.filter((f) => f.id !== filterId),
+            activeSavedFilterId: wasActive ? null : prev.activeSavedFilterId,
+          }));
+          if (wasActive) {
+            set((s) => ({
+              filterBaselinesByCampaign: {
+                ...s.filterBaselinesByCampaign,
+                [campaignId]: cloneFilterMetricSnapshot(live),
+              },
+            }));
+          }
+        },
+
+        reorderSavedFilters: (campaignId, from, to) =>
+          patchSlice(campaignId, (prev) => {
+            if (
+              from < 0 ||
+              to < 0 ||
+              from >= prev.savedFilters.length ||
+              to >= prev.savedFilters.length ||
+              from === to
+            ) {
+              return prev;
+            }
+            const next = [...prev.savedFilters];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return { ...prev, savedFilters: next };
+          }),
+
         setSelectedMetric: (campaignId, metric) => {
           set((s) => {
             const ui = s.uiByCampaign[campaignId];
@@ -1176,6 +1438,28 @@ export function useReportSelectedMetric(
     [campaignId, setSelectedMetric]
   );
   return [fromUi || primaryMetric, setMetric];
+}
+
+const EMPTY_SAVED_FILTERS: ReportSavedFilter[] = [];
+
+export function useReportSavedFilters(campaignId: string): ReportSavedFilter[] {
+  return useReportViewsStore(
+    (s) => s.byCampaign[campaignId]?.savedFilters ?? EMPTY_SAVED_FILTERS
+  );
+}
+
+export function useActiveSavedFilterId(campaignId: string): string | null {
+  return useReportViewsStore(
+    (s) => s.byCampaign[campaignId]?.activeSavedFilterId ?? null
+  );
+}
+
+export function useIsSavedFilterDirty(campaignId: string): boolean {
+  return useReportViewsStore((s) => {
+    const live = liveFilterMetricSnapshot(campaignId, () => s);
+    const committed = committedFilterMetricSnapshot(campaignId, () => s);
+    return !filterMetricSnapshotsEqual(live, committed);
+  });
 }
 
 export function useReportMetricsNavCollapsed(

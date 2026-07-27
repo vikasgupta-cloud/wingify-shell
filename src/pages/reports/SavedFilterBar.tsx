@@ -4,11 +4,11 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { Bookmark, GripVertical, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  BASE_VIEW_ID,
-  isDirtyIgnoringLayout,
-  useIsActiveViewDirty,
-  useViewsStore,
-} from "../../store/views";
+  useActiveSavedFilterId,
+  useIsSavedFilterDirty,
+  useReportSavedFilters,
+  useReportViewsStore,
+} from "../../store/reportViews";
 import { cn } from "../../lib/utils";
 
 function DirtyDot() {
@@ -20,20 +20,21 @@ function DirtyDot() {
   );
 }
 
-export default function ViewBar() {
-  const views = useViewsStore((s) => s.views);
-  const activeViewId = useViewsStore((s) => s.activeViewId);
-  const defaultViewId = useViewsStore((s) => s.defaultViewId);
-  const drafts = useViewsStore((s) => s.drafts);
-  const setActiveView = useViewsStore((s) => s.setActiveView);
-  const setDefaultView = useViewsStore((s) => s.setDefaultView);
-  const saveDraftToActiveView = useViewsStore((s) => s.saveDraftToActiveView);
-  const saveDraftAsNewView = useViewsStore((s) => s.saveDraftAsNewView);
-  const discardActiveViewDraft = useViewsStore((s) => s.discardActiveViewDraft);
-  const renameView = useViewsStore((s) => s.renameView);
-  const deleteView = useViewsStore((s) => s.deleteView);
-  const reorderViews = useViewsStore((s) => s.reorderViews);
-  const isDirty = useIsActiveViewDirty();
+export default function SavedFilterBar({
+  campaignId,
+}: {
+  campaignId: string;
+}) {
+  const savedFilters = useReportSavedFilters(campaignId);
+  const activeId = useActiveSavedFilterId(campaignId);
+  const isDirty = useIsSavedFilterDirty(campaignId);
+  const applySavedFilter = useReportViewsStore((s) => s.applySavedFilter);
+  const saveActive = useReportViewsStore((s) => s.saveActiveSavedFilter);
+  const saveAsNew = useReportViewsStore((s) => s.saveAsNewSavedFilter);
+  const discard = useReportViewsStore((s) => s.discardSavedFilterChanges);
+  const renameSavedFilter = useReportViewsStore((s) => s.renameSavedFilter);
+  const deleteSavedFilter = useReportViewsStore((s) => s.deleteSavedFilter);
+  const reorderSavedFilters = useReportViewsStore((s) => s.reorderSavedFilters);
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -44,40 +45,27 @@ export default function ViewBar() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
-  const hasSaved = views.length > 0;
-  const activeView = views.find((v) => v.id === activeViewId);
-  const onSavedFilter = activeViewId !== BASE_VIEW_ID && Boolean(activeView);
+  const hasSaved = savedFilters.length > 0;
+  const activeFilter = savedFilters.find((f) => f.id === activeId);
+  const onSaved = Boolean(activeFilter);
 
-  // Show the bar when there are saved filters or unsaved filter/metric edits.
   if (!hasSaved && !isDirty) return null;
-
-  const dirtyFor = (id: string) => {
-    const draft = drafts[id];
-    if (!draft) return false;
-    const saved =
-      id === BASE_VIEW_ID
-        ? undefined
-        : views.find((v) => v.id === id)?.state;
-    if (!saved) return false;
-    return isDirtyIgnoringLayout(draft, saved);
-  };
 
   const startRename = (id: string, name: string) => {
     setRenamingId(id);
     setRenameValue(name);
   };
   const commitRename = () => {
-    if (renamingId) renameView(renamingId, renameValue);
+    if (renamingId) renameSavedFilter(campaignId, renamingId, renameValue);
     setRenamingId(null);
   };
 
   const openSaveAs = () => {
-    const nextIndex = views.length + 1;
-    setSaveAsName(`Saved filter ${nextIndex}`);
+    setSaveAsName(`Saved filter ${savedFilters.length + 1}`);
     setSaveAsOpen(true);
   };
   const submitSaveAs = () => {
-    saveDraftAsNewView(saveAsName.trim() || "New saved filter");
+    saveAsNew(campaignId, saveAsName.trim() || "New saved filter");
     setSaveAsOpen(false);
   };
 
@@ -88,7 +76,7 @@ export default function ViewBar() {
 
   return (
     <>
-      <div className="mb-4 flex min-h-10 flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
+      <div className="flex min-h-10 flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
         <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
           <Bookmark className="h-4 w-4 shrink-0" aria-hidden />
           <span className="font-medium text-foreground">Saved filter</span>
@@ -97,12 +85,13 @@ export default function ViewBar() {
         <div className="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden />
 
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          {views.map((view, index) => {
-            const active = view.id === activeViewId;
-            const renaming = renamingId === view.id;
+          {savedFilters.map((filter, index) => {
+            const active = filter.id === activeId;
+            const renaming = renamingId === filter.id;
+            const showDirty = active && isDirty;
             return (
               <div
-                key={view.id}
+                key={filter.id}
                 draggable={!renaming}
                 onDragStart={(e) => {
                   setDragIndex(index);
@@ -116,7 +105,7 @@ export default function ViewBar() {
                 onDrop={(e) => {
                   e.preventDefault();
                   if (dragIndex !== null && overIndex !== null) {
-                    reorderViews(dragIndex, overIndex);
+                    reorderSavedFilters(campaignId, dragIndex, overIndex);
                   }
                   endDrag();
                 }}
@@ -148,11 +137,11 @@ export default function ViewBar() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setActiveView(view.id)}
+                    onClick={() => applySavedFilter(campaignId, filter.id)}
                     className="inline-flex max-w-[200px] items-center truncate px-3 py-1"
                   >
-                    <span className="truncate">{view.name}</span>
-                    {dirtyFor(view.id) ? <DirtyDot /> : null}
+                    <span className="truncate">{filter.name}</span>
+                    {showDirty ? <DirtyDot /> : null}
                   </button>
                 )}
               </div>
@@ -166,20 +155,20 @@ export default function ViewBar() {
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 text-muted-foreground"
-                onClick={discardActiveViewDraft}
+                onClick={() => discard(campaignId)}
               >
                 Discard
               </Button>
-              {onSavedFilter ? (
+              {onSaved ? (
                 <>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     className="h-7 gap-1 px-2 font-medium text-foreground"
-                    onClick={() => saveDraftToActiveView()}
+                    onClick={() => saveActive(campaignId)}
                   >
-                    Save “{activeView?.name}”
+                    Save “{activeFilter?.name}”
                   </Button>
                   <Button
                     type="button"
@@ -219,7 +208,6 @@ export default function ViewBar() {
         ) : null}
       </div>
 
-      {/* Manage saved filters */}
       <Dialog.Root open={manageOpen} onOpenChange={setManageOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
@@ -230,8 +218,8 @@ export default function ViewBar() {
                   Manage saved filters
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-                  Rename, reorder, set a default, or delete saved filters. Each
-                  filter stores your filters and selected columns.
+                  Rename, reorder, or delete saved filters. Each one stores your
+                  filters and selected metric.
                 </Dialog.Description>
               </div>
               <Dialog.Close asChild>
@@ -248,12 +236,11 @@ export default function ViewBar() {
             </div>
 
             <ul className="mt-4 max-h-[320px] space-y-1 overflow-y-auto">
-              {views.map((view, index) => {
-                const isDefault = defaultViewId === view.id;
-                const renaming = renamingId === view.id;
+              {savedFilters.map((filter, index) => {
+                const renaming = renamingId === filter.id;
                 return (
                   <li
-                    key={view.id}
+                    key={filter.id}
                     onDragOver={(e) => {
                       if (dragIndex === null) return;
                       e.preventDefault();
@@ -262,7 +249,7 @@ export default function ViewBar() {
                     onDrop={(e) => {
                       e.preventDefault();
                       if (dragIndex !== null) {
-                        reorderViews(dragIndex, index);
+                        reorderSavedFilters(campaignId, dragIndex, index);
                       }
                       endDrag();
                     }}
@@ -276,12 +263,12 @@ export default function ViewBar() {
                     <button
                       type="button"
                       draggable={!renaming}
-                      aria-label={`Reorder ${view.name}`}
+                      aria-label={`Reorder ${filter.name}`}
                       title="Drag to reorder"
                       onDragStart={(e) => {
                         setDragIndex(index);
                         e.dataTransfer.effectAllowed = "move";
-                        e.dataTransfer.setData("text/plain", view.id);
+                        e.dataTransfer.setData("text/plain", filter.id);
                       }}
                       onDragEnd={endDrag}
                       className="inline-flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground active:cursor-grabbing"
@@ -291,7 +278,7 @@ export default function ViewBar() {
                     <button
                       type="button"
                       onClick={() => {
-                        setActiveView(view.id);
+                        applySavedFilter(campaignId, filter.id);
                         setManageOpen(false);
                       }}
                       className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground"
@@ -311,14 +298,7 @@ export default function ViewBar() {
                           className="w-full border-0 bg-transparent p-0 text-sm outline-none"
                         />
                       ) : (
-                        <>
-                          {view.name}
-                          {isDefault ? (
-                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                              Default
-                            </span>
-                          ) : null}
-                        </>
+                        filter.name
                       )}
                     </button>
                     {!renaming ? (
@@ -328,27 +308,17 @@ export default function ViewBar() {
                           variant="ghost"
                           size="sm"
                           className="h-7 px-2 text-xs"
-                          onClick={() => startRename(view.id, view.name)}
+                          onClick={() => startRename(filter.id, filter.name)}
                         >
                           Rename
                         </Button>
                         <Button
                           type="button"
                           variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          disabled={isDefault}
-                          onClick={() => setDefaultView(view.id)}
-                        >
-                          {isDefault ? "Default" : "Make default"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground"
-                          aria-label={`Delete ${view.name}`}
-                          onClick={() => setDeleteId(view.id)}
+                          aria-label={`Delete ${filter.name}`}
+                          onClick={() => setDeleteId(filter.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -373,8 +343,8 @@ export default function ViewBar() {
               Delete saved filter?
             </AlertDialog.Title>
             <AlertDialog.Description className="mt-1.5 text-sm text-muted-foreground">
-              “{views.find((v) => v.id === deleteId)?.name}” will be removed.
-              This can&apos;t be undone.
+              “{savedFilters.find((f) => f.id === deleteId)?.name}” will be
+              removed. This can&apos;t be undone.
             </AlertDialog.Description>
             <div className="mt-5 flex justify-end gap-2">
               <AlertDialog.Cancel asChild>
@@ -387,7 +357,7 @@ export default function ViewBar() {
                   type="button"
                   size="sm"
                   onClick={() => {
-                    if (deleteId) deleteView(deleteId);
+                    if (deleteId) deleteSavedFilter(campaignId, deleteId);
                     setDeleteId(null);
                   }}
                 >
@@ -407,7 +377,7 @@ export default function ViewBar() {
               Save filter
             </Dialog.Title>
             <Dialog.Description className="mt-1.5 text-sm text-muted-foreground">
-              Saves your current filters and selected table columns.
+              Saves your current filters and selected metric.
             </Dialog.Description>
             <form
               onSubmit={(e) => {

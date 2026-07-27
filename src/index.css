@@ -17,6 +17,9 @@
   [role="radio"],
   [role="switch"],
   [role="combobox"],
+  [role="link"],
+  a,
+  a:any-link,
   a[href],
   label[for],
   summary,
@@ -30,11 +33,23 @@
     cursor: pointer;
   }
 
+  /* Keep pointer on links even when utilities set a different cursor. */
+  a,
+  a:any-link,
+  a[href],
+  [role="link"] {
+    cursor: pointer !important;
+  }
+
   button:disabled,
   [aria-disabled="true"],
   input:disabled,
   select:disabled {
     cursor: not-allowed;
+  }
+
+  a[aria-disabled="true"] {
+    cursor: not-allowed !important;
   }
 }
 
