@@ -590,7 +590,7 @@ function ResultsFilterPanel({
       className={cn(
         embedded
           ? "border-b border-border bg-background"
-          : "overflow-hidden rounded-lg border border-border bg-background"
+          : "overflow-hidden rounded-lg border border-surface-border bg-surface"
       )}
     >
       <div className={filterPanelInsetClass}>
@@ -5336,15 +5336,16 @@ export default function ResultsTab({
                   ) : undefined
                 }
               />
-              <MetricHeader
-                campaign={campaign}
-                metric={selectedMetric}
-                isPrimary={selectedMetric === campaign.primaryMetric}
-                onOpenSettings={() => setViewSettingsOpen(true)}
-                onOpenLearnings={() => setLearningsOpen(true)}
-                onViewVitalsDetails={onNavigateToVitals}
-              />
-              <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+              <div className="space-y-4">
+                <MetricHeader
+                  campaign={campaign}
+                  metric={selectedMetric}
+                  isPrimary={selectedMetric === campaign.primaryMetric}
+                  onOpenSettings={() => setViewSettingsOpen(true)}
+                  onOpenLearnings={() => setLearningsOpen(true)}
+                  onViewVitalsDetails={onNavigateToVitals}
+                />
+                <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
                 <div className="border-b border-border">
                   <ConclusionBanner
                     conclusion={conclusion}
@@ -5401,6 +5402,7 @@ export default function ResultsTab({
                     />
                   </div>
                 )}
+                </div>
               </div>
             </>
           )}
