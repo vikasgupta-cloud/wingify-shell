@@ -4,6 +4,9 @@ import { NAV, type NavItem, type NavLeaf } from "../config/navigation";
 /** Width of the primary rail in px — shared by the rail, its flyout, and the app grid. */
 export const RAIL_WIDTH = 64;
 
+/** Width of the detail-surface utility rail (right) in px. */
+export const UTILITY_RAIL_WIDTH = 56;
+
 /** The main-nav item whose path prefixes the given pathname. */
 export function findItemByPath(pathname: string): NavItem | undefined {
   return NAV.find(

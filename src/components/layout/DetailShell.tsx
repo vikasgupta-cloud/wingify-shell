@@ -26,7 +26,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
-import { mainNavCrumbPath, RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
+import { mainNavCrumbPath, UTILITY_RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,7 +67,14 @@ import PrimaryRail from "./PrimaryRail";
 
 // The utility rail on the RIGHT of a detail surface: Ask Wandz (stub) at the top
 // and Help pinned to the bottom. Configure/Reports now live in the header tabs.
-function UtilityRail({ entityId }: { entityId?: string }) {
+function UtilityRail({
+  entityId,
+  belowTabs,
+}: {
+  entityId?: string;
+  /** Reports: sit below the sticky tab bar so icons align with the metrics rail. */
+  belowTabs?: boolean;
+}) {
   const wandzOpen = useWandzStore((s) => s.open);
 
   const railButton = (active: boolean) =>
@@ -87,8 +94,13 @@ function UtilityRail({ entityId }: { entityId?: string }) {
   return (
     <TooltipProvider delayDuration={200}>
       <nav
-        className="flex h-full shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4"
-        style={{ width: RAIL_WIDTH }}
+        className={cn(
+          "flex shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4",
+          belowTabs
+            ? "mt-14 h-[calc(100%-3.5rem)] self-start"
+            : "h-full"
+        )}
+        style={{ width: UTILITY_RAIL_WIDTH }}
       >
         <Tooltip>
           <TooltipTrigger asChild>
@@ -372,6 +384,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   // Fallback from the URL guards against a stale element tree (e.g. mid-HMR)
   // rendering this component without the prop.
   const basePath = basePathProp ?? pathname.split("/c/")[0];
+  const onReports = pathname.endsWith("/reports");
 
   // Breadcrumb trail: main-nav label, plus the sub-nav label when basePath is a leaf.
   const { item, leaf, siblings } = resolveBreadcrumb(basePath);
@@ -665,8 +678,23 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <main className="flex-1 overflow-y-auto">{children}</main>
-        <UtilityRail entityId={entityId} />
+        <main
+          className={cn(
+            "min-h-0 flex-1",
+            onReports ? "flex overflow-hidden" : "overflow-y-auto"
+          )}
+        >
+          <div
+            className={cn(
+              "min-h-0 flex-1",
+              onReports ? "overflow-y-auto" : undefined
+            )}
+          >
+            {children}
+          </div>
+          {onReports ? <UtilityRail entityId={entityId} belowTabs /> : null}
+        </main>
+        {!onReports ? <UtilityRail entityId={entityId} /> : null}
       </div>
 
       {/* Edge-reveal hotzone: dwell on the left viewport edge to open the nav overlay. */}

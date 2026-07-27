@@ -1166,9 +1166,12 @@ function SegmentsDrawer({
 export function SegmentsSelector({
   value,
   onChange,
+  plain,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
+  /** Text-only chip for the results filter bar. */
+  plain?: boolean;
 }) {
   const [mode, setMode] = useState<"closed" | "mini" | "drawer">("closed");
   const modeRef = useRef(mode);
@@ -1228,15 +1231,23 @@ export function SegmentsSelector({
           <button
             type="button"
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-              value.length > 0
-                ? "border-foreground/30 bg-accent/40 text-foreground"
-                : "text-foreground/80"
+              "inline-flex items-center rounded-md border border-border bg-background text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
+              plain
+                ? "h-8 px-3 text-foreground/80"
+                : "h-7 gap-1.5 px-2.5 text-foreground/80",
+              value.length > 0 &&
+                (plain
+                  ? "text-foreground"
+                  : "border-foreground/30 bg-accent/40 text-foreground")
             )}
           >
-            <Compass className="h-3.5 w-3.5" aria-hidden />
-            <span className="max-w-[140px] truncate">{summary}</span>
-            <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+            {!plain && <Compass className="h-3.5 w-3.5" aria-hidden />}
+            <span className={cn("truncate", plain ? "" : "max-w-[140px]")}>
+              {summary}
+            </span>
+            {!plain && (
+              <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+            )}
           </button>
         </PopoverTrigger>
         <PopoverContent

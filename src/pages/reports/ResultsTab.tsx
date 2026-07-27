@@ -23,7 +23,6 @@ import {
   GripVertical,
   HelpCircle,
   Info,
-  Layers,
   LayoutPanelTop,
   LineChart,
   MousePointerClick,
@@ -338,13 +337,16 @@ function MultiSelectFilterChip({
   value,
   onChange,
   maxSelections,
+  plain,
 }: {
-  icon: ReactNode;
+  icon?: ReactNode;
   label: string;
   options: readonly string[];
   value: string[];
   onChange: (next: string[]) => void;
   maxSelections?: number;
+  /** Text-only chip for the results filter bar. */
+  plain?: boolean;
 }) {
   const summary =
     value.length === 0 ? label : value.join(", ");
@@ -366,13 +368,20 @@ function MultiSelectFilterChip({
           type="button"
           title={summary}
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-            value.length > 0 ? "text-foreground" : "text-foreground/80"
+            "inline-flex items-center rounded-md border border-border bg-background text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
+            plain
+              ? "h-8 px-3 text-foreground/80"
+              : "h-7 gap-1.5 px-2.5 text-foreground/80",
+            value.length > 0 && "text-foreground"
           )}
         >
-          {icon}
-          <span className="max-w-[180px] truncate">{summary}</span>
-          <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+          {!plain && icon}
+          <span className={cn("truncate", plain ? "" : "max-w-[180px]")}>
+            {summary}
+          </span>
+          {!plain && (
+            <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56 p-2">
@@ -461,14 +470,11 @@ function FilterBar({
   const showTrailing = Boolean(right);
 
   return (
-    <div className={filterPanelRowClass}>
-      <span className={filterPanelLabelClass}>
-        <FunnelIcon className="h-3.5 w-3.5 shrink-0" />
-        Filter by :
-      </span>
-      <div className={filterPanelChipsClass}>
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <FunnelIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
         <DateRangeDropdown
-          variant="filter"
+          variant="presets"
           value={storedToDateRange(dateRange)}
           onChange={(range) =>
             updateSharedFilters(campaignId, {
@@ -476,14 +482,17 @@ function FilterBar({
             })
           }
         />
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
         <SegmentsSelector
+          plain
           value={segments}
           onChange={(next) =>
             updateSharedFilters(campaignId, { segments: next })
           }
         />
         <MultiSelectFilterChip
-          icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
+          plain
           label="Dimensions"
           options={REPORT_DIMENSION_OPTIONS}
           value={dimensions}
@@ -492,12 +501,8 @@ function FilterBar({
           }
           maxSelections={MAX_VISITOR_DIMENSIONS}
         />
+        {showTrailing && right}
       </div>
-      {showTrailing && (
-        <div className="flex shrink-0 items-center gap-2 self-start pt-0.5">
-          {right}
-        </div>
-      )}
     </div>
   );
 }
@@ -4394,8 +4399,11 @@ function GraphPanel({
 // ---------------------------------------------------------------------------
 // Metric selector (left panel)
 
+const metricsNavStickyClass =
+  "sticky top-[var(--reports-tabs-height,0px)] z-10 h-[calc(100vh-3.5rem-var(--reports-tabs-height,0px))] shrink-0 self-start";
+
 const metricsNavAsideClass =
-  "sticky top-[var(--reports-tabs-height,0px)] z-10 flex h-[calc(100vh-3.5rem-var(--reports-tabs-height,0px))] shrink-0 self-start flex-col border-r border-panel-border bg-panel text-panel-foreground transition-[width] duration-200 motion-reduce:transition-none";
+  "flex flex-col border-r border-panel-border bg-panel text-panel-foreground transition-[width] duration-200 motion-reduce:transition-none";
 
 function MetricsNavShell({
   collapsed,
@@ -4412,7 +4420,7 @@ function MetricsNavShell({
 }) {
   if (collapsed) {
     return (
-      <aside className={cn(metricsNavAsideClass, "w-16")}>
+      <aside className={cn(metricsNavStickyClass, metricsNavAsideClass, "w-14")}>
         {collapsedContent ? (
           <div className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
             {collapsedContent}
@@ -4435,7 +4443,7 @@ function MetricsNavShell({
   }
 
   return (
-    <aside className={cn(metricsNavAsideClass, "w-[248px]")}>
+    <aside className={cn(metricsNavStickyClass, metricsNavAsideClass, "w-[248px]")}>
       {children}
       <div
         className={cn(
@@ -5277,7 +5285,7 @@ export default function ResultsTab({
         />
       )}
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1120px] space-y-8 px-12 pb-8 pt-12">
+        <div className="mx-auto w-full max-w-[1120px] space-y-8 px-12 pb-8 pt-12">
           <ViewSettingsDialog
             open={viewSettingsOpen}
             onOpenChange={setViewSettingsOpen}

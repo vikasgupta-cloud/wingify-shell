@@ -700,8 +700,8 @@ function ReportsChrome({
             ))}
           </TabsList>
 
-          <div className="flex items-center gap-2 pb-2.5">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex shrink-0 items-center gap-2 pb-2.5">
+            <span className="whitespace-nowrap text-sm text-muted-foreground">
               Last updated {overview.lastUpdated}
             </span>
             <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Refresh report">

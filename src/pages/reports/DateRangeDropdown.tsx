@@ -35,7 +35,60 @@ export type DateRange = {
 
 export const CUSTOM_RANGE_ID = "custom";
 
-const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d));
+/** Local calendar "today" stored as UTC midnight (matches picker conversion). */
+function localTodayUtc(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+function addUtcDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+/** Client-side presets relative to today — recomputed whenever called. */
+export function getDateRangePresets(opts?: {
+  campaignFrom?: Date;
+  campaignTo?: Date;
+}): DateRange[] {
+  const today = localTodayUtc();
+  const yesterday = addUtcDays(today, -1);
+  return [
+    { id: "today", label: "Today", from: today, to: today },
+    { id: "yesterday", label: "Yesterday", from: yesterday, to: yesterday },
+    {
+      id: "last-7",
+      label: "Last 7 days",
+      from: addUtcDays(today, -6),
+      to: today,
+    },
+    {
+      id: "last-14",
+      label: "Last 14 days",
+      from: addUtcDays(today, -13),
+      to: today,
+    },
+    {
+      id: "last-15",
+      label: "Last 15 days",
+      from: addUtcDays(today, -14),
+      to: today,
+    },
+    {
+      id: "last-30",
+      label: "Last 30 days",
+      from: addUtcDays(today, -29),
+      to: today,
+    },
+    {
+      id: "campaign",
+      label: "Campaign duration",
+      from: opts?.campaignFrom ?? addUtcDays(today, -22),
+      to: opts?.campaignTo ?? today,
+    },
+  ];
+}
 
 /** Picker works in local calendar days; stored ranges stay UTC midnight. */
 function toPickerDay(d: Date): Date {
@@ -63,6 +116,15 @@ function formatRangeChip(from: Date, to: Date) {
   return `${part(from)} - ${part(to)}`;
 }
 
+/** Compact range label for the inline preset bar (e.g. "1 Jan 24 - 1 Dec 24"). */
+function formatRangeBar(from: Date, to: Date) {
+  const part = (d: Date) => {
+    const y = String(d.getUTCFullYear()).slice(-2);
+    return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${y}`;
+  };
+  return `${part(from)} - ${part(to)}`;
+}
+
 function formatDayLabel(d: Date) {
   const day = String(d.getUTCDate()).padStart(2, "0");
   return `${MONTHS[d.getUTCMonth()]} ${day}, ${d.getUTCFullYear()}`;
@@ -74,49 +136,38 @@ const PRESET_ORDER = [
   "yesterday",
   "last-7",
   "last-14",
+  "last-15",
   "last-30",
   "campaign",
 ] as const;
 
-/** Dummy presets — client-side only, no calendar API. */
-export const DEFAULT_DATE_RANGE_PRESETS: DateRange[] = [
-  {
-    id: "today",
-    label: "Today",
-    from: utc(2026, 5, 1),
-    to: utc(2026, 5, 1),
-  },
-  {
-    id: "yesterday",
-    label: "Yesterday",
-    from: utc(2026, 4, 30),
-    to: utc(2026, 4, 30),
-  },
-  {
-    id: "last-7",
-    label: "Last 7 days",
-    from: utc(2026, 4, 25),
-    to: utc(2026, 5, 1),
-  },
-  {
-    id: "last-14",
-    label: "Last 14 days",
-    from: utc(2026, 4, 18),
-    to: utc(2026, 5, 1),
-  },
-  {
-    id: "last-30",
-    label: "Last 30 days",
-    from: utc(2026, 4, 2),
-    to: utc(2026, 5, 1),
-  },
-  {
-    id: "campaign",
-    label: "Campaign duration",
-    from: utc(2026, 4, 9),
-    to: utc(2026, 5, 1),
-  },
-];
+/** Inline filter-bar presets shown before the custom range picker. */
+const FILTER_BAR_PRESET_IDS = [
+  "today",
+  "yesterday",
+  "last-7",
+  "last-15",
+] as const;
+
+const FILTER_BAR_PRESET_LABELS: Record<
+  (typeof FILTER_BAR_PRESET_IDS)[number],
+  string
+> = {
+  today: "Today",
+  yesterday: "Yesterday",
+  "last-7": "7 days",
+  "last-15": "15 days",
+};
+
+/** @deprecated Prefer getDateRangePresets() — dates are relative to today. */
+export const DEFAULT_DATE_RANGE_PRESETS = getDateRangePresets();
+
+function resolvePresetById(
+  presets: DateRange[],
+  id: string
+): DateRange | undefined {
+  return presets.find((p) => p.id === id) ?? getDateRangePresets().find((p) => p.id === id);
+}
 
 function matchPreset(
   presets: DateRange[],
@@ -155,24 +206,32 @@ type DateRangeDropdownProps = {
   /** Controlled value — when set, changes go through onChange. */
   value?: DateRange;
   onChange?: (range: DateRange) => void;
-  /** Filter bar chip (compact) vs overview outline control */
-  variant?: "filter" | "outline";
+  /** Filter bar chip, inline preset bar, or overview outline control */
+  variant?: "filter" | "presets" | "outline";
   className?: string;
 };
 
 export default function DateRangeDropdown({
-  presets = DEFAULT_DATE_RANGE_PRESETS,
+  presets: presetsProp,
   defaultPresetId = "campaign",
   value,
   onChange,
   variant = "filter",
   className,
 }: DateRangeDropdownProps) {
+  const presets = presetsProp ?? getDateRangePresets();
   const initial = useMemo(
     () => presets.find((p) => p.id === defaultPresetId) ?? presets[0],
     [presets, defaultPresetId]
   );
   const sidebarPresets = useMemo(() => orderPresets(presets), [presets]);
+  const filterBarPresets = useMemo(() => {
+    const byId = new Map(presets.map((p) => [p.id, p]));
+    return FILTER_BAR_PRESET_IDS.flatMap((id) => {
+      const preset = byId.get(id);
+      return preset ? [preset] : [];
+    });
+  }, [presets]);
   const [open, setOpen] = useState(false);
   const [uncontrolled, setUncontrolled] = useState<DateRange>(initial);
   const selected = value ?? uncontrolled;
@@ -196,6 +255,10 @@ export default function DateRangeDropdown({
   }, [open, selected]);
 
   const chipLabel = formatRangeChip(selected.from, selected.to);
+  const barLabel = formatRangeBar(selected.from, selected.to);
+  const isFilterBarPreset = FILTER_BAR_PRESET_IDS.includes(
+    selected.id as (typeof FILTER_BAR_PRESET_IDS)[number]
+  );
   const draftFrom = draft.from ? fromPickerDay(draft.from) : null;
   const draftTo = draft.to
     ? fromPickerDay(draft.to)
@@ -222,7 +285,7 @@ export default function DateRangeDropdown({
   };
 
   const selectPreset = (preset: DateRange) => {
-    commit(preset);
+    commit(resolvePresetById(presets, preset.id) ?? preset);
     setOpen(false);
   };
 
@@ -246,6 +309,167 @@ export default function DateRangeDropdown({
       setDraftPresetId(CUSTOM_RANGE_ID);
     }
   };
+
+  const pickerPanel = (
+    <PopoverContent
+      align="start"
+      className="w-auto max-w-[calc(100vw-2rem)] p-0"
+    >
+      <div className="flex flex-col sm:flex-row">
+        {/* Presets — GA / Mixpanel style sidebar */}
+        <div className="flex w-full shrink-0 flex-col border-b border-border sm:w-[168px] sm:border-b-0 sm:border-r">
+          <p className="px-3 pb-1 pt-3 text-xs font-medium text-muted-foreground">
+            Quick ranges
+          </p>
+          <ul
+            role="listbox"
+            aria-label="Date range presets"
+            className="flex flex-row gap-0.5 overflow-x-auto p-1.5 sm:flex-col sm:overflow-visible"
+          >
+            {sidebarPresets.map((preset) => {
+              const active = !isCustomMode && draftPresetId === preset.id;
+              return (
+                <li key={preset.id} className="shrink-0 sm:shrink">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    className={cn(
+                      "w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                      active && "bg-accent font-medium text-foreground"
+                    )}
+                    onClick={() => selectPreset(preset)}
+                  >
+                    {preset.label}
+                  </button>
+                </li>
+              );
+            })}
+            <li className="shrink-0 sm:shrink">
+              <button
+                type="button"
+                role="option"
+                aria-selected={isCustomMode}
+                className={cn(
+                  "w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                  isCustomMode && "bg-accent font-medium text-foreground"
+                )}
+                onClick={enterCustomMode}
+              >
+                Custom
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        {/* Dual-month calendar */}
+        <div className="flex min-w-0 flex-col">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Selected range</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {draftFrom && draftTo
+                  ? `${formatDayLabel(draftFrom)} – ${formatDayLabel(draftTo)}`
+                  : draftFrom
+                    ? `${formatDayLabel(draftFrom)} – …`
+                    : "Pick a start date"}
+              </p>
+            </div>
+          </div>
+
+          <Calendar
+            mode="range"
+            numberOfMonths={2}
+            month={month}
+            onMonthChange={setMonth}
+            selected={draft}
+            onSelect={onCalendarSelect}
+            defaultMonth={toPickerDay(selected.to)}
+            className="p-3"
+          />
+
+          <Separator />
+
+          {isCustomMode && (
+            <div className="flex items-center justify-end gap-2 px-3 py-2.5">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={!canApply}
+                onClick={applyDraft}
+                className="rounded-md px-5 shadow"
+              >
+                Apply
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </PopoverContent>
+  );
+
+  const presetSegmentClass = (active: boolean) =>
+    cn(
+      "inline-flex h-full shrink-0 items-center px-3 text-sm text-foreground/80 transition-colors hover:bg-muted/60",
+      active && "bg-muted/60 font-medium text-foreground"
+    );
+
+  if (variant === "presets") {
+    return (
+      <div
+        className={cn(
+          "inline-flex h-8 items-stretch overflow-hidden rounded-md border border-border bg-background text-sm",
+          className
+        )}
+      >
+        {filterBarPresets.map((preset, index) => {
+          const label =
+            FILTER_BAR_PRESET_LABELS[
+              preset.id as (typeof FILTER_BAR_PRESET_IDS)[number]
+            ] ?? preset.label;
+          return (
+            <div key={preset.id} className="flex h-full items-stretch">
+              {index > 0 && (
+                <div className="w-px shrink-0 self-stretch bg-border" aria-hidden />
+              )}
+              <button
+                type="button"
+                className={presetSegmentClass(selected.id === preset.id)}
+                onClick={() => selectPreset(preset)}
+              >
+                {label}
+              </button>
+            </div>
+          );
+        })}
+        <div className="w-px shrink-0 self-stretch bg-border" aria-hidden />
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              className={cn(
+                "inline-flex h-full items-center gap-2 px-3 text-foreground/80 transition-colors hover:bg-muted/60",
+                (!isFilterBarPreset || open) &&
+                  "bg-muted/60 font-medium text-foreground"
+              )}
+            >
+              <span className="whitespace-nowrap">{barLabel}</span>
+              <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            </button>
+          </PopoverTrigger>
+          {pickerPanel}
+        </Popover>
+      </div>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -282,107 +506,7 @@ export default function DateRangeDropdown({
           />
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-auto max-w-[calc(100vw-2rem)] p-0"
-      >
-        <div className="flex flex-col sm:flex-row">
-          {/* Presets — GA / Mixpanel style sidebar */}
-          <div className="flex w-full shrink-0 flex-col border-b border-border sm:w-[168px] sm:border-b-0 sm:border-r">
-            <p className="px-3 pb-1 pt-3 text-xs font-medium text-muted-foreground">
-              Quick ranges
-            </p>
-            <ul
-              role="listbox"
-              aria-label="Date range presets"
-              className="flex flex-row gap-0.5 overflow-x-auto p-1.5 sm:flex-col sm:overflow-visible"
-            >
-              {sidebarPresets.map((preset) => {
-                const active = !isCustomMode && draftPresetId === preset.id;
-                return (
-                  <li key={preset.id} className="shrink-0 sm:shrink">
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={active}
-                      className={cn(
-                        "w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                        active && "bg-accent font-medium text-foreground"
-                      )}
-                      onClick={() => selectPreset(preset)}
-                    >
-                      {preset.label}
-                    </button>
-                  </li>
-                );
-              })}
-              <li className="shrink-0 sm:shrink">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={isCustomMode}
-                  className={cn(
-                    "w-full rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                    isCustomMode && "bg-accent font-medium text-foreground"
-                  )}
-                  onClick={enterCustomMode}
-                >
-                  Custom
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Dual-month calendar */}
-          <div className="flex min-w-0 flex-col">
-            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Selected range</p>
-                <p className="truncate text-sm font-medium text-foreground">
-                  {draftFrom && draftTo
-                    ? `${formatDayLabel(draftFrom)} – ${formatDayLabel(draftTo)}`
-                    : draftFrom
-                      ? `${formatDayLabel(draftFrom)} – …`
-                      : "Pick a start date"}
-                </p>
-              </div>
-            </div>
-
-            <Calendar
-              mode="range"
-              numberOfMonths={2}
-              month={month}
-              onMonthChange={setMonth}
-              selected={draft}
-              onSelect={onCalendarSelect}
-              defaultMonth={toPickerDay(selected.to)}
-              className="p-3"
-            />
-
-            <Separator />
-
-            {isCustomMode && (
-              <div className="flex items-center justify-end gap-2 px-3 py-2.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  disabled={!canApply}
-                  onClick={applyDraft}
-                  className="rounded-md px-5 shadow"
-                >
-                  Apply
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </PopoverContent>
+      {pickerPanel}
     </Popover>
   );
 }
