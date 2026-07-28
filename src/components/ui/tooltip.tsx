@@ -27,4 +27,18 @@ const TooltipContent = React.forwardRef<
 ))
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+const TooltipArrow = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Arrow>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Arrow>
+>(({ className, width = 12, height = 6, ...props }, ref) => (
+  <TooltipPrimitive.Arrow
+    ref={ref}
+    width={width}
+    height={height}
+    className={cn("fill-background stroke-border", className)}
+    {...props}
+  />
+))
+TooltipArrow.displayName = TooltipPrimitive.Arrow.displayName
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, TooltipArrow }

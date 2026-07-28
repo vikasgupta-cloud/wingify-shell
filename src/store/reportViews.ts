@@ -207,6 +207,10 @@ type CampaignSlice = {
   sharedFilters: CampaignSharedFilters;
   savedFilters: ReportSavedFilter[];
   activeSavedFilterId: string | null;
+  /** Optional display-name overrides for built-in preset tabs. */
+  presetLabels: Partial<Record<ReportPresetId, string>>;
+  /** Built-in presets removed from the tab bar (can still exist in state). */
+  hiddenPresetIds: ReportPresetId[];
 };
 
 function cloneSharedFilters(
@@ -467,6 +471,8 @@ const EMPTY_SLICE: CampaignSlice = {
   sharedFilters: defaultSharedFilters(),
   savedFilters: [],
   activeSavedFilterId: null,
+  presetLabels: {},
+  hiddenPresetIds: [],
 };
 
 type CampaignReportUi = {
@@ -526,6 +532,13 @@ type ReportViewsState = {
   discardResultsTableColumnsDraft: (campaignId: string) => void;
   renameCustomView: (campaignId: string, viewId: string, name: string) => void;
   deleteCustomView: (campaignId: string, viewId: string) => void;
+  renamePreset: (
+    campaignId: string,
+    presetId: ReportPresetId,
+    name: string
+  ) => void;
+  /** Hides a built-in preset tab from the bar (keeps its saved settings). */
+  deletePreset: (campaignId: string, presetId: ReportPresetId) => void;
   reorderCustomViews: (campaignId: string, from: number, to: number) => void;
   setSelectedMetric: (campaignId: string, metric: string) => void;
   setMetricsNavCollapsed: (campaignId: string, collapsed: boolean) => void;
@@ -537,6 +550,9 @@ type ReportViewsState = {
   renameSavedFilter: (campaignId: string, filterId: string, name: string) => void;
   deleteSavedFilter: (campaignId: string, filterId: string) => void;
   reorderSavedFilters: (campaignId: string, from: number, to: number) => void;
+  /** Bump to open the Results view-settings popover (session-only). */
+  viewSettingsOpenNonce: number;
+  requestOpenViewSettings: () => void;
 };
 
 function liveFilterMetricSnapshot(
@@ -648,14 +664,43 @@ function normalizeSlice(raw: unknown): CampaignSlice {
     savedFilters.some((f) => f.id === r.activeSavedFilterId)
       ? r.activeSavedFilterId
       : null;
+  const presetLabels: Partial<Record<ReportPresetId, string>> = {};
+  if (r.presetLabels && typeof r.presetLabels === "object") {
+    for (const id of Object.values(REPORT_PRESET_IDS) as ReportPresetId[]) {
+      const label = (r.presetLabels as Record<string, unknown>)[id];
+      if (typeof label === "string" && label.trim()) {
+        presetLabels[id] = label.trim();
+      }
+    }
+  }
+  const hiddenPresetIds = Array.isArray(r.hiddenPresetIds)
+    ? r.hiddenPresetIds.filter((id): id is ReportPresetId => isValidPresetId(id))
+    : [];
+  // Keep at least one preset visible when there are no custom views.
+  const visiblePresetIds = (
+    Object.values(REPORT_PRESET_IDS) as ReportPresetId[]
+  ).filter((id) => !hiddenPresetIds.includes(id));
+  const safeHidden =
+    visiblePresetIds.length === 0 && customViews.length === 0
+      ? hiddenPresetIds.filter((id) => id !== REPORT_PRESET_IDS.visitors)
+      : hiddenPresetIds;
+  let activePresetId = active;
+  if (safeHidden.includes(activePresetId) && activeCustomViewId === null) {
+    activePresetId =
+      (Object.values(REPORT_PRESET_IDS) as ReportPresetId[]).find(
+        (id) => !safeHidden.includes(id)
+      ) ?? REPORT_PRESET_IDS.visitors;
+  }
   return {
-    activePresetId: active,
+    activePresetId,
     presets,
     customViews,
     activeCustomViewId,
     sharedFilters: seedFilters,
     savedFilters,
     activeSavedFilterId,
+    presetLabels,
+    hiddenPresetIds: safeHidden,
   };
 }
 
@@ -673,6 +718,8 @@ function cloneCampaignSlice(sl: CampaignSlice): CampaignSlice {
     sharedFilters: cloneSharedFilters(sl.sharedFilters),
     savedFilters: sl.savedFilters.map(cloneSavedFilter),
     activeSavedFilterId: sl.activeSavedFilterId,
+    presetLabels: { ...sl.presetLabels },
+    hiddenPresetIds: [...sl.hiddenPresetIds],
   };
 }
 
@@ -706,6 +753,7 @@ export const useReportViewsStore = create<ReportViewsState>()(
         draftsByCampaign: {},
         filterBaselinesByCampaign: {},
         lastSaveHint: null,
+        viewSettingsOpenNonce: 0,
 
         initCampaign: (campaignId, seed) =>
           set((s) => {
@@ -725,6 +773,8 @@ export const useReportViewsStore = create<ReportViewsState>()(
                 sharedFilters: initialFilters,
                 savedFilters: [],
                 activeSavedFilterId: null,
+                presetLabels: {},
+                hiddenPresetIds: [],
               };
             }
 
@@ -1083,6 +1133,58 @@ export const useReportViewsStore = create<ReportViewsState>()(
           }));
         },
 
+        renamePreset: (campaignId, presetId, name) => {
+          const trimmed = name.trim();
+          if (!trimmed || !isValidPresetId(presetId)) return;
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            presetLabels: {
+              ...prev.presetLabels,
+              [presetId]: trimmed,
+            },
+          }));
+        },
+
+        deletePreset: (campaignId, presetId) => {
+          if (!isValidPresetId(presetId)) return;
+          patchSlice(campaignId, (prev) => {
+            if (prev.hiddenPresetIds.includes(presetId)) return prev;
+            const nextHidden = [...prev.hiddenPresetIds, presetId];
+            const remainingPresets = (
+              Object.values(REPORT_PRESET_IDS) as ReportPresetId[]
+            ).filter((id) => !nextHidden.includes(id));
+            // Keep at least one tab overall.
+            if (
+              remainingPresets.length === 0 &&
+              prev.customViews.length === 0
+            ) {
+              return prev;
+            }
+            const wasShowingPreset =
+              prev.activeCustomViewId === null &&
+              prev.activePresetId === presetId;
+            if (!wasShowingPreset) {
+              return { ...prev, hiddenPresetIds: nextHidden };
+            }
+            if (remainingPresets[0]) {
+              return {
+                ...prev,
+                hiddenPresetIds: nextHidden,
+                activePresetId: remainingPresets[0],
+                activeCustomViewId: null,
+              };
+            }
+            const fallbackCustom = prev.customViews[0];
+            if (!fallbackCustom) return prev;
+            return {
+              ...prev,
+              hiddenPresetIds: nextHidden,
+              activePresetId: fallbackCustom.presetId,
+              activeCustomViewId: fallbackCustom.id,
+            };
+          });
+        },
+
         deleteCustomView: (campaignId, viewId) =>
           set((s) => {
             const prev = s.byCampaign[campaignId]
@@ -1246,6 +1348,11 @@ export const useReportViewsStore = create<ReportViewsState>()(
             next.splice(to, 0, moved);
             return { ...prev, savedFilters: next };
           }),
+
+        requestOpenViewSettings: () =>
+          set((s) => ({
+            viewSettingsOpenNonce: s.viewSettingsOpenNonce + 1,
+          })),
 
         setSelectedMetric: (campaignId, metric) => {
           set((s) => {

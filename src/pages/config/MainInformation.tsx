@@ -34,6 +34,7 @@ import { useConfigStore } from "../../store/config";
 import { useWandzStore } from "../../store/wandz";
 import { HYPOTHESES, LABELS, priorityScore, type Hypothesis } from "../../data/hypotheses";
 import AskWandzButton from "./AskWandzButton";
+import SectionTitle from "./SectionTitle";
 
 // A small "?" help icon with a tooltip, matching the field-help affordance.
 function HelpHint({ text }: { text: string }) {
@@ -192,7 +193,7 @@ export default function MainInformation({ id }: { id: string }) {
   return (
     <section>
       <div className="mb-3 flex items-center gap-1">
-        <h2 className="text-lg font-semibold text-foreground">Main Information</h2>
+        <SectionTitle sectionId="main" className="text-lg" />
         <AskWandzButton onClick={() => askWandz("Main Information")} />
       </div>
 

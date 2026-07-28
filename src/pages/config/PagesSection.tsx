@@ -43,6 +43,7 @@ import {
   type EligibilityResult,
 } from "../../lib/urlEligibility";
 import AskWandzButton from "./AskWandzButton";
+import SectionTitle from "./SectionTitle";
 import PredicatePicker from "./PredicatePicker";
 
 function PageGroupCombobox({
@@ -479,9 +480,11 @@ export default function PagesSection({ id }: { id: string }) {
 
   return (
     <section>
-      <div className="mb-3 flex items-center justify-between">
+      {/* Heading row. Hidden in guided, where the step header owns the title
+          and the "Save as page group" CTA (see ConfigPage). */}
+      <div data-section-heading className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <h2 className="text-lg font-semibold text-foreground">Pages</h2>
+          <SectionTitle sectionId="pages" className="text-lg" />
           <AskWandzButton
             onClick={() =>
               openWandz({ kind: "section", campaignId: id, sectionLabel: "Pages" })

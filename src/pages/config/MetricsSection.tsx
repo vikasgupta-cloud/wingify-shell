@@ -13,6 +13,7 @@ import { useWandzStore } from "../../store/wandz";
 import AskWandzButton from "./AskWandzButton";
 import MetricCard from "./MetricCard";
 import MetricPicker from "./MetricPicker";
+import SectionTitle from "./SectionTitle";
 
 // The header row shared by each metric block.
 function BlockHeader({
@@ -72,7 +73,7 @@ export default function MetricsSection({ id }: { id: string }) {
     <section>
       {/* Heading row. */}
       <div className="mb-6 flex items-center gap-1">
-        <h2 className="text-lg font-semibold text-foreground">Metrics</h2>
+        <SectionTitle sectionId="metrics" className="text-lg" />
         <AskWandzButton
           onClick={() =>
             openWandz({ kind: "section", campaignId: id, sectionLabel: "Metrics" })

@@ -13,68 +13,79 @@ export type SegmentAttribute = {
   // renders as "where <subject> <operator> <value>". Omitted = no filter.
   condition?: SegmentDefCondition;
 };
-export type SegmentCategory = { id: string; label: string; attributes: SegmentAttribute[] };
+// `label` = pill text (reports naming). `section` = list heading above items.
+export type SegmentCategory = {
+  id: string;
+  label: string;
+  section: string;
+  attributes: SegmentAttribute[];
+};
 
+// Shared catalog for config + reports. Item names/descriptions follow reports;
+// definition `condition` follows the config definition-panel shape.
 export const STANDARD_SEGMENTS: SegmentCategory[] = [
   {
     id: "traffic",
     label: "Traffic",
+    section: "Traffic source",
     attributes: [
       {
-        id: "all-traffic",
-        label: "All Traffic",
-        description: "Everyone who visits, with no filtering applied.",
+        id: "all-visitors",
+        label: "All visitors",
+        description:
+          "Every visitor included in the campaign, with no traffic-source filtering applied.",
         example: "Use as the baseline audience for most experiments.",
       },
       {
-        id: "direct",
-        label: "Direct",
+        id: "direct-traffic",
+        label: "Direct traffic",
         description:
-          "Visitors who arrived by typing your URL or via a bookmark — no referrer.",
+          "Visitors who reached the site by typing the URL directly or via a saved bookmark.",
         example: "Someone opening the site from a saved bookmark.",
         condition: { subject: "Traffic Source", operator: "Is equal to", value: "Direct" },
       },
       {
-        id: "referral",
-        label: "Referral",
-        description: "Visitors who came from a link on another website.",
+        id: "referral-traffic",
+        label: "Referral traffic",
+        description: "Visitors who arrived from a link on another website.",
         example: "A visitor clicking a link from a partner blog.",
         condition: { subject: "Traffic Source", operator: "Is equal to", value: "Referral" },
       },
       {
-        id: "social",
-        label: "Social",
+        id: "social-traffic",
+        label: "Social traffic",
         description:
-          "Visitors who arrived from a social network such as Facebook, X, or LinkedIn.",
+          "Visitors who arrived from a social network such as Facebook, X or LinkedIn.",
         example: "A visitor tapping a link in an Instagram bio.",
         condition: { subject: "Traffic Source", operator: "Is equal to", value: "Social" },
       },
       {
-        id: "non-paid",
-        label: "Non-paid",
+        id: "non-paid-search",
+        label: "Non-paid search traffic",
         description:
-          "Visitors from unpaid sources such as organic search and direct traffic.",
+          "Visitors who arrived through organic, unpaid search-engine results.",
         example: "A visitor from an organic Google result.",
-        condition: { subject: "Traffic Source", operator: "Is equal to", value: "Non-paid" },
+        condition: {
+          subject: "Traffic Source",
+          operator: "Is equal to",
+          value: "Non-paid search",
+        },
       },
       {
-        id: "paid",
-        label: "Paid",
-        description: "Visitors from paid campaigns like Google Ads or paid social.",
+        id: "paid-search",
+        label: "Paid search traffic",
+        description: "Visitors who arrived by clicking a paid search advertisement.",
         example: "A visitor from a Google Ads click.",
-        condition: { subject: "Traffic Source", operator: "Is equal to", value: "Paid" },
+        condition: {
+          subject: "Traffic Source",
+          operator: "Is equal to",
+          value: "Paid search",
+        },
       },
       {
-        id: "search",
-        label: "Search",
-        description: "Visitors who arrived from a search engine results page.",
-        example: "A visitor searching your brand name on Bing.",
-        condition: { subject: "Traffic Source", operator: "Is equal to", value: "Search" },
-      },
-      {
-        id: "email",
-        label: "Email",
-        description: "Visitors who clicked through from an email campaign.",
+        id: "email-traffic",
+        label: "Email traffic",
+        description: "Visitors who arrived from a link inside an email campaign.",
         example: "A visitor opening a link in your newsletter.",
         condition: { subject: "Traffic Source", operator: "Is equal to", value: "Email" },
       },
@@ -82,107 +93,141 @@ export const STANDARD_SEGMENTS: SegmentCategory[] = [
   },
   {
     id: "device",
-    label: "Device",
+    label: "Device type",
+    section: "Device type",
     attributes: [
       {
-        id: "desktop",
-        label: "Desktop",
-        description: "Visitors browsing on a desktop or laptop computer.",
-        example: "A visitor on a 15-inch laptop.",
-        condition: { subject: "Device Type", operator: "Is equal to", value: "Desktop" },
+        id: "mobile-tablet",
+        label: "Mobile and tablet traffic",
+        description: "Visitors browsing on either a mobile phone or a tablet device.",
+        example: "A visitor on an iPhone or an iPad.",
+        condition: {
+          subject: "Device Type",
+          operator: "Is one of",
+          value: "Mobile, Tablet",
+        },
       },
       {
-        id: "mobile",
-        label: "Mobile",
+        id: "mobile-traffic",
+        label: "Mobile traffic",
         description: "Visitors browsing on a mobile phone.",
         example: "A visitor on an iPhone or Android phone.",
         condition: { subject: "Device Type", operator: "Is equal to", value: "Mobile" },
       },
       {
-        id: "tablet",
-        label: "Tablet",
+        id: "desktop-traffic",
+        label: "Desktop traffic",
+        description: "Visitors browsing on a desktop or laptop computer.",
+        example: "A visitor on a 15-inch laptop.",
+        condition: { subject: "Device Type", operator: "Is equal to", value: "Desktop" },
+      },
+      {
+        id: "tablet-traffic",
+        label: "Tablet traffic",
         description: "Visitors browsing on a tablet device.",
         example: "A visitor on an iPad.",
         condition: { subject: "Device Type", operator: "Is equal to", value: "Tablet" },
+      },
+      {
+        id: "desktop-tablet",
+        label: "Desktop and Tablet traffic",
+        description: "Visitors browsing on either a desktop or a tablet device.",
+        example: "A visitor on a laptop or an iPad.",
+        condition: {
+          subject: "Device Type",
+          operator: "Is one of",
+          value: "Desktop, Tablet",
+        },
       },
     ],
   },
   {
     id: "visitor",
-    label: "Visitor",
+    label: "Visitor Type",
+    section: "Visitor type",
     attributes: [
       {
-        id: "new",
+        id: "new-visitors",
         label: "New visitors",
-        description: "People visiting your site for the first time.",
+        description:
+          "Visitors viewing the site for the first time within the campaign window.",
         example: "A first-time shopper with no prior cookie.",
         condition: { subject: "Visitor Type", operator: "Is equal to", value: "New" },
       },
       {
-        id: "returning",
+        id: "returning-visitors",
         label: "Returning visitors",
-        description: "People who have visited your site before.",
+        description:
+          "Visitors who have viewed the site before during the campaign window.",
         example: "A shopper coming back a second time.",
         condition: { subject: "Visitor Type", operator: "Is equal to", value: "Returning" },
       },
       {
-        id: "logged-in",
-        label: "Logged in",
-        description: "Visitors authenticated into an account.",
+        id: "logged-in-visitors",
+        label: "Logged-in visitors",
+        description: "Visitors who are authenticated with an account during their session.",
         example: "A signed-in member browsing their dashboard.",
         condition: { subject: "Visitor Type", operator: "Is equal to", value: "Logged in" },
       },
       {
-        id: "logged-out",
-        label: "Logged out",
-        description: "Visitors who are not signed in.",
-        example: "An anonymous visitor with no active session.",
-        condition: { subject: "Visitor Type", operator: "Is equal to", value: "Logged out" },
+        id: "first-time-buyers",
+        label: "First-time buyers",
+        description: "Visitors completing their first purchase during the campaign.",
+        example: "A shopper checking out for the first time.",
+        condition: {
+          subject: "Purchase Count",
+          operator: "Is equal to",
+          value: "1",
+        },
       },
     ],
   },
   {
     id: "os",
     label: "Operating System",
+    section: "Operating system",
     attributes: [
       {
         id: "windows",
         label: "Windows",
-        description: "Visitors on the Windows operating system.",
+        description: "Visitors browsing from a device running Microsoft Windows.",
         example: "A visitor on Windows 11.",
         condition: { subject: "Operating System", operator: "Is equal to", value: "Windows" },
       },
       {
         id: "macos",
-        label: "Mac OS",
-        description: "Visitors on macOS.",
+        label: "macOS",
+        description: "Visitors browsing from a device running Apple macOS.",
         example: "A visitor on a MacBook running macOS.",
-        condition: { subject: "Operating System", operator: "Is equal to", value: "Mac OS" },
-      },
-      {
-        id: "linux",
-        label: "Linux",
-        description: "Visitors on a Linux distribution.",
-        example: "A visitor on Ubuntu.",
-        condition: { subject: "Operating System", operator: "Is equal to", value: "Linux" },
+        condition: { subject: "Operating System", operator: "Is equal to", value: "macOS" },
       },
       {
         id: "ios",
         label: "iOS",
-        description: "Visitors on Apple iOS (iPhone or iPad).",
+        description: "Visitors browsing from an iPhone or iPad running iOS.",
         example: "A visitor on an iPhone running iOS.",
         condition: { subject: "Operating System", operator: "Is equal to", value: "iOS" },
       },
       {
         id: "android",
         label: "Android",
-        description: "Visitors on the Android operating system.",
+        description: "Visitors browsing from a device running Android.",
         example: "A visitor on a Samsung Galaxy phone.",
         condition: { subject: "Operating System", operator: "Is equal to", value: "Android" },
+      },
+      {
+        id: "linux",
+        label: "Linux",
+        description: "Visitors browsing from a device running a Linux distribution.",
+        example: "A visitor on Ubuntu.",
+        condition: { subject: "Operating System", operator: "Is equal to", value: "Linux" },
       },
     ],
   },
 ];
+
+/** Default selected segment label (config campaigns + resets). */
+export const DEFAULT_SEGMENT_LABEL = "All visitors";
 
 export const MY_SEGMENTS: SegmentAttribute[] = [
   {
@@ -304,4 +349,12 @@ export function findSegmentLabel(id: string): string | undefined {
     if (found) return found.label;
   }
   return MY_SEGMENTS.find((a) => a.id === id)?.label;
+}
+
+export function findSegmentByLabel(label: string): SegmentAttribute | undefined {
+  for (const category of STANDARD_SEGMENTS) {
+    const found = category.attributes.find((a) => a.label === label);
+    if (found) return found;
+  }
+  return MY_SEGMENTS.find((a) => a.label === label);
 }

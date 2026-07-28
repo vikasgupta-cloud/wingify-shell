@@ -1,11 +1,14 @@
+// Config segment picker — shared catalog + metric-style search/pills.
+// Single-select; closes on pick; Create custom segment footer.
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   ChevronDown,
-  ChevronRight,
   Info,
   PlusCircle,
   Search,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,41 +20,32 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import {
+  SegmentDefinitionPanel,
+  type SegmentDisplayDef,
+} from "@/components/segments/SegmentDefinitionPanel";
 import { useConfigStore } from "../../store/config";
 import { useCustomSegmentsStore } from "../../store/customSegments";
 import {
   describeCustomSegment,
+  findSegmentByLabel,
   MY_SEGMENTS,
-  STANDARD_COUNT,
   STANDARD_SEGMENTS,
   type CustomSegmentDef,
   type SegmentAttribute,
   type SegmentCategory,
-  type SegmentDefCondition,
 } from "../../config/segments";
 import CustomSegmentDrawer from "./CustomSegmentDrawer";
 
-// Shape shown in the picker's right-hand definition panel.
-type DisplayDef = {
-  label: string;
-  kind: "Standard" | "Custom";
-  description?: string;
-  condition?: SegmentDefCondition;
-};
-
-function findAttrByLabel(label: string): SegmentAttribute | null {
-  for (const c of STANDARD_SEGMENTS) {
-    const a = c.attributes.find((x) => x.label === label);
-    if (a) return a;
-  }
-  return MY_SEGMENTS.find((x) => x.label === label) ?? null;
+function stdDef(a: SegmentAttribute): SegmentDisplayDef {
+  return {
+    label: a.label,
+    kind: "Standard",
+    description: a.description,
+    condition: a.condition,
+  };
 }
 
-function stdDef(a: SegmentAttribute): DisplayDef {
-  return { label: a.label, kind: "Standard", description: a.description, condition: a.condition };
-}
-
-// One selectable attribute row (used inside categories and for My Segments).
 function AttributeRow({
   attribute,
   selected,
@@ -83,7 +77,7 @@ function AttributeRow({
     >
       <span className="flex items-center gap-1.5 text-foreground">
         {attribute.label}
-        {attribute.label === "All Traffic" && (
+        {attribute.label === "All visitors" && (
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -104,65 +98,6 @@ function AttributeRow({
   );
 }
 
-// A collapsible standard category with its attributes.
-function CategoryRow({
-  category,
-  selectedLabel,
-  forceOpen,
-  onSelect,
-  onHover,
-}: {
-  category: SegmentCategory;
-  selectedLabel: string;
-  forceOpen: boolean;
-  onSelect: (label: string) => void;
-  onHover: (a: SegmentAttribute) => void;
-}) {
-  // Standard categories start expanded so all attributes are visible by default.
-  const [open, setOpen] = useState(true);
-  const expanded = forceOpen || open;
-
-  return (
-    <div>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setOpen((o) => !o);
-          }
-        }}
-        className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-accent"
-      >
-        <ChevronRight
-          className={cn(
-            "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-150",
-            expanded && "rotate-90"
-          )}
-        />
-        <span className="text-foreground">
-          {category.label} ({category.attributes.length})
-        </span>
-      </div>
-      {expanded && (
-        <div className="pl-6">
-          {category.attributes.map((a) => (
-            <AttributeRow
-              key={a.id}
-              attribute={a}
-              selected={a.label === selectedLabel}
-              onSelect={() => onSelect(a.label)}
-              onHover={() => onHover(a)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-2 pb-1 pt-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -171,7 +106,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-type PillId = "all" | "standard" | "my";
+type PillId = "all" | "my" | (string & {});
 
 export default function SegmentPicker({
   campaignId,
@@ -189,20 +124,20 @@ export default function SegmentPicker({
   const [open, setOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [activePill, setActivePill] = useState<PillId>("all");
-  const [hoverDef, setHoverDef] = useState<DisplayDef | null>(null);
+  const [hoverDef, setHoverDef] = useState<SegmentDisplayDef | null>(null);
 
+  const searchRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const standardRef = useRef<HTMLDivElement>(null);
-  const myRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const value = config?.segment ?? "";
   const applied = config?.customSegment ?? null;
   const appliedUnsaved =
     applied && !savedCustom.some((s) => s.id === applied.id) ? applied : null;
 
-  // Right-panel definition: hovered segment, else the selected one.
-  const selectedDef: DisplayDef | null = (() => {
+  const selectedDef: SegmentDisplayDef | null = (() => {
     if (applied && value === applied.label) {
       return {
         label: applied.label,
@@ -210,7 +145,7 @@ export default function SegmentPicker({
         description: describeCustomSegment(applied.conditions),
       };
     }
-    const a = findAttrByLabel(value);
+    const a = findSegmentByLabel(value);
     return a ? stdDef(a) : null;
   })();
   const displayDef = hoverDef ?? selectedDef;
@@ -242,16 +177,38 @@ export default function SegmentPicker({
   const myVisible = myFiltered.length > 0;
   const empty = !customVisible && !standardVisible && !myVisible;
 
-  // Scroll-spy: highlight the pill for the section under a reading line.
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(e.target as Node) &&
+        !query.trim()
+      ) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [searchOpen, query]);
+
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
     const compute = () => {
       const line = el.getBoundingClientRect().top + 48;
       let next: PillId = "all";
-      if (standardRef.current && standardRef.current.getBoundingClientRect().top <= line)
-        next = "standard";
-      if (myRef.current && myRef.current.getBoundingClientRect().top <= line) next = "my";
+      for (const c of standardCategories) {
+        const ref = sectionRefs.current[c.id];
+        if (ref && ref.getBoundingClientRect().top <= line) next = c.id;
+      }
+      if (
+        myVisible &&
+        sectionRefs.current.my &&
+        sectionRefs.current.my.getBoundingClientRect().top <= line
+      ) {
+        next = "my";
+      }
       if (el.scrollTop < 4) next = "all";
       setActivePill(next);
     };
@@ -266,7 +223,7 @@ export default function SegmentPicker({
       cancelAnimationFrame(raf);
       el.removeEventListener("scroll", onScroll);
     };
-  }, [open, searching, standardVisible, myVisible]);
+  }, [open, searching, standardCategories, myVisible]);
 
   const scrollToPill = (id: PillId) => {
     setActivePill(id);
@@ -276,7 +233,7 @@ export default function SegmentPicker({
       el.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    const target = id === "standard" ? standardRef.current : myRef.current;
+    const target = sectionRefs.current[id];
     if (target) {
       el.scrollTo({
         top: target.offsetTop - el.offsetTop,
@@ -294,12 +251,6 @@ export default function SegmentPicker({
     setOpen(false);
   };
 
-  const pills: { id: PillId; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "standard", label: `Standard (${STANDARD_COUNT})` },
-    { id: "my", label: `My Segments (${myItems.length})` },
-  ];
-
   return (
     <>
       <Popover
@@ -309,6 +260,7 @@ export default function SegmentPicker({
           if (!o) setHoverDef(null);
           if (o) {
             setQuery("");
+            setSearchOpen(false);
             setActivePill("all");
           }
         }}
@@ -328,45 +280,97 @@ export default function SegmentPicker({
             />
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="flex max-h-[460px] w-[680px] flex-col p-0">
-          {/* Search. */}
-          <div className="shrink-0 border-b border-border p-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search segments"
-                className="pl-9"
-              />
-            </div>
+        <PopoverContent
+          align="start"
+          sideOffset={6}
+          collisionPadding={16}
+          className="flex max-h-[min(460px,var(--radix-popover-content-available-height,100vh))] w-[min(680px,var(--radix-popover-content-available-width,calc(100vw-2rem)))] flex-col overflow-hidden p-0"
+        >
+          {/* Metric-style search: icon before All; expanded hides pills. */}
+          <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-3">
+            {searchOpen ? (
+              <div ref={searchRef} className="relative w-full">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search segments"
+                  className="pl-9 pr-9"
+                />
+                {query ? (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => {
+                      setQuery("");
+                      setSearchOpen(false);
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Search segments"
+                  className="h-9 w-9 shrink-0 rounded-full"
+                  onClick={() => setSearchOpen(true)}
+                >
+                  <Search />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "rounded-full",
+                    activePill === "all" && "border-accent bg-accent text-foreground"
+                  )}
+                  onClick={() => scrollToPill("all")}
+                >
+                  All
+                </Button>
+                {STANDARD_SEGMENTS.map((c) => (
+                  <Button
+                    key={c.id}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "rounded-full",
+                      activePill === c.id && "border-accent bg-accent text-foreground"
+                    )}
+                    onClick={() => scrollToPill(c.id)}
+                  >
+                    {c.label} ({c.attributes.length})
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "rounded-full",
+                    activePill === "my" && "border-accent bg-accent text-foreground"
+                  )}
+                  onClick={() => scrollToPill("my")}
+                >
+                  My Segments ({myItems.length})
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* Anchor pills. */}
-          <div className="flex shrink-0 flex-wrap gap-2 border-b border-border px-4 py-3">
-            {pills.map((p) => (
-              <Button
-                key={p.id}
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "rounded-full",
-                  activePill === p.id && "border-accent bg-accent text-foreground"
-                )}
-                onClick={() => scrollToPill(p.id)}
-              >
-                {p.label}
-              </Button>
-            ))}
-          </div>
-
-          {/* Body + definition panel. */}
           <div className="flex min-h-0 flex-1">
             <div
               ref={listRef}
-              className="min-h-0 w-[320px] shrink-0 overflow-y-auto border-r border-border p-1.5"
+              className="min-h-0 w-[min(320px,45%)] shrink-0 overflow-y-auto border-r border-border p-1.5"
             >
               {empty ? (
                 <div className="px-2 py-8 text-center text-sm text-muted-foreground">
@@ -419,31 +423,33 @@ export default function SegmentPicker({
                     </div>
                   )}
 
-                  {standardVisible && (
-                    <div>
-                      <div ref={standardRef}>
-                        <SectionHeading>Standard</SectionHeading>
-                      </div>
-                      {standardCategories.map((c) => (
-                        <CategoryRow
-                          key={c.id}
-                          category={c}
-                          selectedLabel={value}
-                          forceOpen={searching}
-                          onSelect={pickLabel}
-                          onHover={(a) => setHoverDef(stdDef(a))}
+                  {standardCategories.map((c) => (
+                    <div
+                      key={c.id}
+                      ref={(node) => {
+                        sectionRefs.current[c.id] = node;
+                      }}
+                    >
+                      <SectionHeading>{c.section}</SectionHeading>
+                      {c.attributes.map((a) => (
+                        <AttributeRow
+                          key={a.id}
+                          attribute={a}
+                          selected={a.label === value}
+                          onSelect={() => pickLabel(a.label)}
+                          onHover={() => setHoverDef(stdDef(a))}
                         />
                       ))}
                     </div>
-                  )}
-
-                  {standardVisible && myVisible && <div className="my-1.5 h-px bg-border" />}
+                  ))}
 
                   {myVisible && (
-                    <div>
-                      <div ref={myRef}>
-                        <SectionHeading>My Segments</SectionHeading>
-                      </div>
+                    <div
+                      ref={(node) => {
+                        sectionRefs.current.my = node;
+                      }}
+                    >
+                      <SectionHeading>My Segments</SectionHeading>
                       {myFiltered.map((a) => (
                         <AttributeRow
                           key={a.id}
@@ -469,49 +475,11 @@ export default function SegmentPicker({
               )}
             </div>
 
-            {/* Definition panel — "All Visitors" + optional where clause. */}
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              {displayDef ? (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-semibold text-foreground">
-                      {displayDef.label}
-                    </span>
-                    <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                      {displayDef.kind}
-                    </span>
-                  </div>
-                  {displayDef.description && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {displayDef.description}
-                    </p>
-                  )}
-                  <div className="mt-5">
-                    <div className="text-sm font-semibold text-foreground">All Visitors</div>
-                    {displayDef.condition && (
-                      <div className="mt-2">
-                        <div className="text-sm text-muted-foreground">where</div>
-                        <div className="mt-1 text-sm">
-                          <span className="font-semibold text-foreground">
-                            {displayDef.condition.subject}
-                          </span>{" "}
-                          <span className="text-foreground">
-                            {displayDef.condition.operator} {displayDef.condition.value}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="text-sm text-muted-foreground">
-                  Hover over a segment to see its definition.
-                </div>
-              )}
+              <SegmentDefinitionPanel def={displayDef} />
             </div>
           </div>
 
-          {/* Footer. */}
           <div className="shrink-0 border-t border-border p-2">
             <Button
               type="button"

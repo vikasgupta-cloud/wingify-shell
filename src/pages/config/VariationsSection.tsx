@@ -1,3 +1,6 @@
+// @summary Add settings gear icon UI in the Variations targeting block.
+// Segment settings is still a stub; Trigger settings now opens a small dropdown
+// (Once / Always) and the gear icon shows a tooltip reflecting the selection.
 import { useEffect, useState } from "react";
 import {
   Check,
@@ -32,6 +35,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -50,6 +54,7 @@ import {
 import { useWandzStore } from "../../store/wandz";
 import { TRIGGERS, FREQUENCIES } from "../../config/configOptions";
 import AskWandzButton from "./AskWandzButton";
+import SectionTitle from "./SectionTitle";
 import SegmentPicker from "./SegmentPicker";
 
 // The header + card wrapper shared by all three sub-blocks.
@@ -95,29 +100,106 @@ function TargetingRow({
   label,
   value,
   options,
+  showSettings,
+  settingsSelected,
+  onSettingsChange,
   onChange,
 }: {
   label: string;
   value: string;
   options: string[];
+  showSettings?: boolean;
+  settingsSelected?: "Once" | "Always";
+  onSettingsChange?: (v: "Once" | "Always") => void;
   onChange: (v: string) => void;
 }) {
   return (
     <div className="grid grid-cols-[120px_auto_1fr] items-center gap-3">
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className="text-muted-foreground">:</span>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-[240px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem key={o} value={o}>
-              {o}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-2">
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((o) => (
+              <SelectItem key={o} value={o}>
+                {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {showSettings ? (
+          settingsSelected && onSettingsChange ? (
+            <DropdownMenu>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`${label} settings`}
+                        title={`Checking trigger conditions: ${settingsSelected}`}
+                        className="h-7 w-7 shrink-0 text-muted-foreground"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Checking trigger conditions: {settingsSelected}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <DropdownMenuContent align="end" className="w-56 p-2">
+                <div className="px-2 pb-2 text-xs font-medium text-muted-foreground">
+                  Check trigger conditions for a visitor
+                </div>
+                <DropdownMenuItem
+                  onSelect={() => onSettingsChange("Once")}
+                  className={cn(
+                    "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                    settingsSelected === "Once"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  Once
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => onSettingsChange("Always")}
+                  className={cn(
+                    "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                    settingsSelected === "Always"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  Always
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            // Stub (segment gear icon, or if settings wiring isn't provided).
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`${label} settings`}
+              className="h-7 w-7 shrink-0 text-muted-foreground"
+              onClick={() => {
+                // Stub: future settings popover/drawer.
+              }}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -891,13 +973,47 @@ export default function VariationsSection({ id }: { id: string }) {
     patch(id, { trafficAllocation: clamped });
   };
 
+  // Segment settings gear (visual “advanced targeting” stub) controls two
+  // existing config fields:
+  // - `frequency`: Once vs Always (simplified)
+  // - `trigger`: visibility timing (best-effort mapping to our TRIGGERS list)
+  const targetingConditions: "Once" | "Always" =
+    config.frequency === "Always" ? "Always" : "Once";
+
+  type VisibilityWhen = "Campaign executes" | "DOM Ready" | "Custom Event" | "Always";
+  const visibilityWhen: VisibilityWhen =
+    config.trigger === "Custom Event"
+      ? "Custom Event"
+      : config.trigger === "Scroll Depth"
+        ? "Always"
+        : config.trigger === "Element Clicked"
+          ? "DOM Ready"
+          : "Campaign executes";
+
+  const setTargetingConditions = (v: "Once" | "Always") =>
+    patch(id, {
+      frequency: v === "Always" ? "Always" : "Once per visitor",
+    });
+
+  const setVisibilityWhen = (v: VisibilityWhen) =>
+    patch(id, {
+      trigger:
+        v === "Campaign executes"
+          ? "Page Viewed"
+          : v === "DOM Ready"
+            ? "Element Clicked"
+            : v === "Custom Event"
+              ? "Custom Event"
+              : "Scroll Depth",
+    });
+
   return (
     <section>
       {/* Heading row. Hidden in the guided view, where the step header owns the
           title and the Workflow Mode CTA (see ConfigPage). */}
       <div data-section-heading className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <h2 className="text-lg font-semibold text-foreground">Target and Variation</h2>
+          <SectionTitle sectionId="variations" className="text-lg" />
           <AskWandzButton
             onClick={() =>
               openWandz({
@@ -970,12 +1086,125 @@ export default function VariationsSection({ id }: { id: string }) {
             <div className="grid grid-cols-[120px_auto_1fr] items-center gap-3">
               <span className="text-sm text-muted-foreground">Segment</span>
               <span className="text-muted-foreground">:</span>
-              <SegmentPicker campaignId={id} />
+              <div className="flex items-center gap-2">
+                <SegmentPicker campaignId={id} triggerClassName="w-[200px]" />
+                <DropdownMenu>
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Segment settings"
+                            title={`Targeting: ${targetingConditions} · Visible when: ${visibilityWhen}`}
+                            className="h-7 w-7 shrink-0 text-muted-foreground"
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Targeting: {targetingConditions} · Visible when: {visibilityWhen}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <DropdownMenuContent align="end" className="w-80 p-2">
+                    <div className="px-2 pb-2 text-xs font-medium text-muted-foreground">
+                      Check targeting conditions for a visitor
+                    </div>
+
+                    <DropdownMenuItem
+                      onSelect={() => setTargetingConditions("Once")}
+                      className={cn(
+                        "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                        targetingConditions === "Once"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      Once
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setTargetingConditions("Always")}
+                      className={cn(
+                        "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                        targetingConditions === "Always"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      Always
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="my-2" />
+
+                    <div className="px-2 pb-2 text-xs font-medium text-muted-foreground">
+                      Make modified elements visible when
+                    </div>
+
+                    <DropdownMenuItem
+                      onSelect={() => setVisibilityWhen("Campaign executes")}
+                      className={cn(
+                        "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                        visibilityWhen === "Campaign executes"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      Campaign executes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setVisibilityWhen("DOM Ready")}
+                      className={cn(
+                        "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                        visibilityWhen === "DOM Ready"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      DOM Ready
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setVisibilityWhen("Custom Event")}
+                      className={cn(
+                        "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                        visibilityWhen === "Custom Event"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      Custom Event
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setVisibilityWhen("Always")}
+                      className={cn(
+                        "mx-1 my-1 flex items-center justify-start rounded-md px-2 py-2 text-sm",
+                        visibilityWhen === "Always"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      Always (elements are not hidden)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             <TargetingRow
               label="Trigger"
               value={config.trigger}
               options={TRIGGERS}
+              showSettings
+              settingsSelected={config.frequency === "Always" ? "Always" : "Once"}
+              onSettingsChange={(v) =>
+                patch(id, {
+                  // "Once" is represented as "Once per visitor" in the full frequency list.
+                  frequency: v === "Always" ? "Always" : "Once per visitor",
+                })
+              }
               onChange={(v) => patch(id, { trigger: v })}
             />
             <TargetingRow

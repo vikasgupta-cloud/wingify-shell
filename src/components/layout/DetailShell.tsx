@@ -26,7 +26,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
-import { mainNavCrumbPath, RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
+import { mainNavCrumbPath, UTILITY_RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,9 +67,10 @@ import PrimaryRail from "./PrimaryRail";
 
 // The utility rail on the RIGHT of a detail surface: Ask Wandz (stub) at the top
 // and Help pinned to the bottom. Configure/Reports now live in the header tabs.
+// On Reports, DetailShell positions this absolutely below the sticky tab bar so
+// the tabs themselves stay edge-to-edge.
 function UtilityRail({ entityId }: { entityId?: string }) {
   const wandzOpen = useWandzStore((s) => s.open);
-  const openWandz = useWandzStore((s) => s.openWandz);
 
   const railButton = (active: boolean) =>
     cn(
@@ -77,18 +78,27 @@ function UtilityRail({ entityId }: { entityId?: string }) {
       active && "bg-accent text-foreground"
     );
 
+  // Always close when already open (even if context is a section), so the rail
+  // icon acts as a true toggle for the panel.
+  const handleAskWandz = () => {
+    const { open, closeWandz, openWandz } = useWandzStore.getState();
+    if (open) closeWandz();
+    else openWandz({ kind: "campaign", campaignId: entityId ?? "" });
+  };
+
   return (
     <TooltipProvider delayDuration={200}>
       <nav
         className="flex h-full shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4"
-        style={{ width: RAIL_WIDTH }}
+        style={{ width: UTILITY_RAIL_WIDTH }}
       >
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               type="button"
               aria-label="Ask Wandz"
-              onClick={() => openWandz({ kind: "campaign", campaignId: entityId ?? "" })}
+              aria-pressed={wandzOpen}
+              onClick={handleAskWandz}
               className={railButton(wandzOpen)}
             >
               <Sparkles className="h-[18px] w-[18px]" />
@@ -203,16 +213,23 @@ function SaveButton({ entityId }: { entityId?: string }) {
   const dirty = useIsConfigDirty(entityId ?? "");
   const save = useConfigStore((s) => s.save);
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      disabled={!dirty}
-      onClick={() => entityId && save(entityId)}
-      className="transition-opacity duration-200"
-    >
-      <Save className="h-4 w-4" />
-      Save
-    </Button>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!dirty}
+            aria-label="Save"
+            onClick={() => entityId && save(entityId)}
+            className="h-8 w-8 transition-opacity duration-200"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Save</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -357,6 +374,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   // Fallback from the URL guards against a stale element tree (e.g. mid-HMR)
   // rendering this component without the prop.
   const basePath = basePathProp ?? pathname.split("/c/")[0];
+  const onReports = pathname.endsWith("/reports");
 
   // Breadcrumb trail: main-nav label, plus the sub-nav label when basePath is a leaf.
   const { item, leaf, siblings } = resolveBreadcrumb(basePath);
@@ -451,9 +469,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex shrink-0 flex-col bg-background">
-        {/* Row 1: breadcrumb (left) + actions (right) */}
-        <div className="flex h-14 items-center justify-between gap-4 px-4">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <button
             type="button"
@@ -630,29 +646,58 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           </div>
         </div>
 
-        {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
-            the list pages only. Status + kebab need a real campaign. */}
-        <div className="flex shrink-0 items-center gap-2">
-          <SaveButton entityId={entityId} />
-          {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
-          {campaign && <KebabMenu campaign={campaign} />}
-        </div>
-        </div>
-
-        {/* Row 2: Configure/Reports tabs on their own line, centered, with the
-            border-b acting as the baseline the active tab's underline touches. */}
-        <div className="flex justify-center border-b border-border px-4">
+        {/* Center switcher: Configure/Reports tabs bottom-aligned to the bar so
+            the active underline sits on the header's own bottom border. Middle
+            column of the three-column bar → stays centered while the breadcrumb
+            truncates in its own column. */}
+        <div className="flex shrink-0 items-end justify-center self-stretch">
           <SurfaceTabs
             basePath={basePath}
             entityId={entityId}
             showViewToggle={Boolean(campaign) && !pathname.endsWith("/reports")}
           />
         </div>
+
+        {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
+            the list pages only. Status + kebab need a real campaign. */}
+        <div className="flex flex-1 items-center justify-end gap-2">
+          <SaveButton entityId={entityId} />
+          {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
+          {campaign && <KebabMenu campaign={campaign} />}
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <main className="flex-1 overflow-y-auto">{children}</main>
-        <UtilityRail entityId={entityId} />
+        <main
+          className={cn(
+            "min-h-0 flex-1",
+            // Both branches make <main> a flex container so the inner flex-1
+            // wrapper resolves to a real height. Without flex here the inner
+            // flex-1 collapses to content height, which left full-height
+            // children like Workflow Mode with no room to render.
+            // Reports: relative so the utility rail can sit below the full-bleed
+            // sticky tabs without shrinking the tab bar.
+            onReports ? "relative overflow-hidden" : "flex flex-col overflow-y-auto"
+          )}
+        >
+          <div
+            className={cn(
+              "min-h-0",
+              onReports ? "h-full overflow-y-auto" : "flex-1"
+            )}
+          >
+            {children}
+          </div>
+          {onReports ? (
+            <div
+              className="absolute bottom-0 right-0 top-14 z-30"
+              style={{ width: UTILITY_RAIL_WIDTH }}
+            >
+              <UtilityRail entityId={entityId} />
+            </div>
+          ) : null}
+        </main>
+        {!onReports ? <UtilityRail entityId={entityId} /> : null}
       </div>
 
       {/* Edge-reveal hotzone: dwell on the left viewport edge to open the nav overlay. */}

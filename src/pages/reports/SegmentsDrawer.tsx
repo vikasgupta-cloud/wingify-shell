@@ -1,5 +1,6 @@
 import {
   Fragment,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -14,24 +15,16 @@ import {
   Maximize2,
   Minimize2,
   MinusCircle,
-  MousePointerClick,
-  Pencil,
+  MoreHorizontal,
   Plus,
   Search,
   Sparkles,
   Users,
   X,
 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -47,121 +40,47 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { SegmentConditionControls } from "@/components/segments/SegmentConditionControls";
+import {
+  SegmentDefinitionPanel,
+  type SegmentDisplayDef,
+} from "@/components/segments/SegmentDefinitionPanel";
+import {
+  describeCustomSegment,
+  findSegmentByLabel,
+  makeCondition,
+  STANDARD_SEGMENTS,
+  type SegmentAttribute,
+  type SegmentCondition,
+  type SegmentConnector,
+} from "@/config/segments";
 
 // ---------------------------------------------------------------------------
-// Segment catalog — grouped the same way as the Segments drawer design.
+// Shared catalog (config + reports) — local aliases for list rendering.
 
-type Segment = { name: string; description: string };
-type SegmentGroup = { id: string; pill: string; section: string; items: Segment[] };
+type Segment = {
+  name: string;
+  description: string;
+  attr?: SegmentAttribute;
+  unsaved?: boolean;
+};
+type SegmentGroup = {
+  id: string;
+  pill: string;
+  section: string;
+  items: Segment[];
+};
 
-const SEGMENT_GROUPS: SegmentGroup[] = [
-  {
-    id: "traffic",
-    pill: "Traffic",
-    section: "Traffic source",
-    items: [
-      {
-        name: "All visitors",
-        description:
-          "Every visitor included in the campaign, with no traffic-source filtering applied.",
-      },
-      {
-        name: "Direct traffic",
-        description:
-          "Visitors who reached the site by typing the URL directly or via a saved bookmark.",
-      },
-      {
-        name: "Referral traffic",
-        description: "Visitors who arrived from a link on another website.",
-      },
-      {
-        name: "Social traffic",
-        description:
-          "Visitors who arrived from a social network such as Facebook, X or LinkedIn.",
-      },
-      {
-        name: "Non-paid search traffic",
-        description:
-          "Visitors who arrived through organic, unpaid search-engine results.",
-      },
-      {
-        name: "Paid search traffic",
-        description: "Visitors who arrived by clicking a paid search advertisement.",
-      },
-      {
-        name: "Email traffic",
-        description: "Visitors who arrived from a link inside an email campaign.",
-      },
-    ],
-  },
-  {
-    id: "device",
-    pill: "Device type",
-    section: "Device type",
-    items: [
-      {
-        name: "Mobile and tablet traffic",
-        description: "Visitors browsing on either a mobile phone or a tablet device.",
-      },
-      { name: "Mobile traffic", description: "Visitors browsing on a mobile phone." },
-      {
-        name: "Desktop traffic",
-        description: "Visitors browsing on a desktop or laptop computer.",
-      },
-      { name: "Tablet traffic", description: "Visitors browsing on a tablet device." },
-      {
-        name: "Desktop and Tablet traffic",
-        description: "Visitors browsing on either a desktop or a tablet device.",
-      },
-    ],
-  },
-  {
-    id: "visitor",
-    pill: "Visitor Type",
-    section: "Visitor type",
-    items: [
-      {
-        name: "New visitors",
-        description:
-          "Visitors viewing the site for the first time within the campaign window.",
-      },
-      {
-        name: "Returning visitors",
-        description:
-          "Visitors who have viewed the site before during the campaign window.",
-      },
-      {
-        name: "Logged-in visitors",
-        description: "Visitors who are authenticated with an account during their session.",
-      },
-      {
-        name: "First-time buyers",
-        description: "Visitors completing their first purchase during the campaign.",
-      },
-    ],
-  },
-  {
-    id: "os",
-    pill: "Operating System",
-    section: "Operating system",
-    items: [
-      {
-        name: "Windows",
-        description: "Visitors browsing from a device running Microsoft Windows.",
-      },
-      { name: "macOS", description: "Visitors browsing from a device running Apple macOS." },
-      {
-        name: "iOS",
-        description: "Visitors browsing from an iPhone or iPad running iOS.",
-      },
-      { name: "Android", description: "Visitors browsing from a device running Android." },
-      {
-        name: "Linux",
-        description: "Visitors browsing from a device running a Linux distribution.",
-      },
-    ],
-  },
-];
+const SEGMENT_GROUPS: SegmentGroup[] = STANDARD_SEGMENTS.map((c) => ({
+  id: c.id,
+  pill: c.label,
+  section: c.section,
+  items: c.attributes.map((a) => ({
+    name: a.label,
+    description: a.description ?? "",
+    attr: a,
+  })),
+}));
 
 const ALL_SEGMENTS = SEGMENT_GROUPS.flatMap((g) => g.items);
 
@@ -169,56 +88,31 @@ function findSegment(name: string): Segment | undefined {
   return ALL_SEGMENTS.find((s) => s.name === name);
 }
 
+function stdDisplayDef(a: SegmentAttribute): SegmentDisplayDef {
+  return {
+    label: a.label,
+    kind: "Standard",
+    description: a.description,
+    condition: a.condition,
+  };
+}
+
 // ---------------------------------------------------------------------------
-// Custom Logic — query builder model
-
-const ATTRIBUTE_OPTIONS = [
-  "Landing page URL",
-  "Query Parameter",
-  "Operating system",
-  "Browser",
-  "Device type",
-  "Country",
-  "Traffic source",
-  "Cookie",
-] as const;
-
-const OPERATOR_OPTIONS = [
-  { value: "eq-ci", label: "= ci" },
-  { value: "neq-ci", label: "≠ ci" },
-  { value: "contains", label: "contains" },
-  { value: "not-contains", label: "does not contain" },
-  { value: "starts", label: "starts with" },
-  { value: "ends", label: "ends with" },
-] as const;
+// Custom Logic — keep reports block/bracket layout; fields match Create custom.
 
 const CONNECTORS = ["And", "Or"] as const;
-type Connector = (typeof CONNECTORS)[number];
 
-type Condition = {
-  id: string;
-  connector: Connector; // connector to the previous condition (ignored on first)
-  attribute: string;
-  operator: string;
-  value: string;
-};
 type FilterBlock = {
   id: string;
-  connector: Connector; // connector to the previous block (ignored on first)
-  conditions: Condition[];
+  connector: SegmentConnector;
+  conditions: SegmentCondition[];
 };
 
 let uidCounter = 0;
 const uid = () => `q${++uidCounter}`;
 
-function newCondition(): Condition {
-  return {
-    id: uid(),
-    connector: "And",
-    attribute: ATTRIBUTE_OPTIONS[0],
-    operator: OPERATOR_OPTIONS[0].value,
-    value: "",
-  };
+function newCondition(): SegmentCondition {
+  return { ...makeCondition(), id: uid() };
 }
 
 function newBlock(): FilterBlock {
@@ -237,6 +131,7 @@ function cloneBlock(block: FilterBlock): FilterBlock {
 
 type CategoryId = "all" | "mine" | (string & {});
 
+/** Metric-picker pill style — shared across segment + metric boxes. */
 function CategoryPill({
   active,
   onClick,
@@ -247,21 +142,22 @@ function CategoryPill({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button
       type="button"
-      onClick={onClick}
+      variant="outline"
+      size="sm"
       className={cn(
-        "inline-flex h-7 shrink-0 items-center rounded-full px-3 text-sm transition-colors",
-        active
-          ? "border border-foreground font-medium text-foreground"
-          : "border border-border text-foreground/80 hover:bg-muted/60"
+        "rounded-full",
+        active && "border-accent bg-accent text-foreground"
       )}
+      onClick={onClick}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
+/* @undo Selected chips bar removed from SegmentsPickerPanel.
 function SelectedTag({
   name,
   onRemove,
@@ -295,25 +191,38 @@ function SelectedTag({
     </span>
   );
 }
+*/
 
 function SegmentRow({
   segment,
   checked,
   focused,
+  unsaved,
   onToggle,
   onFocus,
+  onSave,
+  onEdit,
+  onRename,
+  onDelete,
 }: {
   segment: Segment;
   checked: boolean;
   focused: boolean;
+  unsaved?: boolean;
   onToggle: () => void;
   onFocus: () => void;
+  onSave?: () => void;
+  onEdit?: () => void;
+  onRename?: () => void;
+  onDelete?: () => void;
 }) {
+  const showKebab = !unsaved && (onEdit || onRename || onDelete);
+
   return (
-    <label
+    <div
       onMouseEnter={onFocus}
       className={cn(
-        "flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 transition-colors",
+        "flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-2 transition-colors",
         focused ? "bg-muted/70" : "hover:bg-muted/50"
       )}
     >
@@ -321,67 +230,96 @@ function SegmentRow({
         checked={checked}
         onCheckedChange={() => onToggle()}
         onFocus={onFocus}
-        className="h-4 w-4 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+        className="h-4 w-4 shrink-0 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
       />
-      <span
+      <button
+        type="button"
+        onClick={onFocus}
+        title={segment.name}
         className={cn(
-          "min-w-0 flex-1 truncate text-sm",
+          "min-w-0 max-w-[18ch] flex-1 truncate text-left text-sm",
           checked ? "font-medium text-foreground" : "text-foreground"
         )}
       >
         {segment.name}
-      </span>
-    </label>
+      </button>
+      {unsaved && onSave ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSave();
+          }}
+          className="ml-auto shrink-0 text-xs font-semibold text-foreground underline-offset-2 hover:underline"
+        >
+          Save
+        </button>
+      ) : null}
+      {showKebab ? (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              aria-label={`Actions for ${segment.name}`}
+              onClick={(e) => e.stopPropagation()}
+              className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="end"
+              sideOffset={4}
+              className="z-[60] min-w-[140px] rounded-md border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {onEdit ? (
+                <DropdownMenu.Item
+                  onSelect={onEdit}
+                  className="cursor-pointer rounded-sm px-2.5 py-1.5 outline-none data-[highlighted]:bg-accent"
+                >
+                  Edit
+                </DropdownMenu.Item>
+              ) : null}
+              {onRename ? (
+                <DropdownMenu.Item
+                  onSelect={onRename}
+                  className="cursor-pointer rounded-sm px-2.5 py-1.5 outline-none data-[highlighted]:bg-accent"
+                >
+                  Rename
+                </DropdownMenu.Item>
+              ) : null}
+              {onDelete ? (
+                <DropdownMenu.Item
+                  onSelect={onDelete}
+                  className="cursor-pointer rounded-sm px-2.5 py-1.5 outline-none data-[highlighted]:bg-accent"
+                >
+                  Delete
+                </DropdownMenu.Item>
+              ) : null}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      ) : null}
+    </div>
   );
 }
 
-function LeftTab({
-  active,
-  onClick,
-  label,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  count?: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-current={active ? "true" : undefined}
-      className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
-        active
-          ? "bg-muted font-medium text-foreground"
-          : "text-foreground/70 hover:bg-muted/60"
-      )}
-    >
-      <span className="truncate">{label}</span>
-      {count !== undefined && (
-        <span
-          className={cn(
-            "shrink-0 text-xs tabular-nums",
-            active ? "text-foreground/70" : "text-muted-foreground"
-          )}
-        >
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
+/* @undo LeftTab removed — Custom Logic is now "Add custom" under My Segments. */
 
 function ConnectorSelect({
   value,
   onChange,
 }: {
-  value: Connector;
-  onChange: (v: Connector) => void;
+  value: SegmentConnector;
+  onChange: (v: SegmentConnector) => void;
 }) {
   return (
-    <Select value={value} onValueChange={(v) => onChange(v as Connector)}>
+    <Select
+      value={value}
+      onValueChange={(v) => onChange(v as SegmentConnector)}
+    >
       <SelectTrigger className="h-8 w-[76px] gap-1 text-sm">
         <SelectValue />
       </SelectTrigger>
@@ -421,10 +359,10 @@ function ConditionItem({
   onRemove,
   onDuplicate,
 }: {
-  condition: Condition;
+  condition: SegmentCondition;
   first: boolean;
   canRemove: boolean;
-  onChange: (next: Condition) => void;
+  onChange: (next: SegmentCondition) => void;
   onRemove: () => void;
   onDuplicate: () => void;
 }) {
@@ -440,44 +378,11 @@ function ConditionItem({
         <ConditionBracket side="left" />
         <div className="flex-1 space-y-2 py-2">
           <p className="text-xs text-muted-foreground">where</p>
-          <div className="flex items-center gap-2">
-            <Select
-              value={condition.attribute}
-              onValueChange={(attribute) => onChange({ ...condition, attribute })}
-            >
-              <SelectTrigger className="h-9 w-[210px] shrink-0 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ATTRIBUTE_OPTIONS.map((a) => (
-                  <SelectItem key={a} value={a}>
-                    {a}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={condition.operator}
-              onValueChange={(operator) => onChange({ ...condition, operator })}
-            >
-              <SelectTrigger className="h-9 w-[84px] shrink-0 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {OPERATOR_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              value={condition.value}
-              onChange={(e) => onChange({ ...condition, value: e.target.value })}
-              placeholder="Enter a value"
-              className="h-9 min-w-0 flex-1"
-            />
-          </div>
+          <SegmentConditionControls
+            condition={condition}
+            onChange={(patch) => onChange({ ...condition, ...patch })}
+            attributeWidthClassName="w-[210px]"
+          />
         </div>
         <ConditionBracket side="right" />
         <div className="flex flex-col justify-center gap-1">
@@ -514,7 +419,7 @@ function FilterBlockGroup({
 }: {
   block: FilterBlock;
   canRemove: boolean;
-  onChangeCondition: (id: string, next: Condition) => void;
+  onChangeCondition: (id: string, next: SegmentCondition) => void;
   onAddCondition: () => void;
   onRemoveCondition: (id: string) => void;
   onDuplicateCondition: (id: string) => void;
@@ -549,42 +454,22 @@ function FilterBlockGroup({
 function CustomLogicBuilder({
   blocks,
   setBlocks,
-  onSave,
-  onAddFilter,
+  name,
+  onNameChange,
+  onNameBlur,
+  nameError,
 }: {
   blocks: FilterBlock[];
   setBlocks: Dispatch<SetStateAction<FilterBlock[]>>;
-  onSave: (name: string) => boolean;
-  onAddFilter: () => void;
+  name: string;
+  onNameChange: (next: string) => void;
+  onNameBlur?: () => void;
+  nameError?: string | null;
 }) {
   const [wandzOpen, setWandzOpen] = useState(false);
-  const [saveOpen, setSaveOpen] = useState(false);
-  const [segmentName, setSegmentName] = useState("");
-  const [nameError, setNameError] = useState("");
   const totalConditions = blocks.reduce((n, b) => n + b.conditions.length, 0);
 
-  const openSave = () => {
-    setSegmentName("");
-    setNameError("");
-    setSaveOpen(true);
-  };
-
-  const confirmSave = () => {
-    const trimmed = segmentName.trim();
-    if (!trimmed) {
-      setNameError("Enter a segment name.");
-      return;
-    }
-    if (!onSave(trimmed)) {
-      setNameError("This name is already used by a built-in segment.");
-      return;
-    }
-    setSaveOpen(false);
-    setSegmentName("");
-    setNameError("");
-  };
-
-  const changeCondition = (blockId: string, condId: string, next: Condition) =>
+  const changeCondition = (blockId: string, condId: string, next: SegmentCondition) =>
     setBlocks((prev) =>
       prev.map((b) =>
         b.id === blockId
@@ -635,126 +520,89 @@ function CustomLogicBuilder({
     });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-medium text-foreground">All visitors…</p>
-          <button
-            type="button"
-            onClick={() => setWandzOpen((o) => !o)}
-            aria-expanded={wandzOpen}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium transition-colors",
-              wandzOpen
-                ? "bg-muted text-foreground"
-                : "bg-background text-foreground hover:bg-muted/60"
-            )}
-          >
-            Do it with
-            <Sparkles className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-            Wandz AI
-          </button>
-        </div>
-
-        {wandzOpen ? (
-          <div className="rounded-lg border border-border bg-muted/40 p-4">
-            <p className="text-sm font-medium text-foreground">
-              Describe the segment you want
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Wandz will turn your prompt into custom logic conditions.
-            </p>
-            <div className="mt-3 flex items-center gap-2">
-              <Input
-                placeholder="e.g. Only mobile visitors from paid search"
-                className="h-9 flex-1"
-              />
-              <Button type="button" size="sm">
-                Generate
-              </Button>
-            </div>
-          </div>
+    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
+      <div className="space-y-1.5">
+        <Label htmlFor="custom-segment-name" className="text-xs text-muted-foreground">
+          Segment name
+        </Label>
+        <Input
+          id="custom-segment-name"
+          value={name}
+          onChange={(e) => onNameChange(e.target.value)}
+          onBlur={onNameBlur}
+          placeholder="Custom 1"
+          className="h-9 max-w-sm font-medium"
+        />
+        {nameError ? (
+          <p className="text-sm text-danger-fg">{nameError}</p>
         ) : null}
-
-        {blocks.map((block, bi) => (
-          <Fragment key={block.id}>
-            {bi > 0 && (
-              <ConnectorSelect
-                value={block.connector}
-                onChange={(connector) =>
-                  setBlocks((prev) =>
-                    prev.map((b) => (b.id === block.id ? { ...b, connector } : b))
-                  )
-                }
-              />
-            )}
-            <FilterBlockGroup
-              block={block}
-              canRemove={totalConditions > 1}
-              onChangeCondition={(condId, next) =>
-                changeCondition(block.id, condId, next)
-              }
-              onAddCondition={() => addCondition(block.id)}
-              onRemoveCondition={(condId) => removeCondition(block.id, condId)}
-              onDuplicateCondition={(condId) =>
-                duplicateCondition(block.id, condId)
-              }
-            />
-          </Fragment>
-        ))}
       </div>
 
-      <div className="flex items-center justify-between border-t border-border px-6 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-medium text-foreground">All visitors…</p>
         <button
           type="button"
-          onClick={openSave}
-          className="text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+          onClick={() => setWandzOpen((o) => !o)}
+          aria-expanded={wandzOpen}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium transition-colors",
+            wandzOpen
+              ? "bg-muted text-foreground"
+              : "bg-background text-foreground hover:bg-muted/60"
+          )}
         >
-          Save Segment
+          Do it with
+          <Sparkles className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+          Wandz AI
         </button>
-        <Button variant="outline" onClick={onAddFilter}>
-          Add another filter
-        </Button>
       </div>
 
-      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Save segment</DialogTitle>
-            <DialogDescription>
-              Name this segment to keep it in My Segments for later use.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="segment-name">Segment name</Label>
+      {wandzOpen ? (
+        <div className="rounded-lg border border-border bg-muted/40 p-4">
+          <p className="text-sm font-medium text-foreground">
+            Describe the segment you want
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Wandz will turn your prompt into custom logic conditions.
+          </p>
+          <div className="mt-3 flex items-center gap-2">
             <Input
-              id="segment-name"
-              value={segmentName}
-              onChange={(e) => {
-                setSegmentName(e.target.value);
-                if (nameError) setNameError("");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  confirmSave();
-                }
-              }}
-              placeholder="e.g. Mobile paid search"
-              autoFocus
+              placeholder="e.g. Only mobile visitors from paid search"
+              className="h-9 flex-1"
             />
-            {nameError ? (
-              <p className="text-sm text-danger-fg">{nameError}</p>
-            ) : null}
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setSaveOpen(false)}>
-              Cancel
+            <Button type="button" size="sm">
+              Generate
             </Button>
-            <Button onClick={confirmSave}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      ) : null}
+
+      {blocks.map((block, bi) => (
+        <Fragment key={block.id}>
+          {bi > 0 && (
+            <ConnectorSelect
+              value={block.connector}
+              onChange={(connector) =>
+                setBlocks((prev) =>
+                  prev.map((b) => (b.id === block.id ? { ...b, connector } : b))
+                )
+              }
+            />
+          )}
+          <FilterBlockGroup
+            block={block}
+            canRemove={totalConditions > 1}
+            onChangeCondition={(condId, next) =>
+              changeCondition(block.id, condId, next)
+            }
+            onAddCondition={() => addCondition(block.id)}
+            onRemoveCondition={(condId) => removeCondition(block.id, condId)}
+            onDuplicateCondition={(condId) =>
+              duplicateCondition(block.id, condId)
+            }
+          />
+        </Fragment>
+      ))}
     </div>
   );
 }
@@ -763,24 +611,27 @@ function CustomLogicBuilder({
 // expanding / collapsing without losing the in-progress draft.
 function useSegmentsState(value: string[]) {
   const [draft, setDraft] = useState<string[]>(value);
-  const [leftTab, setLeftTab] = useState<"all" | "custom">("all");
   const [category, setCategory] = useState<CategoryId>("all");
   const [search, setSearch] = useState("");
   const [focused, setFocused] = useState<string>(
     value[0] ?? ALL_SEGMENTS[0]!.name
   );
-  const [blocks, setBlocks] = useState<FilterBlock[]>([newBlock()]);
+  // Unsaved drafts live here until Save; saved ones move to savedCustoms.
+  const [unsavedCustoms, setUnsavedCustoms] = useState<
+    Record<string, FilterBlock[]>
+  >({});
   const [savedCustoms, setSavedCustoms] = useState<
     Record<string, FilterBlock[]>
   >({});
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const resetFromValue = (next: string[]) => {
     setDraft(next);
-    setLeftTab("all");
     setCategory("all");
     setSearch("");
     setFocused(next[0] ?? ALL_SEGMENTS[0]!.name);
-    setBlocks([newBlock()]);
+    setUnsavedCustoms({});
+    setNameError(null);
   };
 
   const toggle = (name: string) =>
@@ -788,103 +639,253 @@ function useSegmentsState(value: string[]) {
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
     );
 
-  const isCustom = (name: string) =>
-    name in savedCustoms || /^Custom \d+$/.test(name);
+  const nameTaken = (name: string, except?: string) => {
+    const n = name.trim();
+    if (!n) return true;
+    if (except && n === except) return false;
+    if (findSegment(n)) return true;
+    if (n in savedCustoms && n !== except) return true;
+    if (n in unsavedCustoms && n !== except) return true;
+    return false;
+  };
 
   const nextCustomName = () => {
     let n = 1;
-    while (
-      `Custom ${n}` in savedCustoms ||
-      draft.includes(`Custom ${n}`)
-    ) {
-      n += 1;
-    }
+    while (nameTaken(`Custom ${n}`)) n += 1;
     return `Custom ${n}`;
   };
 
-  // Persist to My Segments only — does not select or apply the filter.
-  const saveSegment = (name: string): boolean => {
-    const trimmed = name.trim();
-    if (!trimmed) return false;
-    if (findSegment(trimmed)) return false;
-    setSavedCustoms((prev) => ({ ...prev, [trimmed]: blocks }));
-    setBlocks([newBlock()]);
-    setLeftTab("all");
+  const addCustom = () => {
+    const name = nextCustomName();
+    setUnsavedCustoms((prev) => ({ ...prev, [name]: [newBlock()] }));
+    setDraft((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setFocused(name);
     setCategory("mine");
+    setNameError(null);
+  };
+
+  // Persist unsaved → My Segments. `asName` applies a pending name edit in the
+  // same update (avoids reading stale unsavedCustoms after renameUnsaved).
+  const saveCustom = (currentKey: string, asName?: string): boolean => {
+    const blocks = unsavedCustoms[currentKey];
+    if (!blocks) return false;
+    const trimmed = (asName ?? currentKey).trim();
+    if (!trimmed) {
+      setNameError("Enter a segment name.");
+      return false;
+    }
+    if (findSegment(trimmed)) {
+      setNameError("This name is already used by a built-in segment.");
+      return false;
+    }
+    if (trimmed !== currentKey && nameTaken(trimmed, currentKey)) {
+      setNameError("This name is already in use.");
+      return false;
+    }
+    setSavedCustoms((prev) => ({ ...prev, [trimmed]: blocks }));
+    setUnsavedCustoms((prev) => {
+      const next = { ...prev };
+      delete next[currentKey];
+      return next;
+    });
+    if (trimmed !== currentKey) {
+      setDraft((prev) => prev.map((n) => (n === currentKey ? trimmed : n)));
+    }
     setFocused(trimmed);
+    setNameError(null);
+    setCategory("mine");
     return true;
   };
 
-  // Commit current logic as a selected filter and start a fresh block —
-  // same behaviour Save Segment used to have.
-  const addAnotherFilter = () => {
-    const name = nextCustomName();
-    setSavedCustoms((prev) => ({ ...prev, [name]: blocks }));
-    setDraft((prev) => (prev.includes(name) ? prev : [...prev, name]));
-    setBlocks([newBlock()]);
+  const renameUnsaved = (oldName: string, nextLabel: string) => {
+    if (!(oldName in unsavedCustoms)) return false;
+    const trimmed = nextLabel.trim();
+    if (!trimmed || trimmed === oldName) {
+      setNameError(null);
+      return trimmed === oldName;
+    }
+    if (nameTaken(trimmed, oldName)) {
+      setNameError("This name is already in use.");
+      return false;
+    }
+    setUnsavedCustoms((prev) => {
+      const blocks = prev[oldName];
+      if (!blocks) return prev;
+      const copy = { ...prev };
+      delete copy[oldName];
+      copy[trimmed] = blocks;
+      return copy;
+    });
+    setDraft((prev) => prev.map((n) => (n === oldName ? trimmed : n)));
+    setFocused(trimmed);
+    setNameError(null);
+    return true;
   };
 
-  const editSegment = (name: string) => {
-    const saved = savedCustoms[name];
-    if (saved) setBlocks(saved.map((b) => cloneBlock(b)));
-    setLeftTab("custom");
+  const renameSaved = (oldName: string, nextLabel: string): boolean => {
+    if (!(oldName in savedCustoms)) return false;
+    const trimmed = nextLabel.trim();
+    if (!trimmed) {
+      setNameError("Enter a segment name.");
+      return false;
+    }
+    if (trimmed === oldName) {
+      setNameError(null);
+      return true;
+    }
+    if (nameTaken(trimmed, oldName)) {
+      setNameError("This name is already in use.");
+      return false;
+    }
+    setSavedCustoms((prev) => {
+      const blocks = prev[oldName];
+      if (!blocks) return prev;
+      const copy = { ...prev };
+      delete copy[oldName];
+      copy[trimmed] = blocks;
+      return copy;
+    });
+    setDraft((prev) => prev.map((n) => (n === oldName ? trimmed : n)));
+    if (focused === oldName) setFocused(trimmed);
+    setNameError(null);
+    return true;
+  };
+
+  const deleteSaved = (name: string) => {
+    setSavedCustoms((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+    setDraft((prev) => prev.filter((n) => n !== name));
+    if (focused === name) {
+      setFocused(ALL_SEGMENTS[0]!.name);
+    }
+  };
+
+  // Move a saved custom back into the unsaved builder so it can be edited.
+  const editSaved = (name: string) => {
+    const blocks = savedCustoms[name];
+    if (!blocks) return;
+    setUnsavedCustoms((prev) => ({
+      ...prev,
+      [name]: blocks.map((b) => cloneBlock(b)),
+    }));
+    setSavedCustoms((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+    setFocused(name);
+    setCategory("mine");
+    setNameError(null);
+  };
+
+  const setFocusedUnsavedBlocks: Dispatch<SetStateAction<FilterBlock[]>> = (
+    action
+  ) => {
+    setUnsavedCustoms((prev) => {
+      const current = prev[focused];
+      if (!current) return prev;
+      const next = typeof action === "function" ? action(current) : action;
+      return { ...prev, [focused]: next };
+    });
   };
 
   const visibleGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (leftTab === "custom") return [];
-    if (category === "mine") {
-      const items = Object.keys(savedCustoms)
-        .filter((name) => !/^Custom \d+$/.test(name))
-        .filter((name) => name.toLowerCase().includes(q))
-        .map((name) => ({
-          name,
-          description:
-            "Custom segment you saved from Custom Logic.",
-        }));
-      return items.length
-        ? [{ id: "mine", pill: "My Segments", section: "My Segments", items }]
-        : [];
-    }
-    return SEGMENT_GROUPS.filter((g) => category === "all" || g.id === category)
-      .map((g) => ({
-        ...g,
-        items: g.items.filter((s) => s.name.toLowerCase().includes(q)),
-      }))
-      .filter((g) => g.items.length > 0);
-  }, [category, search, leftTab, savedCustoms]);
 
-  const focusedSegment =
-    findSegment(focused) ??
-    (focused in savedCustoms
-      ? {
-          name: focused,
-          description: "Custom segment you saved from Custom Logic.",
-        }
-      : undefined);
+    const unsavedItems = Object.keys(unsavedCustoms)
+      .filter((name) => !q || name.toLowerCase().includes(q))
+      .map((name) => ({
+        name,
+        description: "Unsaved custom segment — save to keep it in My Segments.",
+        unsaved: true as const,
+      }));
+
+    const savedItems = Object.keys(savedCustoms)
+      .filter((name) => !q || name.toLowerCase().includes(q))
+      .map((name) => ({
+        name,
+        description: describeCustomSegment(
+          savedCustoms[name]!.flatMap((b) => b.conditions)
+        ),
+        unsaved: false as const,
+      }));
+
+    const mineItems = [...unsavedItems, ...savedItems];
+
+    const groups: {
+      id: string;
+      pill: string;
+      section: string;
+      items: (Segment & { unsaved?: boolean })[];
+    }[] = [];
+
+    for (const g of SEGMENT_GROUPS) {
+      const items = g.items.filter(
+        (s) => !q || s.name.toLowerCase().includes(q)
+      );
+      if (items.length > 0) {
+        groups.push({ ...g, items });
+      }
+    }
+
+    // My Segments always last. Keep it when not searching so Add custom is reachable.
+    if (!q || mineItems.length > 0) {
+      groups.push({
+        id: "mine",
+        pill: "My Segments",
+        section: "My Segments",
+        items: mineItems,
+      });
+    }
+
+    return groups;
+  }, [search, unsavedCustoms, savedCustoms]);
+
+  const focusedUnsaved = focused in unsavedCustoms;
+  const focusedDisplayDef: SegmentDisplayDef | null = (() => {
+    if (focusedUnsaved) return null;
+    if (focused in savedCustoms) {
+      const conditions = savedCustoms[focused]!.flatMap((b) => b.conditions);
+      return {
+        label: focused,
+        kind: "Custom",
+        description: describeCustomSegment(conditions),
+      };
+    }
+    const a = findSegmentByLabel(focused);
+    return a ? stdDisplayDef(a) : null;
+  })();
 
   return {
     draft,
     setDraft,
-    leftTab,
-    setLeftTab,
     category,
     setCategory,
     search,
     setSearch,
     focused,
     setFocused,
-    blocks,
-    setBlocks,
     toggle,
-    isCustom,
-    saveSegment,
-    addAnotherFilter,
-    editSegment,
+    addCustom,
+    saveCustom,
+    renameUnsaved,
+    renameSaved,
+    deleteSaved,
+    editSaved,
+    setFocusedUnsavedBlocks,
+    focusedUnsaved,
+    focusedUnsavedBlocks: unsavedCustoms[focused] ?? null,
+    nameError,
+    setNameError,
     visibleGroups,
-    focusedSegment,
+    focusedDisplayDef,
     resetFromValue,
     savedCustoms,
+    unsavedCustoms,
+    nameTaken,
   };
 }
 
@@ -906,36 +907,162 @@ function SegmentsPickerPanel({
   const {
     draft,
     setDraft,
-    leftTab,
-    setLeftTab,
     category,
     setCategory,
     search,
     setSearch,
     focused,
     setFocused,
-    blocks,
-    setBlocks,
     toggle,
-    isCustom,
-    saveSegment,
-    addAnotherFilter,
-    editSegment,
+    addCustom,
+    saveCustom,
+    renameUnsaved,
+    renameSaved,
+    deleteSaved,
+    editSaved,
+    setFocusedUnsavedBlocks,
+    focusedUnsaved,
+    focusedUnsavedBlocks,
+    nameError,
+    setNameError,
     visibleGroups,
-    focusedSegment,
+    focusedDisplayDef,
     savedCustoms,
+    unsavedCustoms,
   } = seg;
-  const hasResults = visibleGroups.length > 0;
-  const mySegmentCount = Object.keys(savedCustoms).filter(
-    (name) => !/^Custom \d+$/.test(name)
-  ).length;
+  const hasResults = visibleGroups.some((g) => g.items.length > 0);
+  const mySegmentCount =
+    Object.keys(savedCustoms).length + Object.keys(unsavedCustoms).length;
+
+  // Local name while editing an unsaved custom (so typing doesn't fight the map key).
+  const [editName, setEditName] = useState(focused);
+  useEffect(() => {
+    if (focusedUnsaved) setEditName(focused);
+  }, [focused, focusedUnsaved]);
+
+  const [renameTarget, setRenameTarget] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+
+  // Search expands like MetricPicker: icon → full input (hides pills).
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(e.target as Node) &&
+        !search.trim()
+      ) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [searchOpen, search]);
+
+  // Scroll-spy: highlight the pill for the section under the reading line.
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const compute = () => {
+      const line = el.getBoundingClientRect().top + 48;
+      let next: CategoryId = "all";
+      for (const g of visibleGroups) {
+        const ref = sectionRefs.current[g.id];
+        if (ref && ref.getBoundingClientRect().top <= line) next = g.id;
+      }
+      if (el.scrollTop < 4) next = "all";
+      setCategory(next);
+    };
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(compute);
+    };
+    compute();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [visibleGroups, setCategory]);
+
+  const scrollToSection = (id: CategoryId) => {
+    setCategory(id);
+    const el = listRef.current;
+    if (!el) return;
+    if (id === "all") {
+      el.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const ref = sectionRefs.current[id];
+    if (ref) el.scrollTo({ top: ref.offsetTop - el.offsetTop, behavior: "smooth" });
+  };
+
+  const handleAddCustom = () => {
+    addCustom();
+    requestAnimationFrame(() => {
+      const el = listRef.current;
+      const ref = sectionRefs.current.mine;
+      if (el && ref) {
+        el.scrollTo({ top: ref.offsetTop - el.offsetTop, behavior: "smooth" });
+      }
+    });
+  };
+
+  const commitName = () => {
+    if (!focusedUnsaved) return;
+    if (editName.trim() === focused) {
+      setNameError(null);
+      return;
+    }
+    if (!renameUnsaved(focused, editName)) {
+      setEditName(focused);
+    }
+  };
+
+  const handleSaveRow = (name: string) => {
+    // Apply the builder's edited name in the same save (no stale-state rename).
+    if (name === focused && focusedUnsaved) {
+      if (saveCustom(name, editName)) {
+        setEditName(editName.trim() || name);
+      }
+      return;
+    }
+    saveCustom(name);
+  };
+
+  const openRename = (name: string) => {
+    setRenameTarget(name);
+    setRenameValue(name);
+    setRenameError(null);
+  };
+
+  const confirmRename = () => {
+    if (!renameTarget) return;
+    if (!renameValue.trim()) {
+      setRenameError("Enter a segment name.");
+      return;
+    }
+    if (!renameSaved(renameTarget, renameValue)) {
+      setRenameError("This name is already in use.");
+      return;
+    }
+    setRenameTarget(null);
+    setRenameValue("");
+    setRenameError(null);
+  };
 
   const Title =
     titleAs === "dialog" ? DialogPrimitive.Title : "h2";
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      {/* Header */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
         <Title className="flex items-center gap-2.5 text-base font-semibold text-foreground">
           <Users className="h-5 w-5" aria-hidden />
@@ -944,151 +1071,181 @@ function SegmentsPickerPanel({
         <div className="flex items-center gap-1">{headerActions}</div>
       </div>
 
-      {/* Selected chips */}
-      <div className="flex min-h-[48px] shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2">
-        <span className="mr-1 text-sm text-muted-foreground">Selected :</span>
-        {draft.length === 0 ? (
-          <span className="text-sm text-muted-foreground/70">None</span>
-        ) : (
-          draft.map((name) => (
-            <SelectedTag
-              key={name}
-              name={name}
-              onRemove={() => toggle(name)}
-              onEdit={isCustom(name) ? () => editSegment(name) : undefined}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Body */}
-      <div className="flex min-h-0 flex-1">
-        {/* Left rail */}
-        <div className="flex w-[180px] shrink-0 flex-col gap-1 border-r border-border p-2">
-          <LeftTab
-            active={leftTab === "all"}
-            onClick={() => setLeftTab("all")}
-            label="All Segments"
-            count={ALL_SEGMENTS.length}
-          />
-          <LeftTab
-            active={leftTab === "custom"}
-            onClick={() => setLeftTab("custom")}
-            label="Custom Logic"
-          />
-        </div>
-
-        {/* Right pane */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {leftTab === "custom" ? (
-            <CustomLogicBuilder
-              blocks={blocks}
-              setBlocks={setBlocks}
-              onSave={saveSegment}
-              onAddFilter={addAnotherFilter}
-            />
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Search icon before All; expanded search hides all pills (MetricPicker). */}
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-3">
+          {searchOpen ? (
+            <div ref={searchRef} className="relative w-full">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search all segments"
+                className="h-9 pl-9 pr-9"
+              />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => {
+                    setSearch("");
+                    setSearchOpen(false);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
           ) : (
             <>
-              {/* Search + category pills */}
-              <div className="shrink-0 space-y-2.5 border-b border-border p-3">
-                <div className="relative">
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search all segments"
-                    className="h-9 pl-9"
-                  />
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <CategoryPill
-                    active={category === "all"}
-                    onClick={() => setCategory("all")}
-                  >
-                    All
-                  </CategoryPill>
-                  <CategoryPill
-                    active={category === "mine"}
-                    onClick={() => setCategory("mine")}
-                  >
-                    My Segments{mySegmentCount > 0 ? ` (${mySegmentCount})` : ""}
-                  </CategoryPill>
-                  {SEGMENT_GROUPS.map((g) => (
-                    <CategoryPill
-                      key={g.id}
-                      active={category === g.id}
-                      onClick={() => setCategory(g.id)}
-                    >
-                      {g.pill} ({g.items.length})
-                    </CategoryPill>
-                  ))}
-                </div>
-              </div>
-
-              {/* List + detail */}
-              <div className="flex min-h-0 flex-1">
-                <div className="w-[260px] shrink-0 overflow-y-auto border-r border-border p-2">
-                  {hasResults ? (
-                    <div className="space-y-3">
-                      {visibleGroups.map((g) => (
-                        <div key={g.id} className="space-y-0.5">
-                          <p className="px-2.5 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {g.section}
-                          </p>
-                          {g.items.map((segment) => (
-                            <SegmentRow
-                              key={segment.name}
-                              segment={segment}
-                              checked={draft.includes(segment.name)}
-                              focused={focused === segment.name}
-                              onToggle={() => toggle(segment.name)}
-                              onFocus={() => setFocused(segment.name)}
-                            />
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                      {category === "mine"
-                        ? "You haven't saved any segments yet."
-                        : "No segments match your search."}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-4">
-                  {focusedSegment ? (
-                    <>
-                      <h3 className="text-base font-semibold text-foreground">
-                        {focusedSegment.name}
-                      </h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                        {focusedSegment.description}
-                      </p>
-                      <div className="mt-auto flex items-center gap-1.5 pt-4 text-sm text-muted-foreground">
-                        <MousePointerClick className="h-4 w-4" aria-hidden />
-                        Created by
-                        <span className="font-medium text-foreground">
-                          {focusedSegment.name in savedCustoms ? "You" : "VWO"}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
-                      Hover a segment to see its details.
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Search segments"
+                className="h-9 w-9 shrink-0 rounded-full"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search />
+              </Button>
+              <CategoryPill
+                active={category === "all"}
+                onClick={() => scrollToSection("all")}
+              >
+                All
+              </CategoryPill>
+              {SEGMENT_GROUPS.map((g) => (
+                <CategoryPill
+                  key={g.id}
+                  active={category === g.id}
+                  onClick={() => scrollToSection(g.id)}
+                >
+                  {g.pill} ({g.items.length})
+                </CategoryPill>
+              ))}
+              <CategoryPill
+                active={category === "mine"}
+                onClick={() => scrollToSection("mine")}
+              >
+                My Segments
+                {mySegmentCount > 0 ? ` (${mySegmentCount})` : ""}
+              </CategoryPill>
             </>
           )}
         </div>
+
+        {/* List + definition / custom builder */}
+        <div className="flex min-h-0 flex-1">
+          <div
+            ref={listRef}
+            className="min-h-0 w-[calc(18ch+7.25rem)] shrink-0 overflow-y-auto border-r border-border p-2"
+          >
+            {hasResults || visibleGroups.length > 0 ? (
+              <div className="space-y-3">
+                {visibleGroups.map((g) => (
+                  <div
+                    key={g.id}
+                    ref={(node) => {
+                      sectionRefs.current[g.id] = node;
+                    }}
+                    className="space-y-0.5"
+                  >
+                    <p className="px-2.5 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {g.section}
+                    </p>
+                    {g.items.map((segment) => {
+                      const unsaved = Boolean(segment.unsaved);
+                      const isSavedMine = g.id === "mine" && !unsaved;
+                      return (
+                        <SegmentRow
+                          key={segment.name}
+                          segment={segment}
+                          checked={draft.includes(segment.name)}
+                          focused={focused === segment.name}
+                          unsaved={unsaved}
+                          onToggle={() => toggle(segment.name)}
+                          onFocus={() => {
+                            setFocused(segment.name);
+                            setNameError(null);
+                          }}
+                          onSave={
+                            unsaved ? () => handleSaveRow(segment.name) : undefined
+                          }
+                          onEdit={
+                            isSavedMine
+                              ? () => editSaved(segment.name)
+                              : undefined
+                          }
+                          onRename={
+                            isSavedMine
+                              ? () => openRename(segment.name)
+                              : undefined
+                          }
+                          onDelete={
+                            isSavedMine
+                              ? () => deleteSaved(segment.name)
+                              : undefined
+                          }
+                        />
+                      );
+                    })}
+                    {g.id === "mine" ? (
+                      <button
+                        type="button"
+                        onClick={handleAddCustom}
+                        className="mt-1 flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                        Add custom
+                      </button>
+                    ) : null}
+                    {g.id !== "mine" && g.items.length === 0 ? (
+                      <p className="px-2.5 py-2 text-sm text-muted-foreground">
+                        No segments in this group.
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                No segments match your search.
+              </div>
+            )}
+          </div>
+
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {focusedUnsaved && focusedUnsavedBlocks ? (
+              <CustomLogicBuilder
+                blocks={focusedUnsavedBlocks}
+                setBlocks={setFocusedUnsavedBlocks}
+                name={editName}
+                onNameChange={(next) => {
+                  setEditName(next);
+                  setNameError(null);
+                }}
+                onNameBlur={commitName}
+                nameError={nameError}
+              />
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto p-5">
+                <SegmentDefinitionPanel
+                  def={focusedDisplayDef}
+                  emptyText="Hover a segment to see its definition."
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
+      {/* Commit rename when leaving the builder name field via blur is handled
+          on Save; also commit when Apply if needed — blur on name input: */}
       {/* Footer */}
       <div className="flex h-14 shrink-0 items-center justify-end gap-3 border-t border-border px-4">
         <Button
@@ -1098,8 +1255,67 @@ function SegmentsPickerPanel({
         >
           Clear
         </Button>
-        <Button onClick={onApply}>Apply filters ({draft.length})</Button>
+        <Button
+          onClick={() => {
+            commitName();
+            onApply();
+          }}
+        >
+          Apply filters ({draft.length})
+        </Button>
       </div>
+
+      <DialogPrimitive.Root
+        open={renameTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRenameTarget(null);
+            setRenameError(null);
+          }
+        }}
+      >
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[70] bg-foreground/20" />
+          <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-[70] w-[min(400px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl">
+            <DialogPrimitive.Title className="text-sm font-medium text-foreground">
+              Rename segment
+            </DialogPrimitive.Title>
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="rename-segment">Segment name</Label>
+              <Input
+                id="rename-segment"
+                autoFocus
+                value={renameValue}
+                onChange={(e) => {
+                  setRenameValue(e.target.value);
+                  setRenameError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    confirmRename();
+                  }
+                }}
+              />
+              {renameError ? (
+                <p className="text-sm text-danger-fg">{renameError}</p>
+              ) : null}
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setRenameTarget(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={confirmRename}>
+                Rename
+              </Button>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </div>
   );
 }
@@ -1127,7 +1343,7 @@ function SegmentsDrawer({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[940px] flex-col overflow-hidden bg-background shadow-2xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
+          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[980px] flex-col overflow-hidden bg-background shadow-2xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
           aria-describedby={undefined}
         >
           <SegmentsPickerPanel
@@ -1166,9 +1382,12 @@ function SegmentsDrawer({
 export function SegmentsSelector({
   value,
   onChange,
+  plain,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
+  /** Text-only chip for the results filter bar. */
+  plain?: boolean;
 }) {
   const [mode, setMode] = useState<"closed" | "mini" | "drawer">("closed");
   const modeRef = useRef(mode);
@@ -1228,20 +1447,30 @@ export function SegmentsSelector({
           <button
             type="button"
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-              value.length > 0
-                ? "border-foreground/30 bg-accent/40 text-foreground"
-                : "text-foreground/80"
+              "inline-flex items-center rounded-md border border-border bg-background text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
+              plain
+                ? "h-8 px-3 text-foreground/80"
+                : "h-7 gap-1.5 px-2.5 text-foreground/80",
+              value.length > 0 &&
+                (plain
+                  ? "text-foreground"
+                  : "border-foreground/30 bg-accent/40 text-foreground")
             )}
           >
-            <Compass className="h-3.5 w-3.5" aria-hidden />
-            <span className="max-w-[140px] truncate">{summary}</span>
-            <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+            {!plain && <Compass className="h-3.5 w-3.5" aria-hidden />}
+            <span className={cn("truncate", plain ? "" : "max-w-[140px]")}>
+              {summary}
+            </span>
+            {!plain && (
+              <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+            )}
           </button>
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="h-[min(520px,70vh)] w-[min(780px,calc(100vw-2rem))] overflow-hidden p-0"
+          sideOffset={6}
+          collisionPadding={16}
+          className="flex h-[min(520px,var(--radix-popover-content-available-height,70vh))] w-[min(860px,var(--radix-popover-content-available-width,calc(100vw-2rem)))] flex-col overflow-hidden p-0"
         >
           <SegmentsPickerPanel
             seg={seg}

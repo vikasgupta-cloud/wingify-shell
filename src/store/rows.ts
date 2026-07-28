@@ -76,6 +76,7 @@ export const useRowsStore = create<RowsState>((set, get) => ({
       url: "",
       type,
       status,
+      scenario: "not-started",
       decision: "No decision",
       vitals: null,
       variations: 1,

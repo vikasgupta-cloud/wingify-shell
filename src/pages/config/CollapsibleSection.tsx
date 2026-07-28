@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
 import type { SectionId } from "../../config/configSections";
+import SectionTitle from "./SectionTitle";
 
 // Shared collapsible wrapper for the optional config sections
 // (Additional Settings / QA Assistant). Default CLOSED. Open state lives in the
@@ -9,11 +10,13 @@ import type { SectionId } from "../../config/configSections";
 export default function CollapsibleSection({
   id,
   title,
+  description,
   optional,
   children,
 }: {
   id: SectionId;
   title: string;
+  description?: string;
   optional?: boolean;
   children: React.ReactNode;
 }) {
@@ -42,7 +45,13 @@ export default function CollapsibleSection({
           )}
           aria-hidden
         />
-        <span className="text-lg font-semibold text-foreground">{title}</span>
+        <SectionTitle
+          sectionId={id}
+          label={title}
+          description={description}
+          as="span"
+          className="text-lg"
+        />
         {optional && (
           <span className="text-sm italic text-muted-foreground">(Optional)</span>
         )}

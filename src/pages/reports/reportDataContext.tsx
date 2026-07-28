@@ -8,13 +8,16 @@ import {
 import type { Decision } from "../../data/campaigns";
 import type { Campaign, Variant } from "../../data/campaigns";
 import {
+  allVariationsDisabled,
   conclusionKind,
   conclusionProgress,
-  conclusionTitle,
   hasDeclaredWinner,
+  reportFiltersActive,
+  variationCollecting,
   type ConclusionKind,
   type ConclusionProgress,
 } from "../../data/campaignConclusion";
+import { conclusionCopy } from "../../data/conclusionCopy";
 import {
   REPORT_PRESET_IDS,
   useActiveReportPresetId,
@@ -39,6 +42,8 @@ export type ReportVariantRow = {
   variant: Variant;
   index: number;
   stats: MetricRowStats;
+  /** True until this variation clears 500 visitors AND 1 conversion. */
+  collecting: boolean;
 };
 
 export type ReportConclusionSnapshot = {
@@ -47,6 +52,12 @@ export type ReportConclusionSnapshot = {
   decision: Decision;
   showWinnerChrome: boolean;
   progress: ConclusionProgress;
+  /**
+   * Report-only OVERRIDE conditions. They change what the banner shows but do
+   * NOT change `kind` — precedence is allDisabled > filtersActive > kind.
+   */
+  filtersActive: boolean;
+  allDisabled: boolean;
 };
 
 export type ReportOverviewSnapshot = {
@@ -136,33 +147,31 @@ function buildOverview(
     bestStats.visitors > 0 ? projected / bestStats.visitors : 0;
   const showWinner = hasDeclaredWinner(campaign.decision);
   const kind = conclusionKind(campaign);
+  const remainingDays = Math.max(
+    0,
+    campaign.report.requiredDays - campaign.report.elapsedDays
+  );
 
-  let headline: string;
-  let body: string;
+  // Banner title/body come from the single shared copy map so Overview,
+  // Results (and later Quick view) can't drift.
+  const copy = conclusionCopy(kind, {
+    variation: best.name,
+    control: control.name,
+    days: remainingDays,
+  });
+  const headline = copy.title ?? copy.body;
+  const body = copy.body;
+
   let heading: string;
-
   if (kind === "collecting") {
-    headline = conclusionTitle(campaign);
-    body = `Too early to conclude on ${metric.toLowerCase()}. Wait for at least 5 days and a minimum sample before progress estimates appear.`;
     heading = `Early standings on ${metric.toLowerCase()}`;
   } else if (kind === "progress") {
-    headline = conclusionTitle(campaign);
-    body =
-      campaign.status === "Ended"
-        ? "This campaign ended before reaching a statistical conclusion."
-        : `Gathering data for ${metric.toLowerCase()}. Check back when the required sample is met.`;
     heading = `Current standings on ${metric.toLowerCase()}`;
   } else if (kind === "inconclusive") {
-    headline = "No clear winner";
-    body = `Results for ${metric.toLowerCase()} are inconclusive. No variation clearly outperformed the others.`;
     heading = `No clear leader on ${metric.toLowerCase()}`;
   } else if (kind === "baseline") {
-    headline = `${control.name} remains the best choice`;
-    body = `Keep the baseline. Monitor ${metric.toLowerCase()} after any future changes.`;
     heading = `${control.name} leads on ${metric.toLowerCase()}`;
   } else {
-    headline = `${best.name} is your best choice`;
-    body = `Roll it out to all traffic and monitor ${metric.toLowerCase()} for two weeks.`;
     heading = `${best.name} leads on ${metric.toLowerCase()} vs. ${control.name}`;
   }
 
@@ -285,6 +294,7 @@ export function ReportDataProvider({
         variant,
         index,
         stats: statsFor(selectedMetric, index),
+        collecting: variationCollecting(campaign, index),
       })
     );
 
@@ -297,12 +307,24 @@ export function ReportDataProvider({
     const best = campaign.report.variants[bestIndex]!;
     const bestStats = rows[bestIndex]?.stats ?? statsFor(selectedMetric, bestIndex);
     const showWinnerChrome = hasDeclaredWinner(campaign.decision);
+    const kind = conclusionKind(campaign);
+    const remainingDays = Math.max(
+      0,
+      campaign.report.requiredDays - campaign.report.elapsedDays
+    );
     const conclusion: ReportConclusionSnapshot = {
-      kind: conclusionKind(campaign),
-      title: conclusionTitle(campaign),
+      kind,
+      title:
+        conclusionCopy(kind, {
+          variation: best.name,
+          control: campaign.report.variants[0]?.name ?? "Control",
+          days: remainingDays,
+        }).title ?? "",
       decision: campaign.decision,
       showWinnerChrome,
       progress: conclusionProgress(campaign),
+      filtersActive: reportFiltersActive(filters),
+      allDisabled: allVariationsDisabled(campaign),
     };
 
     return {
