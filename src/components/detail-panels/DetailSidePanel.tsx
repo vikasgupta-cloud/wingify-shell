@@ -180,7 +180,7 @@ export default function DetailSidePanel({
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
           <p className="text-sm text-muted-foreground">
-            {DETAIL_PANEL_META[openId].title} content coming soon.
+            {title} content coming soon.
           </p>
         </div>
       )}
