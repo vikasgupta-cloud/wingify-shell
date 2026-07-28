@@ -227,6 +227,7 @@ function SegmentRow({
       )}
     >
       <Checkbox
+        id={`segment-${segment.name}`}
         checked={checked}
         onCheckedChange={() => onToggle()}
         onFocus={onFocus}
@@ -234,7 +235,10 @@ function SegmentRow({
       />
       <button
         type="button"
-        onClick={onFocus}
+        onClick={() => {
+          onFocus();
+          onToggle();
+        }}
         title={segment.name}
         className={cn(
           "min-w-0 max-w-[18ch] flex-1 truncate text-left text-sm",

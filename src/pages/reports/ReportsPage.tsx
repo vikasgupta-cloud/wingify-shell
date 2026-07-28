@@ -35,6 +35,8 @@ import ResultsTab from "./ResultsTab";
 import VitalsTab from "./VitalsTab";
 import vwoMark from "./vwo-mark.svg";
 import WandzPanel from "../../components/wandz/WandzPanel";
+import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
+import { useDetailPanelsStore } from "../../store/detailPanels";
 import { useWandzStore } from "../../store/wandz";
 
 // ---------------------------------------------------------------------------
@@ -836,6 +838,7 @@ function ReportsChrome({
   const { campaign, overview } = useReportData();
   const wandzOpen = useWandzStore((s) => s.open);
   const wandzFullPreview = useWandzStore((s) => s.fullPreview);
+  const detailPanelOpen = useDetailPanelsStore((s) => s.openId) !== null;
 
   return (
     <div
@@ -923,6 +926,18 @@ function ReportsChrome({
             >
               {/* static: outer wrapper owns sticky; panel measures its own max height. */}
               <WandzPanel className="static top-auto" />
+            </div>
+          ) : null}
+          {detailPanelOpen ? (
+            <div
+              className="sticky z-30 shrink-0 self-start pl-2 pr-4"
+              style={
+                {
+                  top: "calc(var(--reports-tabs-height) + 1rem)",
+                } as CSSProperties
+              }
+            >
+              <DetailSidePanel className="static top-auto" />
             </div>
           ) : null}
         </div>

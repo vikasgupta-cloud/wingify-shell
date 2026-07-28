@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ButtonHTMLAttributes,
@@ -94,9 +95,14 @@ import {
   type ReportDateRange,
 } from "../../store/reportViews";
 import { useWandzStore } from "../../store/wandz";
-import DateRangeDropdown, { type DateRange } from "./DateRangeDropdown";
+import { useVisibleCampaigns } from "../../store/rows";
+import DateRangeDropdown, {
+  getDateRangePresets,
+  type DateRange,
+} from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
 import SavedFilterBar from "./SavedFilterBar";
+import { campaignReportDateRange } from "./reportCampaignDefaults";
 import {
   DEFAULT_REPORT_VIEW_SETTINGS,
   type ReportViewSettings,
@@ -519,6 +525,16 @@ function FilterBar({
   const { dateRange, segments, dimensions } =
     useCampaignSharedFilters(campaignId);
   const updateSharedFilters = useReportViewsStore((s) => s.updateSharedFilters);
+  const campaigns = useVisibleCampaigns();
+  const campaign = campaigns.find((c) => c.id === campaignId);
+  const datePresets = useMemo(() => {
+    if (!campaign) return getDateRangePresets();
+    const range = campaignReportDateRange(campaign);
+    return getDateRangePresets({
+      campaignFrom: fromYmd(range.from),
+      campaignTo: fromYmd(range.to),
+    });
+  }, [campaign]);
   const showTrailing = Boolean(right);
 
   return (
@@ -527,6 +543,7 @@ function FilterBar({
         <FunnelIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
         <DateRangeDropdown
           variant="presets"
+          presets={datePresets}
           value={storedToDateRange(dateRange)}
           onChange={(range) =>
             updateSharedFilters(campaignId, {
@@ -585,7 +602,13 @@ function AppliedSegmentChip({
   );
 }
 
-function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
+function AppliedSegmentsRow({
+  campaignId,
+  trailing,
+}: {
+  campaignId: string;
+  trailing?: ReactNode;
+}) {
   const { segments } = useCampaignSharedFilters(campaignId);
   const updateSharedFilters = useReportViewsStore((s) => s.updateSharedFilters);
   if (segments.length === 0) return null;
@@ -615,14 +638,19 @@ function AppliedSegmentsRow({ campaignId }: { campaignId: string }) {
           />
         ))}
       </div>
-      <button
-        type="button"
-        onClick={() => updateSharedFilters(campaignId, { segments: [] })}
-        className="inline-flex shrink-0 items-center gap-1 self-start pt-0.5 text-xs font-medium text-foreground hover:underline"
-      >
-        <X className="h-3.5 w-3.5" aria-hidden />
-        Clear All
-      </button>
+      <div className="ml-auto flex shrink-0 flex-wrap items-center gap-3 self-start">
+        {trailing ? (
+          <div className="flex items-center gap-2">{trailing}</div>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => updateSharedFilters(campaignId, { segments: [] })}
+          className="inline-flex items-center gap-1 pt-0.5 text-xs font-medium text-foreground hover:underline"
+        >
+          <X className="h-3.5 w-3.5" aria-hidden />
+          Clear All
+        </button>
+      </div>
     </div>
   );
 }
@@ -747,10 +775,13 @@ function AppliedFiltersInline({ campaignId }: { campaignId: string }) {
 function ResultsFilterPanel({
   campaignId,
   right,
+  appliedTrailing,
   embedded,
 }: {
   campaignId: string;
   right?: ReactNode;
+  /** Renders on the applied-segments row (e.g. Group by). */
+  appliedTrailing?: ReactNode;
   /** When true, sits inside the results/table card (no outer border/radius). */
   embedded?: boolean;
 }) {
@@ -762,10 +793,14 @@ function ResultsFilterPanel({
           : "overflow-hidden rounded-lg border border-surface-border bg-surface"
       )}
     >
+      <SavedFilterBar campaignId={campaignId} embedded />
       <div className={filterPanelInsetClass}>
         <FilterBar campaignId={campaignId} right={right} />
       </div>
-      <AppliedSegmentsRow campaignId={campaignId} />
+      <AppliedSegmentsRow
+        campaignId={campaignId}
+        trailing={appliedTrailing}
+      />
     </div>
   );
 }
@@ -5445,12 +5480,12 @@ function ResultsGroupByControl({
 }) {
   return (
     <>
-      <span className="text-sm text-muted-foreground">Group by :</span>
+      <span className="text-xs text-muted-foreground">Group by :</span>
       <Select
         value={value}
         onValueChange={(v) => onChange(v as ResultsGroupBy)}
       >
-        <SelectTrigger className="h-7 w-[130px] gap-1 rounded-md border-border bg-background text-sm">
+        <SelectTrigger className="h-6 w-[130px] gap-1 rounded-md border-border bg-background px-2 py-0 text-xs shadow-none [&>svg]:h-3 [&>svg]:w-3">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -5828,7 +5863,6 @@ export default function ResultsTab({
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           {compareMode ? (
             <>
-              <SavedFilterBar campaignId={campaign.id} />
               <ResultsFilterPanel
                 campaignId={campaign.id}
                 right={
@@ -5857,10 +5891,9 @@ export default function ResultsTab({
             </>
           ) : (
             <>
-              <SavedFilterBar campaignId={campaign.id} />
               <ResultsFilterPanel
                 campaignId={campaign.id}
-                right={
+                appliedTrailing={
                   filters.segments.length > 0 ? (
                     <ResultsGroupByControl
                       value={resultsGroupBy}

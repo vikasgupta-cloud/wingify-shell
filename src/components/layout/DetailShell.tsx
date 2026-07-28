@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import {
+  Activity,
   Archive,
   Check,
   ChevronDown,
@@ -14,7 +15,9 @@ import {
   FileBarChart,
   GalleryVerticalEnd,
   HelpCircle,
+  LineChart,
   ListFilter,
+  MessageSquare,
   MoreHorizontal,
   PenLine,
   Printer,
@@ -57,6 +60,12 @@ import {
 import StatusMenu from "@/components/ui/StatusMenu";
 import { useConfigStore, useIsConfigDirty } from "../../store/config";
 import { useWandzStore } from "../../store/wandz";
+import {
+  DETAIL_PANEL_META,
+  DETAIL_PANEL_RAIL_ORDER,
+  useDetailPanelsStore,
+  type DetailPanelId,
+} from "../../store/detailPanels";
 import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
 import {
   campaignLandingPath,
@@ -65,22 +74,34 @@ import {
 } from "../../data/campaigns";
 import PrimaryRail from "./PrimaryRail";
 
-// The utility rail on the RIGHT of a detail surface: Ask Wandz (stub) at the top
-// and Help pinned to the bottom. Configure/Reports now live in the header tabs.
-// On Reports, DetailShell positions this absolutely below the sticky tab bar so
-// the tabs themselves stay edge-to-edge.
+const RAIL_PANEL_ICONS: Record<DetailPanelId, typeof Activity> = {
+  comments: MessageSquare,
+  activity: Activity,
+  suggestions: LineChart,
+};
+
+// The utility rail on the RIGHT of a detail surface: Ask Wandz, then
+// Chat / Activity / Insights; Help pinned to the bottom.
+// Configure/Reports now live in the header tabs. On Reports, DetailShell
+// positions this absolutely below the sticky tab bar so the tabs stay edge-to-edge.
 function UtilityRail({ entityId }: { entityId?: string }) {
   const wandzOpen = useWandzStore((s) => s.open);
+  const openPanelId = useDetailPanelsStore((s) => s.openId);
+  const togglePanel = useDetailPanelsStore((s) => s.toggle);
 
-  const railButton = (active: boolean) =>
+  const railButton = (active: boolean, disabled = false) =>
     cn(
-      "flex h-9 w-9 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted",
-      active && "bg-accent text-foreground"
+      "flex h-9 w-9 items-center justify-center rounded-md text-foreground transition-colors",
+      disabled
+        ? "cursor-not-allowed text-muted-foreground/40"
+        : "hover:bg-muted",
+      active && !disabled && "bg-accent text-foreground"
     );
 
   // Always close when already open (even if context is a section), so the rail
   // icon acts as a true toggle for the panel.
   const handleAskWandz = () => {
+    useDetailPanelsStore.getState().close();
     const { open, closeWandz, openWandz } = useWandzStore.getState();
     if (open) closeWandz();
     else openWandz({ kind: "campaign", campaignId: entityId ?? "" });
@@ -106,6 +127,42 @@ function UtilityRail({ entityId }: { entityId?: string }) {
           </TooltipTrigger>
           <TooltipContent side="left">Ask Wandz</TooltipContent>
         </Tooltip>
+
+        {DETAIL_PANEL_RAIL_ORDER.map((id) => {
+          const Icon = RAIL_PANEL_ICONS[id];
+          const meta = DETAIL_PANEL_META[id];
+          const disabled = Boolean(meta.disabled);
+          const active = openPanelId === id;
+          const button = (
+            <button
+              type="button"
+              aria-label={meta.label}
+              aria-pressed={active}
+              aria-disabled={disabled}
+              disabled={disabled}
+              onClick={() => {
+                if (!disabled) togglePanel(id);
+              }}
+              className={railButton(active, disabled)}
+            >
+              <Icon className="h-[18px] w-[18px]" />
+            </button>
+          );
+          return (
+            <Tooltip key={id}>
+              <TooltipTrigger asChild>
+                {disabled ? (
+                  <span className="inline-flex">{button}</span>
+                ) : (
+                  button
+                )}
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                {disabled ? `${meta.label} (coming soon)` : meta.label}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
 
         <Tooltip>
           <TooltipTrigger asChild>

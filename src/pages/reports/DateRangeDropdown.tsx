@@ -132,20 +132,20 @@ function formatDayLabel(d: Date) {
 
 /** Inline filter-bar presets shown before the custom range picker. */
 const FILTER_BAR_PRESET_IDS = [
-  "today",
-  "yesterday",
+  "campaign",
   "last-7",
   "last-15",
+  "last-30",
 ] as const;
 
 const FILTER_BAR_PRESET_LABELS: Record<
   (typeof FILTER_BAR_PRESET_IDS)[number],
   string
 > = {
-  today: "Today",
-  yesterday: "Yesterday",
+  campaign: "Campaign duration",
   "last-7": "7 days",
   "last-15": "15 days",
+  "last-30": "30 days",
 };
 
 /** @deprecated Prefer getDateRangePresets() — dates are relative to today. */

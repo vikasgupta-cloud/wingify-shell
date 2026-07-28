@@ -1,18 +1,25 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { CAMPAIGNS, type Campaign } from "../data/campaigns";
 import { greetingFor, replyFor } from "../data/wandzReplies";
+import { useDetailPanelsStore } from "./detailPanels";
 import { useQuickViewStore } from "./quickView";
 import { useRowsStore } from "./rows";
 
 export type ChatRole = "user" | "assistant";
-export type ChatMessage = { id: string; role: ChatRole; body: string; at: string /* ISO */ };
+export type ChatMessage = {
+  id: string;
+  role: ChatRole;
+  body: string;
+  at: string /* ISO */;
+};
 
 export type WandzContext =
   | { kind: "campaign"; campaignId: string }
   | { kind: "section"; campaignId: string; sectionLabel: string }
   | { kind: "general" };
 
-// A stable per-context key so each conversation is kept separate.
+/** Stable per-context key so each conversation is kept separate. */
 export function contextKey(ctx: WandzContext): string {
   switch (ctx.kind) {
     case "campaign":
@@ -24,7 +31,6 @@ export function contextKey(ctx: WandzContext): string {
   }
 }
 
-// Session-unique message id (no persistence, no need for crypto).
 let idSeq = 0;
 const uid = () => `msg-${(idSeq += 1)}`;
 
@@ -55,6 +61,8 @@ type WandzState = {
   fullPreview: boolean;
   context: WandzContext | null;
   threads: Record<string /* contextKey */, ChatMessage[]>;
+  /** Composer draft per conversation — survives panel close / remount. */
+  drafts: Record<string /* contextKey */, string>;
   pending: boolean;
   openWandz: (context: WandzContext) => void;
   /** Opens Wandz and immediately asks a question (e.g. campaign summary). */
@@ -62,91 +70,116 @@ type WandzState = {
   toggleWandz: (context: WandzContext) => void;
   closeWandz: () => void;
   setFullPreview: (fullPreview: boolean) => void;
+  setDraft: (key: string, draft: string) => void;
   send: (body: string) => void;
   clearThread: (key: string) => void;
 };
 
-// NOTE: Replies are CANNED, not real AI — there are no API calls or keys. A
-// scripted response is chosen deterministically from the message text (see
-// wandzReplies) and revealed after a short, length-derived delay so it reads as
-// if Wandz were thinking. Session-only: a reload clears every thread.
-export const useWandzStore = create<WandzState>((set, get) => ({
-  open: false,
-  fullPreview: false,
-  context: null,
-  threads: {},
-  pending: false,
+// NOTE: Replies are CANNED, not real AI — no API calls. Threads + drafts persist
+// across reloads (localStorage); open/pending stay session-only.
+export const useWandzStore = create<WandzState>()(
+  persist(
+    (set, get) => ({
+      open: false,
+      fullPreview: false,
+      context: null,
+      threads: {},
+      drafts: {},
+      pending: false,
 
-  openWandz: (context) => {
-    // Mutual exclusion: the two right-side panels never both render.
-    useQuickViewStore.getState().close();
-    const key = contextKey(context);
-    set((s) => ({
-      open: true,
-      context,
-      threads: s.threads[key]
-        ? s.threads
-        : { ...s.threads, [key]: [assistantMsg(greetingFor(context))] },
-    }));
-  },
+      openWandz: (context) => {
+        useQuickViewStore.getState().close();
+        useDetailPanelsStore.getState().close();
+        const key = contextKey(context);
+        set((s) => ({
+          open: true,
+          context,
+          threads: s.threads[key]
+            ? s.threads
+            : { ...s.threads, [key]: [assistantMsg(greetingFor(context))] },
+        }));
+      },
 
-  openWandzAndAsk: (context, prompt) => {
-    get().openWandz(context);
-    // Let the greeting paint, then send so the reply shows the thinking state.
-    window.setTimeout(() => get().send(prompt), 80);
-  },
+      openWandzAndAsk: (context, prompt) => {
+        get().openWandz(context);
+        window.setTimeout(() => get().send(prompt), 80);
+      },
 
-  // Clicking the same context's Wandz icon again closes the panel.
-  toggleWandz: (context) => {
-    const s = get();
-    if (s.open && s.context && contextKey(s.context) === contextKey(context)) {
-      set({ open: false, fullPreview: false });
-    } else {
-      get().openWandz(context);
-    }
-  },
+      toggleWandz: (context) => {
+        const s = get();
+        if (s.open && s.context && contextKey(s.context) === contextKey(context)) {
+          set({ open: false, fullPreview: false });
+        } else {
+          get().openWandz(context);
+        }
+      },
 
-  closeWandz: () => set({ open: false, fullPreview: false }),
+      closeWandz: () => set({ open: false, fullPreview: false }),
 
-  setFullPreview: (fullPreview) => set({ fullPreview }),
+      setFullPreview: (fullPreview) => set({ fullPreview }),
 
-  send: (body) => {
-    const text = body.trim();
-    const ctx = get().context;
-    if (!text || !ctx || get().pending) return;
-    const key = contextKey(ctx);
-    const userMsg: ChatMessage = {
-      id: uid(),
-      role: "user",
-      body: text,
-      at: new Date().toISOString(),
-    };
-    set((s) => ({
-      pending: true,
-      threads: { ...s.threads, [key]: [...(s.threads[key] ?? []), userMsg] },
-    }));
+      setDraft: (key, draft) =>
+        set((s) => ({
+          drafts: { ...s.drafts, [key]: draft },
+        })),
 
-    const campaign =
-      ctx.kind === "campaign" || ctx.kind === "section"
-        ? resolveCampaign(ctx.campaignId)
-        : null;
+      send: (body) => {
+        const text = body.trim();
+        const ctx = get().context;
+        if (!text || !ctx || get().pending) return;
+        const key = contextKey(ctx);
+        const userMsg: ChatMessage = {
+          id: uid(),
+          role: "user",
+          body: text,
+          at: new Date().toISOString(),
+        };
+        set((s) => ({
+          pending: true,
+          drafts: { ...s.drafts, [key]: "" },
+          threads: {
+            ...s.threads,
+            [key]: [...(s.threads[key] ?? []), userMsg],
+          },
+        }));
 
-    // Deterministic "thinking" delay derived from message length (700–1100ms).
-    const delay = 700 + (text.length % 5) * 100;
-    setTimeout(() => {
-      const reply = assistantMsg(replyFor(ctx, text, campaign));
-      set((s) => ({
-        pending: false,
-        threads: { ...s.threads, [key]: [...(s.threads[key] ?? []), reply] },
-      }));
-    }, delay);
-  },
+        const campaign =
+          ctx.kind === "campaign" || ctx.kind === "section"
+            ? resolveCampaign(ctx.campaignId)
+            : null;
 
-  clearThread: (key) =>
-    set((s) => {
-      const ctx = s.context;
-      // Reset to the greeting when clearing the active conversation.
-      const seed = ctx && contextKey(ctx) === key ? [assistantMsg(greetingFor(ctx))] : [];
-      return { threads: { ...s.threads, [key]: seed } };
+        const delay = 700 + (text.length % 5) * 100;
+        setTimeout(() => {
+          const reply = assistantMsg(replyFor(ctx, text, campaign));
+          set((s) => ({
+            pending: false,
+            threads: {
+              ...s.threads,
+              [key]: [...(s.threads[key] ?? []), reply],
+            },
+          }));
+        }, delay);
+      },
+
+      clearThread: (key) =>
+        set((s) => {
+          const ctx = s.context;
+          const seed =
+            ctx && contextKey(ctx) === key
+              ? [assistantMsg(greetingFor(ctx))]
+              : [];
+          return {
+            threads: { ...s.threads, [key]: seed },
+            drafts: { ...s.drafts, [key]: "" },
+          };
+        }),
     }),
-}));
+    {
+      name: "wingify-wandz",
+      partialize: (s) => ({
+        threads: s.threads,
+        drafts: s.drafts,
+      }),
+    }
+  )
+);

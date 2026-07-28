@@ -1,7 +1,8 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { Bookmark, GripVertical, Plus, Trash2, X } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Bookmark, GripVertical, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   useActiveSavedFilterId,
@@ -22,8 +23,11 @@ function DirtyDot() {
 
 export default function SavedFilterBar({
   campaignId,
+  embedded,
 }: {
   campaignId: string;
+  /** When true, renders as a row inside another card (no outer chrome). */
+  embedded?: boolean;
 }) {
   const savedFilters = useReportSavedFilters(campaignId);
   const activeId = useActiveSavedFilterId(campaignId);
@@ -76,10 +80,17 @@ export default function SavedFilterBar({
 
   return (
     <>
-      <div className="flex min-h-10 flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
-        <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
-          <Bookmark className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="font-medium text-foreground">Saved filter</span>
+      <div
+        className={cn(
+          "flex min-h-10 flex-wrap items-center gap-3",
+          embedded
+            ? "border-b border-surface-border bg-background px-5 py-3"
+            : "rounded-lg border border-border bg-background px-3 py-2"
+        )}
+      >
+        <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+          <Bookmark className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>Saved filter</span>
         </div>
 
         <div className="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden />
@@ -147,65 +158,64 @@ export default function SavedFilterBar({
               </div>
             );
           })}
+        </div>
 
+        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
           {isDirty ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-muted-foreground"
                 onClick={() => discard(campaignId)}
               >
                 Discard
               </Button>
               {onSaved ? (
-                <>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-2 font-medium text-foreground"
-                    onClick={() => saveActive(campaignId)}
-                  >
-                    Save “{activeFilter?.name}”
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-2 font-medium text-foreground"
-                    onClick={openSaveAs}
-                  >
-                    <Plus className="h-3.5 w-3.5" aria-hidden />
-                    Save as new filter
-                  </Button>
-                </>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button type="button" size="sm">
+                      Save
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      align="end"
+                      sideOffset={4}
+                      className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+                    >
+                      <DropdownMenu.Item
+                        onSelect={() => saveActive(campaignId)}
+                        className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
+                      >
+                        Save changes to “{activeFilter?.name}”
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        onSelect={openSaveAs}
+                        className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
+                      >
+                        Save as new filter
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
               ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 font-medium text-foreground"
-                  onClick={openSaveAs}
-                >
-                  <Plus className="h-3.5 w-3.5" aria-hidden />
-                  Save current filter
+                <Button type="button" size="sm" onClick={openSaveAs}>
+                  Save
                 </Button>
               )}
-            </div>
+            </>
+          ) : null}
+          {hasSaved ? (
+            <button
+              type="button"
+              onClick={() => setManageOpen(true)}
+              className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Manage filters
+            </button>
           ) : null}
         </div>
-
-        {hasSaved ? (
-          <button
-            type="button"
-            onClick={() => setManageOpen(true)}
-            className="shrink-0 text-sm font-medium text-foreground underline-offset-2 hover:underline"
-          >
-            Manage filters
-          </button>
-        ) : null}
       </div>
 
       <Dialog.Root open={manageOpen} onOpenChange={setManageOpen}>

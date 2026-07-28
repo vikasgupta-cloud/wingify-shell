@@ -28,6 +28,9 @@ import DotNav from "./DotNav";
 import GuidedStepHeader from "./GuidedStepHeader";
 import WorkflowMode from "./workflow/WorkflowMode";
 import WandzPanel from "../../components/wandz/WandzPanel";
+import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
+import { useDetailPanelsStore } from "../../store/detailPanels";
+import { useSidePanelWidthStore } from "../../store/sidePanelWidth";
 import { useWandzStore } from "../../store/wandz";
 
 const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
@@ -145,6 +148,10 @@ export default function ConfigPage() {
   const activeStepId = useConfigStore((s) => s.activeStepId);
   const setActiveStepId = useConfigStore((s) => s.setActiveStepId);
   const wandzOpen = useWandzStore((s) => s.open);
+  const detailPanelOpen = useDetailPanelsStore((s) => s.openId) !== null;
+  const sidePanelWidth = useSidePanelWidthStore((s) => s.width);
+  const sidePanelOpen = wandzOpen || detailPanelOpen;
+  const contentMaxWidth = sidePanelOpen ? 860 + sidePanelWidth + 24 : 860;
   const wasWorkflowOpen = useRef(false);
 
   useEffect(() => {
@@ -250,10 +257,8 @@ export default function ConfigPage() {
       {/* Content column + the Wandz panel sit side by side; the panel pushes the
           content, which stays capped at 860px. */}
       <div
-        className={cn(
-          "mx-auto flex w-full items-start gap-6 px-6 py-10",
-          wandzOpen ? "max-w-[1380px]" : "max-w-[860px]"
-        )}
+        className="mx-auto flex w-full items-start gap-6 px-6 py-10"
+        style={{ maxWidth: sidePanelOpen ? contentMaxWidth : 860 }}
       >
         <div className="relative min-w-0 max-w-[860px] flex-1">
         {/* Undocked: DotNav floats in the left gutter of the content column. */}
@@ -342,8 +347,9 @@ export default function ConfigPage() {
         )}
         </div>
 
-        {/* Mutual exclusion keeps Quick view and Wandz from both rendering. */}
+        {/* Mutual exclusion keeps Quick view, Wandz, and detail panels exclusive. */}
         {wandzOpen && <WandzPanel />}
+        {detailPanelOpen && <DetailSidePanel />}
       </div>
       </div>
     </div>
