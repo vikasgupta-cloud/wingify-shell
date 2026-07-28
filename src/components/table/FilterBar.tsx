@@ -15,10 +15,9 @@ import { useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { cn } from "../../lib/utils";
 
-// Dashed outline (Add filter / Group) — outline variant with the dashed border and
-// the original muted-text / hover styling restored via className.
+// Dashed outline (Add filter / Group) — outline with dashed border, foreground text.
 const DASHED_BUTTON =
-  "h-auto gap-1.5 border-dashed border-input px-2.5 py-1.5 text-sm text-muted-foreground shadow-none hover:border-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3.5";
+  "h-auto gap-1.5 border-dashed border-input px-2.5 py-1.5 text-sm text-foreground shadow-none hover:border-foreground hover:bg-transparent [&_svg]:size-3.5";
 const OP_LABELS: Record<Exclude<FilterOp, "is">, string> = {
   isAnyOf: "is any of",
   isNoneOf: "is none of",

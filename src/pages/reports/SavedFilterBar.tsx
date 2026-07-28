@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Bookmark, GripVertical, Trash2, X } from "lucide-react";
+import { Bookmark, GripVertical, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   useActiveSavedFilterId,
@@ -20,6 +20,13 @@ function DirtyDot() {
     />
   );
 }
+
+const KEBAB_BASE =
+  "h-auto w-auto overflow-hidden p-0 text-muted-foreground transition-[width,padding,margin,opacity] hover:text-foreground focus-visible:opacity-100 [&_svg]:size-3.5";
+const MENU_CONTENT =
+  "z-50 min-w-[160px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg";
+const MENU_ITEM =
+  "cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent";
 
 export default function SavedFilterBar({
   campaignId,
@@ -45,11 +52,13 @@ export default function SavedFilterBar({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saveAsOpen, setSaveAsOpen] = useState(false);
   const [saveAsName, setSaveAsName] = useState("New saved filter");
-  const [manageOpen, setManageOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [rearranging, setRearranging] = useState(false);
 
   const hasSaved = savedFilters.length > 0;
+  const canRearrange = savedFilters.length > 1;
   const activeFilter = savedFilters.find((f) => f.id === activeId);
   const onSaved = Boolean(activeFilter);
 
@@ -58,6 +67,10 @@ export default function SavedFilterBar({
   const startRename = (id: string, name: string) => {
     setRenamingId(id);
     setRenameValue(name);
+  };
+  // Defer so the dropdown finishes closing and doesn't reclaim focus.
+  const startRenameSoon = (id: string, name: string) => {
+    window.setTimeout(() => startRename(id, name), 0);
   };
   const commitRename = () => {
     if (renamingId) renameSavedFilter(campaignId, renamingId, renameValue);
@@ -82,10 +95,10 @@ export default function SavedFilterBar({
     <>
       <div
         className={cn(
-          "flex min-h-10 flex-wrap items-center gap-3",
+          "flex h-10 flex-wrap items-center gap-2.5",
           embedded
-            ? "border-b border-surface-border bg-background px-5 py-3"
-            : "rounded-lg border border-border bg-background px-3 py-2"
+            ? "border-b border-surface-border bg-background px-5"
+            : "rounded-lg border border-border bg-background px-3"
         )}
       >
         <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
@@ -95,27 +108,38 @@ export default function SavedFilterBar({
 
         <div className="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden />
 
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        <div
+          className={cn(
+            "flex min-w-0 flex-wrap items-center gap-2",
+            (isDirty || rearranging) && "flex-1"
+          )}
+        >
           {savedFilters.map((filter, index) => {
             const active = filter.id === activeId;
             const renaming = renamingId === filter.id;
             const showDirty = active && isDirty;
+            const menuOpen = menuOpenId === filter.id;
             return (
               <div
                 key={filter.id}
-                draggable={!renaming}
+                draggable={rearranging && !renaming}
                 onDragStart={(e) => {
+                  if (!rearranging) return;
                   setDragIndex(index);
                   e.dataTransfer.effectAllowed = "move";
                 }}
                 onDragOver={(e) => {
-                  if (dragIndex === null) return;
+                  if (!rearranging || dragIndex === null) return;
                   e.preventDefault();
                   setOverIndex(index);
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  if (dragIndex !== null && overIndex !== null) {
+                  if (
+                    rearranging &&
+                    dragIndex !== null &&
+                    overIndex !== null
+                  ) {
                     reorderSavedFilters(campaignId, dragIndex, overIndex);
                   }
                   endDrag();
@@ -123,6 +147,7 @@ export default function SavedFilterBar({
                 onDragEnd={endDrag}
                 className={cn(
                   "group relative inline-flex max-w-full items-center rounded-full border text-sm transition-colors",
+                  rearranging && "cursor-grab active:cursor-grabbing",
                   active
                     ? "border-foreground bg-background font-medium text-foreground"
                     : "border-border bg-background text-foreground hover:bg-muted/60"
@@ -131,6 +156,14 @@ export default function SavedFilterBar({
                 {dragIndex !== null && overIndex === index && (
                   <span className="pointer-events-none absolute inset-y-1 left-0 w-0.5 rounded-full bg-foreground" />
                 )}
+                {rearranging && !renaming ? (
+                  <span
+                    className="flex h-full items-center pl-2 text-muted-foreground"
+                    aria-hidden
+                  >
+                    <GripVertical className="h-3.5 w-3.5" />
+                  </span>
+                ) : null}
                 {renaming ? (
                   <input
                     autoFocus
@@ -143,30 +176,116 @@ export default function SavedFilterBar({
                       if (e.key === "Escape") setRenamingId(null);
                     }}
                     size={Math.max(renameValue.length, 4)}
-                    className="my-0.5 ml-3 mr-1 max-w-[180px] border-0 bg-transparent p-0 text-sm text-foreground outline-none"
+                    className="my-0.5 ml-3 mr-2 max-w-[180px] border-0 bg-transparent p-0 text-sm text-foreground outline-none"
                   />
                 ) : (
                   <button
                     type="button"
-                    onClick={() => applySavedFilter(campaignId, filter.id)}
-                    className="inline-flex max-w-[200px] items-center truncate px-3 py-1"
+                    onClick={() => {
+                      if (rearranging) return;
+                      applySavedFilter(campaignId, filter.id);
+                    }}
+                    onDoubleClick={() => {
+                      if (rearranging) return;
+                      startRename(filter.id, filter.name);
+                    }}
+                    className={cn(
+                      "inline-flex max-w-[180px] items-center truncate py-0.5 text-[13px] leading-5",
+                      rearranging ? "pl-1.5 pr-2" : "px-2.5"
+                    )}
                   >
                     <span className="truncate">{filter.name}</span>
                     {showDirty ? <DirtyDot /> : null}
                   </button>
                 )}
+
+                {!renaming && !rearranging ? (
+                  <DropdownMenu.Root
+                    open={menuOpen}
+                    onOpenChange={(open) =>
+                      setMenuOpenId(open ? filter.id : null)
+                    }
+                  >
+                    <DropdownMenu.Trigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`${filter.name} options`}
+                        className={cn(
+                          KEBAB_BASE,
+                          menuOpen
+                            ? "mr-1 w-auto p-1 opacity-100"
+                            : "w-0 opacity-0 group-hover:mr-1 group-hover:w-auto group-hover:p-1 group-hover:opacity-100"
+                        )}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5 shrink-0" />
+                      </Button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        align="end"
+                        sideOffset={4}
+                        className={MENU_CONTENT}
+                        onCloseAutoFocus={(e) => e.preventDefault()}
+                      >
+                        <DropdownMenu.Item
+                          onSelect={() =>
+                            startRenameSoon(filter.id, filter.name)
+                          }
+                          className={MENU_ITEM}
+                        >
+                          Rename
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                          disabled={!canRearrange}
+                          onSelect={() => setRearranging(true)}
+                          className={cn(
+                            MENU_ITEM,
+                            "data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                          )}
+                        >
+                          Rearrange
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                          onSelect={() => setDeleteId(filter.id)}
+                          className={MENU_ITEM}
+                        >
+                          Delete
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
+                ) : null}
               </div>
             );
           })}
         </div>
 
+        {rearranging || isDirty ? (
         <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
-          {isDirty ? (
+          {rearranging ? (
+            <Button
+              type="button"
+              size="sm"
+              className="h-7"
+              onClick={() => {
+                setRearranging(false);
+                endDrag();
+              }}
+            >
+              Done
+            </Button>
+          ) : null}
+          {isDirty && !rearranging ? (
             <>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
+                className="h-7"
                 onClick={() => discard(campaignId)}
               >
                 Discard
@@ -174,7 +293,7 @@ export default function SavedFilterBar({
               {onSaved ? (
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
-                    <Button type="button" size="sm">
+                    <Button type="button" size="sm" className="h-7">
                       Save
                     </Button>
                   </DropdownMenu.Trigger>
@@ -200,147 +319,20 @@ export default function SavedFilterBar({
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>
               ) : (
-                <Button type="button" size="sm" onClick={openSaveAs}>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7"
+                  onClick={openSaveAs}
+                >
                   Save
                 </Button>
               )}
             </>
           ) : null}
-          {hasSaved ? (
-            <button
-              type="button"
-              onClick={() => setManageOpen(true)}
-              className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Manage filters
-            </button>
-          ) : null}
         </div>
+        ) : null}
       </div>
-
-      <Dialog.Root open={manageOpen} onOpenChange={setManageOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[440px] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-popover p-5 text-popover-foreground shadow-xl">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <Dialog.Title className="text-sm font-medium text-foreground">
-                  Manage saved filters
-                </Dialog.Title>
-                <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-                  Rename, reorder, or delete saved filters. Each one stores your
-                  filters and selected metric.
-                </Dialog.Description>
-              </div>
-              <Dialog.Close asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </Dialog.Close>
-            </div>
-
-            <ul className="mt-4 max-h-[320px] space-y-1 overflow-y-auto">
-              {savedFilters.map((filter, index) => {
-                const renaming = renamingId === filter.id;
-                return (
-                  <li
-                    key={filter.id}
-                    onDragOver={(e) => {
-                      if (dragIndex === null) return;
-                      e.preventDefault();
-                      setOverIndex(index);
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (dragIndex !== null) {
-                        reorderSavedFilters(campaignId, dragIndex, index);
-                      }
-                      endDrag();
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-md border border-border px-2 py-2",
-                      dragIndex !== null &&
-                        overIndex === index &&
-                        "border-foreground"
-                    )}
-                  >
-                    <button
-                      type="button"
-                      draggable={!renaming}
-                      aria-label={`Reorder ${filter.name}`}
-                      title="Drag to reorder"
-                      onDragStart={(e) => {
-                        setDragIndex(index);
-                        e.dataTransfer.effectAllowed = "move";
-                        e.dataTransfer.setData("text/plain", filter.id);
-                      }}
-                      onDragEnd={endDrag}
-                      className="inline-flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground active:cursor-grabbing"
-                    >
-                      <GripVertical className="h-4 w-4" aria-hidden />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        applySavedFilter(campaignId, filter.id);
-                        setManageOpen(false);
-                      }}
-                      className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground"
-                    >
-                      {renaming ? (
-                        <input
-                          autoFocus
-                          value={renameValue}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.currentTarget.select()}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onBlur={commitRename}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") commitRename();
-                            if (e.key === "Escape") setRenamingId(null);
-                          }}
-                          className="w-full border-0 bg-transparent p-0 text-sm outline-none"
-                        />
-                      ) : (
-                        filter.name
-                      )}
-                    </button>
-                    {!renaming ? (
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => startRename(filter.id, filter.name)}
-                        >
-                          Rename
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground"
-                          aria-label={`Delete ${filter.name}`}
-                          onClick={() => setDeleteId(filter.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
 
       <AlertDialog.Root
         open={deleteId !== null}

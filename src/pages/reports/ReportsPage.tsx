@@ -674,44 +674,54 @@ function VariationCard({
         isControl={isControl}
       />
 
-      <div className="flex items-end justify-between pt-3">
-        <div>
-          <p className="text-3xl font-semibold tabular-nums tracking-tight text-foreground">
-            {variant.conversions}
+      <div className="mt-3 border-t border-border pt-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[28px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
+              {variant.conversions}
+            </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Unique conversions
+            </p>
+          </div>
+          <p
+            className={cn(
+              "shrink-0 pt-1 text-sm tabular-nums",
+              isControl || variant.upliftLabel === "Baseline"
+                ? "text-muted-foreground"
+                : "font-semibold text-success-fg"
+            )}
+          >
+            {variant.upliftLabel}
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Unique conversions</p>
         </div>
-        <p
-          className={cn(
-            "pb-1 text-sm tabular-nums",
-            isControl || variant.upliftLabel === "Baseline"
-              ? "text-muted-foreground"
-              : "font-semibold text-success-fg"
-          )}
-        >
-          {variant.upliftLabel}
-        </p>
-      </div>
 
-      <div className="grid grid-cols-3 gap-3 pt-2.5">
-        <div>
-          <p className="text-xs text-muted-foreground">{metricLabel}</p>
-          <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
-            {variant.ctaRate}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Visitors</p>
-          <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
-            {variant.visitors}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Confidence</p>
-          <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
-            {variant.confidence}
-          </p>
-        </div>
+        <dl className="mt-3 grid grid-cols-3 divide-x divide-border">
+          <div className="pr-3">
+            <dt className="text-[11px] leading-none text-muted-foreground">
+              {metricLabel}
+            </dt>
+            <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
+              {variant.ctaRate}
+            </dd>
+          </div>
+          <div className="px-3">
+            <dt className="text-[11px] leading-none text-muted-foreground">
+              Visitors
+            </dt>
+            <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
+              {variant.visitors}
+            </dd>
+          </div>
+          <div className="pl-3">
+            <dt className="text-[11px] leading-none text-muted-foreground">
+              Confidence
+            </dt>
+            <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
+              {variant.confidence}
+            </dd>
+          </div>
+        </dl>
       </div>
     </article>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -15,7 +15,6 @@ import {
   FileBarChart,
   GalleryVerticalEnd,
   HelpCircle,
-  LineChart,
   ListFilter,
   MessageSquare,
   MoreHorizontal,
@@ -74,10 +73,43 @@ import {
 } from "../../data/campaigns";
 import PrimaryRail from "./PrimaryRail";
 
-const RAIL_PANEL_ICONS: Record<DetailPanelId, typeof Activity> = {
+/** Line chart + sparkles — matches GA-style Insights glyph. */
+function InsightsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      {/* Smaller sparkle above left peak */}
+      <path d="M9.5 1.4 10.25 3.55l2.15.75-2.15.75-.75 2.15-.75-2.15-2.15-.75 2.15-.75z" />
+      {/* Larger sparkle above right peak */}
+      <path d="M19.5 0.7 20.45 3.4l2.7.95-2.7.95-.95 2.7-.95-2.7-2.7-.95 2.7-.95z" />
+      {/* Zigzag polyline nodes: bl → mid-high → mid-low → tr */}
+      <circle cx="4.5" cy="18.2" r="1.55" />
+      <circle cx="9.5" cy="12.2" r="1.55" />
+      <circle cx="14.5" cy="15.8" r="1.55" />
+      <circle cx="19.5" cy="10.8" r="1.55" />
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4.5 18.2 9.5 12.2 14.5 15.8 19.5 10.8"
+      />
+    </svg>
+  );
+}
+
+const RAIL_PANEL_ICONS: Record<
+  DetailPanelId,
+  ComponentType<{ className?: string }>
+> = {
   comments: MessageSquare,
   activity: Activity,
-  suggestions: LineChart,
+  suggestions: InsightsIcon,
 };
 
 // The utility rail on the RIGHT of a detail surface: Ask Wandz, then
