@@ -411,7 +411,7 @@ export default function WandzPanel({ className }: { className?: string }) {
             window.addEventListener("pointermove", onMove);
             window.addEventListener("pointerup", onUp);
           }}
-          className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize touch-none hover:bg-foreground/10"
+          className="absolute inset-y-0 left-0 z-20 w-2.5 cursor-col-resize touch-none hover:bg-foreground/10"
         />
       ) : null}
       {chat}

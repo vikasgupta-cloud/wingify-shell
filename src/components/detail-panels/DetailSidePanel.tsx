@@ -62,6 +62,8 @@ function useDragResizeWidth(
   currentWidth: number
 ) {
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+  const widthRef = useRef(currentWidth);
+  widthRef.current = currentWidth;
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -85,7 +87,7 @@ function useDragResizeWidth(
 
   const onPointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
-    dragRef.current = { startX: e.clientX, startWidth: currentWidth };
+    dragRef.current = { startX: e.clientX, startWidth: widthRef.current };
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   };
@@ -143,7 +145,7 @@ export default function DetailSidePanel({
         aria-valuemin={SIDE_PANEL_WIDTH.min}
         aria-valuemax={SIDE_PANEL_WIDTH.max}
         onPointerDown={onDragStart}
-        className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize touch-none hover:bg-foreground/10"
+        className="absolute inset-y-0 left-0 z-20 w-2.5 cursor-col-resize touch-none hover:bg-foreground/10"
       />
 
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3">

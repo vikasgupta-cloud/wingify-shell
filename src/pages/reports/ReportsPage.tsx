@@ -171,7 +171,7 @@ function LinkButton({ children }: { children: ReactNode }) {
 }
 
 type BannerStat = { value: string; label: string; accent: boolean };
-type ProgressStat = { label: string; value: string; sub: string };
+type ProgressStat = { label: string; value: string; sub: string; pct?: number };
 
 /** Winner-style value/label stat row (used by winner / baseline / inconclusive). */
 function BannerStatRow({ stats }: { stats: BannerStat[] }) {
@@ -202,16 +202,34 @@ function BannerStatRow({ stats }: { stats: BannerStat[] }) {
 /** "current / target" trio used by progress + collecting. */
 function BannerProgressRow({ items }: { items: ProgressStat[] }) {
   return (
-    <div className="grid max-w-2xl grid-cols-3 gap-x-10 gap-y-4">
+    <div className="grid max-w-3xl grid-cols-3 gap-3">
       {items.map((it) => (
-        <div key={it.label} className="min-w-0">
+        <div
+          key={it.label}
+          className="flex min-w-0 flex-col rounded-lg bg-muted/40 px-4 py-3.5"
+        >
           <div className="text-xs text-muted-foreground">{it.label}</div>
-          <div className="mt-2 tabular-nums">
-            <span className="text-base font-semibold text-foreground">
+          <div className="mt-1.5 tabular-nums">
+            <span className="text-lg font-semibold text-foreground">
               {it.value}
             </span>{" "}
             <span className="text-sm text-muted-foreground">{it.sub}</span>
           </div>
+          {it.pct !== undefined && (
+            <div
+              className="mt-3 h-1.5 overflow-hidden rounded-full bg-border/70"
+              role="progressbar"
+              aria-valuenow={Math.round(it.pct)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${it.label} progress`}
+            >
+              <div
+                className="h-full rounded-full bg-foreground/70 transition-[width] duration-500"
+                style={{ width: `${Math.min(100, Math.max(3, it.pct))}%` }}
+              />
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -921,13 +939,13 @@ function ReportsChrome({
           )}
           {wandzOpen && wandzFullPreview ? <WandzPanel /> : null}
           {wandzOpen && !wandzFullPreview ? (
-            <div className="flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
+            <div className="relative z-30 flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
               {/* static: outer wrapper owns height; panel measures its own max height. */}
               <WandzPanel className="static top-auto max-h-full" />
             </div>
           ) : null}
           {detailPanelOpen ? (
-            <div className="flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
+            <div className="relative z-30 flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
               <DetailSidePanel className="static top-auto max-h-full" />
             </div>
           ) : null}
