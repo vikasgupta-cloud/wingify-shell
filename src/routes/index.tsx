@@ -6,12 +6,14 @@ import AppLayout from "../components/layout/AppLayout";
 import DetailShell from "../components/layout/DetailShell";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import WebExperimentation from "../pages/WebExperimentation";
+import WebsitesAndApps from "../pages/WebsitesAndApps";
 import ConfigPage from "../pages/config/ConfigPage";
 import ReportsPage from "../pages/reports/ReportsPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
   "/web-experiment": WebExperimentation,
+  "/profile/websites-and-apps": WebsitesAndApps,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
