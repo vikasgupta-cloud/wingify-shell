@@ -30,7 +30,6 @@ import WorkflowMode from "./workflow/WorkflowMode";
 import WandzPanel from "../../components/wandz/WandzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
 import { useDetailPanelsStore } from "../../store/detailPanels";
-import { useSidePanelWidthStore } from "../../store/sidePanelWidth";
 import { useWandzStore } from "../../store/wandz";
 
 const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
@@ -149,9 +148,7 @@ export default function ConfigPage() {
   const setActiveStepId = useConfigStore((s) => s.setActiveStepId);
   const wandzOpen = useWandzStore((s) => s.open);
   const detailPanelOpen = useDetailPanelsStore((s) => s.openId) !== null;
-  const sidePanelWidth = useSidePanelWidthStore((s) => s.width);
   const sidePanelOpen = wandzOpen || detailPanelOpen;
-  const contentMaxWidth = sidePanelOpen ? 860 + sidePanelWidth + 24 : 860;
   const wasWorkflowOpen = useRef(false);
 
   useEffect(() => {
@@ -257,10 +254,17 @@ export default function ConfigPage() {
       {/* Content column + the Wandz panel sit side by side; the panel pushes the
           content, which stays capped at 860px. */}
       <div
-        className="mx-auto flex w-full items-start gap-6 px-6 py-10"
-        style={{ maxWidth: sidePanelOpen ? contentMaxWidth : 860 }}
+        className={cn(
+          "flex w-full items-start gap-6 px-6 py-10",
+          // No side panel: centre the capped content column. With a panel open,
+          // span full width so the panel sits flush against the right utility
+          // rail (matching Reports) instead of floating inward with a centred
+          // group; the content column re-centres itself via mx-auto below.
+          !sidePanelOpen && "mx-auto"
+        )}
+        style={sidePanelOpen ? undefined : { maxWidth: 860 }}
       >
-        <div className="relative min-w-0 max-w-[860px] flex-1">
+        <div className="relative mx-auto min-w-0 max-w-[860px] flex-1">
         {/* Undocked: DotNav floats in the left gutter of the content column. */}
         {dockState === "undocked" && <DotNav id={id} />}
         {/* Bespoke page header — product-type icon + name only (ID is in the
