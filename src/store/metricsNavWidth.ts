@@ -1,40 +1,33 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-/** Shared width for Wandz, Insights, Chats, and Activity side panels. */
-export const SIDE_PANEL_WIDTH = {
-  default: 420,
-  min: 320,
-  max: 720,
-  step: 80,
+/** Width of the Results metrics left nav (Primary / Secondary / Guardrails). */
+export const METRICS_NAV_WIDTH = {
+  default: 248,
+  min: 200,
+  max: 420,
 } as const;
 
 function clampWidth(width: number): number {
   return Math.min(
-    SIDE_PANEL_WIDTH.max,
-    Math.max(SIDE_PANEL_WIDTH.min, Math.round(width))
+    METRICS_NAV_WIDTH.max,
+    Math.max(METRICS_NAV_WIDTH.min, Math.round(width))
   );
 }
 
-type SidePanelWidthState = {
+type MetricsNavWidthState = {
   width: number;
   setWidth: (width: number) => void;
-  increaseWidth: () => void;
-  decreaseWidth: () => void;
 };
 
-export const useSidePanelWidthStore = create<SidePanelWidthState>()(
+export const useMetricsNavWidthStore = create<MetricsNavWidthState>()(
   persist(
     (set) => ({
-      width: SIDE_PANEL_WIDTH.default,
+      width: METRICS_NAV_WIDTH.default,
       setWidth: (width) => set({ width: clampWidth(width) }),
-      increaseWidth: () =>
-        set((s) => ({ width: clampWidth(s.width + SIDE_PANEL_WIDTH.step) })),
-      decreaseWidth: () =>
-        set((s) => ({ width: clampWidth(s.width - SIDE_PANEL_WIDTH.step) })),
     }),
     {
-      name: "wingify-side-panel-width",
+      name: "wingify-metrics-nav-width",
       partialize: (s) => ({ width: s.width }),
       merge: (persisted, current) => {
         const raw =

@@ -97,8 +97,8 @@ export default function SavedFilterBar({
         className={cn(
           "flex h-10 flex-wrap items-center gap-2.5",
           embedded
-            ? "border-b border-surface-border bg-background px-5"
-            : "rounded-lg border border-border bg-background px-3"
+            ? "border-b border-surface-border bg-muted/40 px-5"
+            : "rounded-lg border border-border bg-muted/40 px-3"
         )}
       >
         <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
@@ -149,8 +149,8 @@ export default function SavedFilterBar({
                   "group relative inline-flex max-w-full items-center rounded-full border text-sm transition-colors",
                   rearranging && "cursor-grab active:cursor-grabbing",
                   active
-                    ? "border-foreground bg-background font-medium text-foreground"
-                    : "border-border bg-background text-foreground hover:bg-muted/60"
+                    ? "border-foreground bg-transparent font-medium text-foreground"
+                    : "border-border bg-transparent text-foreground hover:bg-muted/50"
                 )}
               >
                 {dragIndex !== null && overIndex === index && (

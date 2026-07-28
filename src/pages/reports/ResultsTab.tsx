@@ -94,6 +94,10 @@ import {
   useReportViewsStore,
   type ReportDateRange,
 } from "../../store/reportViews";
+import {
+  METRICS_NAV_WIDTH,
+  useMetricsNavWidthStore,
+} from "../../store/metricsNavWidth";
 import { useWandzStore } from "../../store/wandz";
 import { useVisibleCampaigns } from "../../store/rows";
 import DateRangeDropdown, {
@@ -4975,10 +4979,43 @@ function GraphPanel({
 // Metric selector (left panel)
 
 const metricsNavStickyClass =
-  "sticky top-[var(--reports-tabs-height,0px)] z-10 h-[calc(100vh-3.5rem-var(--reports-tabs-height,0px))] shrink-0 self-start";
+  "z-10 h-full min-h-0 shrink-0 self-stretch";
 
 const metricsNavAsideClass =
-  "flex flex-col border-r border-panel-border bg-panel text-panel-foreground transition-[width] duration-200 motion-reduce:transition-none";
+  "relative flex h-full min-h-0 flex-col border-r border-panel-border bg-panel text-panel-foreground";
+
+function useMetricsNavDragResize(
+  onWidth: (width: number) => void,
+  currentWidth: number
+) {
+  const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      onWidth(drag.startWidth + (e.clientX - drag.startX));
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [onWidth]);
+
+  return (e: React.PointerEvent) => {
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, startWidth: currentWidth };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+}
 
 function MetricsNavShell({
   collapsed,
@@ -4993,6 +5030,10 @@ function MetricsNavShell({
   collapsedContent?: ReactNode;
   footer?: ReactNode;
 }) {
+  const width = useMetricsNavWidthStore((s) => s.width);
+  const setWidth = useMetricsNavWidthStore((s) => s.setWidth);
+  const onDragStart = useMetricsNavDragResize(setWidth, width);
+
   if (collapsed) {
     return (
       <aside className={cn(metricsNavStickyClass, metricsNavAsideClass, "w-14")}>
@@ -5018,7 +5059,20 @@ function MetricsNavShell({
   }
 
   return (
-    <aside className={cn(metricsNavStickyClass, metricsNavAsideClass, "w-[248px]")}>
+    <aside
+      className={cn(metricsNavStickyClass, metricsNavAsideClass)}
+      style={{ width }}
+    >
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize metrics panel"
+        aria-valuenow={width}
+        aria-valuemin={METRICS_NAV_WIDTH.min}
+        aria-valuemax={METRICS_NAV_WIDTH.max}
+        onPointerDown={onDragStart}
+        className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-col-resize touch-none hover:bg-foreground/10"
+      />
       {children}
       <div
         className={cn(
@@ -5229,8 +5283,8 @@ function MetricRailDivider() {
 }
 
 const metricsSidebarScrollClass =
-  "flex min-h-0 flex-1 flex-col overflow-y-auto py-6";
-const metricsSidebarPrimarySectionClass = "flex flex-col gap-1 px-3";
+  "flex min-h-0 flex-1 flex-col overflow-y-auto pb-4 pt-0";
+const metricsSidebarPrimarySectionClass = "flex flex-col gap-1 px-3 pt-3";
 const metricsSidebarSectionClass = "mt-3 flex flex-col gap-1 border-t border-panel-border px-3 pt-3";
 const metricsSidebarActionStripClass =
   "mt-3 flex min-h-[44px] items-center border-t border-panel-border px-3 pt-3";
@@ -5838,7 +5892,7 @@ export default function ResultsTab({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex min-h-full items-start">
+      <div className="flex h-full min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
       {compareMode ? (
         <CompareMetricSelector
           campaign={campaign}
@@ -5858,7 +5912,7 @@ export default function ResultsTab({
           onToggleCollapsed={() => setMetricsNavCollapsed(!metricsNavCollapsed)}
         />
       )}
-      <div className="min-w-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[1120px] space-y-8 px-12 pb-8 pt-12">
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           {compareMode ? (

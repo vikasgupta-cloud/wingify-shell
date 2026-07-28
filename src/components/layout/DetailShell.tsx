@@ -772,7 +772,9 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           <div
             className={cn(
               "min-h-0",
-              onReports ? "h-full overflow-y-auto" : "flex-1"
+              // Reports owns scroll below its tab bar so the metrics rail can
+              // sit flush under the tabs with no canvas gap.
+              onReports ? "h-full overflow-hidden" : "flex-1"
             )}
           >
             {children}

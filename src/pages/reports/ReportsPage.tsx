@@ -636,6 +636,34 @@ function VariantChip({ children }: { children: ReactNode }) {
   );
 }
 
+function UpliftPill({ label }: { label: string }) {
+  const positive = label.startsWith("+");
+  const negative = label.startsWith("-");
+  return (
+    <span
+      className={cn(
+        "shrink-0 self-start rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
+        positive && "bg-success-fg/10 text-success-fg",
+        negative && "bg-danger-fg/10 text-danger-fg",
+        !positive && !negative && "bg-muted text-muted-foreground"
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function StatTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-muted/50 px-3 py-2.5">
+      <dt className="text-[11px] leading-none text-muted-foreground">{label}</dt>
+      <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
 function VariationCard({
   variant,
   metricLabel,
@@ -674,53 +702,23 @@ function VariationCard({
         isControl={isControl}
       />
 
-      <div className="mt-3 border-t border-border pt-3">
+      <div className="mt-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[28px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
+            <p className="text-[30px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
               {variant.conversions}
             </p>
-            <p className="mt-1.5 text-xs text-muted-foreground">
+            <p className="mt-2 text-xs text-muted-foreground">
               Unique conversions
             </p>
           </div>
-          <p
-            className={cn(
-              "shrink-0 pt-1 text-sm tabular-nums",
-              isControl || variant.upliftLabel === "Baseline"
-                ? "text-muted-foreground"
-                : "font-semibold text-success-fg"
-            )}
-          >
-            {variant.upliftLabel}
-          </p>
+          <UpliftPill label={variant.upliftLabel} />
         </div>
 
-        <dl className="mt-3 grid grid-cols-3 divide-x divide-border">
-          <div className="pr-3">
-            <dt className="text-[11px] leading-none text-muted-foreground">
-              {metricLabel}
-            </dt>
-            <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
-              {variant.ctaRate}
-            </dd>
-          </div>
-          <div className="px-3">
-            <dt className="text-[11px] leading-none text-muted-foreground">
-              Visitors
-            </dt>
-            <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
-              {variant.visitors}
-            </dd>
-          </div>
-          <div className="pl-3">
-            <dt className="text-[11px] leading-none text-muted-foreground">
-              Confidence
-            </dt>
-            <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
-              {variant.confidence}
-            </dd>
-          </div>
+        <dl className="mt-4 grid grid-cols-3 gap-2">
+          <StatTile label={metricLabel} value={variant.ctaRate} />
+          <StatTile label="Visitors" value={variant.visitors} />
+          <StatTile label="Confidence" value={variant.confidence} />
         </dl>
       </div>
     </article>
@@ -853,7 +851,7 @@ function ReportsChrome({
   return (
     <div
       className={cn(
-        "flex min-h-full flex-col",
+        "flex h-full min-h-0 flex-col",
         activeTab === "vitals" ? "bg-background" : "bg-canvas"
       )}
       style={{ "--reports-tabs-height": tabsBarHeight } as CSSProperties}
@@ -861,11 +859,11 @@ function ReportsChrome({
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex min-h-full flex-col"
+        className="flex h-full min-h-0 flex-col"
       >
         <div
           ref={tabsBarRef}
-          className="sticky top-0 z-40 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
+          className="z-40 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
         >
           <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
             {TABS.map((tab) => (
@@ -890,64 +888,47 @@ function ReportsChrome({
         </div>
 
         <div
-          className="flex min-h-0 min-w-0 flex-1 items-start"
+          className="flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden"
           style={{ paddingRight: UTILITY_RAIL_WIDTH }}
         >
-          <div className="min-w-0 flex-1">
-            <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
-              <ReportsOverview
-                onViewFullStats={() => setActiveTab("results")}
-                onViewVitalsDetails={() => setActiveTab("vitals")}
-              />
-            </TabsContent>
-            <TabsContent value="results" className="mt-0 focus-visible:outline-none">
-              <ResultsTab
-                key={campaign.id}
-                campaign={campaign}
-                onNavigateToVitals={() => setActiveTab("vitals")}
-              />
-            </TabsContent>
-            <TabsContent value="behaviour" className="mt-0 focus-visible:outline-none">
-              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                Behaviour coming soon.
-              </div>
-            </TabsContent>
-            <TabsContent value="live-hits" className="mt-0 focus-visible:outline-none">
-              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                Live hits coming soon.
-              </div>
-            </TabsContent>
-            <TabsContent
-              value="vitals"
-              className="mt-0 bg-background focus-visible:outline-none"
-            >
-              <VitalsTab key={campaign.id} campaign={campaign} />
-            </TabsContent>
-          </div>
+          {activeTab === "results" ? (
+            <ResultsTab
+              key={campaign.id}
+              campaign={campaign}
+              onNavigateToVitals={() => setActiveTab("vitals")}
+            />
+          ) : (
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+              <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+                <ReportsOverview
+                  onViewFullStats={() => setActiveTab("results")}
+                  onViewVitalsDetails={() => setActiveTab("vitals")}
+                />
+              </TabsContent>
+              <TabsContent value="behaviour" className="mt-0 focus-visible:outline-none">
+                <BehaviourComingSoon />
+              </TabsContent>
+              <TabsContent value="live-hits" className="mt-0 focus-visible:outline-none">
+                <LiveHitsComingSoon />
+              </TabsContent>
+              <TabsContent
+                value="vitals"
+                className="mt-0 bg-background focus-visible:outline-none"
+              >
+                <VitalsTab key={campaign.id} campaign={campaign} />
+              </TabsContent>
+            </div>
+          )}
           {wandzOpen && wandzFullPreview ? <WandzPanel /> : null}
           {wandzOpen && !wandzFullPreview ? (
-            <div
-              className="sticky z-30 shrink-0 self-start pl-2 pr-4"
-              style={
-                {
-                  top: "calc(var(--reports-tabs-height) + 1rem)",
-                } as CSSProperties
-              }
-            >
-              {/* static: outer wrapper owns sticky; panel measures its own max height. */}
-              <WandzPanel className="static top-auto" />
+            <div className="flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
+              {/* static: outer wrapper owns height; panel measures its own max height. */}
+              <WandzPanel className="static top-auto max-h-full" />
             </div>
           ) : null}
           {detailPanelOpen ? (
-            <div
-              className="sticky z-30 shrink-0 self-start pl-2 pr-4"
-              style={
-                {
-                  top: "calc(var(--reports-tabs-height) + 1rem)",
-                } as CSSProperties
-              }
-            >
-              <DetailSidePanel className="static top-auto" />
+            <div className="flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
+              <DetailSidePanel className="static top-auto max-h-full" />
             </div>
           ) : null}
         </div>
@@ -968,6 +949,349 @@ const OVERVIEW_DEFAULT_STATUSES: CampaignStatus[] = [
 
 function defaultReportTab(status: CampaignStatus): string {
   return OVERVIEW_DEFAULT_STATUSES.includes(status) ? "overview" : "results";
+}
+
+function BehaviourIllustration({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 280 180"
+      className={className}
+      aria-hidden
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Browser frame */}
+      <rect
+        x="36"
+        y="20"
+        width="208"
+        height="128"
+        rx="12"
+        stroke="hsl(var(--border))"
+        strokeWidth="1.5"
+        fill="hsl(var(--background))"
+      />
+      <rect x="36" y="20" width="208" height="26" rx="12" fill="hsl(var(--muted))" />
+      <rect x="36" y="34" width="208" height="12" fill="hsl(var(--muted))" />
+      <circle cx="54" cy="33" r="3.5" fill="hsl(var(--muted-foreground) / 0.35)" />
+      <circle cx="66" cy="33" r="3.5" fill="hsl(var(--muted-foreground) / 0.25)" />
+      <circle cx="78" cy="33" r="3.5" fill="hsl(var(--muted-foreground) / 0.18)" />
+      <rect
+        x="96"
+        y="27"
+        width="100"
+        height="12"
+        rx="6"
+        fill="hsl(var(--background))"
+        stroke="hsl(var(--border))"
+        strokeWidth="1"
+      />
+
+      {/* Page blocks */}
+      <rect
+        x="52"
+        y="58"
+        width="72"
+        height="10"
+        rx="3"
+        fill="hsl(var(--muted))"
+      />
+      <rect
+        x="52"
+        y="74"
+        width="176"
+        height="48"
+        rx="6"
+        fill="hsl(var(--muted) / 0.55)"
+        stroke="hsl(var(--border))"
+        strokeWidth="1"
+      />
+      <rect
+        x="52"
+        y="130"
+        width="48"
+        height="8"
+        rx="3"
+        fill="hsl(var(--muted))"
+      />
+      <rect
+        x="108"
+        y="130"
+        width="64"
+        height="8"
+        rx="3"
+        fill="hsl(var(--muted) / 0.7)"
+      />
+
+      {/* Heatmap blobs */}
+      <circle cx="88" cy="92" r="18" fill="hsl(var(--foreground) / 0.06)" />
+      <circle cx="88" cy="92" r="11" fill="hsl(var(--foreground) / 0.1)" />
+      <circle cx="88" cy="92" r="5" fill="hsl(var(--foreground) / 0.18)" />
+      <circle cx="148" cy="98" r="14" fill="hsl(var(--foreground) / 0.05)" />
+      <circle cx="148" cy="98" r="7" fill="hsl(var(--foreground) / 0.1)" />
+      <circle cx="196" cy="86" r="10" fill="hsl(var(--foreground) / 0.05)" />
+      <circle cx="196" cy="86" r="4" fill="hsl(var(--foreground) / 0.12)" />
+
+      {/* Click path */}
+      <path
+        d="M74 108 C98 100, 120 94, 148 98 C170 101, 184 92, 196 86"
+        stroke="hsl(var(--muted-foreground))"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeDasharray="3 4"
+        strokeOpacity="0.55"
+      />
+      <circle cx="74" cy="108" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.45" />
+      <circle cx="148" cy="98" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.4" />
+      <circle cx="196" cy="86" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.35" />
+
+      {/* Cursor */}
+      <path
+        d="M202 90 L208 108 L211 102 L217 110 L220 108 L214 99 L221 97 Z"
+        fill="hsl(var(--foreground))"
+        fillOpacity="0.55"
+      />
+
+      {/* Caption bars */}
+      <rect
+        x="98"
+        y="158"
+        width="84"
+        height="8"
+        rx="4"
+        fill="hsl(var(--muted))"
+      />
+      <rect
+        x="114"
+        y="170"
+        width="52"
+        height="5"
+        rx="2.5"
+        fill="hsl(var(--muted))"
+        fillOpacity="0.7"
+      />
+    </svg>
+  );
+}
+
+function BehaviourComingSoon() {
+  return (
+    <div className="flex min-h-[min(28rem,calc(100dvh-12rem))] flex-col items-center justify-center gap-5 px-6 py-16 text-center">
+      <BehaviourIllustration className="h-auto w-full max-w-[280px] text-foreground" />
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-foreground">Behaviour coming soon</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Session replays, heatmaps, and click paths for this campaign will show
+          up here.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function LiveHitsIllustration({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 280 180"
+      className={className}
+      aria-hidden
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Feed panel */}
+      <rect
+        x="36"
+        y="18"
+        width="208"
+        height="136"
+        rx="12"
+        stroke="hsl(var(--border))"
+        strokeWidth="1.5"
+        fill="hsl(var(--background))"
+      />
+
+      {/* Live badge */}
+      <rect
+        x="52"
+        y="32"
+        width="52"
+        height="18"
+        rx="9"
+        fill="hsl(var(--muted))"
+      />
+      <circle cx="64" cy="41" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.55" />
+      <rect
+        x="72"
+        y="37"
+        width="22"
+        height="8"
+        rx="2"
+        fill="hsl(var(--muted-foreground) / 0.35)"
+      />
+
+      {/* Pulse rings */}
+      <circle
+        cx="214"
+        cy="41"
+        r="10"
+        stroke="hsl(var(--muted-foreground))"
+        strokeOpacity="0.2"
+        strokeWidth="1.25"
+      />
+      <circle
+        cx="214"
+        cy="41"
+        r="6"
+        stroke="hsl(var(--muted-foreground))"
+        strokeOpacity="0.35"
+        strokeWidth="1.25"
+      />
+      <circle cx="214" cy="41" r="2.5" fill="hsl(var(--foreground))" fillOpacity="0.45" />
+
+      {/* Hit rows */}
+      <rect
+        x="52"
+        y="62"
+        width="176"
+        height="22"
+        rx="6"
+        fill="hsl(var(--muted) / 0.55)"
+        stroke="hsl(var(--border))"
+        strokeWidth="1"
+      />
+      <circle cx="66" cy="73" r="5" fill="hsl(var(--foreground))" fillOpacity="0.2" />
+      <rect
+        x="78"
+        y="68"
+        width="72"
+        height="6"
+        rx="2"
+        fill="hsl(var(--muted-foreground) / 0.28)"
+      />
+      <rect
+        x="78"
+        y="78"
+        width="44"
+        height="4"
+        rx="2"
+        fill="hsl(var(--muted-foreground) / 0.16)"
+      />
+      <rect
+        x="188"
+        y="69"
+        width="28"
+        height="8"
+        rx="4"
+        fill="hsl(var(--foreground) / 0.12)"
+      />
+
+      <rect
+        x="52"
+        y="92"
+        width="176"
+        height="22"
+        rx="6"
+        fill="hsl(var(--muted) / 0.4)"
+        stroke="hsl(var(--border))"
+        strokeWidth="1"
+      />
+      <circle cx="66" cy="103" r="5" fill="hsl(var(--foreground))" fillOpacity="0.14" />
+      <rect
+        x="78"
+        y="98"
+        width="64"
+        height="6"
+        rx="2"
+        fill="hsl(var(--muted-foreground) / 0.22)"
+      />
+      <rect
+        x="78"
+        y="108"
+        width="36"
+        height="4"
+        rx="2"
+        fill="hsl(var(--muted-foreground) / 0.12)"
+      />
+      <rect
+        x="196"
+        y="99"
+        width="20"
+        height="8"
+        rx="4"
+        fill="hsl(var(--foreground) / 0.08)"
+      />
+
+      <rect
+        x="52"
+        y="122"
+        width="176"
+        height="22"
+        rx="6"
+        fill="hsl(var(--muted) / 0.28)"
+        stroke="hsl(var(--border))"
+        strokeWidth="1"
+      />
+      <circle cx="66" cy="133" r="5" fill="hsl(var(--foreground))" fillOpacity="0.1" />
+      <rect
+        x="78"
+        y="128"
+        width="56"
+        height="6"
+        rx="2"
+        fill="hsl(var(--muted-foreground) / 0.16)"
+      />
+      <rect
+        x="78"
+        y="138"
+        width="28"
+        height="4"
+        rx="2"
+        fill="hsl(var(--muted-foreground) / 0.1)"
+      />
+      <rect
+        x="200"
+        y="129"
+        width="16"
+        height="8"
+        rx="4"
+        fill="hsl(var(--foreground) / 0.06)"
+      />
+
+      {/* Caption bars */}
+      <rect
+        x="98"
+        y="162"
+        width="84"
+        height="8"
+        rx="4"
+        fill="hsl(var(--muted))"
+      />
+      <rect
+        x="114"
+        y="174"
+        width="52"
+        height="5"
+        rx="2.5"
+        fill="hsl(var(--muted))"
+        fillOpacity="0.7"
+      />
+    </svg>
+  );
+}
+
+function LiveHitsComingSoon() {
+  return (
+    <div className="flex min-h-[min(28rem,calc(100dvh-12rem))] flex-col items-center justify-center gap-5 px-6 py-16 text-center">
+      <LiveHitsIllustration className="h-auto w-full max-w-[280px] text-foreground" />
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-foreground">Live hits coming soon</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Real-time conversions and visitor activity for this campaign will stream
+          in here.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function ReportsEmptyIllustration({ className }: { className?: string }) {
