@@ -66,46 +66,15 @@ import {
 } from "../../data/campaigns";
 import PrimaryRail from "./PrimaryRail";
 
-/** Line chart + sparkles — matches GA-style Insights glyph. */
-function InsightsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-      aria-hidden
-    >
-      {/* Smaller sparkle above left peak */}
-      <path d="M9.5 1.4 10.25 3.55l2.15.75-2.15.75-.75 2.15-.75-2.15-2.15-.75 2.15-.75z" />
-      {/* Larger sparkle above right peak */}
-      <path d="M19.5 0.7 20.45 3.4l2.7.95-2.7.95-.95 2.7-.95-2.7-2.7-.95 2.7-.95z" />
-      {/* Zigzag polyline nodes: bl → mid-high → mid-low → tr */}
-      <circle cx="4.5" cy="18.2" r="1.55" />
-      <circle cx="9.5" cy="12.2" r="1.55" />
-      <circle cx="14.5" cy="15.8" r="1.55" />
-      <circle cx="19.5" cy="10.8" r="1.55" />
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4.5 18.2 9.5 12.2 14.5 15.8 19.5 10.8"
-      />
-    </svg>
-  );
-}
-
 const RAIL_PANEL_ICONS: Record<
   DetailPanelId,
   ComponentType<{ className?: string }>
 > = {
   activity: Activity,
-  suggestions: InsightsIcon,
 };
 
 // The utility rail on the RIGHT of a detail surface: Ask Wandz, then
-// Insights / Activity; Help pinned to the bottom.
+// Activity; Help pinned to the bottom. Insights live inside Wandz as a tab.
 // Configure/Reports now live in the header tabs. On Reports, DetailShell
 // positions this absolutely below the sticky tab bar so the tabs stay edge-to-edge.
 function UtilityRail({ entityId }: { entityId?: string }) {
@@ -742,7 +711,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
             // children like Workflow Mode with no room to render.
             // Reports: relative so the utility rail can sit below the full-bleed
             // sticky tabs without shrinking the tab bar.
-            onReports ? "relative overflow-hidden" : "flex flex-col overflow-y-auto"
+            onReports ? "relative flex flex-col overflow-hidden" : "flex flex-col overflow-y-auto"
           )}
         >
           <div
@@ -750,7 +719,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               "min-h-0",
               // Reports owns scroll below its tab bar so the metrics rail can
               // sit flush under the tabs with no canvas gap.
-              onReports ? "h-full overflow-hidden" : "flex-1"
+              onReports ? "min-h-0 flex-1 overflow-hidden" : "flex-1"
             )}
           >
             {children}

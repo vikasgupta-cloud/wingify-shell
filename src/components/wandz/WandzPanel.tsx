@@ -22,12 +22,19 @@ import {
   SIDE_PANEL_WIDTH,
   useSidePanelWidthStore,
 } from "../../store/sidePanelWidth";
+import { useVisibleCampaigns } from "../../store/rows";
+import SuggestionsPanel from "../detail-panels/SuggestionsPanel";
 
 // Keyframes for the "thinking" dots — inlined so the panel is self-contained.
 const DOTS_CSS = `
 @keyframes wandz-dot { 0%,80%,100% { opacity: .4 } 40% { opacity: 1 } }
 .wandz-dot { animation: wandz-dot 1.2s ease-in-out infinite; }
 `;
+
+const WANDZ_TABS = [
+  { id: "chat" as const, label: "Chat" },
+  { id: "insights" as const, label: "Insights" },
+];
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -232,61 +239,100 @@ function ChatComposer({
 function PanelHeader({ fullPreview }: { fullPreview: boolean }) {
   const closeWandz = useWandzStore((s) => s.closeWandz);
   const setFullPreview = useWandzStore((s) => s.setFullPreview);
+  const panelTab = useWandzStore((s) => s.panelTab);
+  const setPanelTab = useWandzStore((s) => s.setPanelTab);
 
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-      <Sparkles className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
-      <span className="text-sm font-medium text-foreground">Wandz</span>
-      <div className="ml-auto flex items-center gap-0.5">
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={fullPreview ? "Exit full preview" : "Full preview"}
-                className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
-                onClick={() => setFullPreview(!fullPreview)}
-              >
-                {fullPreview ? (
-                  <Minimize2 className="h-4 w-4" />
-                ) : (
-                  <Maximize2 className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {fullPreview ? "Exit full preview" : "Full preview"}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Close Wandz"
-          className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
-          onClick={closeWandz}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+    <div className="flex shrink-0 flex-col border-b border-border">
+      <div className="flex items-center gap-2 px-4 py-3">
+        <Sparkles className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
+        <span className="text-sm font-medium text-foreground">Wandz</span>
+        <div className="ml-auto flex items-center gap-0.5">
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={fullPreview ? "Exit full preview" : "Full preview"}
+                  className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => setFullPreview(!fullPreview)}
+                >
+                  {fullPreview ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {fullPreview ? "Exit full preview" : "Full preview"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Close Wandz"
+            className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
+            onClick={closeWandz}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div
+        className="flex items-end gap-5 px-4"
+        role="tablist"
+        aria-label="Wandz views"
+      >
+        {WANDZ_TABS.map((tab) => {
+          const active = panelTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setPanelTab(tab.id)}
+              className={cn(
+                "relative -mb-px px-0.5 pb-2.5 text-sm transition-colors",
+                active
+                  ? "border-b-2 border-foreground font-medium text-foreground"
+                  : "border-b-2 border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-export default function WandzPanel({ className }: { className?: string }) {
+export default function WandzPanel({
+  className,
+  fillHeight = false,
+}: {
+  className?: string;
+  /** Fill a fixed-height dock column (Reports). Skip sticky / viewport height cap. */
+  fillHeight?: boolean;
+}) {
   const context = useWandzStore((s) => s.context);
   const threads = useWandzStore((s) => s.threads);
   const drafts = useWandzStore((s) => s.drafts);
   const pending = useWandzStore((s) => s.pending);
   const fullPreview = useWandzStore((s) => s.fullPreview);
+  const panelTab = useWandzStore((s) => s.panelTab);
   const setFullPreview = useWandzStore((s) => s.setFullPreview);
   const setDraft = useWandzStore((s) => s.setDraft);
   const send = useWandzStore((s) => s.send);
   const width = useSidePanelWidthStore((s) => s.width);
   const setWidth = useSidePanelWidthStore((s) => s.setWidth);
+  const campaigns = useVisibleCampaigns();
 
   const reduced = usePrefersReducedMotion();
 
@@ -297,9 +343,17 @@ export default function WandzPanel({ className }: { className?: string }) {
   const key = context ? contextKey(context) : null;
   const messages = key ? threads[key] ?? [] : [];
   const draft = key ? drafts[key] ?? "" : "";
+  const campaignId =
+    context?.kind === "campaign" || context?.kind === "section"
+      ? context.campaignId
+      : null;
+  const campaign =
+    campaignId != null
+      ? (campaigns.find((c) => c.id === campaignId) ?? null)
+      : null;
   const maxHeight = useViewportCappedMaxHeight(
     rootRef,
-    Boolean(context && key && !fullPreview)
+    Boolean(context && key && !fullPreview && !fillHeight)
   );
 
   useLayoutEffect(() => {
@@ -307,13 +361,13 @@ export default function WandzPanel({ className }: { className?: string }) {
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
-  }, [draft, fullPreview]);
+  }, [draft, fullPreview, panelTab]);
 
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [messages.length, pending, fullPreview]);
+  }, [messages.length, pending, fullPreview, panelTab]);
 
   // Escape exits full preview first, then closes (handled by close button).
   useEffect(() => {
@@ -335,25 +389,34 @@ export default function WandzPanel({ className }: { className?: string }) {
     send(draft);
   };
 
-  const chat = (
+  const body =
+    panelTab === "insights" ? (
+      <SuggestionsPanel key={campaign?.id ?? "none"} campaign={campaign} />
+    ) : (
+      <>
+        <ChatMessages
+          messages={messages}
+          pending={pending}
+          reduced={reduced}
+          listRef={listRef}
+          wide={fullPreview}
+        />
+        <ChatComposer
+          draft={draft}
+          setDraft={(v) => setDraft(key, v)}
+          pending={pending}
+          onSubmit={submit}
+          textareaRef={textareaRef}
+          wide={fullPreview}
+        />
+      </>
+    );
+
+  const panel = (
     <>
       <style>{DOTS_CSS}</style>
       <PanelHeader fullPreview={fullPreview} />
-      <ChatMessages
-        messages={messages}
-        pending={pending}
-        reduced={reduced}
-        listRef={listRef}
-        wide={fullPreview}
-      />
-      <ChatComposer
-        draft={draft}
-        setDraft={(v) => setDraft(key, v)}
-        pending={pending}
-        onSubmit={submit}
-        textareaRef={textareaRef}
-        wide={fullPreview}
-      />
+      {body}
     </>
   );
 
@@ -365,7 +428,7 @@ export default function WandzPanel({ className }: { className?: string }) {
         aria-modal="true"
         aria-label="Wandz full preview"
       >
-        {chat}
+        {panel}
       </div>,
       document.body
     );
@@ -375,46 +438,48 @@ export default function WandzPanel({ className }: { className?: string }) {
     <div
       ref={rootRef}
       style={
-        maxHeight
-          ? { maxHeight, height: maxHeight, width }
-          : { width }
+        fillHeight
+          ? { width, height: "100%" }
+          : maxHeight
+            ? { maxHeight, height: maxHeight, width }
+            : { width }
       }
       className={cn(
         "relative flex shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
-        "sticky top-6 max-h-[calc(100dvh-8rem)]",
+        fillHeight
+          ? "h-full min-h-0 max-h-full"
+          : "sticky top-6 max-h-[calc(100dvh-8rem)]",
         className
       )}
     >
-      {!fullPreview ? (
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize panel"
-          aria-valuenow={width}
-          aria-valuemin={SIDE_PANEL_WIDTH.min}
-          aria-valuemax={SIDE_PANEL_WIDTH.max}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            const startX = e.clientX;
-            const startWidth = width;
-            const onMove = (ev: PointerEvent) => {
-              setWidth(startWidth + (startX - ev.clientX));
-            };
-            const onUp = () => {
-              window.removeEventListener("pointermove", onMove);
-              window.removeEventListener("pointerup", onUp);
-              document.body.style.cursor = "";
-              document.body.style.userSelect = "";
-            };
-            document.body.style.cursor = "col-resize";
-            document.body.style.userSelect = "none";
-            window.addEventListener("pointermove", onMove);
-            window.addEventListener("pointerup", onUp);
-          }}
-          className="absolute inset-y-0 left-0 z-20 w-2.5 cursor-col-resize touch-none hover:bg-foreground/10"
-        />
-      ) : null}
-      {chat}
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize panel"
+        aria-valuenow={width}
+        aria-valuemin={SIDE_PANEL_WIDTH.min}
+        aria-valuemax={SIDE_PANEL_WIDTH.max}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          const startX = e.clientX;
+          const startWidth = width;
+          const onMove = (ev: PointerEvent) => {
+            setWidth(startWidth + (startX - ev.clientX));
+          };
+          const onUp = () => {
+            window.removeEventListener("pointermove", onMove);
+            window.removeEventListener("pointerup", onUp);
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+          };
+          document.body.style.cursor = "col-resize";
+          document.body.style.userSelect = "none";
+          window.addEventListener("pointermove", onMove);
+          window.addEventListener("pointerup", onUp);
+        }}
+        className="absolute inset-y-0 left-0 z-20 w-2.5 cursor-col-resize touch-none hover:bg-foreground/10"
+      />
+      {panel}
     </div>
   );
 }

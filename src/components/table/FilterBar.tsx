@@ -168,10 +168,7 @@ function GroupMenu({
       >
         <DropdownMenu.Item
           onSelect={() => onSelect(null)}
-          className={cn(
-            "cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent",
-            value === null && "text-foreground"
-          )}
+          className="cursor-pointer rounded-sm px-3 py-1.5 text-foreground outline-none data-[highlighted]:bg-accent"
         >
           None
         </DropdownMenu.Item>
@@ -179,10 +176,7 @@ function GroupMenu({
           <DropdownMenu.Item
             key={g.id}
             onSelect={() => onSelect(g.id)}
-            className={cn(
-              "flex cursor-pointer items-center justify-between rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent",
-              value === g.id ? "text-foreground" : "text-muted-foreground"
-            )}
+            className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-1.5 text-foreground outline-none data-[highlighted]:bg-accent"
           >
             {g.label}
             {value === g.id && <Check className="h-3.5 w-3.5" />}

@@ -3,10 +3,10 @@ import { persist } from "zustand/middleware";
 
 /** Shared width for Wandz, Insights, Chats, and Activity side panels. */
 export const SIDE_PANEL_WIDTH = {
-  default: 420,
-  min: 320,
-  max: 720,
-  step: 80,
+  default: 320,
+  min: 280,
+  max: 560,
+  step: 40,
 } as const;
 
 function clampWidth(width: number): number {
@@ -34,7 +34,8 @@ export const useSidePanelWidthStore = create<SidePanelWidthState>()(
         set((s) => ({ width: clampWidth(s.width - SIDE_PANEL_WIDTH.step) })),
     }),
     {
-      name: "wingify-side-panel-width",
+      // v2: narrower default so reports stay usable beside the panel.
+      name: "wingify-side-panel-width-v2",
       partialize: (s) => ({ width: s.width }),
       merge: (persisted, current) => {
         const raw =

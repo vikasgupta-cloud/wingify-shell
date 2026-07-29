@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   Bot,
+  LayoutGrid,
   MessageSquare,
   Reply,
   SendHorizontal,
@@ -9,6 +10,12 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "../../lib/utils";
 import {
   CURRENT_USER,
@@ -21,16 +28,36 @@ import {
   type TimelineKind,
 } from "../../store/activityTimeline";
 
+/** Below this width, filter tabs drop labels and keep icons only. */
+const FILTER_ICONS_ONLY_WIDTH = 340;
+
 const FILTERS: {
   id: TimelineFilter;
   label: string;
-  icon?: typeof Activity;
+  icon: typeof Activity;
 }[] = [
-  { id: "all", label: "All" },
+  { id: "all", label: "All", icon: LayoutGrid },
   { id: "bot", label: "Automation", icon: Bot },
   { id: "comment", label: "Comments", icon: MessageSquare },
   { id: "activity", label: "Activity", icon: Activity },
 ];
+
+function useIconsOnlyFilter(threshold = FILTER_ICONS_ONLY_WIDTH) {
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [iconsOnly, setIconsOnly] = useState(false);
+
+  useEffect(() => {
+    const el = measureRef.current;
+    if (!el) return;
+    const sync = () => setIconsOnly(el.clientWidth < threshold);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [threshold]);
+
+  return { measureRef, iconsOnly };
+}
 
 function KindGlyph({ kind }: { kind: TimelineKind }) {
   const Icon =
@@ -247,6 +274,7 @@ export default function ActivityTimeline({
   const setDraft = useActivityTimelineStore((s) => s.setDraft);
   const addComment = useActivityTimelineStore((s) => s.addComment);
   const lastInitial = useRef<string | undefined>(undefined);
+  const { measureRef, iconsOnly } = useIconsOnlyFilter();
 
   // Apply rail default when open source changes (Chat → Comments, Activity → All).
   useEffect(() => {
@@ -274,7 +302,7 @@ export default function ActivityTimeline({
       .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div ref={measureRef} className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 space-y-4 border-b border-border px-4 py-4">
         <Composer
           value={slice.draft}
@@ -284,33 +312,45 @@ export default function ActivityTimeline({
         />
 
         <div className="flex justify-center">
-          <div
-            role="tablist"
-            aria-label="Timeline filter"
-            className="inline-flex items-center gap-0.5 rounded-full border border-border bg-muted/60 p-1"
-          >
-            {FILTERS.map(({ id, label, icon: Icon }) => {
-              const active = slice.filter === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setFilter(campaignId, id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden /> : null}
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+          <TooltipProvider delayDuration={200}>
+            <div
+              role="tablist"
+              aria-label="Timeline filter"
+              className="inline-flex items-center gap-0.5 rounded-full border border-border bg-muted/60 p-1"
+            >
+              {FILTERS.map(({ id, label, icon: Icon }) => {
+                const active = slice.filter === id;
+                const tab = (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-label={label}
+                    aria-selected={active}
+                    onClick={() => setFilter(campaignId, id)}
+                    className={cn(
+                      "inline-flex items-center justify-center gap-1.5 rounded-full text-xs font-medium transition-colors",
+                      iconsOnly ? "h-8 w-8 px-0" : "px-3 py-1.5",
+                      active
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {!iconsOnly ? <span>{label}</span> : null}
+                  </button>
+                );
+                if (!iconsOnly) {
+                  return <span key={id}>{tab}</span>;
+                }
+                return (
+                  <Tooltip key={id}>
+                    <TooltipTrigger asChild>{tab}</TooltipTrigger>
+                    <TooltipContent side="bottom">{label}</TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </div>
       </div>
 

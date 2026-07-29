@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import type { DateRange as DayPickerRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,9 @@ const MONTHS = [
   "Nov",
   "Dec",
 ];
+
+/** Below this width the preset chip bar collapses to a single dropdown. */
+const PRESETS_COMPACT_WIDTH = 420;
 
 export type DateRange = {
   id: string;
@@ -155,7 +158,10 @@ function resolvePresetById(
   presets: DateRange[],
   id: string
 ): DateRange | undefined {
-  return presets.find((p) => p.id === id) ?? getDateRangePresets().find((p) => p.id === id);
+  return (
+    presets.find((p) => p.id === id) ??
+    getDateRangePresets().find((p) => p.id === id)
+  );
 }
 
 function matchPreset(
@@ -172,6 +178,23 @@ function matchPreset(
 
 function toDraftRange(range: DateRange): DayPickerRange {
   return { from: toPickerDay(range.from), to: toPickerDay(range.to) };
+}
+
+function useCompactPresets(threshold = PRESETS_COMPACT_WIDTH) {
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = useState(false);
+
+  useEffect(() => {
+    const el = measureRef.current;
+    if (!el) return;
+    const sync = () => setCompact(el.clientWidth < threshold);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [threshold]);
+
+  return { measureRef, compact };
 }
 
 type DateRangeDropdownProps = {
@@ -206,8 +229,10 @@ export default function DateRangeDropdown({
     });
   }, [presets]);
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [uncontrolled, setUncontrolled] = useState<DateRange>(initial);
   const selected = value ?? uncontrolled;
+  const { measureRef, compact } = useCompactPresets();
 
   const commit = (range: DateRange) => {
     onChange?.(range);
@@ -230,6 +255,11 @@ export default function DateRangeDropdown({
   const isFilterBarPreset = FILTER_BAR_PRESET_IDS.includes(
     selected.id as (typeof FILTER_BAR_PRESET_IDS)[number]
   );
+  const selectedPresetLabel = isFilterBarPreset
+    ? FILTER_BAR_PRESET_LABELS[
+        selected.id as (typeof FILTER_BAR_PRESET_IDS)[number]
+      ]
+    : barLabel;
   const draftFrom = draft.from ? fromPickerDay(draft.from) : null;
   const draftTo = draft.to
     ? fromPickerDay(draft.to)
@@ -257,6 +287,7 @@ export default function DateRangeDropdown({
   const selectPreset = (preset: DateRange) => {
     commit(resolvePresetById(presets, preset.id) ?? preset);
     setOpen(false);
+    setMenuOpen(false);
   };
 
   const onCalendarSelect = (range: DayPickerRange | undefined) => {
@@ -267,7 +298,6 @@ export default function DateRangeDropdown({
     setDraft(range);
   };
 
-  // Calendar-only picker — quick ranges live on the filter bar outside.
   const pickerPanel = (
     <PopoverContent
       align="start"
@@ -289,7 +319,7 @@ export default function DateRangeDropdown({
 
         <Calendar
           mode="range"
-          numberOfMonths={2}
+          numberOfMonths={compact ? 1 : 2}
           month={month}
           onMonthChange={setMonth}
           selected={draft}
@@ -301,11 +331,7 @@ export default function DateRangeDropdown({
         <Separator />
 
         <div className="flex items-center justify-end gap-2 px-3 py-2.5">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setOpen(false)}
-          >
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
           <Button
@@ -329,51 +355,133 @@ export default function DateRangeDropdown({
 
   if (variant === "presets") {
     return (
-      <div
-        className={cn(
-          "inline-flex h-8 items-stretch overflow-hidden rounded-md border border-border bg-background text-sm",
-          className
+      <div ref={measureRef} className={cn("min-w-0 w-full max-w-full", className)}>
+        {compact ? (
+          <div className="relative min-w-0">
+            <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  className="inline-flex h-8 w-full max-w-[16rem] items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-none transition-colors hover:bg-muted/60"
+                >
+                  <span className="min-w-0 flex-1 truncate text-left">
+                    {selectedPresetLabel}
+                  </span>
+                  <ChevronDown
+                    className="h-3.5 w-3.5 shrink-0 opacity-50"
+                    aria-hidden
+                  />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-56 p-1.5">
+                <div className="flex flex-col gap-0.5" role="menu">
+                  {filterBarPresets.map((preset) => {
+                    const label =
+                      FILTER_BAR_PRESET_LABELS[
+                        preset.id as (typeof FILTER_BAR_PRESET_IDS)[number]
+                      ] ?? preset.label;
+                    const active = selected.id === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={active}
+                        className={cn(
+                          "rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                          active && "bg-muted font-medium text-foreground"
+                        )}
+                        onClick={() => selectPreset(preset)}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                  <Separator className="my-1" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={cn(
+                      "flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                      !isFilterBarPreset &&
+                        "bg-muted font-medium text-foreground"
+                    )}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setOpen(true);
+                    }}
+                  >
+                    <CalendarDays
+                      className="h-3.5 w-3.5 shrink-0"
+                      aria-hidden
+                    />
+                    Custom range
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
+                  aria-hidden
+                >
+                  Custom range calendar
+                </button>
+              </PopoverTrigger>
+              {pickerPanel}
+            </Popover>
+          </div>
+        ) : (
+          <div className="inline-flex h-8 max-w-full items-stretch overflow-hidden rounded-md border border-border bg-background text-sm">
+            {filterBarPresets.map((preset, index) => {
+              const label =
+                FILTER_BAR_PRESET_LABELS[
+                  preset.id as (typeof FILTER_BAR_PRESET_IDS)[number]
+                ] ?? preset.label;
+              return (
+                <div key={preset.id} className="flex h-full items-stretch">
+                  {index > 0 && (
+                    <div
+                      className="w-px shrink-0 self-stretch bg-border"
+                      aria-hidden
+                    />
+                  )}
+                  <button
+                    type="button"
+                    className={presetSegmentClass(selected.id === preset.id)}
+                    onClick={() => selectPreset(preset)}
+                  >
+                    {label}
+                  </button>
+                </div>
+              );
+            })}
+            <div className="w-px shrink-0 self-stretch bg-border" aria-hidden />
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={open}
+                  className={cn(
+                    "inline-flex h-full items-center gap-2 px-3 text-foreground/80 transition-colors hover:bg-muted/60",
+                    (!isFilterBarPreset || open) &&
+                      "bg-muted/60 font-medium text-foreground"
+                  )}
+                >
+                  <span className="whitespace-nowrap">{barLabel}</span>
+                  <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                </button>
+              </PopoverTrigger>
+              {pickerPanel}
+            </Popover>
+          </div>
         )}
-      >
-        {filterBarPresets.map((preset, index) => {
-          const label =
-            FILTER_BAR_PRESET_LABELS[
-              preset.id as (typeof FILTER_BAR_PRESET_IDS)[number]
-            ] ?? preset.label;
-          return (
-            <div key={preset.id} className="flex h-full items-stretch">
-              {index > 0 && (
-                <div className="w-px shrink-0 self-stretch bg-border" aria-hidden />
-              )}
-              <button
-                type="button"
-                className={presetSegmentClass(selected.id === preset.id)}
-                onClick={() => selectPreset(preset)}
-              >
-                {label}
-              </button>
-            </div>
-          );
-        })}
-        <div className="w-px shrink-0 self-stretch bg-border" aria-hidden />
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              aria-expanded={open}
-              className={cn(
-                "inline-flex h-full items-center gap-2 px-3 text-foreground/80 transition-colors hover:bg-muted/60",
-                (!isFilterBarPreset || open) &&
-                  "bg-muted/60 font-medium text-foreground"
-              )}
-            >
-              <span className="whitespace-nowrap">{barLabel}</span>
-              <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            </button>
-          </PopoverTrigger>
-          {pickerPanel}
-        </Popover>
       </div>
     );
   }

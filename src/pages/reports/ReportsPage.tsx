@@ -199,6 +199,12 @@ function BannerStatRow({ stats }: { stats: BannerStat[] }) {
   );
 }
 
+/** Completion percent of a current value against its target (clamped 0–100). */
+function progressPct(current: number, target: number): number {
+  if (target <= 0) return 0;
+  return Math.min(100, Math.max(0, (current / target) * 100));
+}
+
 /** "current / target" trio used by progress + collecting. */
 function BannerProgressRow({ items }: { items: ProgressStat[] }) {
   return (
@@ -304,16 +310,19 @@ function DecisionBanner({
             label: "Duration",
             value: String(progress.elapsedDays),
             sub: `/ ${progress.requiredDays} days`,
+            pct: progressPct(progress.elapsedDays, progress.requiredDays),
           },
           {
             label: "Unique visitors",
             value: formatNumber(progress.visitors),
             sub: `/ ${formatNumber(progress.requiredVisitors)} required`,
+            pct: progressPct(progress.visitors, progress.requiredVisitors),
           },
           {
             label: "Conversions",
             value: formatNumber(progress.uniqueConversions),
             sub: `/ ${formatNumber(progress.requiredConversions)} required`,
+            pct: progressPct(progress.uniqueConversions, progress.requiredConversions),
           },
         ]}
       />
@@ -332,11 +341,13 @@ function DecisionBanner({
             label: "Unique visitors",
             value: formatNumber(progress.visitors),
             sub: `/ ${formatNumber(COLLECT_MIN_VISITORS)}`,
+            pct: progressPct(progress.visitors, COLLECT_MIN_VISITORS),
           },
           {
             label: "Conversions",
             value: formatNumber(progress.uniqueConversions),
             sub: `/ ${formatNumber(COLLECT_MIN_CONVERSIONS)}`,
+            pct: progressPct(progress.uniqueConversions, COLLECT_MIN_CONVERSIONS),
           },
         ]}
       />
@@ -564,7 +575,7 @@ function WebpagePreview({
   isControl: boolean;
 }) {
   return (
-    <div className={cn("mt-2.5 flex h-[435px] flex-col overflow-hidden border border-border bg-background", overviewRadius)}>
+    <div className={cn("mt-5 flex h-[435px] flex-col overflow-hidden border border-border bg-background", overviewRadius)}>
       {/* Browser chrome */}
       <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border bg-muted/60 px-2.5">
         <div className="flex gap-1">
@@ -712,14 +723,6 @@ function VariationCard({
         {isControl && <span className="ml-auto text-xs text-muted-foreground">Original</span>}
       </div>
 
-      <WebpagePreview
-        headline={variant.headline}
-        sub={variant.sub}
-        cta={variant.cta}
-        conversionsLabel={`${variant.conversions} unique conversions · ${variant.ctaRate}`}
-        isControl={isControl}
-      />
-
       <div className="mt-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -739,6 +742,14 @@ function VariationCard({
           <StatTile label="Confidence" value={variant.confidence} />
         </dl>
       </div>
+
+      <WebpagePreview
+        headline={variant.headline}
+        sub={variant.sub}
+        cta={variant.cta}
+        conversionsLabel={`${variant.conversions} unique conversions · ${variant.ctaRate}`}
+        isControl={isControl}
+      />
     </article>
   );
 }
@@ -939,14 +950,13 @@ function ReportsChrome({
           )}
           {wandzOpen && wandzFullPreview ? <WandzPanel /> : null}
           {wandzOpen && !wandzFullPreview ? (
-            <div className="relative z-30 flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
-              {/* static: outer wrapper owns height; panel measures its own max height. */}
-              <WandzPanel className="static top-auto max-h-full" />
+            <div className="relative z-30 flex h-full min-h-0 shrink-0 flex-col py-4 pl-2 pr-4">
+              <WandzPanel fillHeight className="min-h-0" />
             </div>
           ) : null}
           {detailPanelOpen ? (
-            <div className="relative z-30 flex h-full shrink-0 flex-col py-4 pl-2 pr-4">
-              <DetailSidePanel className="static top-auto max-h-full" />
+            <div className="relative z-30 flex h-full min-h-0 shrink-0 flex-col py-4 pl-2 pr-4">
+              <DetailSidePanel fillHeight className="min-h-0" />
             </div>
           ) : null}
         </div>

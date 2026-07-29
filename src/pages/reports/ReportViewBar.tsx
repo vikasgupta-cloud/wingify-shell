@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -119,7 +120,14 @@ function ViewMenu({
   );
 }
 
-export default function ReportViewBar({ campaignId }: { campaignId: string }) {
+export default function ReportViewBar({
+  campaignId,
+  trailing,
+}: {
+  campaignId: string;
+  /** Optional control on the tab row (e.g. Group by). */
+  trailing?: ReactNode;
+}) {
   const activePresetId = useActiveReportPresetId(campaignId);
   const activeCustomViewId = useActiveCustomViewId(campaignId);
   const customViews = useReportCustomViews(campaignId);
@@ -671,12 +679,17 @@ export default function ReportViewBar({ campaignId }: { campaignId: string }) {
             ) : null}
           </div>
         </div>
-        <div className="flex h-9 min-w-[11.5rem] shrink-0 items-center justify-end self-end">
+        <div className="ml-auto flex shrink-0 items-center justify-end gap-3 self-end pb-2">
           {isDirty ? (
-            <ReportViewSaveActions campaignId={campaignId} />
+            <div className="flex h-7 items-center justify-end">
+              <ReportViewSaveActions campaignId={campaignId} />
+            </div>
           ) : (
             <ReportViewSavedHint campaignId={campaignId} />
           )}
+          {trailing ? (
+            <div className="flex items-center gap-2">{trailing}</div>
+          ) : null}
         </div>
       </div>
 

@@ -55,10 +55,14 @@ function resolveCampaign(campaignId: string): Campaign | null {
   return status ? { ...found, status } : found;
 }
 
+type WandzPanelTab = "chat" | "insights";
+
 type WandzState = {
   open: boolean;
   /** Side panel vs full-screen preview overlay. */
   fullPreview: boolean;
+  /** Chat vs Insights inside the Wandz panel. Session-only. */
+  panelTab: WandzPanelTab;
   context: WandzContext | null;
   threads: Record<string /* contextKey */, ChatMessage[]>;
   /** Composer draft per conversation — survives panel close / remount. */
@@ -70,6 +74,7 @@ type WandzState = {
   toggleWandz: (context: WandzContext) => void;
   closeWandz: () => void;
   setFullPreview: (fullPreview: boolean) => void;
+  setPanelTab: (tab: WandzPanelTab) => void;
   setDraft: (key: string, draft: string) => void;
   send: (body: string) => void;
   clearThread: (key: string) => void;
@@ -82,6 +87,7 @@ export const useWandzStore = create<WandzState>()(
     (set, get) => ({
       open: false,
       fullPreview: false,
+      panelTab: "chat",
       context: null,
       threads: {},
       drafts: {},
@@ -93,6 +99,7 @@ export const useWandzStore = create<WandzState>()(
         const key = contextKey(context);
         set((s) => ({
           open: true,
+          panelTab: "chat",
           context,
           threads: s.threads[key]
             ? s.threads
@@ -102,6 +109,7 @@ export const useWandzStore = create<WandzState>()(
 
       openWandzAndAsk: (context, prompt) => {
         get().openWandz(context);
+        get().setPanelTab("chat");
         window.setTimeout(() => get().send(prompt), 80);
       },
 
@@ -114,9 +122,11 @@ export const useWandzStore = create<WandzState>()(
         }
       },
 
-      closeWandz: () => set({ open: false, fullPreview: false }),
+      closeWandz: () => set({ open: false, fullPreview: false, panelTab: "chat" }),
 
       setFullPreview: (fullPreview) => set({ fullPreview }),
+
+      setPanelTab: (panelTab) => set({ panelTab }),
 
       setDraft: (key, draft) =>
         set((s) => ({

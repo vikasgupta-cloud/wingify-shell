@@ -106,6 +106,7 @@ import DateRangeDropdown, {
 } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
 import SavedFilterBar from "./SavedFilterBar";
+import { isFeatureEnabled } from "../../config/featureFlags";
 import { campaignReportDateRange } from "./reportCampaignDefaults";
 import {
   DEFAULT_REPORT_VIEW_SETTINGS,
@@ -543,7 +544,7 @@ function FilterBar({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <FunnelIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
         <DateRangeDropdown
           variant="presets"
@@ -797,7 +798,9 @@ function ResultsFilterPanel({
           : "overflow-hidden rounded-lg border border-surface-border bg-surface"
       )}
     >
-      <SavedFilterBar campaignId={campaignId} embedded />
+      {isFeatureEnabled("savedFilters") ? (
+        <SavedFilterBar campaignId={campaignId} embedded />
+      ) : null}
       <div className={filterPanelInsetClass}>
         <FilterBar campaignId={campaignId} right={right} />
       </div>
@@ -1640,7 +1643,7 @@ function MetricHeader({
     "border-b border-dashed border-muted-foreground text-lg font-semibold leading-tight tracking-tight text-foreground";
 
   return (
-    <div className="flex items-center justify-between gap-6">
+    <div className="flex flex-nowrap items-center justify-between gap-4">
       <div className="flex min-w-0 items-center gap-2.5">
         <MousePointerClick
           className="h-5 w-5 shrink-0 text-foreground"
@@ -1649,12 +1652,12 @@ function MetricHeader({
         <div className="flex min-w-0 flex-wrap items-center gap-2.5">
           {metric === "Conversion rate" ? (
             <MetricDefinitionTooltip side="bottom">
-              <button type="button" className={metricTitleClass}>
+              <button type="button" className={cn(metricTitleClass, "truncate")}>
                 {metric}
               </button>
             </MetricDefinitionTooltip>
           ) : (
-            <span className={metricTitleClass}>{metric}</span>
+            <span className={cn(metricTitleClass, "truncate")}>{metric}</span>
           )}
           {isPrimary && (
             <span className="inline-flex items-center rounded border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground/70">
@@ -5616,12 +5619,12 @@ function ResultsGroupByControl({
 }) {
   return (
     <>
-      <span className="text-xs text-muted-foreground">Group by :</span>
+      <span className="text-sm text-muted-foreground">Group by :</span>
       <Select
         value={value}
         onValueChange={(v) => onChange(v as ResultsGroupBy)}
       >
-        <SelectTrigger className="h-6 w-[130px] gap-1 rounded-md border-border bg-background px-2 py-0 text-xs shadow-none [&>svg]:h-3 [&>svg]:w-3">
+        <SelectTrigger className="h-7 w-[130px] gap-1 rounded-md border-border bg-background text-sm shadow-none">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -5994,8 +5997,8 @@ export default function ResultsTab({
           onToggleCollapsed={() => setMetricsNavCollapsed(!metricsNavCollapsed)}
         />
       )}
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[1120px] space-y-8 px-12 pb-8 pt-12">
+      <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+        <div className="mx-auto w-full min-w-[44rem] max-w-[1120px] space-y-8 px-8 pb-8 pt-12 sm:px-12">
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           {compareMode ? (
             <>
@@ -6027,17 +6030,7 @@ export default function ResultsTab({
             </>
           ) : (
             <>
-              <ResultsFilterPanel
-                campaignId={campaign.id}
-                appliedTrailing={
-                  filters.segments.length > 0 ? (
-                    <ResultsGroupByControl
-                      value={resultsGroupBy}
-                      onChange={setResultsGroupBy}
-                    />
-                  ) : undefined
-                }
-              />
+              <ResultsFilterPanel campaignId={campaign.id} />
               <div className="space-y-4">
                 <MetricHeader
                   campaign={campaign}
@@ -6056,7 +6049,17 @@ export default function ResultsTab({
                   />
                 </div>
                 <div className="border-b border-border px-4 pb-0 pt-4">
-                  <ReportViewBar campaignId={campaign.id} />
+                  <ReportViewBar
+                    campaignId={campaign.id}
+                    trailing={
+                      filters.segments.length > 0 ? (
+                        <ResultsGroupByControl
+                          value={resultsGroupBy}
+                          onChange={setResultsGroupBy}
+                        />
+                      ) : undefined
+                    }
+                  />
                 </div>
                 {isStatisticsPreset ? (
                   <StatisticsPresetEmptyState metricName={selectedMetric} />

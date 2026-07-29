@@ -2,21 +2,17 @@ import { create } from "zustand";
 import { useWandzStore } from "./wandz";
 import { useQuickViewStore } from "./quickView";
 
-export type DetailPanelId = "suggestions" | "activity";
+export type DetailPanelId = "activity";
 
 export const DETAIL_PANEL_META: Record<
   DetailPanelId,
   { label: string; title: string; disabled?: boolean }
 > = {
   activity: { label: "Activity", title: "Activity Timeline" },
-  suggestions: { label: "Wandz AI Insights", title: "Wandz AI Insights" },
 };
 
-/** Rail order under Wandz: Insights → Activity. */
-export const DETAIL_PANEL_RAIL_ORDER: DetailPanelId[] = [
-  "suggestions",
-  "activity",
-];
+/** Rail order under Wandz. Insights live inside Wandz as a tab. */
+export const DETAIL_PANEL_RAIL_ORDER: DetailPanelId[] = ["activity"];
 
 type DetailPanelsState = {
   openId: DetailPanelId | null;
@@ -26,7 +22,7 @@ type DetailPanelsState = {
 };
 
 /**
- * Side panels opened from the detail utility rail (Activity / Insights).
+ * Side panels opened from the detail utility rail (Activity).
  * Mutually exclusive with Wandz and Quick View. Session-only.
  * Panel width is shared via `useSidePanelWidthStore`.
  */

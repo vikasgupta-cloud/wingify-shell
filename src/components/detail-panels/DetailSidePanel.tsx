@@ -6,7 +6,6 @@ import { cn } from "../../lib/utils";
 import {
   DETAIL_PANEL_META,
   useDetailPanelsStore,
-  type DetailPanelId,
 } from "../../store/detailPanels";
 import {
   SIDE_PANEL_WIDTH,
@@ -14,7 +13,6 @@ import {
 } from "../../store/sidePanelWidth";
 import { useVisibleCampaigns } from "../../store/rows";
 import ActivityTimeline from "./ActivityTimeline";
-import SuggestionsPanel from "./SuggestionsPanel";
 
 /**
  * Cap the docked panel to the space between its live top edge and the bottom of
@@ -95,14 +93,13 @@ function useDragResizeWidth(
   return onPointerDown;
 }
 
-function panelTitle(id: DetailPanelId): string {
-  return DETAIL_PANEL_META[id].title;
-}
-
 export default function DetailSidePanel({
   className,
+  fillHeight = false,
 }: {
   className?: string;
+  /** Fill a fixed-height dock column (Reports). Skip sticky / viewport height cap. */
+  fillHeight?: boolean;
 }) {
   const { entityId } = useParams();
   const openId = useDetailPanelsStore((s) => s.openId);
@@ -113,27 +110,34 @@ export default function DetailSidePanel({
   const campaign =
     campaigns.find((c) => c.id === entityId) ?? null;
   const rootRef = useRef<HTMLDivElement>(null);
-  const maxHeight = useViewportCappedMaxHeight(rootRef, Boolean(openId));
+  const maxHeight = useViewportCappedMaxHeight(
+    rootRef,
+    Boolean(openId) && !fillHeight
+  );
   const onDragStart = useDragResizeWidth(setWidth, width);
 
   if (!openId) return null;
 
-  const title = panelTitle(openId);
-  const showTimeline = openId === "activity";
-  const showInsights = openId === "suggestions";
+  const title = DETAIL_PANEL_META[openId].title;
 
   return (
     <aside
       ref={rootRef}
       aria-label={title}
       className={cn(
-        "relative sticky top-4 z-30 flex shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background shadow-sm",
-        "max-h-[calc(100dvh-8rem)]",
+        "relative z-30 flex shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background shadow-sm",
+        fillHeight
+          ? "h-full min-h-0 max-h-full"
+          : "sticky top-4 max-h-[calc(100dvh-8rem)]",
         className
       )}
       style={{
         width,
-        ...(maxHeight != null ? { maxHeight, height: maxHeight } : {}),
+        ...(fillHeight
+          ? { height: "100%" }
+          : maxHeight != null
+            ? { maxHeight, height: maxHeight }
+            : {}),
       }}
     >
       <div
@@ -163,20 +167,12 @@ export default function DetailSidePanel({
         </Button>
       </div>
 
-      {showTimeline && campaign ? (
+      {campaign ? (
         <ActivityTimeline campaignId={campaign.id} initialFilter="all" />
-      ) : showTimeline ? (
+      ) : (
         <div className="flex flex-1 items-center justify-center px-6 py-16 text-center">
           <p className="text-sm text-muted-foreground">
             Open a campaign to view activity.
-          </p>
-        </div>
-      ) : showInsights ? (
-        <SuggestionsPanel key={campaign?.id ?? "none"} campaign={campaign} />
-      ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
-          <p className="text-sm text-muted-foreground">
-            {title} content coming soon.
           </p>
         </div>
       )}
