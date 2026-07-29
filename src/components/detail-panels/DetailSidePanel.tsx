@@ -96,7 +96,6 @@ function useDragResizeWidth(
 }
 
 function panelTitle(id: DetailPanelId): string {
-  if (id === "activity" || id === "comments") return "Activity Timeline";
   return DETAIL_PANEL_META[id].title;
 }
 
@@ -120,7 +119,7 @@ export default function DetailSidePanel({
   if (!openId) return null;
 
   const title = panelTitle(openId);
-  const showTimeline = openId === "activity" || openId === "comments";
+  const showTimeline = openId === "activity";
   const showInsights = openId === "suggestions";
 
   return (
@@ -165,14 +164,11 @@ export default function DetailSidePanel({
       </div>
 
       {showTimeline && campaign ? (
-        <ActivityTimeline
-          campaignId={campaign.id}
-          initialFilter={openId === "comments" ? "comment" : "all"}
-        />
+        <ActivityTimeline campaignId={campaign.id} initialFilter="all" />
       ) : showTimeline ? (
         <div className="flex flex-1 items-center justify-center px-6 py-16 text-center">
           <p className="text-sm text-muted-foreground">
-            Open a campaign to view activity and comments.
+            Open a campaign to view activity.
           </p>
         </div>
       ) : showInsights ? (

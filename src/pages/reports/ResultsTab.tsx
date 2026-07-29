@@ -1692,21 +1692,7 @@ function MetricHeader({
             Learnings
           </TooltipContent>
         </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => downloadCsvSummary(metric)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
-              aria-label="Download CSV Summary"
-            >
-              <Download className="h-[18px] w-[18px]" aria-hidden />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" sideOffset={8}>
-            Download CSV Summary
-          </TooltipContent>
-        </Tooltip>
+        <DownloadCsvMenu metricName={metric} />
         {/* @undo Settings moved to the table-header gear (View Settings).
         <button
           type="button"
@@ -1757,7 +1743,7 @@ function LearningIcon({ className }: { className?: string }) {
   );
 }
 
-function downloadCsvSummary(metricName: string) {
+function downloadCsv(metricName: string, kind: "summary" | "detailed") {
   const slug = metricName.toLowerCase().replace(/\s+/g, "-");
   const csv = [
     "Note",
@@ -1767,9 +1753,105 @@ function downloadCsvSummary(metricName: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${slug}-summary.csv`;
+  anchor.download = `${slug}-${kind}.csv`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function DownloadCsvMenu({ metricName }: { metricName: string }) {
+  const [open, setOpen] = useState(false);
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearOpenTimer = () => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+  };
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+  const clearTimers = () => {
+    clearOpenTimer();
+    clearCloseTimer();
+  };
+
+  const scheduleOpen = () => {
+    clearCloseTimer();
+    if (open || openTimerRef.current) return;
+    openTimerRef.current = setTimeout(() => {
+      openTimerRef.current = null;
+      setOpen(true);
+    }, 120);
+  };
+
+  const openMenu = () => {
+    clearTimers();
+    setOpen(true);
+  };
+
+  const scheduleClose = () => {
+    clearOpenTimer();
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => setOpen(false), 120);
+  };
+
+  useEffect(() => () => clearTimers(), []);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
+          aria-label="Download CSV"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onMouseEnter={scheduleOpen}
+          onMouseLeave={scheduleClose}
+          onFocus={openMenu}
+          onBlur={scheduleClose}
+        >
+          <Download className="h-[18px] w-[18px]" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        side="bottom"
+        sideOffset={6}
+        className="w-40 p-1"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onMouseEnter={openMenu}
+        onMouseLeave={scheduleClose}
+      >
+        <button
+          type="button"
+          className="flex w-full cursor-pointer items-center rounded-sm px-3 py-1.5 text-sm outline-none hover:bg-accent"
+          onClick={() => {
+            downloadCsv(metricName, "summary");
+            setOpen(false);
+          }}
+        >
+          Summary
+        </button>
+        <button
+          type="button"
+          className="flex w-full cursor-pointer items-center rounded-sm px-3 py-1.5 text-sm outline-none hover:bg-accent"
+          onClick={() => {
+            downloadCsv(metricName, "detailed");
+            setOpen(false);
+          }}
+        >
+          Detailed
+        </button>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 const IMPACT_OPTIONS = ["Positive", "Neutral", "Negative", "Inconclusive"] as const;

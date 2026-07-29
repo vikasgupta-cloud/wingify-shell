@@ -8,15 +8,12 @@ import {
   Archive,
   Check,
   ChevronDown,
-  Clock,
   Copy,
-  Download,
   Eraser,
   FileBarChart,
   GalleryVerticalEnd,
   HelpCircle,
   ListFilter,
-  MessageSquare,
   MoreHorizontal,
   PenLine,
   Printer,
@@ -41,11 +38,7 @@ import {
   DropdownMenu as DropdownMenuRoot,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -107,13 +100,12 @@ const RAIL_PANEL_ICONS: Record<
   DetailPanelId,
   ComponentType<{ className?: string }>
 > = {
-  comments: MessageSquare,
   activity: Activity,
   suggestions: InsightsIcon,
 };
 
 // The utility rail on the RIGHT of a detail surface: Ask Wandz, then
-// Chat / Activity / Insights; Help pinned to the bottom.
+// Insights / Activity; Help pinned to the bottom.
 // Configure/Reports now live in the header tabs. On Reports, DetailShell
 // positions this absolutely below the sticky tab bar so the tabs stay edge-to-edge.
 function UtilityRail({ entityId }: { entityId?: string }) {
@@ -365,27 +357,11 @@ function KebabMenu({ campaign }: { campaign: Campaign }) {
             <Copy />
             Clone
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => { /* TODO — Timeline drawer is a deferred prompt */ }}>
-            <Clock />
-            Timeline
-          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => { /* TODO */ }}>
             <Share2 />
             Share
           </DropdownMenuItem>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Download />
-              Download CSV
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onSelect={() => { /* TODO */ }}>Summary</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => { /* TODO */ }}>Detailed</DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
           <DropdownMenuItem onSelect={() => { /* TODO */ }}>
             <Printer />
             Print

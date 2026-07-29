@@ -2,22 +2,20 @@ import { create } from "zustand";
 import { useWandzStore } from "./wandz";
 import { useQuickViewStore } from "./quickView";
 
-export type DetailPanelId = "suggestions" | "comments" | "activity";
+export type DetailPanelId = "suggestions" | "activity";
 
 export const DETAIL_PANEL_META: Record<
   DetailPanelId,
   { label: string; title: string; disabled?: boolean }
 > = {
-  comments: { label: "Chat", title: "Activity Timeline" },
   activity: { label: "Activity", title: "Activity Timeline" },
   suggestions: { label: "Wandz AI Insights", title: "Wandz AI Insights" },
 };
 
-/** Rail order under Wandz: Chat → Activity → Insights. */
+/** Rail order under Wandz: Insights → Activity. */
 export const DETAIL_PANEL_RAIL_ORDER: DetailPanelId[] = [
-  "comments",
-  "activity",
   "suggestions",
+  "activity",
 ];
 
 type DetailPanelsState = {
@@ -28,8 +26,8 @@ type DetailPanelsState = {
 };
 
 /**
- * Side panels opened from the detail utility rail (Chat / Activity /
- * Insights). Mutually exclusive with Wandz and Quick View. Session-only.
+ * Side panels opened from the detail utility rail (Activity / Insights).
+ * Mutually exclusive with Wandz and Quick View. Session-only.
  * Panel width is shared via `useSidePanelWidthStore`.
  */
 export const useDetailPanelsStore = create<DetailPanelsState>((set, get) => ({
