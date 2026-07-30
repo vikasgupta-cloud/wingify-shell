@@ -5,7 +5,7 @@ import { findProfileMode } from "../../config/navigation";
 import { pageLabel } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import DrillInNav from "./DrillInNav";
-import PrimaryRail from "./PrimaryRail";
+import ExpandedNav from "./ExpandedNav";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
 const EDGE_OPEN_DELAY_MS = 240;
@@ -146,7 +146,7 @@ export default function DrillInShell() {
                 }
               }}
             >
-              <PrimaryRail forceFlyout />
+              <ExpandedNav forceCollapsed />
             </div>
           </div>,
           document.body

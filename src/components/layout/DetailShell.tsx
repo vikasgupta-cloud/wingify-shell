@@ -64,7 +64,7 @@ import {
   CAMPAIGN_STATUSES,
   type Campaign,
 } from "../../data/campaigns";
-import PrimaryRail from "./PrimaryRail";
+import ExpandedNav from "./ExpandedNav";
 
 const RAIL_PANEL_ICONS: Record<
   DetailPanelId,
@@ -780,7 +780,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 }
               }}
             >
-              <PrimaryRail forceFlyout />
+              <ExpandedNav forceCollapsed />
             </div>
           </div>,
           document.body

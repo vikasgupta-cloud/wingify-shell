@@ -1,142 +1,399 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { ChevronDown, Pin, PinOff } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Pin, PinOff } from "lucide-react";
 import { NAV, type NavItem } from "../../config/navigation";
-import { findItemByPath, firstChildPath } from "../../lib/nav";
-import { useUIStore } from "../../store/ui";
+import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
+import { canUnpinPath, useUIStore } from "../../store/ui";
 import { cn } from "../../lib/utils";
+import SubNavPanel from "./SubNavPanel";
+import ProfileMenuPanel from "./ProfileMenuPanel";
 
 /** Width of the expanded (labeled) navigation sidebar — shared with the app grid. */
-export const EXPANDED_NAV_WIDTH = 260;
+export const EXPANDED_NAV_WIDTH = 280;
+
+const FLYOUT_CLOSE_GRACE_MS = 120;
+const MORE_CLOSE_GRACE_MS = 150;
+const FLYOUT_VIEWPORT_MARGIN = 8;
+const MORE_FLYOUT_WIDTH = 248;
+const WIDTH_MS = 220;
 
 const tooltipContentClass =
   "z-50 rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md";
 
-// The expanded sidebar shown while the nav is "open" (docked). Every main-nav item
-// is an icon + label row; items with sub-nav expand as a single-open accordion, with
-// the active section auto-expanded. Collapsed mode keeps the icon rail + hover flyout
-// (see PrimaryRail) — AppLayout switches between the two.
-export default function ExpandedNav() {
+function useClampedFlyoutTop(
+  ref: React.RefObject<HTMLDivElement | null>,
+  state: { top: number } | null
+) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !state) return;
+    const maxTop =
+      window.innerHeight - el.offsetHeight - FLYOUT_VIEWPORT_MARGIN;
+    el.style.top = `${Math.max(FLYOUT_VIEWPORT_MARGIN, Math.min(state.top, maxTop))}px`;
+  }, [ref, state]);
+}
+
+/**
+ * Single sidebar for AppLayout: width morphs between rail and expanded.
+ * Inner content stays EXPANDED_NAV_WIDTH so icons keep the same x-position;
+ * the outer clips when collapsed. Collapsed mode uses hover flyouts; expanded
+ * mode uses accordion sub-nav.
+ *
+ * `forceCollapsed` pins it to the rail regardless of the docked setting — used
+ * by the detail and drill-in shells, whose nav is an edge-reveal overlay.
+ */
+export default function ExpandedNav({
+  forceCollapsed = false,
+}: {
+  forceCollapsed?: boolean;
+} = {}) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const isDocked = useUIStore((s) => s.isDocked);
   const pinnedPaths = useUIStore((s) => s.pinnedPaths);
   const pin = useUIStore((s) => s.pin);
   const unpin = useUIStore((s) => s.unpin);
+  const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
 
+  const expanded = !forceCollapsed && isDocked;
   const activeItem = findItemByPath(pathname);
-  // Single-open accordion: the one expanded section's path (null = all collapsed).
-  const [openPath, setOpenPath] = useState<string | null>(
+  const [openPath, setOpenPath] = useState<string | null>(() =>
     activeItem?.sections ? activeItem.path : null
   );
 
-  // Auto-expand the active section as the route changes.
+  // Hover flyouts (collapsed only).
+  const [flyout, setFlyout] = useState<{ path: string; top: number } | null>(
+    null
+  );
+  const closeTimer = useRef<number | undefined>(undefined);
+  const flyoutRef = useRef<HTMLDivElement>(null);
+  const [moreFlyout, setMoreFlyout] = useState<{ top: number } | null>(null);
+  const [moreNested, setMoreNested] = useState<{
+    path: string;
+    top: number;
+  } | null>(null);
+  const moreCloseTimer = useRef<number | undefined>(undefined);
+  const moreFlyoutRef = useRef<HTMLDivElement>(null);
+  const moreNestedRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (activeItem?.sections) setOpenPath(activeItem.path);
+    if (expanded && activeItem?.sections) setOpenPath(activeItem.path);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeItem?.path]);
+  }, [activeItem?.path, expanded]);
+
+  useEffect(() => {
+    if (expanded) {
+      setFlyout(null);
+      setMoreFlyout(null);
+      setMoreNested(null);
+    } else {
+      setOpenPath(null);
+    }
+  }, [expanded]);
+
+  const closeMore = () => {
+    setMoreFlyout(null);
+    setMoreNested(null);
+  };
+  const scheduleMoreClose = () => {
+    window.clearTimeout(moreCloseTimer.current);
+    moreCloseTimer.current = window.setTimeout(closeMore, MORE_CLOSE_GRACE_MS);
+  };
+  const cancelMoreClose = () => window.clearTimeout(moreCloseTimer.current);
+
+  const openFlyout = (item: NavItem, target: HTMLElement) => {
+    if (expanded) return;
+    window.clearTimeout(closeTimer.current);
+    closeMore();
+    setFlyout(
+      item.sections
+        ? { path: item.path, top: target.getBoundingClientRect().top }
+        : null
+    );
+  };
+  const scheduleClose = () => {
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(
+      () => setFlyout(null),
+      FLYOUT_CLOSE_GRACE_MS
+    );
+  };
+  const cancelClose = () => window.clearTimeout(closeTimer.current);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeMore();
+        setFlyout(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.clearTimeout(moreCloseTimer.current);
+      window.clearTimeout(closeTimer.current);
+    };
+  }, []);
+
+  useClampedFlyoutTop(flyoutRef, flyout);
+  useClampedFlyoutTop(moreFlyoutRef, moreFlyout);
+  useClampedFlyoutTop(moreNestedRef, moreNested);
 
   const isVisible = (i: NavItem) => !i.pinnable || pinnedPaths.includes(i.path);
   const group1 = NAV.filter((i) => i.group === 1 && isVisible(i));
   const group2 = NAV.filter((i) => i.group === 2 && isVisible(i));
   const group3 = NAV.filter((i) => i.group === 3);
-  const unpinned = NAV.filter((i) => i.pinnable && !pinnedPaths.includes(i.path));
+  const unpinned = NAV.filter(
+    (i) => i.pinnable && !pinnedPaths.includes(i.path)
+  );
+  const flyoutItem = flyout
+    ? NAV.find((i) => i.path === flyout.path)
+    : undefined;
+  const moreNestedItem = moreNested
+    ? unpinned.find((i) => i.path === moreNested.path)
+    : undefined;
+
+  const openMoreFlyout = (target: HTMLElement) => {
+    if (expanded) return;
+    cancelMoreClose();
+    setFlyout(null);
+    setMoreFlyout({ top: target.getBoundingClientRect().top });
+  };
+
+  const revealMoreNested = (item: NavItem, target: HTMLElement) => {
+    cancelMoreClose();
+    setMoreNested(
+      item.sections
+        ? { path: item.path, top: target.getBoundingClientRect().top }
+        : null
+    );
+  };
+
+  const labelClass = cn(
+    "min-w-0 flex-1 truncate text-left transition-opacity duration-200",
+    expanded ? "opacity-100" : "pointer-events-none opacity-0"
+  );
+  const chromeClass = cn(
+    "shrink-0 transition-opacity duration-200",
+    expanded ? "opacity-100" : "pointer-events-none opacity-0"
+  );
 
   const renderItem = (item: NavItem, inMore = false) => {
     const Icon = item.icon;
     const isActive = findItemByPath(pathname)?.path === item.path;
     const hasSections = !!item.sections;
-    const open = openPath === item.path;
+    const open = expanded && openPath === item.path;
+    const tooltipOnly = !!item.flyoutOnly && !hasSections;
+    const expandOnly = !!item.flyoutOnly && hasSections;
+    const showUnpin = !inMore && item.pinnable && canUnpin(item.path);
 
     const leadingIcon = item.initials ? (
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">
+      <span
+        className={cn(
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground",
+          isActive &&
+            !expanded &&
+            "bg-rail-active text-rail-active-foreground"
+        )}
+      >
         {item.initials}
       </span>
     ) : (
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+      <Icon
+        className={cn(
+          "h-5 w-5 shrink-0",
+          isActive && !expanded
+            ? "text-rail-active-foreground"
+            : "text-foreground"
+        )}
+        strokeWidth={1.75}
+      />
     );
+
+    const row = (
+      <div
+        className={cn(
+          "group flex items-center gap-0.5 rounded-lg transition-[background-color,color,width] duration-200 hover:bg-muted",
+          // Collapsed rows clamp to the icon so the active pill can't bleed past the rail.
+          expanded ? "w-full pr-1.5" : "w-10 justify-start",
+          isActive && expanded && !hasSections && "bg-accent hover:bg-accent",
+          isActive &&
+            !expanded &&
+            "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
+        )}
+        onMouseEnter={
+          !expanded && !tooltipOnly
+            ? (e) => openFlyout(item, e.currentTarget)
+            : undefined
+        }
+        onMouseLeave={!expanded && !tooltipOnly ? scheduleClose : undefined}
+        onFocus={
+          !expanded && !tooltipOnly
+            ? (e) => openFlyout(item, e.currentTarget)
+            : undefined
+        }
+        onBlur={!expanded && !tooltipOnly ? scheduleClose : undefined}
+      >
+        <button
+          type="button"
+          aria-label={item.label}
+          onClick={() => {
+            if (tooltipOnly) return;
+            if (expandOnly) {
+              if (expanded) setOpenPath(open ? null : item.path);
+              return;
+            }
+            navigate(firstChildPath(item));
+            if (expanded && hasSections) {
+              setOpenPath(open ? null : item.path);
+            }
+          }}
+          className={cn(
+            "flex h-10 shrink-0 items-center gap-3 text-sm outline-none",
+            // Collapsed: the label + gap overflow the 40px box, so centering
+            // would pull the icon left. Start-align and let it spill right.
+            // No left padding when expanded: the icon slot must sit at the same
+            // x in both states so nothing shifts while the width animates.
+            expanded
+              ? "min-w-0 flex-1 pr-1.5 text-left text-foreground"
+              : "w-10 justify-start overflow-hidden",
+            isActive && expanded && "font-medium"
+          )}
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+            {leadingIcon}
+          </span>
+          <span className={labelClass}>{item.label}</span>
+        </button>
+
+        {item.pinnable && (inMore || showUnpin) && (
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <button
+                type="button"
+                aria-label={
+                  inMore
+                    ? `Pin ${item.label} to sidebar`
+                    : `Unpin ${item.label} from sidebar`
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  inMore ? pin(item.path) : unpin(item.path);
+                }}
+                className={cn(
+                  chromeClass,
+                  "rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground",
+                  // Collapsed rows have no room for it: stay hidden even on hover.
+                  expanded
+                    ? "opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+                    : "opacity-0"
+                )}
+              >
+                {inMore ? (
+                  <Pin className="h-3.5 w-3.5" />
+                ) : (
+                  <PinOff className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="bottom"
+                sideOffset={4}
+                className={tooltipContentClass}
+              >
+                {inMore ? "Pin to sidebar" : "Unpin from sidebar"}
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        )}
+
+        {hasSections && (
+          <button
+            type="button"
+            aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
+            onClick={() => {
+              if (!expanded) return;
+              setOpenPath(open ? null : item.path);
+            }}
+            className={cn(
+              chromeClass,
+              "rounded-sm p-1 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform duration-150",
+                open && "rotate-180"
+              )}
+            />
+          </button>
+        )}
+      </div>
+    );
+
+    // Collapsed rail: an icon alone doesn't name itself. Items with a sub-nav
+    // flyout are labelled there; direct items get a tooltip, and pinnable ones
+    // carry an inline unpin next to the label (hidden at the pin minimum).
+    let hoverRow = row;
+    if (!expanded && !inMore && !hasSections) {
+      hoverRow = item.pinnable ? (
+        <HoverCard.Root openDelay={150} closeDelay={150}>
+          <HoverCard.Trigger asChild>{row}</HoverCard.Trigger>
+          <HoverCard.Portal>
+            <HoverCard.Content
+              side="right"
+              sideOffset={8}
+              className={cn(tooltipContentClass, "flex items-center gap-2")}
+            >
+              <span>{item.label}</span>
+              {canUnpin(item.path) && (
+                <button
+                  type="button"
+                  aria-label={`Unpin ${item.label} from sidebar`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    unpin(item.path);
+                  }}
+                  className="flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <PinOff className="h-3 w-3" />
+                </button>
+              )}
+            </HoverCard.Content>
+          </HoverCard.Portal>
+        </HoverCard.Root>
+      ) : (
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>{row}</Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="right"
+              sideOffset={8}
+              className={tooltipContentClass}
+            >
+              {item.label}
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      );
+    }
 
     return (
       <div key={item.path}>
-        <div
-          className={cn(
-            "group flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-muted",
-            isActive && !hasSections && "bg-accent hover:bg-accent"
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              // flyoutOnly + sections (avatar): expand options only — no navigation.
-              if (item.flyoutOnly && hasSections) {
-                setOpenPath(open ? null : item.path);
-                return;
-              }
-              navigate(firstChildPath(item));
-              if (hasSections) setOpenPath(open ? null : item.path);
-            }}
-            className={cn(
-              "flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left text-sm text-foreground outline-none",
-              isActive && !hasSections && "font-medium text-accent-foreground",
-              isActive && hasSections && "font-medium"
-            )}
-          >
-            {leadingIcon}
-            <span className="min-w-0 flex-1 truncate">{item.label}</span>
-          </button>
-          {item.pinnable && (
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button
-                  type="button"
-                  aria-label={
-                    inMore
-                      ? `Pin ${item.label} to sidebar`
-                      : `Unpin ${item.label} from sidebar`
-                  }
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    inMore ? pin(item.path) : unpin(item.path);
-                  }}
-                  className="shrink-0 rounded-sm p-1 text-muted-foreground opacity-0 transition-colors hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
-                >
-                  {inMore ? (
-                    <Pin className="h-3.5 w-3.5" />
-                  ) : (
-                    <PinOff className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content side="bottom" sideOffset={4} className={tooltipContentClass}>
-                  {inMore ? "Pin to sidebar" : "Unpin from sidebar"}
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          )}
-          {hasSections && (
-            <button
-              type="button"
-              aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
-              onClick={() => setOpenPath(open ? null : item.path)}
-              className="shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform duration-150",
-                  open && "rotate-180"
-                )}
-              />
-            </button>
-          )}
-        </div>
+        {hoverRow}
 
         {hasSections && open && item.sections && (
-          <div className="ml-[19px] mt-1 flex flex-col border-l border-panel-border pb-2 pl-3 pr-1">
+          <div className="ml-[22px] mt-1.5 flex flex-col border-l border-panel-border pb-2 pl-3">
             {item.sections.map((section, i) => (
               <div key={section.heading ?? i} className="flex flex-col gap-1">
                 {i > 0 && (
-                  <div className="my-2 h-px bg-panel-border" aria-hidden="true" />
+                  <div
+                    className="my-2 h-px bg-panel-border"
+                    aria-hidden="true"
+                  />
                 )}
                 {section.items.map((leaf) => {
                   const LeafIcon = leaf.icon;
@@ -146,18 +403,21 @@ export default function ExpandedNav() {
                       to={leaf.path}
                       className={({ isActive: leafActive }) =>
                         cn(
-                          "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                          leafActive && "bg-accent font-medium text-accent-foreground"
+                          "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                          leafActive &&
+                            "bg-accent font-medium text-accent-foreground hover:bg-accent"
                         )
                       }
                     >
                       {LeafIcon && (
                         <LeafIcon
-                          className="h-4 w-4 shrink-0 text-muted-foreground"
+                          className="h-4 w-4 shrink-0 text-foreground"
                           strokeWidth={1.75}
                         />
                       )}
-                      <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+                      <span className="min-w-0 flex-1 truncate">
+                        {leaf.label}
+                      </span>
                     </NavLink>
                   );
                 })}
@@ -170,46 +430,215 @@ export default function ExpandedNav() {
   };
 
   const separator = (
-    <div className="mx-3 my-3 h-px shrink-0 bg-panel-border" aria-hidden="true" />
+    <div className="my-3 shrink-0 px-3" aria-hidden="true">
+      {/* Collapsed rule spans the icon slot exactly, so it stays inside the rail. */}
+      <div
+        className={cn(
+          "h-px bg-panel-border transition-[width] duration-200",
+          expanded ? "w-full" : "w-10"
+        )}
+      />
+    </div>
   );
 
   return (
     <Tooltip.Provider delayDuration={300} skipDelayDuration={100}>
-      <nav
-        className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-panel py-4 text-panel-foreground"
-        style={{ width: EXPANDED_NAV_WIDTH }}
-      >
-        <div className="flex shrink-0 items-center px-3 pb-3">
-          <button
-            type="button"
-            aria-label="Go to Home dashboard"
-            onClick={() => navigate("/home/dashboard")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-rail-active text-base font-bold text-rail-active-foreground"
+      <div className="relative h-full shrink-0">
+        <nav
+          className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-panel py-4 text-panel-foreground"
+          style={{
+            width: expanded ? EXPANDED_NAV_WIDTH : RAIL_WIDTH,
+            transition: `width ${WIDTH_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
+          }}
+        >
+          {/* Inner stays full expanded width so icons never shift while the outer clips. */}
+          <div
+            className="flex h-full flex-col"
+            style={{ width: EXPANDED_NAV_WIDTH }}
           >
-            W
-          </button>
-        </div>
+            <div className="flex shrink-0 items-center px-3 pb-4">
+              {/* 40px slot keeps the mark on the same center line as the icon rows. */}
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                <button
+                  type="button"
+                  aria-label="Go to Home dashboard"
+                  onClick={() => navigate("/home/dashboard")}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rail-active text-base font-bold text-rail-active-foreground"
+                >
+                  W
+                </button>
+              </span>
+            </div>
 
-        <div className="flex shrink-0 flex-col gap-0.5 px-3">
-          {group1.map((i) => renderItem(i))}
-        </div>
-        {separator}
-        <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3">
-          {group2.map((i) => renderItem(i))}
-          {unpinned.length > 0 && (
-            <>
-              <div className="px-2 pb-0.5 pt-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                More
-              </div>
-              {unpinned.map((i) => renderItem(i, true))}
-            </>
-          )}
-        </div>
-        {separator}
-        <div className="flex shrink-0 flex-col gap-0.5 px-3">
-          {group3.map((i) => renderItem(i))}
-        </div>
-      </nav>
+            <div className="flex shrink-0 flex-col gap-0.5 px-3">
+              {group1.map((i) => renderItem(i))}
+            </div>
+            {separator}
+            <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {group2.map((i) => renderItem(i))}
+              {unpinned.length > 0 &&
+                (expanded ? (
+                  <>
+                    <div className="px-2.5 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      More
+                    </div>
+                    {unpinned.map((i) => renderItem(i, true))}
+                  </>
+                ) : (
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        type="button"
+                        aria-label="More navigation items"
+                        onClick={(e) => openMoreFlyout(e.currentTarget)}
+                        onMouseEnter={(e) => openMoreFlyout(e.currentTarget)}
+                        onMouseLeave={scheduleMoreClose}
+                        onFocus={(e) => openMoreFlyout(e.currentTarget)}
+                        onBlur={scheduleMoreClose}
+                        className={cn(
+                          "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
+                          !!moreFlyout &&
+                            "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
+                        )}
+                      >
+                        <MoreHorizontal
+                          className="h-5 w-5"
+                          strokeWidth={1.75}
+                        />
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        side="right"
+                        sideOffset={8}
+                        className={tooltipContentClass}
+                      >
+                        More
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                ))}
+            </div>
+            {separator}
+            <div className="flex shrink-0 flex-col gap-0.5 px-3">
+              {group3.map((i) => renderItem(i))}
+            </div>
+          </div>
+        </nav>
+
+        {!expanded && flyout && flyoutItem?.sections && (
+          <div
+            ref={flyoutRef}
+            className="fixed z-40 animate-scale-in pl-1.5 duration-150"
+            style={{ left: RAIL_WIDTH, top: flyout.top }}
+            onMouseEnter={cancelClose}
+            onMouseLeave={scheduleClose}
+          >
+            {flyoutItem.path === "/profile" ? (
+              <ProfileMenuPanel
+                item={flyoutItem}
+                onRequestClose={() => setFlyout(null)}
+              />
+            ) : (
+              <SubNavPanel
+                item={flyoutItem}
+                variant="flyout"
+                onRequestClose={() => setFlyout(null)}
+              />
+            )}
+          </div>
+        )}
+
+        {!expanded && moreFlyout && unpinned.length > 0 && (
+          <div
+            ref={moreFlyoutRef}
+            className="fixed z-40 animate-scale-in pl-1.5 duration-150"
+            style={{ left: RAIL_WIDTH, top: moreFlyout.top }}
+            onMouseEnter={cancelMoreClose}
+            onMouseLeave={scheduleMoreClose}
+          >
+            <div
+              className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+              style={{ width: MORE_FLYOUT_WIDTH }}
+            >
+              {unpinned.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.path}
+                    onMouseEnter={(e) =>
+                      revealMoreNested(item, e.currentTarget)
+                    }
+                    onFocus={(e) => revealMoreNested(item, e.currentTarget)}
+                    className={cn(
+                      "flex items-center gap-1 rounded-sm pr-1.5 transition-colors hover:bg-muted",
+                      moreNestedItem?.path === item.path && "bg-muted"
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate(firstChildPath(item));
+                        closeMore();
+                      }}
+                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left outline-none"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-foreground" />
+                      <span className="flex-1 truncate">{item.label}</span>
+                    </button>
+                    <Tooltip.Root>
+                      <Tooltip.Trigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`Pin ${item.label} to sidebar`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            pin(item.path);
+                          }}
+                          className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <Pin className="h-3.5 w-3.5" />
+                        </button>
+                      </Tooltip.Trigger>
+                      <Tooltip.Portal>
+                        <Tooltip.Content
+                          side="bottom"
+                          sideOffset={4}
+                          className={tooltipContentClass}
+                        >
+                          Pin to sidebar
+                        </Tooltip.Content>
+                      </Tooltip.Portal>
+                    </Tooltip.Root>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {!expanded && moreFlyout && moreNested && moreNestedItem?.sections && (
+          <div
+            ref={moreNestedRef}
+            className="fixed z-40 animate-scale-in pl-1.5 duration-150"
+            style={{
+              left: RAIL_WIDTH + 6 + MORE_FLYOUT_WIDTH,
+              top: moreNested.top,
+            }}
+            onMouseEnter={cancelMoreClose}
+            onMouseLeave={scheduleMoreClose}
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("a")) closeMore();
+            }}
+          >
+            <SubNavPanel
+              item={moreNestedItem}
+              variant="flyout"
+              onRequestClose={closeMore}
+            />
+          </div>
+        )}
+      </div>
     </Tooltip.Provider>
   );
 }
