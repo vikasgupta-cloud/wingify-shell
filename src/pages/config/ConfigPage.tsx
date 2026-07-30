@@ -115,6 +115,7 @@ function StepNav({
   return (
     <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
       <Button
+        type="button"
         variant="outline"
         disabled={isFirst}
         onClick={() => onGo(order[idx - 1])}
@@ -123,6 +124,7 @@ function StepNav({
         Prev
       </Button>
       <Button
+        type="button"
         variant="outline"
         disabled={isLast}
         onClick={() => onGo(order[idx + 1])}
@@ -179,15 +181,16 @@ export default function ConfigPage() {
     wasWorkflowOpen.current = workflowOpen;
   }, [workflowOpen]);
 
-  // Guided-only keyboard step-nav: ↑ prev, ↓/Enter next; clamp at ends (no
-  // wrap); ←/→ do nothing. Inert while focus is in a text field / contenteditable
+  // Guided-only keyboard step-nav: ↑ prev, ↓ next; clamp at ends (no wrap);
+  // ←/→ and Enter do nothing. Inert while focus is in a text field / contenteditable
   // or an open select/combobox/dropdown/popover (Radix portals a popper wrapper
   // when one is open) so those keys behave normally there. Scroll never advances.
+  // Enter must never advance a step — it would steal form-field submission.
   useEffect(() => {
     if (viewMode !== "guided") return;
     const order = SECTIONS.map((s) => s.id);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "Enter") return;
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
       const el = document.activeElement as HTMLElement | null;
       const tag = el?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || el?.isContentEditable) return;
@@ -199,12 +202,6 @@ export default function ConfigPage() {
         return;
       // Any open Radix select/dropdown/popover portals this wrapper.
       if (document.querySelector("[data-radix-popper-content-wrapper]")) return;
-      // Let Enter activate a focused button/link rather than advancing.
-      if (
-        e.key === "Enter" &&
-        (tag === "BUTTON" || tag === "A" || el?.getAttribute("role") === "button")
-      )
-        return;
 
       const cur = useConfigStore.getState().activeStepId;
       const idx = Math.max(0, order.indexOf(cur));

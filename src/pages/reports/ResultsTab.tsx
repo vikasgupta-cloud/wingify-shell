@@ -321,6 +321,19 @@ function measureStickyEdgeShadows(el: HTMLDivElement): StickyEdgeShadows {
 
 const resultsTableMetricCellClass = "relative z-0 min-w-0";
 
+/**
+ * Horizontal inset for metric columns — exactly 8px from each vertical edge.
+ * Use the arbitrary value so Tailwind always emits it (const class names can be missed).
+ */
+const RESULTS_COL_PAD_X = "px-[8px]";
+
+/** Shared chrome for metric columns: right divider + 8px horizontal inset. */
+const resultsMetricColChrome = cn(
+  resultsTableMetricCellClass,
+  "border-r border-border",
+  RESULTS_COL_PAD_X
+);
+
 const resultsTableHeaderLabelClass =
   "text-xs font-medium leading-none text-muted-foreground";
 
@@ -2697,10 +2710,14 @@ function TableHeader({
     gridTemplateRows: "auto auto",
   } as const;
 
-  const titleCellClass =
-    "flex items-center gap-1.5 overflow-hidden bg-muted/50 px-3 pb-1.5 pt-3";
-  const subheadCellClass =
-    "flex items-start overflow-hidden bg-muted/50 px-3 pb-3 pt-1";
+  const titleCellClass = cn(
+    "flex items-center gap-1.5 overflow-hidden bg-muted/50 pb-1.5 pt-3",
+    resultsMetricColChrome
+  );
+  const subheadCellClass = cn(
+    "flex items-start overflow-hidden bg-muted/50 pb-3 pt-1",
+    resultsMetricColChrome
+  );
 
   const groupTitle =
     groupBy === "variation" ? "Variations" : "Segment";
@@ -2759,20 +2776,20 @@ function TableHeader({
           <div
             key={`title-${id}`}
             className={cn(
-              resultsTableMetricCellClass,
               titleCellClass,
-              alignCenter && "justify-center px-5",
+              alignCenter && "justify-center",
               !alignCenter && !isProbability && "justify-end",
-              isProbability && "justify-start px-4"
+              isProbability && "justify-start"
             )}
           >
             <span
               className={cn(
                 resultsTableHeaderLabelClass,
                 "min-w-0 truncate",
-                alignCenter && "text-center",
                 !alignCenter && !isProbability && "text-right",
-                isProbability && "text-left"
+                alignCenter && "text-center",
+                isProbability && "text-left",
+                !alignCenter && !isProbability && "max-w-[calc(100%-1.25rem)]"
               )}
               title={meta.label}
             >
@@ -2838,11 +2855,7 @@ function TableHeader({
           return (
             <div
               key={`sub-${id}`}
-              className={cn(
-                resultsTableMetricCellClass,
-                subheadCellClass,
-                "justify-between gap-2 px-5"
-              )}
+              className={cn(subheadCellClass, "justify-between gap-2")}
             >
               <span className={resultsTableSubheadClass}>-6%</span>
               <span
@@ -2862,8 +2875,8 @@ function TableHeader({
             <div
               key={`sub-${id}`}
               className={cn(
-                resultsTableMetricCellClass,
-                "flex flex-col items-start gap-0.5 overflow-visible bg-muted/50 px-5 pb-1 pt-1"
+                "flex flex-col items-start gap-0.5 overflow-visible bg-muted/50 pb-1 pt-1",
+                resultsMetricColChrome
               )}
             >
               <div className="flex min-w-0 items-center gap-1">
@@ -2905,7 +2918,7 @@ function TableHeader({
         return (
           <div
             key={`sub-${id}`}
-            className={cn(resultsTableMetricCellClass, subheadCellClass)}
+            className={cn(subheadCellClass)}
           />
         );
       })}
@@ -3049,14 +3062,14 @@ function ResultsMetricCell({
   suppressConclusion?: boolean;
 }) {
   const metricCell = cn(
-    resultsTableMetricCellClass,
+    resultsMetricColChrome,
     "overflow-hidden bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]"
   );
   const rowH = RESULTS_ROW_H[rowDensity];
   const numericCell = cn(
     metricCell,
     rowH,
-    "flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground"
+    "flex items-center justify-end border-b border-border text-right text-sm tabular-nums text-foreground"
   );
   switch (columnId) {
     case "unique-conversions":
@@ -3065,7 +3078,7 @@ function ResultsMetricCell({
       return <div className={numericCell}>{formatNumber(visitors)}</div>;
     case "expected-improvement":
       return (
-        <div className={cn(metricCell, "overflow-visible")}>
+        <div className={cn(metricCell, "overflow-visible border-b border-border")}>
           <ExpectedImprovementCell
             value={isControl ? null : uplift}
             rowDensity={rowDensity}
@@ -3074,7 +3087,7 @@ function ResultsMetricCell({
       );
     case "probability":
       return (
-        <div className={metricCell}>
+        <div className={cn(metricCell, "border-b border-border")}>
           {suppressConclusion ? (
             <ProbabilityCell value={null} rowDensity={rowDensity} />
           ) : collecting && !isControl ? (
@@ -3158,12 +3171,15 @@ function ResultsTotalMetricCell({
   rowDensity: ResultsRowDensity;
 }) {
   const cell = cn(
-    resultsTableMetricCellClass,
+    resultsMetricColChrome,
     RESULTS_ROW_H[rowDensity],
     "flex items-center border-b border-border",
     STICKY_HEADER_BG
   );
-  const numeric = cn(cell, "justify-end pr-6 text-sm tabular-nums text-foreground");
+  const numeric = cn(
+    cell,
+    "justify-end text-sm tabular-nums text-foreground"
+  );
   switch (columnId) {
     case "unique-conversions":
       return <div className={numeric}>{formatNumber(conversions)}</div>;
@@ -3177,7 +3193,9 @@ function ResultsTotalMetricCell({
       );
     case "probability":
       return (
-        <div className={cn(cell, "pl-5 text-sm text-foreground/70")}>-</div>
+        <div className={cn(cell, "text-sm text-foreground/70")}>
+          -
+        </div>
       );
     case "conversion-rate": {
       const rate = visitors > 0 ? (conversions / visitors) * 100 : 0;
@@ -3250,7 +3268,7 @@ function ExpectedImprovementCell({
     return (
       <div
         className={cn(
-          "flex items-center justify-center border-b border-border",
+          "flex h-full w-full items-center justify-center",
           heightClass
         )}
       >
@@ -3269,7 +3287,7 @@ function ExpectedImprovementCell({
   return (
     <div
       className={cn(
-        "relative flex items-center overflow-visible border-b border-border px-5",
+        "relative flex h-full w-full items-center overflow-visible",
         heightClass
       )}
     >
@@ -3338,7 +3356,7 @@ function ProbabilityCell({
     return (
       <div
         className={cn(
-          "relative flex items-center overflow-hidden border-b border-border px-5",
+          "relative flex h-full w-full items-center overflow-hidden",
           heightClass
         )}
       >
@@ -3353,7 +3371,7 @@ function ProbabilityCell({
   return (
     <div
       className={cn(
-        "relative flex items-center overflow-hidden border-b border-border px-5",
+        "relative flex h-full w-full items-center overflow-hidden",
         heightClass
       )}
     >
@@ -3397,7 +3415,7 @@ function ProbabilityCollectingCell({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 border-b border-border px-5",
+        "flex h-full w-full items-center gap-2",
         RESULTS_CHART_H[rowDensity]
       )}
     >
@@ -5818,10 +5836,20 @@ function CompareTable({
                   <div className="flex items-center gap-2 border-b border-border px-4 py-3">
                     {row.rowLabel}
                   </div>
-                  <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
+                  <div
+                    className={cn(
+                      "flex items-center justify-end border-b border-border text-right text-sm tabular-nums text-foreground",
+                      RESULTS_COL_PAD_X
+                    )}
+                  >
                     {formatNumber(row.conversions)}
                   </div>
-                  <div className="flex items-center justify-end border-b border-border pr-6 text-right text-sm tabular-nums text-foreground">
+                  <div
+                    className={cn(
+                      "flex items-center justify-end border-b border-border text-right text-sm tabular-nums text-foreground",
+                      RESULTS_COL_PAD_X
+                    )}
+                  >
                     {formatNumber(row.visitors)}
                   </div>
                   <ExpectedImprovementCell
