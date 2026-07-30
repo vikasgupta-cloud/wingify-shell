@@ -131,7 +131,8 @@ export default function ComingSoonState({
         </h2>
 
         <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-          This part is still WIP. Explore Web Experimentation for now.
+          This section is still in progress. Explore Web Experimentation in the
+          meantime.
         </p>
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
