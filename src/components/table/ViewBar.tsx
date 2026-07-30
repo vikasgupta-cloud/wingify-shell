@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { ChevronRight, MoreVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SplitSaveButton from "@/components/ui/SplitSaveButton";
 import {
   LAYOUT_LABEL,
   OVERVIEW_ID,
@@ -352,40 +353,19 @@ export default function ViewBar() {
                 Save view
               </Button>
             ) : (
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button type="button" size="sm">
-                    Save view
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    align="end"
-                    sideOffset={4}
-                    className={cn(MENU_CONTENT, "min-w-[200px]")}
-                    // "Save as new view" opens the inline name editor — don't let
-                    // Radix pull focus back to the trigger and blur it.
-                    onCloseAutoFocus={(e) => e.preventDefault()}
-                  >
-                    <DropdownMenu.Item
-                      onSelect={() => saveDraftToActiveView()}
-                      className={MENU_ITEM}
-                    >
-                      Save changes to “{activeView?.name}”
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onSelect={() => {
-                        const copyName = `${activeView?.name ?? "View"} copy`;
-                        const id = saveDraftAsNewView(copyName);
-                        startRenameSoon(id, copyName);
-                      }}
-                      className={MENU_ITEM}
-                    >
-                      Save as new view
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
+              <SplitSaveButton
+                existingLabel={activeView?.name ?? "View"}
+                onSaveExisting={() => saveDraftToActiveView()}
+                onSaveAsNew={() => {
+                  const copyName = `${activeView?.name ?? "View"} copy`;
+                  const id = saveDraftAsNewView(copyName);
+                  startRenameSoon(id, copyName);
+                }}
+                // "Save as new view" opens the inline name editor — don't let
+                // Radix pull focus back to the trigger and blur it.
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                menuClassName={MENU_CONTENT}
+              />
             )}
           </div>
         )}

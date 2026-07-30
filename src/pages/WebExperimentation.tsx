@@ -83,24 +83,28 @@ export default function WebExperimentation() {
 
         {/*
           Flowing layout: the page scrolls and each layout's card grows to fit its
-          content. The Quick view panel is a sticky card that pins below the TopBar
-          while the page scrolls; when its own content is taller than the viewport
-          it scrolls internally (its body is the overflow container).
+          content. The Quick view panel matches the height of the layout beside it
+          and scrolls internally (its body is the overflow container), so its
+          footer actions always sit on the panel's bottom edge.
         */}
-        <div className="flex items-start gap-6">
+        <div className="flex items-stretch gap-6">
           <div className="min-w-0 flex-1">
             {layout === "table" && <CampaignTable />}
             {layout === "kanban" && <KanbanBoard />}
             {layout === "gantt" && <GanttChart />}
           </div>
           {openId && (
-            // Height is a viewport constant — the scroll container is <main>
-            // (100vh minus the 56px TopBar), less the 24px sticky offset and a
-            // 24px gap above the viewport bottom. It must NOT be measured from
-            // the panel's live top: the panel is in flow, so growing it makes
-            // the page taller, which lets it grow again on the next scroll.
-            <div className="sticky top-6 flex h-[calc(100vh-56px-3rem)] max-h-[calc(100vh-56px-3rem)] w-[480px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background">
-              <QuickViewPanel />
+            // The column stretches to the table's height; the panel inside is
+            // absolutely placed so its own content can't drive that height.
+            // Capped at the viewport (100vh less the 56px TopBar and the 24px
+            // sticky offset + bottom gap) so a tall table still leaves the
+            // panel stickable rather than running off screen.
+            <div className="relative w-[480px] shrink-0">
+              <div className="absolute inset-0">
+                <div className="sticky top-6 flex h-full max-h-[calc(100vh-56px-3rem)] min-h-[24rem] flex-col overflow-hidden rounded-lg border border-border bg-background">
+                  <QuickViewPanel />
+                </div>
+              </div>
             </div>
           )}
           {/* The stores close each other, so at most one panel ever renders. */}

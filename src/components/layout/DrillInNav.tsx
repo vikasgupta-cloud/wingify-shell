@@ -209,7 +209,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
           className="flex min-w-0 items-center gap-1 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-background"
         >
           <ArrowLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="truncate text-sm font-semibold">{mode.label}</span>
+          <span className="truncate text-sm font-semibold">Back to app</span>
         </button>
       </div>
 

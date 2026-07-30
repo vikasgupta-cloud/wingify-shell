@@ -4,7 +4,6 @@ import {
   ArrowUpLeft,
   ArrowUpRight,
   Info,
-  MousePointerClick,
   RefreshCw,
   Trophy,
   X,
@@ -24,6 +23,13 @@ import { UTILITY_RAIL_WIDTH } from "../../lib/nav";
 import { ReportDataProvider, useReportData } from "./reportDataContext";
 import type { ReportConclusionSnapshot } from "./reportDataContext";
 import ConclusionStateIcon from "@/components/reports/ConclusionStateIcon";
+import {
+  previewHero,
+  StatTile,
+  UpliftPill,
+  VariantChip,
+  WebpagePreview,
+} from "@/components/reports/variationCard";
 import { conclusionCopy } from "../../data/conclusionCopy";
 import {
   COLLECT_MIN_CONVERSIONS,
@@ -32,7 +38,6 @@ import {
 import { formatNumber } from "./reportMetrics";
 import ResultsTab from "./ResultsTab";
 import VitalsTab from "./VitalsTab";
-import vwoMark from "./vwo-mark.svg";
 import WandzPanel from "../../components/wandz/WandzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
 import ReportsEmptyState from "../../components/reports/ReportsEmptyState";
@@ -86,41 +91,13 @@ type OverviewData = {
   };
 };
 
-const PREVIEW_HERO = [
-  {
-    headline: "Make every customer experience count",
-    sub: "Build, test, and ship digital experiences your customers choose.",
-    cta: "Start free trial",
-  },
-  {
-    headline: "Start testing in 30 seconds",
-    sub: "Launch your first experiment today. No complex setup required.",
-    cta: "Start testing free",
-  },
-  {
-    headline: "Test ideas. Prove impact. Grow.",
-    sub: "Move from intuition to evidence with one connected testing workspace.",
-    cta: "Create your first test",
-  },
-  {
-    headline: "Turn every visit into insight",
-    sub: "Run experiments that reveal what your audience really wants.",
-    cta: "Explore the platform",
-  },
-  {
-    headline: "Build experiences people choose",
-    sub: "Learn what works, understand why, and turn insight into growth.",
-    cta: "See how it works",
-  },
-];
-
 const VARIANT_TONES: BadgeTone[] = ["neutral", "green", "purple", "blue", "purple"];
 
 function useOverviewData(): OverviewData {
   const { campaign, overview } = useReportData();
   return useMemo(() => {
     const variants: ReportVariant[] = overview.comparison.rows.map((row, index) => {
-      const hero = PREVIEW_HERO[index % PREVIEW_HERO.length]!;
+      const hero = previewHero(index);
       return {
         label: row.label,
         name: row.name,
@@ -536,162 +513,6 @@ function HypothesisSection({ overview }: { overview: OverviewData }) {
 
 // ---------------------------------------------------------------------------
 // Variation comparison cards
-
-function AnnotationDot({ n, className }: { n: number; className?: string }) {
-  return (
-    <span
-      className={cn(
-        "absolute z-10 flex h-[19px] w-[19px] items-center justify-center rounded-md border border-background bg-foreground text-[11px] font-semibold text-primary-foreground shadow-sm",
-        className
-      )}
-      aria-hidden
-    >
-      {n}
-    </span>
-  );
-}
-
-function SkeletonTile() {
-  return (
-    <div className="flex h-[54px] w-[118px] flex-col rounded-[5px] border border-border/60 bg-background p-2.5">
-      <span className="h-2.5 w-3.5 rounded-sm bg-muted" />
-      <span className="mt-[7px] h-[3px] w-[70px] rounded-full bg-border" />
-      <span className="mt-[5px] h-[3px] w-[46px] rounded-full bg-border" />
-    </div>
-  );
-}
-
-function WebpagePreview({
-  headline,
-  sub,
-  cta,
-  conversionsLabel,
-  isControl,
-}: {
-  headline: string;
-  sub: string;
-  cta: string;
-  conversionsLabel: string;
-  isControl: boolean;
-}) {
-  return (
-    <div className={cn("mt-5 flex h-[435px] flex-col overflow-hidden border border-border bg-background", overviewRadius)}>
-      {/* Browser chrome */}
-      <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border bg-muted/60 px-2.5">
-        <div className="flex gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/35" />
-          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/55" />
-          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/75" />
-        </div>
-        <div className="flex h-4 flex-1 items-center justify-center rounded-md border border-border bg-background text-[10px] leading-none text-muted-foreground">
-          vwo.com/experience
-        </div>
-      </div>
-
-      {/* Site nav */}
-      <div className="flex h-[39px] shrink-0 items-center gap-3 border-b border-border px-3">
-        <div className="flex items-center gap-1">
-          <img src={vwoMark} alt="" className="h-3 w-3" />
-          <span className="text-xs font-semibold text-foreground">VWO</span>
-        </div>
-        <div className="flex flex-1 justify-center gap-2">
-          <span className="h-1 w-6 rounded-full bg-border" />
-          <span className="h-1 w-6 rounded-full bg-border" />
-          <span className="h-1 w-6 rounded-full bg-border" />
-        </div>
-        <span className="h-3 w-9 rounded bg-muted" />
-      </div>
-
-      {/* Hero */}
-      <div className="flex flex-1 flex-col items-center bg-muted/20 px-5 pt-10">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          Experiment with confidence
-        </p>
-
-        <div className="relative mt-2.5">
-          {isControl ? (
-            <p className="max-w-[290px] text-center text-lg font-semibold leading-[22px] tracking-tight text-foreground">
-              {headline}
-            </p>
-          ) : (
-            <span className="relative inline-block rounded-md bg-muted px-1.5 pb-1 pt-0.5">
-              <AnnotationDot n={1} className="-left-2.5 -top-2" />
-              <span className="whitespace-nowrap text-lg font-semibold leading-[22px] tracking-tight text-foreground">
-                {headline}
-              </span>
-            </span>
-          )}
-        </div>
-
-        <p className="mt-2.5 max-w-[300px] text-center text-xs leading-snug text-muted-foreground">
-          {sub}
-        </p>
-
-        <div className="relative mt-8">
-          <span
-            className={cn(
-              "flex h-[38px] items-center rounded-md px-4 text-[11px] font-semibold text-primary-foreground",
-              isControl ? "bg-foreground/90" : "bg-foreground"
-            )}
-          >
-            {cta}
-          </span>
-          {!isControl && <AnnotationDot n={2} className="-left-2.5 -top-2.5" />}
-          <span
-            className={cn(
-              "absolute -bottom-4 left-12 flex h-[30px] items-center gap-1 whitespace-nowrap rounded-md border border-border bg-background px-2.5 shadow-sm"
-            )}
-          >
-            <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-            <span className="text-[10px] font-medium text-muted-foreground">{conversionsLabel}</span>
-          </span>
-        </div>
-
-        <div className="mt-auto flex justify-center gap-2 pb-6 pt-8">
-          <SkeletonTile />
-          <SkeletonTile />
-          <SkeletonTile />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function VariantChip({ children }: { children: ReactNode }) {
-  return (
-    <span className="flex h-[23px] min-w-[29px] items-center justify-center rounded-md border border-border bg-muted px-2 text-xs font-medium text-muted-foreground">
-      {children}
-    </span>
-  );
-}
-
-function UpliftPill({ label }: { label: string }) {
-  const positive = label.startsWith("+");
-  const negative = label.startsWith("-");
-  return (
-    <span
-      className={cn(
-        "shrink-0 self-start rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
-        positive && "bg-success-fg/10 text-success-fg",
-        negative && "bg-danger-fg/10 text-danger-fg",
-        !positive && !negative && "bg-muted text-muted-foreground"
-      )}
-    >
-      {label}
-    </span>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg bg-muted/50 px-3 py-2.5">
-      <dt className="text-[11px] leading-none text-muted-foreground">{label}</dt>
-      <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
-        {value}
-      </dd>
-    </div>
-  );
-}
 
 function VariationCard({
   variant,

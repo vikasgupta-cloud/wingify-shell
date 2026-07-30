@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { PinOff } from "lucide-react";
 import type { NavItem } from "../../config/navigation";
-import { useUIStore } from "../../store/ui";
+import { canUnpinPath, useUIStore } from "../../store/ui";
 import { cn } from "../../lib/utils";
 
 type SubNavPanelProps = {
@@ -19,6 +19,7 @@ export default function SubNavPanel({
 }: SubNavPanelProps) {
   const unpin = useUIStore((s) => s.unpin);
   const pinnedPaths = useUIStore((s) => s.pinnedPaths);
+  const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
 
   if (!item.sections) return null;
 
@@ -36,7 +37,7 @@ export default function SubNavPanel({
         <div className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {item.label}
         </div>
-        {item.pinnable && pinnedPaths.includes(item.path) && (
+        {item.pinnable && pinnedPaths.includes(item.path) && canUnpin(item.path) && (
           <Tooltip.Provider delayDuration={300}>
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
@@ -78,8 +79,9 @@ export default function SubNavPanel({
                 onClick={() => onRequestClose?.()}
                 className={({ isActive }) =>
                   cn(
-                    "rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                    isActive && "bg-accent font-medium text-accent-foreground"
+                    "rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                    isActive &&
+                      "bg-accent font-medium text-accent-foreground hover:bg-accent"
                   )
                 }
               >
