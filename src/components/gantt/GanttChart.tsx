@@ -9,21 +9,15 @@ import {
   ChevronsRight,
   ChevronsUpDown,
   ChevronUp,
-  Columns2,
   EllipsisVertical,
-  Files,
-  GitBranch,
-  Grid2x2,
   PanelRight,
   Sparkles,
-  type LucideIcon,
 } from "lucide-react";
 import {
   campaignLandingPath,
   phasesFor,
   type Campaign,
   type CampaignStatus,
-  type CampaignType,
 } from "../../data/campaigns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
@@ -35,6 +29,7 @@ import { useQuickViewStore } from "../../store/quickView";
 import { useWandzStore } from "../../store/wandz";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
+import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
 import DecisionIcon from "../ui/DecisionIcon";
@@ -69,13 +64,6 @@ function snapStart(d: Date, zoom: GanttZoom): Date {
   }
   return x;
 }
-
-const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
-  "A/B": Columns2,
-  MVT: Grid2x2,
-  "Split URL": GitBranch,
-  Multipage: Files,
-};
 
 // Same colored status tokens the badge uses — the only colour on the bars.
 const SEGMENT_CLASSES: Record<CampaignStatus, string> = {
@@ -139,6 +127,7 @@ function GanttRow({
   gridInterval: number;
 }) {
   const TypeIcon = TYPE_ICONS[c.type];
+  const quickViewOpen = useQuickViewStore((s) => s.openId === c.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
   const openWandz = useWandzStore((s) => s.toggleWandz);
   const phases = phasesFor(c);
@@ -167,11 +156,20 @@ function GanttRow({
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
-    <div className="group flex border-b border-border" style={{ height: ROW_HEIGHT }}>
+    <div
+      data-selected={quickViewOpen || undefined}
+      aria-current={quickViewOpen ? "true" : undefined}
+      className={cn(
+        "group flex border-b border-border transition-colors duration-150",
+        quickViewOpen && "bg-muted"
+      )}
+      style={{ height: ROW_HEIGHT }}
+    >
       {/* Frozen left column */}
       <div
         className={cn(
-          "sticky left-0 z-30 flex shrink-0 items-center gap-2.5 border-r border-border bg-background px-3 transition-[box-shadow,background-color] duration-150 group-hover:bg-muted",
+          "sticky left-0 z-30 flex shrink-0 items-center gap-2.5 border-r border-border px-3 transition-[box-shadow,background-color] duration-150",
+          quickViewOpen ? "bg-muted" : "bg-background group-hover:bg-muted",
           isScrolled && SCROLL_SHADOW
         )}
         style={{ width: FROZEN_WIDTH }}
@@ -192,8 +190,15 @@ function GanttRow({
           </div>
           <div className="truncate text-xs text-muted-foreground">{c.url}</div>
         </div>
-        {/* Hover-revealed actions */}
-        <div className="hidden shrink-0 items-center gap-0.5 group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex">
+        {/* Hover-revealed actions — stay visible while Quick view is open */}
+        <div
+          className={cn(
+            "shrink-0 items-center gap-0.5",
+            quickViewOpen
+              ? "flex"
+              : "hidden group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex"
+          )}
+        >
           <Button
             type="button"
             variant="ghost"
@@ -214,11 +219,12 @@ function GanttRow({
             size="icon"
             title="Quick view"
             aria-label="Quick view"
+            aria-pressed={quickViewOpen}
             onClick={(e) => {
               stop(e);
               openQuickView(c.id);
             }}
-            className={ROW_ICON_BUTTON}
+            className={cn(ROW_ICON_BUTTON, quickViewOpen && "text-foreground")}
           >
             <PanelRight className="h-4 w-4" />
           </Button>

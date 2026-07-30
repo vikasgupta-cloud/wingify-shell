@@ -1,21 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  Columns2,
-  Files,
-  GitBranch,
-  Grid2x2,
   MoreVertical,
   PanelRight,
   Sparkles,
-  type LucideIcon,
 } from "lucide-react";
 import {
   campaignLandingPath,
   phasesFor,
   type Campaign,
   type CampaignStatus,
-  type CampaignType,
   type Variant,
 } from "../../data/campaigns";
 import { daysSince, formatShortDate, relativeTime } from "../../lib/dates";
@@ -23,15 +17,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { useQuickViewStore } from "../../store/quickView";
 import { useWandzStore } from "../../store/wandz";
+import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import StatusBadge, { VitalsIcon } from "../ui/StatusBadge";
 import CreatorAvatar from "../ui/CreatorAvatar";
-
-const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
-  "A/B": Columns2,
-  MVT: Grid2x2,
-  "Split URL": GitBranch,
-  Multipage: Files,
-};
 
 // Statuses whose campaigns have started: they carry vitals, results, and the
 // full three-stat row.
@@ -149,6 +137,7 @@ export default function KanbanCard({
   showStatus: boolean;
 }) {
   const navigate = useNavigate();
+  const quickViewOpen = useQuickViewStore((s) => s.openId === campaign.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
   const openWandz = useWandzStore((s) => s.toggleWandz);
   const TypeIcon = TYPE_ICONS[campaign.type];
@@ -161,6 +150,8 @@ export default function KanbanCard({
     <div
       role="button"
       tabIndex={0}
+      data-selected={quickViewOpen || undefined}
+      aria-current={quickViewOpen ? "true" : undefined}
       onClick={() => navigate(campaignLandingPath(campaign))}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -168,7 +159,12 @@ export default function KanbanCard({
           navigate(campaignLandingPath(campaign));
         }
       }}
-      className="group relative cursor-pointer rounded-lg border border-border bg-background p-3 transition-shadow duration-150 hover:shadow-sm"
+      className={cn(
+        "group relative cursor-pointer rounded-lg border bg-background p-3 transition-[box-shadow,background-color,border-color] duration-150 hover:shadow-sm",
+        quickViewOpen
+          ? "border-foreground/25 bg-muted shadow-sm"
+          : "border-border"
+      )}
     >
       {/* A) Title row */}
       <div className="flex items-center gap-2">
@@ -187,8 +183,15 @@ export default function KanbanCard({
             <VitalsIcon campaign={campaign} />
           </span>
         )}
-        {/* Hover/focus-revealed actions, right-aligned */}
-        <div className="ml-auto hidden shrink-0 items-center gap-0.5 group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex">
+        {/* Hover/focus-revealed actions — stay visible while Quick view is open */}
+        <div
+          className={cn(
+            "ml-auto shrink-0 items-center gap-0.5",
+            quickViewOpen
+              ? "flex"
+              : "hidden group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex"
+          )}
+        >
           <Button
             type="button"
             variant="ghost"
@@ -209,11 +212,12 @@ export default function KanbanCard({
             size="icon"
             title="Quick view"
             aria-label="Quick view"
+            aria-pressed={quickViewOpen}
             onClick={(e) => {
               stop(e);
               openQuickView(campaign.id);
             }}
-            className={CARD_ICON_BUTTON}
+            className={cn(CARD_ICON_BUTTON, quickViewOpen && "text-foreground")}
           >
             <PanelRight className="h-4 w-4" />
           </Button>

@@ -44,8 +44,7 @@ export default function ExpandedNav() {
 
   const renderItem = (item: NavItem, inMore = false) => {
     const Icon = item.icon;
-    const isActive =
-      pathname === item.path || pathname.startsWith(item.path + "/");
+    const isActive = findItemByPath(pathname)?.path === item.path;
     const hasSections = !!item.sections;
     const open = openPath === item.path;
 
@@ -68,6 +67,11 @@ export default function ExpandedNav() {
           <button
             type="button"
             onClick={() => {
+              // flyoutOnly + sections (avatar): expand options only — no navigation.
+              if (item.flyoutOnly && hasSections) {
+                setOpenPath(open ? null : item.path);
+                return;
+              }
               navigate(firstChildPath(item));
               if (hasSections) setOpenPath(open ? null : item.path);
             }}
@@ -128,20 +132,27 @@ export default function ExpandedNav() {
         </div>
 
         {hasSections && open && item.sections && (
-          <div className="ml-[19px] mt-1 flex flex-col gap-1 border-l border-panel-border pb-2 pl-3 pr-1">
-            {item.sections.flatMap((section) => section.items).map((leaf) => (
-              <NavLink
-                key={leaf.path}
-                to={leaf.path}
-                className={({ isActive: leafActive }) =>
-                  cn(
-                    "rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                    leafActive && "bg-accent font-medium text-accent-foreground"
-                  )
-                }
-              >
-                {leaf.label}
-              </NavLink>
+          <div className="ml-[19px] mt-1 flex flex-col border-l border-panel-border pb-2 pl-3 pr-1">
+            {item.sections.map((section, i) => (
+              <div key={section.heading ?? i} className="flex flex-col gap-1">
+                {i > 0 && (
+                  <div className="my-2 h-px bg-panel-border" aria-hidden="true" />
+                )}
+                {section.items.map((leaf) => (
+                  <NavLink
+                    key={leaf.path}
+                    to={leaf.path}
+                    className={({ isActive: leafActive }) =>
+                      cn(
+                        "rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                        leafActive && "bg-accent font-medium text-accent-foreground"
+                      )
+                    }
+                  >
+                    {leaf.label}
+                  </NavLink>
+                ))}
+              </div>
             ))}
           </div>
         )}

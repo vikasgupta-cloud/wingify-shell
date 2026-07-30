@@ -75,6 +75,7 @@ export default function SubNavPanel({
               <NavLink
                 key={leaf.path}
                 to={leaf.path}
+                onClick={() => onRequestClose?.()}
                 className={({ isActive }) =>
                   cn(
                     "rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",

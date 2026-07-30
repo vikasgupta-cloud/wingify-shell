@@ -1,9 +1,15 @@
 import type { ComponentType } from "react";
 import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
-import { NAV } from "../config/navigation";
-import { firstChildPath } from "../lib/nav";
+import {
+  NAV,
+  PROFILE_MODES,
+  firstModePath,
+  modeLeaves,
+} from "../config/navigation";
+import { firstChildPath, isProfileModePath } from "../lib/nav";
 import AppLayout from "../components/layout/AppLayout";
 import DetailShell from "../components/layout/DetailShell";
+import DrillInShell from "../components/layout/DrillInShell";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import WebExperimentation from "../pages/WebExperimentation";
 import ConfigPage from "../pages/config/ConfigPage";
@@ -36,19 +42,31 @@ const leafElement = (leafPath: string) => {
 };
 
 for (const item of NAV) {
+  // Profile flyout destinations live in DrillInShell via PROFILE_MODES — not AppLayout.
+  if (item.path === "/profile") continue;
+
   if (item.sections) {
     const leaves = item.sections.flatMap((section) => section.items);
+    const appLeaves = leaves.filter((leaf) => !isProfileModePath(leaf.path));
     pageRoutes.push({
       path: item.path,
       children: [
-        { index: true, element: <Navigate to={firstChildPath(item)} replace /> },
-        ...leaves.map((leaf) => ({
+        {
+          index: true,
+          element: (
+            <Navigate
+              to={appLeaves[0]?.path ?? firstChildPath(item)}
+              replace
+            />
+          ),
+        },
+        ...appLeaves.map((leaf) => ({
           path: leaf.path,
           element: leafElement(leaf.path),
         })),
       ],
     });
-    leaves.forEach((leaf) => addDetailRoute(leaf.path));
+    appLeaves.forEach((leaf) => addDetailRoute(leaf.path));
   } else {
     pageRoutes.push({ path: item.path, element: leafElement(item.path) });
     addDetailRoute(item.path);
@@ -65,8 +83,24 @@ detailRoutes.push({
   ),
 });
 
+const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
+  const leaves = modeLeaves(mode);
+  return {
+    path: mode.path,
+    element: <DrillInShell />,
+    children: [
+      { index: true, element: <Navigate to={firstModePath(mode)} replace /> },
+      ...leaves.map((leaf) => ({
+        path: leaf.path.slice(mode.path.length + 1),
+        element: <PlaceholderPage />,
+      })),
+    ],
+  };
+});
+
 export const router = createBrowserRouter([
   ...detailRoutes,
+  ...profileModeRoutes,
   {
     element: <AppLayout />,
     children: [

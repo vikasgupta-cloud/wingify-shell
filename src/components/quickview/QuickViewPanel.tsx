@@ -2,18 +2,15 @@ import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDownRight,
+  ArrowRight,
   ArrowUpRight,
   Award,
+  CalendarRange,
   ChevronLeft,
   ChevronRight,
-  Columns2,
-  Files,
-  GitBranch,
-  Grid2x2,
   Info,
   MousePointerClick,
   X,
-  type LucideIcon,
 } from "lucide-react";
 import {
   allVariationsDisabled,
@@ -27,11 +24,11 @@ import {
 } from "../../data/campaignConclusion";
 import { conclusionCopy } from "../../data/conclusionCopy";
 import ConclusionStateIcon from "../reports/ConclusionStateIcon";
+import ReportsEmptyState from "../reports/ReportsEmptyState";
 import type { ReportFilterContext } from "../../pages/reports/reportFilters";
 import {
   hasReport,
   type Campaign,
-  type CampaignType,
 } from "../../data/campaigns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
@@ -41,15 +38,9 @@ import { useQuickViewStore } from "../../store/quickView";
 import { useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState } from "../../store/views";
 import { useTableStore } from "../../store/table";
+import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import { sortCampaigns } from "../table/CampaignTable";
 import StatusMenu from "../ui/StatusMenu";
-
-const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
-  "A/B": Columns2,
-  MVT: Grid2x2,
-  "Split URL": GitBranch,
-  Multipage: Files,
-};
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const formatDate = (isoDate: string | null) => {
@@ -64,28 +55,49 @@ const NAV_BUTTON =
   "h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40";
 const METRIC_LINK = "inline-flex items-center gap-1 text-foreground underline decoration-muted-foreground/40 underline-offset-2";
 
+/** Completion percent of a value against its target (clamped 0–100). */
+function pctOf(current: number, target: number): number {
+  if (target <= 0) return 0;
+  return Math.min(100, Math.max(0, (current / target) * 100));
+}
+
 function ConclusionStat({
   label,
   achieved,
   rest,
   info,
+  pct,
 }: {
   label: string;
   achieved: string;
   rest: string;
   info?: boolean;
+  pct?: number;
 }) {
   return (
-    <div className="min-w-0">
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        {label}
+    <div className="flex min-w-0 flex-col rounded-lg bg-muted/40 px-3 py-2.5">
+      <div className="flex items-center gap-1 text-[11px] leading-tight text-muted-foreground">
+        <span className="truncate">{label}</span>
         {/* TODO: wire up conversions info tooltip */}
         {info && <Info className="h-3 w-3 shrink-0" aria-hidden />}
       </div>
-      <div className="mt-1 truncate tabular-nums">
-        <span className="text-lg font-semibold text-foreground">{achieved}</span>{" "}
-        <span className="text-sm text-muted-foreground">{rest}</span>
+      <div className="mt-1.5 flex min-w-0 items-baseline gap-1 tabular-nums">
+        <span className="truncate text-lg font-semibold leading-none text-foreground">
+          {achieved}
+        </span>
+        <span className="shrink-0 text-xs text-muted-foreground">{rest}</span>
       </div>
+      {pct !== undefined && (
+        // mt-auto pins the bar to the card bottom so bars line up across cards.
+        <div className="mt-auto pt-2.5">
+          <div className="h-1.5 overflow-hidden rounded-full bg-border/70">
+            <div
+              className="h-full rounded-full bg-foreground/70 transition-[width] duration-500"
+              style={{ width: `${Math.min(100, Math.max(3, pct))}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -147,34 +159,60 @@ function StateCardHeader({
   );
 }
 
+/** Compact "start → est. end" timeline, replacing two verbose date lines. */
+function DateRangeMeta({
+  startedOn,
+  estimatedEndDate,
+}: {
+  startedOn: string | null;
+  estimatedEndDate: string | null;
+}) {
+  if (!startedOn && !estimatedEndDate) return null;
+  return (
+    <div className="mt-2.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
+      <CalendarRange className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      {startedOn && <span className="tabular-nums">{formatDate(startedOn)}</span>}
+      {startedOn && estimatedEndDate && (
+        <ArrowRight className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
+      )}
+      {estimatedEndDate && (
+        <span className="tabular-nums">
+          {formatDate(estimatedEndDate)}{" "}
+          <span className="opacity-70">(est.)</span>
+        </span>
+      )}
+    </div>
+  );
+}
+
 function CollectingCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
   const { title, body } = conclusionCopy("collecting");
   return (
     <div className="rounded-lg border border-border p-4">
       <StateCardHeader kind="collecting" title={title} body={body} />
-      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-        {campaign.startedOn && <span>Started on : {formatDate(campaign.startedOn)}</span>}
-        {r.estimatedEndDate && (
-          <span>Estimated end date : {formatDate(r.estimatedEndDate)}</span>
-        )}
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-4">
+      <DateRangeMeta
+        startedOn={campaign.startedOn}
+        estimatedEndDate={r.estimatedEndDate}
+      />
+      <div className="mt-4 grid grid-cols-3 gap-2">
         <ConclusionStat
           label="Duration"
           achieved={`${r.elapsedDays}`}
           rest={r.elapsedDays === 1 ? "day" : "days"}
         />
         <ConclusionStat
-          label="Minimum unique visitors"
+          label="Min. unique visitors"
           achieved={formatNumber(campaign.visitors)}
           rest={`/ ${formatNumber(COLLECT_MIN_VISITORS)}`}
+          pct={pctOf(campaign.visitors, COLLECT_MIN_VISITORS)}
         />
         <ConclusionStat
-          label="Minimum conversions"
+          label="Min. conversions"
           info
           achieved={formatNumber(campaign.uniqueConversions)}
           rest={`/ ${formatNumber(COLLECT_MIN_CONVERSIONS)}`}
+          pct={pctOf(campaign.uniqueConversions, COLLECT_MIN_CONVERSIONS)}
         />
       </div>
     </div>
@@ -188,28 +226,29 @@ function ProgressCard({ campaign }: { campaign: Campaign }) {
   return (
     <div className="rounded-lg border border-border p-4">
       <StateCardHeader kind="progress" title={title} body={body} />
-      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-        {campaign.startedOn && <span>Started on : {formatDate(campaign.startedOn)}</span>}
-        {r.estimatedEndDate && (
-          <span>Estimated end date : {formatDate(r.estimatedEndDate)}</span>
-        )}
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-4">
+      <DateRangeMeta
+        startedOn={campaign.startedOn}
+        estimatedEndDate={r.estimatedEndDate}
+      />
+      <div className="mt-4 grid grid-cols-3 gap-2">
         <ConclusionStat
           label="Duration"
           achieved={`${r.elapsedDays}`}
           rest={`/ ${r.requiredDays} days`}
+          pct={pctOf(r.elapsedDays, r.requiredDays)}
         />
         <ConclusionStat
           label="Unique visitors"
           achieved={formatNumber(campaign.visitors)}
-          rest={`/ ${formatNumber(r.requiredVisitors)} required`}
+          rest={`/ ${formatNumber(r.requiredVisitors)}`}
+          pct={pctOf(campaign.visitors, r.requiredVisitors)}
         />
         <ConclusionStat
           label="Conversions"
           info
           achieved={formatNumber(campaign.uniqueConversions)}
-          rest={`/ ${formatNumber(r.requiredConversions)} required`}
+          rest={`/ ${formatNumber(r.requiredConversions)}`}
+          pct={pctOf(campaign.uniqueConversions, r.requiredConversions)}
         />
       </div>
     </div>
@@ -472,9 +511,7 @@ export default function QuickViewPanel() {
       {/* Body */}
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         {!hasReport(campaign.status) ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            No report data yet.
-          </div>
+          <ReportsEmptyState campaign={campaign} compact />
         ) : (
           <div className="space-y-6">
             {/* A) Top card — kind-driven, mirrors report banner precedence */}
@@ -482,34 +519,38 @@ export default function QuickViewPanel() {
 
             {/* TODO variants section — next prompt */}
 
-            {/* B) Section label */}
-            <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Experiment context
-            </div>
+            {/* B) Section label — kept tight to the cards it introduces */}
+            <div>
+              <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Experiment context
+              </div>
 
-            {/* C) Hypothesis */}
-            <div className="rounded-lg border border-border p-4">
-              <div className="text-sm font-medium text-foreground">Hypothesis</div>
-              <p className="mt-2 text-sm text-foreground">
-                <span className="text-muted-foreground">I expect</span> that {campaign.hypothesis}
-              </p>
-              <p className="mt-2 text-sm text-foreground">
-                <span className="text-muted-foreground">will address</span> {campaign.addresses}
-              </p>
-              {/* TODO: wire up View details */}
-              <button type="button" className="mt-3 text-sm font-medium text-foreground underline">
-                View details
-              </button>
-            </div>
+              <div className="mt-2 space-y-4">
+                {/* C) Hypothesis */}
+                <div className="rounded-lg border border-border p-4">
+                  <div className="text-sm font-medium text-foreground">Hypothesis</div>
+                  <p className="mt-2 text-sm text-foreground">
+                    <span className="text-muted-foreground">I expect</span> that {campaign.hypothesis}
+                  </p>
+                  <p className="mt-2 text-sm text-foreground">
+                    <span className="text-muted-foreground">will address</span> {campaign.addresses}
+                  </p>
+                  {/* TODO: wire up View details */}
+                  <button type="button" className="mt-3 text-sm font-medium text-foreground underline">
+                    View details
+                  </button>
+                </div>
 
-            {/* D) Campaign details */}
-            <div className="rounded-lg border border-border p-4">
-              <div className="text-sm font-medium text-foreground">Campaign details</div>
-              <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                <Detail label="Variants" value={String(campaign.variations)} />
-                <Detail label="Traffic" value={`${r.traffic}%`} />
-                <Detail label="Traffic split" value={r.trafficSplit} />
-                <Detail label="Audience" value={r.audience} />
+                {/* D) Campaign details */}
+                <div className="rounded-lg border border-border p-4">
+                  <div className="text-sm font-medium text-foreground">Campaign details</div>
+                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                    <Detail label="Variants" value={String(campaign.variations)} />
+                    <Detail label="Traffic" value={`${r.traffic}%`} />
+                    <Detail label="Traffic split" value={r.trafficSplit} />
+                    <Detail label="Audience" value={r.audience} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -106,7 +106,6 @@ import DateRangeDropdown, {
 } from "./DateRangeDropdown";
 import ReportViewBar from "./ReportViewBar";
 import SavedFilterBar from "./SavedFilterBar";
-import { isFeatureEnabled } from "../../config/featureFlags";
 import { campaignReportDateRange } from "./reportCampaignDefaults";
 import {
   DEFAULT_REPORT_VIEW_SETTINGS,
@@ -811,9 +810,7 @@ function ResultsFilterPanel({
           : "overflow-hidden rounded-lg border border-surface-border bg-surface"
       )}
     >
-      {isFeatureEnabled("savedFilters") ? (
-        <SavedFilterBar campaignId={campaignId} embedded />
-      ) : null}
+      <SavedFilterBar campaignId={campaignId} embedded />
       <div className={filterPanelInsetClass}>
         <FilterBar campaignId={campaignId} right={right} />
       </div>
@@ -2480,31 +2477,20 @@ function TableColumnHelp({
         <TooltipContent
           side={compact ? "right" : "top"}
           align="center"
-          sideOffset={compact ? 8 : 12}
+          sideOffset={compact ? 8 : 8}
           className={cn(
-            "relative overflow-visible rounded-xl border border-border bg-background text-left text-foreground shadow-xl",
+            "relative overflow-visible rounded-lg border border-border bg-background text-left text-foreground shadow-lg",
             compact
               ? "max-w-[280px] px-4 py-3.5"
-              : "max-w-[640px] px-8 py-7"
+              : "max-w-[280px] px-3 py-2.5"
           )}
         >
           <TooltipArrow className="fill-background" />
-          <div className={cn("space-y-2", !compact && "space-y-3")}>
-            <p
-              className={cn(
-                "font-semibold leading-tight text-foreground",
-                compact ? "text-sm" : "text-[18px]"
-              )}
-            >
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold leading-tight text-foreground">
               {title}
             </p>
-            <p
-              className={cn(
-                compact
-                  ? "text-sm leading-5 text-muted-foreground"
-                  : "text-[14px] leading-6 text-foreground/80"
-              )}
-            >
+            <p className="text-xs leading-5 text-muted-foreground">
               {body}
             </p>
           </div>

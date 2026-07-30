@@ -1,29 +1,50 @@
 # Feature flags
 
-Flags live in [`src/config/featureFlags.ts`](src/config/featureFlags.ts).
+Flags live in [`src/config/featureFlags.json`](src/config/featureFlags.json).
 
-Flip a flag by setting its value to `true` or `false`, then refresh the app.
+Each flag is `"on"` or `"off"`. Flip a value, then refresh the app.
+
+```json
+{
+  "savedFiltersClassic": "off",
+  "savedFiltersQuiet": "off"
+}
+```
 
 ## Flags
 
 | Flag | Default | What it controls |
 | --- | --- | --- |
-| `savedFilters` | `off` | Reports → Results **Saved filter** bar (chips, Save / Discard, rearrange). Store/API code stays; only the UI is gated. |
+| `savedFiltersClassic` | `off` | Reports → Results **classic** saved filters (chips, dirty Save / Discard, hover ⋯ rename/delete). |
+| `savedFiltersQuiet` | `off` | Reports → Results **quiet** saved filters (subtle title + ⋯ for Save / Switch / Rename / Delete; no dirty prompts). |
 
-## Turn saved filters on
+If both are `"on"`, the quiet experience is shown.
 
-In `src/config/featureFlags.ts`:
+Store/API code for saved filters stays either way — only the UI is gated.
 
-```ts
-savedFilters: true,
+## Examples
+
+Classic chips on:
+
+```json
+"savedFiltersClassic": "on",
+"savedFiltersQuiet": "off"
 ```
 
-## Turn saved filters off
+Quiet title + ⋯ on:
 
-```ts
-savedFilters: false,
+```json
+"savedFiltersClassic": "off",
+"savedFiltersQuiet": "on"
+```
+
+Both off (default):
+
+```json
+"savedFiltersClassic": "off",
+"savedFiltersQuiet": "off"
 ```
 
 ## Asking the agent later
 
-Say something like: **“turn on the saved filters feature flag”** (or “enable saved filters”). The agent should set `savedFilters: true` in `src/config/featureFlags.ts`.
+Say something like: **“turn on the quiet saved filters feature flag”** or **“enable classic saved filters”**. The agent should set the matching key to `"on"` in `src/config/featureFlags.json`.

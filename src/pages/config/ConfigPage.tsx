@@ -3,16 +3,10 @@ import { useParams } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
-  Columns2,
-  Files,
-  GitBranch,
-  Grid2x2,
   Save,
-  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { CampaignType } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
 import { useConfigStore } from "../../store/config";
 import { SECTIONS, type SectionId } from "../../config/configSections";
@@ -31,13 +25,7 @@ import WandzPanel from "../../components/wandz/WandzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
 import { useDetailPanelsStore } from "../../store/detailPanels";
 import { useWandzStore } from "../../store/wandz";
-
-const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
-  "A/B": Columns2,
-  MVT: Grid2x2,
-  "Split URL": GitBranch,
-  Multipage: Files,
-};
+import { TYPE_ICONS } from "../../components/icons/campaignTypeIcons";
 
 // The body for a single step section. Shared by Scroll (all sections) and
 // Guided (one section) so the two views always render identical content — the

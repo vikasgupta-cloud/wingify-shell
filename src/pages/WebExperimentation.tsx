@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Search } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -38,37 +38,6 @@ export default function WebExperimentation() {
     }
     closeQuickView();
   }, [layout, filters, groupBy, search, closeQuickView]);
-
-  // The sticky Quick view must never exceed the viewport, whatever the screen size
-  // or scroll position. Its height = distance from its live top to a 24px gap above
-  // the viewport bottom, so its footer buttons are always in view. Recomputed on
-  // page scroll (its top rises as the header scrolls away) and on resize.
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [panelMaxH, setPanelMaxH] = useState<number>();
-  useLayoutEffect(() => {
-    if (!openId) return;
-    const node = panelRef.current;
-    const scroller = node?.closest("main");
-    const update = () => {
-      const el = panelRef.current;
-      if (!el || !scroller) return;
-      const top = el.getBoundingClientRect().top;
-      // Bottom of the scroll viewport (main runs to the screen bottom); measuring an
-      // element rect avoids the flaky 100vh/clientHeight readings in some contexts.
-      const bottom = scroller.getBoundingClientRect().bottom;
-      const avail = bottom - top - 24; // 24px gap above the viewport bottom
-      // Ignore transient invalid layouts (0-height reads) so a bad value can't lock
-      // in; the CSS max-h fallback covers that window.
-      if (avail > 120) setPanelMaxH(avail);
-    };
-    update();
-    scroller?.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      scroller?.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [openId]);
 
   return (
     <>
@@ -125,19 +94,12 @@ export default function WebExperimentation() {
             {layout === "gantt" && <GanttChart />}
           </div>
           {openId && (
-            // Height is measured live (see panelMaxH) so the panel always fills
-            // the space from its sticky top to the viewport bottom — empty and
-            // data-rich campaigns look the same height; overflow scrolls inside.
-            // The vh-based max-h is a first-paint fallback until the layout effect runs.
-            <div
-              ref={panelRef}
-              style={
-                panelMaxH
-                  ? { height: panelMaxH, maxHeight: panelMaxH }
-                  : undefined
-              }
-              className="sticky top-6 flex max-h-[calc(100vh-56px-3rem)] w-[480px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background"
-            >
+            // Height is a viewport constant — the scroll container is <main>
+            // (100vh minus the 56px TopBar), less the 24px sticky offset and a
+            // 24px gap above the viewport bottom. It must NOT be measured from
+            // the panel's live top: the panel is in flow, so growing it makes
+            // the page taller, which lets it grow again on the next scroll.
+            <div className="sticky top-6 flex h-[calc(100vh-56px-3rem)] max-h-[calc(100vh-56px-3rem)] w-[480px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background">
               <QuickViewPanel />
             </div>
           )}

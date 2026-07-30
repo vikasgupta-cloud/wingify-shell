@@ -4,7 +4,7 @@ import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { MoreHorizontal, Pin, PinOff } from "lucide-react";
 import { NAV, type NavItem } from "../../config/navigation";
-import { firstChildPath, RAIL_WIDTH } from "../../lib/nav";
+import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { useUIStore } from "../../store/ui";
 import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
@@ -153,18 +153,19 @@ export default function PrimaryRail({
 
   const renderRailButton = (item: NavItem) => {
     const Icon = item.icon;
-    const isActive =
-      pathname === item.path || pathname.startsWith(item.path + "/");
+    const isActive = findItemByPath(pathname)?.path === item.path;
     // Profile (and any flyoutOnly item with sections) still gets a SubNav flyout —
     // flyoutOnly only suppresses click-navigation for leaf items like Activity/Help.
     const hasSections = !!item.sections;
     const tooltipOnly = !!item.flyoutOnly && !hasSections;
+    // Avatar (flyoutOnly + sections): hover flyout only — never navigate on click.
+    const expandOnly = !!item.flyoutOnly && hasSections;
     const button = (
       <button
         type="button"
         aria-label={item.label}
         onClick={
-          tooltipOnly
+          tooltipOnly || expandOnly
             ? undefined
             : () => {
                 onMoreSelectedChange?.(false);

@@ -10,15 +10,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronsUpDown,
-  Columns2,
   EllipsisVertical,
-  Files,
-  GitBranch,
-  Grid2x2,
   PanelRight,
   Sparkles,
   Trash2,
-  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { campaignLandingPath, hasReport, type Campaign, type CampaignType } from "../../data/campaigns";
+import { campaignLandingPath, hasReport, type Campaign } from "../../data/campaigns";
 import { conclusionKind } from "../../data/campaignConclusion";
 import ConclusionStateIcon from "../reports/ConclusionStateIcon";
 import { COLUMNS, type ColumnDef, type ColumnId } from "../../config/columns";
@@ -41,15 +36,9 @@ import { useActiveViewState, useViewsStore } from "../../store/views";
 import { useQuickViewStore } from "../../store/quickView";
 import { useWandzStore } from "../../store/wandz";
 import { cn } from "../../lib/utils";
+import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
-
-const TYPE_ICONS: Record<CampaignType, LucideIcon> = {
-  "A/B": Columns2,
-  MVT: Grid2x2,
-  "Split URL": GitBranch,
-  Multipage: Files,
-};
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 // Subtle placeholder for any null cell — a small en-dash, not a graphic em-dash.
@@ -117,9 +106,9 @@ const ROW_ICON_BUTTON =
 // bleed through the pinned region. (An alpha hover like bg-muted/50 would let the
 // content scrolling underneath show through the pinned cells.)
 const STICKY_CHECKBOX_BODY =
-  "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-muted";
+  "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
 const STICKY_NAME_BODY =
-  "sticky left-[44px] z-10 bg-background group-hover:bg-muted";
+  "sticky left-[44px] z-10 bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
 const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-muted";
 const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-muted";
 // The pinned name column's right edge. It CANNOT be a box-shadow on the <td>/<th>:
@@ -145,6 +134,7 @@ const CHECKBOX_COL_WIDTH = 44;
 
 function NameCell({ campaign }: { campaign: Campaign }) {
   const TypeIcon = TYPE_ICONS[campaign.type];
+  const quickViewOpen = useQuickViewStore((s) => s.openId === campaign.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
   const openWandz = useWandzStore((s) => s.toggleWandz);
   return (
@@ -159,8 +149,15 @@ function NameCell({ campaign }: { campaign: Campaign }) {
         </Link>
         <div className="truncate text-xs text-muted-foreground">{campaign.url}</div>
       </div>
-      {/* Hover-revealed row actions */}
-      <div className="hidden shrink-0 items-center gap-0.5 group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex">
+      {/* Hover-revealed row actions — Quick view stays visible while this row is open */}
+      <div
+        className={cn(
+          "shrink-0 items-center gap-0.5",
+          quickViewOpen
+            ? "flex"
+            : "hidden group-focus-within:flex group-hover:flex group-has-[[data-state=open]]:flex"
+        )}
+      >
         <Button
           type="button"
           variant="ghost"
@@ -182,7 +179,8 @@ function NameCell({ campaign }: { campaign: Campaign }) {
           onClick={() => openQuickView(campaign.id)}
           title="Quick view"
           aria-label="Quick view"
-          className={ROW_ICON_BUTTON}
+          aria-pressed={quickViewOpen}
+          className={cn(ROW_ICON_BUTTON, quickViewOpen && "text-foreground")}
         >
           <PanelRight className="h-4 w-4" />
         </Button>
@@ -492,11 +490,19 @@ export default function CampaignTable() {
   };
 
   const hasSelection = selected.size > 0;
+  const quickViewId = useQuickViewStore((s) => s.openId);
 
-  const renderRow = (c: Campaign) => (
+  const renderRow = (c: Campaign) => {
+    const isQuickView = quickViewId === c.id;
+    return (
     <tr
       key={c.id}
-      className="group border-b border-border transition-colors duration-150 last:border-b-0 hover:bg-muted"
+      data-selected={isQuickView || undefined}
+      aria-current={isQuickView ? "true" : undefined}
+      className={cn(
+        "group border-b border-border transition-colors duration-150 last:border-b-0 hover:bg-muted",
+        isQuickView && "bg-muted"
+      )}
     >
       <td className={cn("px-3 align-middle", DENSITY_PAD[rowDensity], STICKY_CHECKBOX_BODY)}>
         <SelectCheckbox
@@ -526,7 +532,8 @@ export default function CampaignTable() {
       {/* Filler cell so the row spans the full card width when columns are narrow. */}
       <td aria-hidden />
     </tr>
-  );
+    );
+  };
 
   return (
     <div>

@@ -544,6 +544,8 @@ type ReportViewsState = {
   setMetricsNavCollapsed: (campaignId: string, collapsed: boolean) => void;
   clearSaveHint: () => void;
   applySavedFilter: (campaignId: string, filterId: string) => void;
+  /** Leave the active saved filter without changing live filters/metric. */
+  clearActiveSavedFilter: (campaignId: string) => void;
   saveActiveSavedFilter: (campaignId: string) => void;
   saveAsNewSavedFilter: (campaignId: string, name: string) => string;
   discardSavedFilterChanges: (campaignId: string) => void;
@@ -1246,6 +1248,20 @@ export const useReportViewsStore = create<ReportViewsState>()(
             activeSavedFilterId: filterId,
           }));
           get().setSelectedMetric(campaignId, saved.selectedMetric);
+        },
+
+        clearActiveSavedFilter: (campaignId) => {
+          const live = liveFilterMetricSnapshot(campaignId, get);
+          patchSlice(campaignId, (prev) => ({
+            ...prev,
+            activeSavedFilterId: null,
+          }));
+          set((s) => ({
+            filterBaselinesByCampaign: {
+              ...s.filterBaselinesByCampaign,
+              [campaignId]: cloneFilterMetricSnapshot(live),
+            },
+          }));
         },
 
         saveActiveSavedFilter: (campaignId) => {
