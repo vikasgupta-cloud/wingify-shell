@@ -24,6 +24,11 @@ import { UTILITY_RAIL_WIDTH } from "../../lib/nav";
 import { ReportDataProvider, useReportData } from "./reportDataContext";
 import type { ReportConclusionSnapshot } from "./reportDataContext";
 import ConclusionStateIcon from "@/components/reports/ConclusionStateIcon";
+import {
+  StatTile,
+  UpliftPill,
+  VariantChip,
+} from "@/components/reports/variationCard";
 import { conclusionCopy } from "../../data/conclusionCopy";
 import {
   COLLECT_MIN_CONVERSIONS,
@@ -653,42 +658,6 @@ function WebpagePreview({
           <SkeletonTile />
         </div>
       </div>
-    </div>
-  );
-}
-
-function VariantChip({ children }: { children: ReactNode }) {
-  return (
-    <span className="flex h-[23px] min-w-[29px] items-center justify-center rounded-md border border-border bg-muted px-2 text-xs font-medium text-muted-foreground">
-      {children}
-    </span>
-  );
-}
-
-function UpliftPill({ label }: { label: string }) {
-  const positive = label.startsWith("+");
-  const negative = label.startsWith("-");
-  return (
-    <span
-      className={cn(
-        "shrink-0 self-start rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
-        positive && "bg-success-fg/10 text-success-fg",
-        negative && "bg-danger-fg/10 text-danger-fg",
-        !positive && !negative && "bg-muted text-muted-foreground"
-      )}
-    >
-      {label}
-    </span>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg bg-muted/50 px-3 py-2.5">
-      <dt className="text-[11px] leading-none text-muted-foreground">{label}</dt>
-      <dd className="mt-1.5 text-sm font-semibold tabular-nums text-foreground">
-        {value}
-      </dd>
     </div>
   );
 }

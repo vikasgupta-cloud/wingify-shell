@@ -23,6 +23,7 @@ import {
 import { conclusionCopy } from "../../data/conclusionCopy";
 import ConclusionStateIcon from "../reports/ConclusionStateIcon";
 import ReportsEmptyState from "../reports/ReportsEmptyState";
+import { StatTile, UpliftPill, VariantChip } from "../reports/variationCard";
 import type { ReportFilterContext } from "../../pages/reports/reportFilters";
 import {
   variantConversionsAllocated,
@@ -429,100 +430,77 @@ function VariationRow({
   );
 
   return (
-    <div
+    <article
       className={cn(
-        "rounded-md border border-border px-3 py-2.5",
-        isBest && "bg-muted/60"
+        "rounded-lg border border-border p-4",
+        isBest && "bg-muted/40"
       )}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground">
-          {variant.label}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+      <div className="flex items-center gap-2">
+        <VariantChip>{variant.label}</VariantChip>
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           {variant.name}
         </span>
-        {isControl && (
-          <span className="text-[11px] text-muted-foreground">Original</span>
-        )}
         {isBest && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-success-fg/10 px-2 py-0.5 text-[11px] font-medium text-success-fg">
-            <Award className="h-3 w-3" />
-            Leading
+          <span className="flex h-[25px] shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2.5">
+            <Award
+              className="h-3 w-3 text-decision-winner-fg"
+              aria-hidden
+            />
+            <span className="text-xs font-medium text-decision-winner-fg">
+              Leading
+            </span>
+          </span>
+        )}
+        {isControl && (
+          <span className="shrink-0 text-xs text-muted-foreground">
+            Original
           </span>
         )}
       </div>
 
       {collecting ? (
-        <div className="mt-2">
+        <div className="mt-4">
           <CollectingInline />
         </div>
       ) : (
-        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
-          <MetricCell
-            label={campaign.primaryMetric}
-            value={`${variant.convRate.toFixed(2)}%`}
-          />
-          <MetricCell label="Visitors" value={formatNumber(visitors)} />
-          <MetricCell label="Conversions" value={formatNumber(conversions)} />
-          <MetricCell
-            label="Uplift"
-            value={
-              isControl || variant.uplift === null
-                ? "—"
-                : formatUplift(variant.uplift)
-            }
-            tone={
-              isControl || variant.uplift === null
-                ? "muted"
-                : variant.uplift >= 0
-                  ? "success"
-                  : "danger"
-            }
-          />
-          <MetricCell
-            label="Confidence"
-            value={
-              isControl || variant.confidence === null
-                ? "—"
-                : `${variant.confidence}%`
-            }
-            tone={
-              !isControl && (variant.confidence ?? 0) >= 95
-                ? "success"
-                : "default"
-            }
-          />
+        <div className="mt-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[30px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
+                {formatNumber(conversions)}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Unique conversions
+              </p>
+            </div>
+            <UpliftPill
+              label={
+                isControl || variant.uplift === null
+                  ? "—"
+                  : formatUplift(variant.uplift)
+              }
+            />
+          </div>
+
+          <dl className="mt-4 grid grid-cols-3 gap-2">
+            <StatTile
+              label={campaign.primaryMetric}
+              value={`${variant.convRate.toFixed(2)}%`}
+            />
+            <StatTile label="Visitors" value={formatNumber(visitors)} />
+            <StatTile
+              label="Confidence"
+              value={
+                isControl || variant.confidence === null
+                  ? "—"
+                  : `${variant.confidence}%`
+              }
+            />
+          </dl>
         </div>
       )}
-    </div>
-  );
-}
-
-function MetricCell({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "muted" | "success" | "danger";
-}) {
-  return (
-    <div className="min-w-0">
-      <div className="truncate text-[11px] text-muted-foreground">{label}</div>
-      <div
-        className={cn(
-          "mt-0.5 truncate text-sm font-semibold tabular-nums",
-          tone === "success" && "text-success-fg",
-          tone === "danger" && "text-danger-fg",
-          tone === "muted" && "text-muted-foreground",
-          tone === "default" && "text-foreground"
-        )}
-      >
-        {value}
-      </div>
-    </div>
+    </article>
   );
 }
 
