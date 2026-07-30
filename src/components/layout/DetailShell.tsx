@@ -65,6 +65,7 @@ import {
   type Campaign,
 } from "../../data/campaigns";
 import ExpandedNav from "./ExpandedNav";
+import WingifyLogoButton from "./WingifyLogoButton";
 
 const RAIL_PANEL_ICONS: Record<
   DetailPanelId,
@@ -505,14 +506,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
     <div className="flex h-screen flex-col bg-background text-foreground">
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <button
-            type="button"
-            aria-label="Go to Home dashboard"
-            onClick={() => navigate("/home/dashboard")}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-rail-active text-sm font-bold text-rail-active-foreground"
-          >
-            W
-          </button>
+          <WingifyLogoButton />
 
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <Link

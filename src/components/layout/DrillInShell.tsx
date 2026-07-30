@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { findProfileMode } from "../../config/navigation";
 import { pageLabel } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import DrillInNav from "./DrillInNav";
 import ExpandedNav from "./ExpandedNav";
+import WingifyLogoButton from "./WingifyLogoButton";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
 const EDGE_OPEN_DELAY_MS = 240;
@@ -18,7 +19,6 @@ const OVERLAY_CLOSE_GRACE_MS = 250;
  */
 export default function DrillInShell() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const mode = findProfileMode(pathname);
   const [navOpen, setNavOpen] = useState(false);
   const [navRendered, setNavRendered] = useState(false);
@@ -86,15 +86,7 @@ export default function DrillInShell() {
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
-          <button
-            type="button"
-            aria-label="Go to Home dashboard"
-            onClick={() => navigate("/home/dashboard")}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-rail-active text-sm font-bold text-rail-active-foreground"
-          >
-            W
-          </button>
-          <span className="text-sm text-muted-foreground">/</span>
+          <WingifyLogoButton />
           <WorkspaceSwitcher />
           <span className="text-sm text-muted-foreground">/</span>
           <span className="truncate text-sm font-medium text-foreground">

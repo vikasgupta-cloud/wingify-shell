@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Compass, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -130,7 +130,7 @@ export default function ComingSoonState({
           {title}
         </h2>
 
-        <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
+        <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">
           This section is still in progress. Explore Web Experimentation in the
           meantime.
         </p>
@@ -140,12 +140,6 @@ export default function ComingSoonState({
             <Link to="/web-experiment">
               Explore Web Experimentation
               <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/home/dashboard">
-              <Compass className="h-4 w-4" aria-hidden />
-              Back to Dashboard
             </Link>
           </Button>
         </div>

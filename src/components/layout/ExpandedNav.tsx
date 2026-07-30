@@ -9,6 +9,7 @@ import { canUnpinPath, useUIStore } from "../../store/ui";
 import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
+import WingifyLogoButton from "./WingifyLogoButton";
 
 /** Width of the expanded (labeled) navigation sidebar — shared with the app grid. */
 export const EXPANDED_NAV_WIDTH = 280;
@@ -445,7 +446,7 @@ export default function ExpandedNav({
     <Tooltip.Provider delayDuration={300} skipDelayDuration={100}>
       <div className="relative h-full shrink-0">
         <nav
-          className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-panel py-4 text-panel-foreground"
+          className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-panel pb-4 text-panel-foreground"
           style={{
             width: expanded ? EXPANDED_NAV_WIDTH : RAIL_WIDTH,
             transition: `width ${WIDTH_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
@@ -456,21 +457,15 @@ export default function ExpandedNav({
             className="flex h-full flex-col"
             style={{ width: EXPANDED_NAV_WIDTH }}
           >
-            <div className="flex shrink-0 items-center px-3 pb-4">
-              {/* 40px slot keeps the mark on the same center line as the icon rows. */}
+            {/* h-14 matches the top bar / detail headers, and the 40px slot the
+                icon rows, so the mark never moves between views. */}
+            <div className="flex h-14 shrink-0 items-center px-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-                <button
-                  type="button"
-                  aria-label="Go to Home dashboard"
-                  onClick={() => navigate("/home/dashboard")}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rail-active text-base font-bold text-rail-active-foreground"
-                >
-                  W
-                </button>
+                <WingifyLogoButton />
               </span>
             </div>
 
-            <div className="flex shrink-0 flex-col gap-0.5 px-3">
+            <div className="mt-5 flex shrink-0 flex-col gap-0.5 px-3">
               {group1.map((i) => renderItem(i))}
             </div>
             {separator}
@@ -485,38 +480,22 @@ export default function ExpandedNav({
                     {unpinned.map((i) => renderItem(i, true))}
                   </>
                 ) : (
-                  <Tooltip.Root>
-                    <Tooltip.Trigger asChild>
-                      <button
-                        type="button"
-                        aria-label="More navigation items"
-                        onClick={(e) => openMoreFlyout(e.currentTarget)}
-                        onMouseEnter={(e) => openMoreFlyout(e.currentTarget)}
-                        onMouseLeave={scheduleMoreClose}
-                        onFocus={(e) => openMoreFlyout(e.currentTarget)}
-                        onBlur={scheduleMoreClose}
-                        className={cn(
-                          "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
-                          !!moreFlyout &&
-                            "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
-                        )}
-                      >
-                        <MoreHorizontal
-                          className="h-5 w-5"
-                          strokeWidth={1.75}
-                        />
-                      </button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Portal>
-                      <Tooltip.Content
-                        side="right"
-                        sideOffset={8}
-                        className={tooltipContentClass}
-                      >
-                        More
-                      </Tooltip.Content>
-                    </Tooltip.Portal>
-                  </Tooltip.Root>
+                  <button
+                    type="button"
+                    aria-label="More navigation items"
+                    onClick={(e) => openMoreFlyout(e.currentTarget)}
+                    onMouseEnter={(e) => openMoreFlyout(e.currentTarget)}
+                    onMouseLeave={scheduleMoreClose}
+                    onFocus={(e) => openMoreFlyout(e.currentTarget)}
+                    onBlur={scheduleMoreClose}
+                    className={cn(
+                      "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
+                      !!moreFlyout &&
+                        "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
+                    )}
+                  >
+                    <MoreHorizontal className="h-5 w-5" strokeWidth={1.75} />
+                  </button>
                 ))}
             </div>
             {separator}
