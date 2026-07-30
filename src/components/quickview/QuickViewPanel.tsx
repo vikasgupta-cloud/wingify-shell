@@ -2,10 +2,8 @@ import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDownRight,
-  ArrowRight,
   ArrowUpRight,
   Award,
-  CalendarRange,
   ChevronLeft,
   ChevronRight,
   Info,
@@ -27,8 +25,13 @@ import ConclusionStateIcon from "../reports/ConclusionStateIcon";
 import ReportsEmptyState from "../reports/ReportsEmptyState";
 import type { ReportFilterContext } from "../../pages/reports/reportFilters";
 import {
+  variantConversionsAllocated,
+  variantVisitors,
+} from "../../pages/reports/reportMetrics";
+import {
   hasReport,
   type Campaign,
+  type Variant,
 } from "../../data/campaigns";
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
@@ -42,12 +45,6 @@ import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import { sortCampaigns } from "../table/CampaignTable";
 import StatusMenu from "../ui/StatusMenu";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const formatDate = (isoDate: string | null) => {
-  if (!isoDate) return "—";
-  const d = new Date(isoDate);
-  return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-};
 const formatNumber = (n: number) => n.toLocaleString("en-US");
 const formatUplift = (n: number) => `${n >= 0 ? "+" : ""}${n}%`;
 
@@ -142,59 +139,24 @@ function InfoCard({ body }: { body: string }) {
 function StateCardHeader({
   kind,
   title,
-  body,
 }: {
   kind: "collecting" | "progress";
   title?: string;
-  body: string;
 }) {
   return (
-    <>
-      <div className="flex items-center gap-2.5">
-        <ConclusionStateIcon kind={kind} size={18} />
-        <div className="text-xl font-semibold text-foreground">{title}</div>
-      </div>
-      <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-    </>
-  );
-}
-
-/** Compact "start → est. end" timeline, replacing two verbose date lines. */
-function DateRangeMeta({
-  startedOn,
-  estimatedEndDate,
-}: {
-  startedOn: string | null;
-  estimatedEndDate: string | null;
-}) {
-  if (!startedOn && !estimatedEndDate) return null;
-  return (
-    <div className="mt-2.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
-      <CalendarRange className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      {startedOn && <span className="tabular-nums">{formatDate(startedOn)}</span>}
-      {startedOn && estimatedEndDate && (
-        <ArrowRight className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
-      )}
-      {estimatedEndDate && (
-        <span className="tabular-nums">
-          {formatDate(estimatedEndDate)}{" "}
-          <span className="opacity-70">(est.)</span>
-        </span>
-      )}
+    <div className="flex items-center gap-2.5">
+      <ConclusionStateIcon kind={kind} size={18} />
+      <div className="text-xl font-semibold text-foreground">{title}</div>
     </div>
   );
 }
 
 function CollectingCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
-  const { title, body } = conclusionCopy("collecting");
+  const { title } = conclusionCopy("collecting");
   return (
     <div className="rounded-lg border border-border p-4">
-      <StateCardHeader kind="collecting" title={title} body={body} />
-      <DateRangeMeta
-        startedOn={campaign.startedOn}
-        estimatedEndDate={r.estimatedEndDate}
-      />
+      <StateCardHeader kind="collecting" title={title} />
       <div className="mt-4 grid grid-cols-3 gap-2">
         <ConclusionStat
           label="Duration"
@@ -222,14 +184,10 @@ function CollectingCard({ campaign }: { campaign: Campaign }) {
 function ProgressCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
   const remainingDays = Math.max(0, r.requiredDays - r.elapsedDays);
-  const { title, body } = conclusionCopy("progress", { days: remainingDays });
+  const { title } = conclusionCopy("progress", { days: remainingDays });
   return (
     <div className="rounded-lg border border-border p-4">
-      <StateCardHeader kind="progress" title={title} body={body} />
-      <DateRangeMeta
-        startedOn={campaign.startedOn}
-        estimatedEndDate={r.estimatedEndDate}
-      />
+      <StateCardHeader kind="progress" title={title} />
       <div className="mt-4 grid grid-cols-3 gap-2">
         <ConclusionStat
           label="Duration"
@@ -274,7 +232,6 @@ function DecidedCard({
 
   const confidence = best.confidence;
   const uplift = best.uplift;
-  const isWinner = kind === "winner";
 
   return (
     <div className="space-y-4 rounded-lg border border-border p-4">
@@ -285,20 +242,6 @@ function DecidedCard({
           <div className="text-base font-semibold text-foreground">{title}</div>
           <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
         </div>
-      </div>
-
-      {/* Best/pick variant row — winner is the only one with the badge */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground">
-          {best.label}
-        </span>
-        <span className="text-base font-medium text-foreground">{best.name}</span>
-        {isWinner && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-success-fg/10 px-2 py-0.5 text-xs font-medium text-success-fg">
-            <Award className="h-3 w-3" />
-            Best performer
-          </span>
-        )}
       </div>
 
       {/* Primary metric */}
@@ -435,6 +378,154 @@ function ConclusionStateCard({ campaign }: { campaign: Campaign }) {
   return <DecidedCard campaign={campaign} kind={kind} />;
 }
 
+/** Per-variation snapshot so you can see which one is ahead on the primary metric. */
+function VariationsCard({ campaign }: { campaign: Campaign }) {
+  const variants = campaign.report.variants;
+  const bestId = campaignBestVariant(campaign).id;
+  const control = variants[0];
+
+  return (
+    <div className="rounded-lg border border-border p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="text-sm font-medium text-foreground">Variations</div>
+        <div className="truncate text-xs text-muted-foreground">
+          {campaign.primaryMetric}
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {variants.map((variant, index) => (
+          <VariationRow
+            key={variant.id}
+            campaign={campaign}
+            variant={variant}
+            index={index}
+            isControl={index === 0}
+            isBest={variant.id === bestId && variant.id !== control?.id}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VariationRow({
+  campaign,
+  variant,
+  index,
+  isControl,
+  isBest,
+}: {
+  campaign: Campaign;
+  variant: Variant;
+  index: number;
+  isControl: boolean;
+  isBest: boolean;
+}) {
+  const collecting = variationCollecting(campaign, index);
+  const visitors = variantVisitors(campaign, index, QUICKVIEW_FILTERS);
+  const conversions = Math.round(
+    variantConversionsAllocated(campaign, index, QUICKVIEW_FILTERS)
+  );
+
+  return (
+    <div
+      className={cn(
+        "rounded-md border border-border px-3 py-2.5",
+        isBest && "bg-muted/60"
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground">
+          {variant.label}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+          {variant.name}
+        </span>
+        {isControl && (
+          <span className="text-[11px] text-muted-foreground">Original</span>
+        )}
+        {isBest && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-success-fg/10 px-2 py-0.5 text-[11px] font-medium text-success-fg">
+            <Award className="h-3 w-3" />
+            Leading
+          </span>
+        )}
+      </div>
+
+      {collecting ? (
+        <div className="mt-2">
+          <CollectingInline />
+        </div>
+      ) : (
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
+          <MetricCell
+            label={campaign.primaryMetric}
+            value={`${variant.convRate.toFixed(2)}%`}
+          />
+          <MetricCell label="Visitors" value={formatNumber(visitors)} />
+          <MetricCell label="Conversions" value={formatNumber(conversions)} />
+          <MetricCell
+            label="Uplift"
+            value={
+              isControl || variant.uplift === null
+                ? "—"
+                : formatUplift(variant.uplift)
+            }
+            tone={
+              isControl || variant.uplift === null
+                ? "muted"
+                : variant.uplift >= 0
+                  ? "success"
+                  : "danger"
+            }
+          />
+          <MetricCell
+            label="Confidence"
+            value={
+              isControl || variant.confidence === null
+                ? "—"
+                : `${variant.confidence}%`
+            }
+            tone={
+              !isControl && (variant.confidence ?? 0) >= 95
+                ? "success"
+                : "default"
+            }
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetricCell({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "muted" | "success" | "danger";
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="truncate text-[11px] text-muted-foreground">{label}</div>
+      <div
+        className={cn(
+          "mt-0.5 truncate text-sm font-semibold tabular-nums",
+          tone === "success" && "text-success-fg",
+          tone === "danger" && "text-danger-fg",
+          tone === "muted" && "text-muted-foreground",
+          tone === "default" && "text-foreground"
+        )}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export default function QuickViewPanel() {
   const openId = useQuickViewStore((s) => s.openId);
   const close = useQuickViewStore((s) => s.close);
@@ -517,7 +608,7 @@ export default function QuickViewPanel() {
             {/* A) Top card — kind-driven, mirrors report banner precedence */}
             <ConclusionStateCard campaign={campaign} />
 
-            {/* TODO variants section — next prompt */}
+            <VariationsCard campaign={campaign} />
 
             {/* B) Section label — kept tight to the cards it introduces */}
             <div>

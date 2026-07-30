@@ -6,6 +6,7 @@ import { pageLabel } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import DrillInNav from "./DrillInNav";
 import PrimaryRail from "./PrimaryRail";
+import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
 const EDGE_OPEN_DELAY_MS = 240;
 const OVERLAY_CLOSE_GRACE_MS = 250;
@@ -84,7 +85,7 @@ export default function DrillInShell() {
       <DrillInNav mode={mode} />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-border bg-background px-4">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
           <button
             type="button"
             aria-label="Go to Home dashboard"
@@ -93,6 +94,8 @@ export default function DrillInShell() {
           >
             W
           </button>
+          <span className="text-sm text-muted-foreground">/</span>
+          <WorkspaceSwitcher />
           <span className="text-sm text-muted-foreground">/</span>
           <span className="truncate text-sm font-medium text-foreground">
             {mode.label}

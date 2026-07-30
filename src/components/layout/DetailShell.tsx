@@ -517,24 +517,28 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <Link
               to={mainNavCrumbPath(basePath)}
-              className="flex items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              title={item?.label ?? basePath}
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {item?.icon && (
                 <item.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
               )}
-              {item?.label ?? basePath}
+              <span className="hidden max-w-[10rem] truncate lg:inline">
+                {item?.label ?? basePath}
+              </span>
             </Link>
             {leaf && (
               <>
-                <span className="text-muted-foreground">/</span>
+                <span className="shrink-0 text-muted-foreground">/</span>
                 <DropdownMenu.Root modal={false}>
                   <DropdownMenu.Trigger asChild>
                     <button
                       type="button"
-                      className="flex items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title={leaf.label}
+                      className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     >
-                      <span className="truncate">{leaf.label}</span>
-                      <ChevronDown className="h-3.5 w-3.5" />
+                      <span className="max-w-[10rem] truncate">{leaf.label}</span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0" />
                     </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
@@ -562,7 +566,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 </DropdownMenu.Root>
               </>
             )}
-            <span className="text-muted-foreground">/</span>
+            <span className="shrink-0 text-muted-foreground">/</span>
             <Popover.Root
               open={entityOpen}
               onOpenChange={(o) => {
@@ -573,13 +577,16 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               <Popover.Trigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                  title={selected?.name ?? "Untitled"}
+                  className="flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
                 >
-                  <span className="truncate">{selected?.name ?? "Untitled"}</span>
-                  <span className="font-normal text-muted-foreground">
+                  <span className="min-w-0 truncate">
+                    {selected?.name ?? "Untitled"}
+                  </span>
+                  <span className="shrink-0 font-normal text-muted-foreground">
                     #{selected?.id}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </button>
               </Popover.Trigger>
               <Popover.Portal>

@@ -4,6 +4,7 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Bookmark, GripVertical, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SplitSaveButton from "@/components/ui/SplitSaveButton";
 import {
   useActiveSavedFilterId,
   useIsSavedFilterDirty,
@@ -291,33 +292,15 @@ export default function SavedFilterBarClassic({
                 Discard
               </Button>
               {onSaved ? (
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <Button type="button" size="sm" className="h-7">
-                      Save
-                    </Button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      align="end"
-                      sideOffset={4}
-                      className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
-                    >
-                      <DropdownMenu.Item
-                        onSelect={() => saveActive(campaignId)}
-                        className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
-                      >
-                        Save changes to “{activeFilter?.name}”
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
-                        onSelect={openSaveAs}
-                        className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
-                      >
-                        Save as new filter
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
+                <SplitSaveButton
+                  label="Save"
+                  existingLabel={activeFilter?.name ?? "Filter"}
+                  saveAsNewLabel="Save as new filter"
+                  onSaveExisting={() => saveActive(campaignId)}
+                  onSaveAsNew={openSaveAs}
+                  className="[&_button]:h-7"
+                  menuClassName="min-w-[220px]"
+                />
               ) : (
                 <Button
                   type="button"

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
+import SplitSaveButton from "@/components/ui/SplitSaveButton";
 import {
   reportPresetLabel,
   useActiveCustomViewId,
@@ -49,33 +49,11 @@ export default function ReportViewSaveActions({
         >
           Discard
         </Button>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <Button type="button" size="sm">
-              Save view
-            </Button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content
-              align="end"
-              sideOffset={4}
-              className="z-50 min-w-[200px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
-            >
-              <DropdownMenu.Item
-                onSelect={() => saveDraft(campaignId)}
-                className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
-              >
-                Save changes to “{saveTargetLabel}”
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onSelect={openSaveAs}
-                className="cursor-pointer rounded-sm px-3 py-1.5 outline-none data-[highlighted]:bg-accent"
-              >
-                Save as new view
-              </DropdownMenu.Item>
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+        <SplitSaveButton
+          existingLabel={saveTargetLabel}
+          onSaveExisting={() => saveDraft(campaignId)}
+          onSaveAsNew={openSaveAs}
+        />
       </div>
 
       <Dialog.Root open={saveAsOpen} onOpenChange={setSaveAsOpen}>
