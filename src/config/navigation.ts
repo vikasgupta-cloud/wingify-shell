@@ -22,9 +22,12 @@ import {
   AppWindow,
   CirclePlus,
   Image,
+  Images,
   Component,
   Palette,
   CodeXml,
+  Blocks,
+  LogOut,
 } from "lucide-react";
 export type NavLeaf = {
   label: string;
@@ -351,21 +354,54 @@ export const PROFILE_MODES: ProfileMode[] = [
   },
 ];
 
+/** Signed-in user shown on the avatar row and in the profile menu header. */
+export const CURRENT_USER = {
+  name: "John Doe",
+  email: "john.doe@wingify.com",
+  initials: "JD",
+};
+
+/** Profile menu header target — rendered as the user card, not a list row. */
+export const PROFILE_DETAILS_PATH = "/settings/profile-details";
+export const LOGOUT_PATH = "/logout";
+
+const MODE_ICONS: Record<string, LucideIcon> = {
+  "websites-and-apps": AppWindow,
+  integrations: Blocks,
+  pages: FileText,
+  "assets-hub": Images,
+  settings: Settings,
+};
+
 const modeLeaf = (id: string): NavLeaf => {
   const mode = PROFILE_MODES.find((m) => m.id === id)!;
-  return { label: mode.label, path: mode.path, hideCreate: true };
+  return {
+    label: mode.label,
+    path: mode.path,
+    hideCreate: true,
+    icon: MODE_ICONS[id],
+  };
 };
 
 // Profile is its own flyout entry but lands inside the Settings shell.
 const profileFlyoutSections: NavSection[] = [
-  { items: [{ label: "Profile", path: "/settings/profile-details", hideCreate: true }] },
+  {
+    items: [
+      { label: "Profile", path: PROFILE_DETAILS_PATH, hideCreate: true, icon: Contact },
+    ],
+  },
   { items: [modeLeaf("websites-and-apps"), modeLeaf("integrations")] },
   { items: [modeLeaf("pages"), modeLeaf("assets-hub")] },
   { items: [modeLeaf("settings")] },
+  {
+    items: [{ label: "Logout", path: LOGOUT_PATH, hideCreate: true, icon: LogOut }],
+  },
 ];
 
 const profileItem = NAV.find((i) => i.path === "/profile");
 if (profileItem) {
+  profileItem.label = CURRENT_USER.name;
+  profileItem.initials = CURRENT_USER.initials;
   profileItem.sections = profileFlyoutSections;
 }
 

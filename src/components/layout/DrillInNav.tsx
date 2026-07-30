@@ -33,7 +33,7 @@ function matchesQuery(label: string, q: string) {
 
 function CountPill({ count }: { count: number }) {
   return (
-    <span className="ml-auto shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+    <span className="ml-auto shrink-0 rounded-full bg-background px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
       {count}
     </span>
   );
@@ -46,11 +46,11 @@ function LeafLink({ leaf }: { leaf: NavLeaf }) {
       to={leaf.path}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-muted",
+          "flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-background",
           leaf.action ? "text-muted-foreground" : "text-foreground",
           isActive &&
             !leaf.action &&
-            "bg-accent font-medium text-accent-foreground"
+            "bg-background font-medium text-foreground"
         )
       }
     >
@@ -118,8 +118,8 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
           to={item.path}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-              isActive && "bg-accent font-medium text-accent-foreground"
+              "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-background",
+              isActive && "bg-background font-medium text-foreground"
             )
           }
         >
@@ -150,7 +150,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
 
     return (
       <div key={item.path}>
-        <div className="group flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-muted">
+        <div className="group flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-background">
           <button
             type="button"
             onClick={() => {
@@ -198,7 +198,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
 
   return (
     <nav
-      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-panel py-4 text-panel-foreground"
+      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-muted py-4 text-panel-foreground"
       style={{ width: SETTINGS_NAV_WIDTH }}
     >
       <div className="flex shrink-0 items-center px-3 pb-3">
@@ -206,7 +206,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
           type="button"
           aria-label="Back to main menu"
           onClick={goBack}
-          className="flex min-w-0 items-center gap-1 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-muted"
+          className="flex min-w-0 items-center gap-1 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-background"
         >
           <ArrowLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="truncate text-sm font-semibold">{mode.label}</span>

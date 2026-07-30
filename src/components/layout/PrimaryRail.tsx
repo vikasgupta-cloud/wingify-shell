@@ -8,6 +8,7 @@ import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { useUIStore } from "../../store/ui";
 import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
+import ProfileMenuPanel from "./ProfileMenuPanel";
 
 const FLYOUT_CLOSE_GRACE_MS = 120;
 const MORE_CLOSE_GRACE_MS = 150;
@@ -338,11 +339,18 @@ export default function PrimaryRail({
             onMouseEnter={cancelClose}
             onMouseLeave={scheduleClose}
           >
-            <SubNavPanel
-              item={flyoutItem}
-              variant="flyout"
-              onRequestClose={() => setFlyout(null)}
-            />
+            {flyoutItem.path === "/profile" ? (
+              <ProfileMenuPanel
+                item={flyoutItem}
+                onRequestClose={() => setFlyout(null)}
+              />
+            ) : (
+              <SubNavPanel
+                item={flyoutItem}
+                variant="flyout"
+                onRequestClose={() => setFlyout(null)}
+              />
+            )}
           </div>
         )}
 

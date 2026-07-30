@@ -138,20 +138,29 @@ export default function ExpandedNav() {
                 {i > 0 && (
                   <div className="my-2 h-px bg-panel-border" aria-hidden="true" />
                 )}
-                {section.items.map((leaf) => (
-                  <NavLink
-                    key={leaf.path}
-                    to={leaf.path}
-                    className={({ isActive: leafActive }) =>
-                      cn(
-                        "rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                        leafActive && "bg-accent font-medium text-accent-foreground"
-                      )
-                    }
-                  >
-                    {leaf.label}
-                  </NavLink>
-                ))}
+                {section.items.map((leaf) => {
+                  const LeafIcon = leaf.icon;
+                  return (
+                    <NavLink
+                      key={leaf.path}
+                      to={leaf.path}
+                      className={({ isActive: leafActive }) =>
+                        cn(
+                          "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                          leafActive && "bg-accent font-medium text-accent-foreground"
+                        )
+                      }
+                    >
+                      {LeafIcon && (
+                        <LeafIcon
+                          className="h-4 w-4 shrink-0 text-muted-foreground"
+                          strokeWidth={1.75}
+                        />
+                      )}
+                      <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+                    </NavLink>
+                  );
+                })}
               </div>
             ))}
           </div>
