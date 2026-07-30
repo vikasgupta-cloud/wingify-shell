@@ -23,7 +23,13 @@ import {
 import { conclusionCopy } from "../../data/conclusionCopy";
 import ConclusionStateIcon from "../reports/ConclusionStateIcon";
 import ReportsEmptyState from "../reports/ReportsEmptyState";
-import { StatTile, UpliftPill, VariantChip } from "../reports/variationCard";
+import {
+  previewHero,
+  StatTile,
+  UpliftPill,
+  VariantChip,
+  WebpagePreview,
+} from "../reports/variationCard";
 import type { ReportFilterContext } from "../../pages/reports/reportFilters";
 import {
   variantConversionsAllocated,
@@ -37,6 +43,12 @@ import {
 import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "../../lib/utils";
 import { useQuickViewStore } from "../../store/quickView";
 import { useVisibleCampaigns } from "../../store/rows";
@@ -48,6 +60,14 @@ import StatusMenu from "../ui/StatusMenu";
 
 const formatNumber = (n: number) => n.toLocaleString("en-US");
 const formatUplift = (n: number) => `${n >= 0 ? "+" : ""}${n}%`;
+const formatStartDate = (iso: string | null) => {
+  if (!iso) return "—";
+  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
 const NAV_BUTTON =
   "h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40";
@@ -185,17 +205,49 @@ function CollectingCard({ campaign }: { campaign: Campaign }) {
 function ProgressCard({ campaign }: { campaign: Campaign }) {
   const r = campaign.report;
   const remainingDays = Math.max(0, r.requiredDays - r.elapsedDays);
-  const { title } = conclusionCopy("progress", { days: remainingDays });
+  const daysLabel = remainingDays === 1 ? "1 day" : `${remainingDays} days`;
+
   return (
     <div className="rounded-lg border border-border p-4">
-      <StateCardHeader kind="progress" title={title} />
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <ConclusionStat
-          label="Duration"
-          achieved={`${r.elapsedDays}`}
-          rest={`/ ${r.requiredDays} days`}
-          pct={pctOf(r.elapsedDays, r.requiredDays)}
-        />
+      <div className="flex items-center gap-2.5">
+        <ConclusionStateIcon kind="progress" size={18} />
+        <div className="text-xl font-semibold text-foreground">
+          Conclusion in{" "}
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="underline decoration-muted-foreground/50 decoration-dotted underline-offset-4 transition-colors hover:decoration-foreground"
+                >
+                  {daysLabel}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="start"
+                className="border border-border bg-popover px-3 py-2.5 text-popover-foreground shadow-md"
+              >
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-6">
+                    <span className="text-muted-foreground">Duration</span>
+                    <span className="font-medium tabular-nums text-foreground">
+                      {r.elapsedDays} / {r.requiredDays} days
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-6">
+                    <span className="text-muted-foreground">Started</span>
+                    <span className="font-medium text-foreground">
+                      {formatStartDate(campaign.startedOn)}
+                    </span>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <ConclusionStat
           label="Unique visitors"
           achieved={formatNumber(campaign.visitors)}
@@ -386,7 +438,7 @@ function VariationsCard({ campaign }: { campaign: Campaign }) {
   const control = variants[0];
 
   return (
-    <div className="rounded-lg border border-border p-4">
+    <div>
       <div className="flex items-baseline justify-between gap-2">
         <div className="text-sm font-medium text-foreground">Variations</div>
         <div className="truncate text-xs text-muted-foreground">
@@ -394,17 +446,22 @@ function VariationsCard({ campaign }: { campaign: Campaign }) {
         </div>
       </div>
 
-      <div className="mt-3 space-y-2">
-        {variants.map((variant, index) => (
-          <VariationRow
-            key={variant.id}
-            campaign={campaign}
-            variant={variant}
-            index={index}
-            isControl={index === 0}
-            isBest={variant.id === bestId && variant.id !== control?.id}
-          />
-        ))}
+      {/* Same comparison as the reports Overview, scrolled sideways. Nested
+          flex keeps start/end padding visible (padding on the overflow node
+          itself is unreliable with snap scrolling). */}
+      <div className="-mx-6 mt-3 overflow-x-auto overscroll-x-contain pb-2">
+        <div className="flex w-max snap-x snap-mandatory gap-3 px-6">
+          {variants.map((variant, index) => (
+            <VariationRow
+              key={variant.id}
+              campaign={campaign}
+              variant={variant}
+              index={index}
+              isControl={index === 0}
+              isBest={variant.id === bestId && variant.id !== control?.id}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -429,48 +486,47 @@ function VariationRow({
     variantConversionsAllocated(campaign, index, QUICKVIEW_FILTERS)
   );
 
+  const hero = previewHero(index);
+
   return (
     <article
       className={cn(
-        "rounded-lg border border-border p-4",
+        "w-[276px] shrink-0 snap-start rounded-lg border border-border p-3",
         isBest && "bg-muted/40"
       )}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex h-[25px] items-center gap-2">
         <VariantChip>{variant.label}</VariantChip>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           {variant.name}
         </span>
         {isBest && (
-          <span className="flex h-[25px] shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2.5">
-            <Award
-              className="h-3 w-3 text-decision-winner-fg"
-              aria-hidden
-            />
-            <span className="text-xs font-medium text-decision-winner-fg">
+          <span className="flex h-[22px] shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2">
+            <Award className="h-3 w-3 text-decision-winner-fg" aria-hidden />
+            <span className="text-[11px] font-medium text-decision-winner-fg">
               Leading
             </span>
           </span>
         )}
         {isControl && (
-          <span className="shrink-0 text-xs text-muted-foreground">
+          <span className="shrink-0 text-[11px] text-muted-foreground">
             Original
           </span>
         )}
       </div>
 
       {collecting ? (
-        <div className="mt-4">
+        <div className="mt-3">
           <CollectingInline />
         </div>
       ) : (
-        <div className="mt-4">
-          <div className="flex items-start justify-between gap-3">
+        <>
+          <div className="mt-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[30px] font-semibold leading-none tabular-nums tracking-tight text-foreground">
+              <p className="text-2xl font-semibold leading-none tabular-nums tracking-tight text-foreground">
                 {formatNumber(conversions)}
               </p>
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
                 Unique conversions
               </p>
             </div>
@@ -483,13 +539,15 @@ function VariationRow({
             />
           </div>
 
-          <dl className="mt-4 grid grid-cols-3 gap-2">
+          <dl className="mt-3 grid grid-cols-3 gap-1.5">
             <StatTile
+              compact
               label={campaign.primaryMetric}
               value={`${variant.convRate.toFixed(2)}%`}
             />
-            <StatTile label="Visitors" value={formatNumber(visitors)} />
+            <StatTile compact label="Visitors" value={formatNumber(visitors)} />
             <StatTile
+              compact
               label="Confidence"
               value={
                 isControl || variant.confidence === null
@@ -498,7 +556,16 @@ function VariationRow({
               }
             />
           </dl>
-        </div>
+
+          <WebpagePreview
+            compact
+            headline={hero.headline}
+            sub={hero.sub}
+            cta={hero.cta}
+            conversionsLabel={`${formatNumber(conversions)} conversions · ${variant.convRate.toFixed(2)}%`}
+            isControl={isControl}
+          />
+        </>
       )}
     </article>
   );
