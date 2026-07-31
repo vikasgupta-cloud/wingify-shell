@@ -7,6 +7,12 @@ import { EditorToolRail } from "@/components/editor/EditorToolRail";
 import { EditorCanvas } from "@/components/editor/EditorCanvas";
 import { EditorCopilotPanel } from "@/components/editor/EditorCopilotPanel";
 import { EditorEditionPanel } from "@/components/editor/EditorEditionPanel";
+import { EditorLayersPanel } from "@/components/editor/EditorLayersPanel";
+import { EditorAddPanel } from "@/components/editor/EditorAddPanel";
+import { EditorMetricsPanel } from "@/components/editor/EditorMetricsPanel";
+import { EditorChangesPanel } from "@/components/editor/EditorChangesPanel";
+import { EditorTranslatePanel } from "@/components/editor/EditorTranslatePanel";
+import { EditorLeftOverlay } from "@/components/editor/EditorLeftOverlay";
 import {
   defaultFloatPos,
   defaultPanelChrome,
@@ -18,6 +24,17 @@ import {
   EditorUtilityRail,
   type EditorSidePanelId,
 } from "@/components/editor/EditorUtilityRail";
+import {
+  DEFAULT_SCENARIO,
+  DEMO_SELECTION,
+  EDITOR_SCENARIOS,
+  type EditionTabId,
+  type EditorDevice,
+  type EditorLayoutMode,
+  type EditorLeftTool,
+  type EditorScenarioId,
+  type EditorSelection,
+} from "@/config/editorScenarios";
 
 type PanelState = {
   open: boolean;
@@ -38,6 +55,22 @@ function isDetached(mode: EditorPanelChrome["mode"]) {
   return mode === "floating" || mode === "minimized";
 }
 
+function panelsFromOpen(rightOpen: EditorSidePanelId[]): Record<
+  EditorSidePanelId,
+  PanelState
+> {
+  return {
+    copilot: {
+      open: rightOpen.includes("copilot"),
+      chrome: defaultPanelChrome(),
+    },
+    edition: {
+      open: rightOpen.includes("edition"),
+      chrome: defaultPanelChrome(),
+    },
+  };
+}
+
 /**
  * Full-tab visual editor — Global Layout / Default from Figma.
  * Opened from campaign config via Launch Editor.
@@ -47,14 +80,37 @@ export default function EditorPage() {
     entityId: string;
     variationId: string;
   }>();
+
+  const [scenarioId, setScenarioId] = useState<EditorScenarioId>(
+    DEFAULT_SCENARIO.id
+  );
+  const [layoutMode, setLayoutMode] = useState<EditorLayoutMode>(
+    DEFAULT_SCENARIO.layoutMode
+  );
+  const [device, setDevice] = useState<EditorDevice>(DEFAULT_SCENARIO.device);
+  const [leftTool, setLeftTool] = useState<EditorLeftTool | null>(
+    DEFAULT_SCENARIO.leftTool
+  );
+  const [selection, setSelection] = useState<EditorSelection | null>(
+    DEFAULT_SCENARIO.selection
+  );
+  const [editionTab, setEditionTab] = useState<EditionTabId>(
+    DEFAULT_SCENARIO.editionTab
+  );
+  const [showSubtestPopover, setShowSubtestPopover] = useState(
+    DEFAULT_SCENARIO.showSubtestPopover
+  );
+  const [showDimensionsBar, setShowDimensionsBar] = useState(
+    DEFAULT_SCENARIO.showDimensionsBar
+  );
+
   const [panels, setPanels] = useState<Record<EditorSidePanelId, PanelState>>(
-    () => ({
-      copilot: { open: true, chrome: defaultPanelChrome() },
-      edition: { open: false, chrome: defaultPanelChrome() },
-    })
+    () => panelsFromOpen(DEFAULT_SCENARIO.rightOpen)
   );
   const [floatPos, setFloatPos] = useState(() => defaultFloatPos());
-  const [activeTab, setActiveTab] = useState<EditorSidePanelId>("copilot");
+  const [activeTab, setActiveTab] = useState<EditorSidePanelId>(
+    DEFAULT_SCENARIO.rightOpen[0] ?? "copilot"
+  );
   const [shellMinimized, setShellMinimized] = useState(false);
 
   useEffect(() => {
@@ -63,6 +119,23 @@ export default function EditorPage() {
     return () => {
       document.title = previous;
     };
+  }, []);
+
+  const applyScenario = useCallback((id: EditorScenarioId) => {
+    const scenario = EDITOR_SCENARIOS.find((s) => s.id === id);
+    if (!scenario) return;
+    setScenarioId(scenario.id);
+    setLayoutMode(scenario.layoutMode);
+    setDevice(scenario.device);
+    setLeftTool(scenario.leftTool);
+    setSelection(scenario.selection);
+    setEditionTab(scenario.editionTab);
+    setShowSubtestPopover(scenario.showSubtestPopover);
+    setShowDimensionsBar(scenario.showDimensionsBar);
+    setPanels(panelsFromOpen(scenario.rightOpen));
+    setActiveTab(scenario.rightOpen[0] ?? "copilot");
+    setShellMinimized(false);
+    setFloatPos(defaultFloatPos());
   }, []);
 
   const detachedIds = PANEL_ORDER.filter(
@@ -74,7 +147,6 @@ export default function EditorPage() {
   const openIds = PANEL_ORDER.filter((id) => panels[id].open);
   const tabbed = detachedIds.length > 1;
 
-  // Keep active tab valid for the detached set.
   const detachedKey = detachedIds.join(",");
   useEffect(() => {
     if (!detachedKey) return;
@@ -206,6 +278,10 @@ export default function EditorPage() {
     });
   };
 
+  const toggleLeftTool = (id: EditorLeftTool) => {
+    setLeftTool((current) => (current === id ? null : id));
+  };
+
   const renderPanel = (id: EditorSidePanelId, inShell: boolean) => {
     const state = panels[id];
     const shared = {
@@ -220,24 +296,72 @@ export default function EditorPage() {
       groupDrag: inShell ? groupDrag : undefined,
     };
     return id === "copilot" ? (
-      <EditorCopilotPanel key={id} {...shared} />
+      <EditorCopilotPanel
+        key={id}
+        {...shared}
+        selection={selection}
+        onClearSelection={() => setSelection(null)}
+      />
     ) : (
-      <EditorEditionPanel key={id} {...shared} />
+      <EditorEditionPanel
+        key={id}
+        {...shared}
+        selection={selection}
+        initialTab={editionTab}
+      />
     );
   };
+
+  const leftPanel =
+    leftTool === "layers" ? (
+      <EditorLayersPanel onClose={() => setLeftTool(null)} />
+    ) : leftTool === "add" ? (
+      <EditorAddPanel onClose={() => setLeftTool(null)} />
+    ) : leftTool === "metrics" ? (
+      <EditorMetricsPanel onClose={() => setLeftTool(null)} />
+    ) : leftTool === "changes" ? (
+      <EditorChangesPanel onClose={() => setLeftTool(null)} />
+    ) : leftTool === "translate" ? (
+      <EditorTranslatePanel onClose={() => setLeftTool(null)} />
+    ) : null;
 
   return (
     <div
       className="flex h-screen flex-col overflow-hidden bg-background"
       data-campaign-id={entityId}
       data-variation-id={variationId}
+      data-scenario={scenarioId}
     >
-      <EditorTopBar />
+      <EditorTopBar
+        scenarioId={scenarioId}
+        onScenarioChange={applyScenario}
+      />
       <div className="flex min-h-0 flex-1">
-        <EditorToolRail />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <EditorVariationBar />
-          <EditorCanvas />
+        <EditorToolRail activeTool={leftTool} onSelect={toggleLeftTool} />
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          <EditorVariationBar
+            layoutMode={layoutMode}
+            device={device}
+            onDeviceChange={(d) => {
+              setDevice(d);
+              setShowDimensionsBar(d !== "desktop");
+            }}
+          />
+          <div className="relative min-h-0 flex-1">
+            {leftPanel && (
+              <div className="absolute inset-y-0 left-0 z-20 flex">
+                <EditorLeftOverlay>{leftPanel}</EditorLeftOverlay>
+              </div>
+            )}
+            <EditorCanvas
+              device={device}
+              showDimensionsBar={showDimensionsBar}
+              selection={selection}
+              onSelectDemo={() => setSelection(DEMO_SELECTION)}
+              onClearSelection={() => setSelection(null)}
+              showSubtestPopover={showSubtestPopover}
+            />
+          </div>
         </div>
         {dockedIds.map((id) => renderPanel(id, false))}
         {detachedIds.length > 0 && (

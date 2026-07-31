@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlignCenter,
   AlignJustify,
@@ -47,8 +47,12 @@ import type {
   EditorPanelChrome,
   EditorPanelGroupDragHandlers,
 } from "./EditorFloatablePanel";
+import type {
+  EditionTabId,
+  EditorSelection,
+} from "@/config/editorScenarios";
 
-type EditionTab = "styles" | "attributes" | "tracking";
+type EditionTab = EditionTabId;
 type AlignId = "left" | "center" | "right" | "justify";
 type FlowId = "row" | "column" | "row-reverse" | "column-reverse";
 
@@ -672,6 +676,148 @@ function StylesTab() {
   );
 }
 
+function AttributesTab() {
+  const [classes, setClasses] = useState(["heading-title"]);
+  const [custom, setCustom] = useState([{ name: "", value: "" }]);
+
+  return (
+    <Accordion
+      type="multiple"
+      defaultValue={["standard", "custom"]}
+      className="w-full"
+    >
+      <AccordionItem value="standard" className="border-border px-3">
+        <AccordionTrigger className="py-2.5 text-[10px] font-semibold tracking-wide text-muted-foreground hover:no-underline">
+          STANDARD
+        </AccordionTrigger>
+        <AccordionContent className="space-y-2.5 pb-3">
+          <div className="space-y-1">
+            <FieldLabel>ID</FieldLabel>
+            <FieldInput placeholder="Value" />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel>Class</FieldLabel>
+            <div className="flex min-h-9 flex-wrap gap-1 rounded-md border border-border bg-background p-1.5">
+              {classes.map((c) => (
+                <span
+                  key={c}
+                  className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground"
+                >
+                  {c}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${c}`}
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() =>
+                      setClasses((prev) => prev.filter((x) => x !== c))
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <FieldLabel>Title</FieldLabel>
+            <FieldInput placeholder="Value" />
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="custom" className="border-border px-3">
+        <AccordionTrigger className="py-2.5 text-[10px] font-semibold tracking-wide text-muted-foreground hover:no-underline">
+          CUSTOM
+        </AccordionTrigger>
+        <AccordionContent className="space-y-2 pb-3">
+          {custom.map((row, i) => (
+            <div key={i} className="flex items-center gap-1">
+              <FieldInput
+                placeholder="Name"
+                value={row.name}
+                onChange={(e) => {
+                  const next = [...custom];
+                  next[i] = { ...row, name: e.target.value };
+                  setCustom(next);
+                }}
+                className="flex-1"
+              />
+              <FieldInput
+                placeholder="Value"
+                value={row.value}
+                onChange={(e) => {
+                  const next = [...custom];
+                  next[i] = { ...row, value: e.target.value };
+                  setCustom(next);
+                }}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 shrink-0"
+                aria-label="Remove attribute"
+                onClick={() => setCustom(custom.filter((_, j) => j !== i))}
+              >
+                <Minus className="size-3.5" strokeWidth={1.75} />
+              </Button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-foreground"
+            onClick={() => setCustom([...custom, { name: "", value: "" }])}
+          >
+            <Plus className="size-3.5" strokeWidth={1.75} />
+            Add attribute
+          </button>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
+
+function TrackingTab() {
+  return (
+    <div className="space-y-3 px-3 py-3">
+      <p className="text-xs text-muted-foreground">
+        Track clicks and impressions on this element.
+      </p>
+      <label className="flex items-center gap-2 text-xs text-foreground">
+        <Checkbox defaultChecked={false} />
+        Track clicks
+      </label>
+      <label className="flex items-center gap-2 text-xs text-foreground">
+        <Checkbox defaultChecked={false} />
+        Track impressions
+      </label>
+      <div className="space-y-1">
+        <FieldLabel>Metric name</FieldLabel>
+        <FieldInput placeholder="e.g. Headline clicks" />
+      </div>
+    </div>
+  );
+}
+
+function EditionEmptyState() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <div className="relative size-24 rounded-lg border border-dashed border-border bg-muted/40">
+        <span className="absolute left-3 top-3 size-8 rounded border-2 border-foreground/40" />
+        <span className="absolute bottom-4 right-4 size-3 rotate-45 border-b-2 border-r-2 border-foreground" />
+      </div>
+      <p className="text-sm font-semibold text-foreground">
+        Select an element on page
+      </p>
+      <p className="max-w-[220px] text-xs leading-5 text-muted-foreground">
+        Click any element in the preview to inspect styles, attributes, and
+        tracking.
+      </p>
+    </div>
+  );
+}
+
 /** Edition inspector — Styles / Attributes / Tracking for the selected element. */
 export function EditorEditionPanel({
   onClose,
@@ -681,6 +827,8 @@ export function EditorEditionPanel({
   grouped,
   tabPane,
   groupDrag,
+  selection = null,
+  initialTab = "styles",
 }: {
   onClose?: () => void;
   chrome: EditorPanelChrome;
@@ -689,14 +837,22 @@ export function EditorEditionPanel({
   grouped?: boolean;
   tabPane?: boolean;
   groupDrag?: EditorPanelGroupDragHandlers;
+  selection?: EditorSelection | null;
+  initialTab?: EditionTab;
 }) {
-  const [tab, setTab] = useState<EditionTab>("styles");
+  const [tab, setTab] = useState<EditionTab>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   const tabs: { id: EditionTab; label: string }[] = [
     { id: "styles", label: "Styles" },
     { id: "attributes", label: "Attributes" },
     { id: "tracking", label: "Tracking" },
   ];
+
+  const hasSelection = Boolean(selection);
 
   return (
     <EditorFloatablePanel
@@ -711,72 +867,96 @@ export function EditorEditionPanel({
       tabPane={tabPane}
       groupDrag={groupDrag}
     >
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 space-y-2 border-b border-border px-3 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-sm font-semibold text-foreground">
-              Heading {"<h3>"}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-7 shrink-0 gap-1 px-2 text-xs font-semibold"
-            >
-              Edit Code
-              <ChevronDown className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
-            </Button>
+      {!hasSelection ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 border-b border-border px-3 py-2.5">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox disabled />
+              None selected
+            </label>
+            <div className="mt-2 flex gap-1 rounded-md border border-border bg-muted p-0.5">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    "h-7 flex-1 rounded-[5px] text-xs font-semibold outline-none transition-colors",
+                    tab === t.id
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="inline-flex max-w-full items-center gap-1 rounded-md border border-border bg-muted px-1.5 py-0.5">
-            <code className="truncate text-[11px] text-muted-foreground">
-              .text-heading-3
-            </code>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-5 shrink-0"
-              aria-label="Copy selector"
-              onClick={() =>
-                void navigator.clipboard?.writeText(".text-heading-3")
-              }
-            >
-              <Copy className="size-3" strokeWidth={1.75} />
-            </Button>
-          </div>
-          <div className="flex gap-1 rounded-md border border-border bg-muted p-0.5">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
+          <EditionEmptyState />
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 space-y-2 border-b border-border px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {selection!.tag} {selection!.label}
+              </p>
+              <Button
                 type="button"
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "h-7 flex-1 rounded-[5px] text-xs font-semibold outline-none transition-colors",
-                  tab === t.id
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                variant="outline"
+                size="sm"
+                className="h-7 shrink-0 gap-1 px-2 text-xs font-semibold"
               >
-                {t.label}
-              </button>
-            ))}
+                Edit Code
+                <ChevronDown
+                  className="size-3.5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
+              </Button>
+            </div>
+            <div className="inline-flex max-w-full items-center gap-1 rounded-md border border-border bg-muted px-1.5 py-0.5">
+              <code className="truncate text-[11px] text-muted-foreground">
+                .text-heading-3
+              </code>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-5 shrink-0"
+                aria-label="Copy selector"
+                onClick={() =>
+                  void navigator.clipboard?.writeText(".text-heading-3")
+                }
+              >
+                <Copy className="size-3" strokeWidth={1.75} />
+              </Button>
+            </div>
+            <div className="flex gap-1 rounded-md border border-border bg-muted p-0.5">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    "h-7 flex-1 rounded-[5px] text-xs font-semibold outline-none transition-colors",
+                    tab === t.id
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {tab === "styles" && <StylesTab />}
+            {tab === "attributes" && <AttributesTab />}
+            {tab === "tracking" && <TrackingTab />}
           </div>
         </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {tab === "styles" && <StylesTab />}
-          {tab === "attributes" && (
-            <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-              Attributes for this element will appear here.
-            </p>
-          )}
-          {tab === "tracking" && (
-            <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-              Tracking settings will appear here.
-            </p>
-          )}
-        </div>
-      </div>
+      )}
     </EditorFloatablePanel>
   );
 }

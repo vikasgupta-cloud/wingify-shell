@@ -13,6 +13,7 @@ import type {
   EditorPanelChrome,
   EditorPanelGroupDragHandlers,
 } from "./EditorFloatablePanel";
+import type { EditorSelection } from "@/config/editorScenarios";
 
 import aiSparkle from "@/assets/editor/ai-sparkle.svg";
 import send from "@/assets/editor/send.svg";
@@ -35,6 +36,8 @@ export function EditorCopilotPanel({
   grouped,
   tabPane,
   groupDrag,
+  selection = null,
+  onClearSelection,
 }: {
   userName?: string;
   onClose?: () => void;
@@ -44,6 +47,8 @@ export function EditorCopilotPanel({
   grouped?: boolean;
   tabPane?: boolean;
   groupDrag?: EditorPanelGroupDragHandlers;
+  selection?: EditorSelection | null;
+  onClearSelection?: () => void;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -129,11 +134,30 @@ export function EditorCopilotPanel({
       </div>
 
       <div className="absolute inset-x-4 bottom-3">
+        {selection && (
+          <div className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1">
+            <code className="truncate text-[11px] font-medium text-foreground">
+              {selection.selector}
+            </code>
+            <button
+              type="button"
+              aria-label="Clear selection"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={onClearSelection}
+            >
+              ×
+            </button>
+          </div>
+        )}
         <div className="relative flex h-24 items-end justify-between overflow-hidden rounded-lg border border-border bg-background p-3 transition-colors focus-within:border-input">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Ask anything....."
+            placeholder={
+              selection
+                ? "Ask anything to modify the selected element..."
+                : "Ask anything....."
+            }
             className="absolute inset-x-3 bottom-10 top-3 resize-none bg-transparent text-[13px] leading-5 text-foreground outline-none placeholder:text-muted-foreground"
           />
           <Button

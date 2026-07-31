@@ -1,7 +1,20 @@
 import { useState } from "react";
+import { LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { EditorIcon } from "./EditorIcon";
+import {
+  EDITOR_SCENARIOS,
+  type EditorScenarioId,
+} from "@/config/editorScenarios";
 
 import arrowLeft from "@/assets/editor/arrow-left.svg";
 import wingifyLogo from "@/assets/wingify-logo.png";
@@ -21,11 +34,17 @@ const MODES: { id: Mode; label: string; icon: string }[] = [
 export function EditorTopBar({
   campaignName = "My Super Duper Campaign Name",
   statusLabel = "Status",
+  scenarioId,
+  onScenarioChange,
 }: {
   campaignName?: string;
   statusLabel?: string;
+  scenarioId?: EditorScenarioId;
+  onScenarioChange?: (id: EditorScenarioId) => void;
 }) {
   const [mode, setMode] = useState<Mode>("design");
+  const activeScenario =
+    EDITOR_SCENARIOS.find((s) => s.id === scenarioId) ?? EDITOR_SCENARIOS[0]!;
 
   return (
     <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-border bg-background px-2">
@@ -47,12 +66,44 @@ export function EditorTopBar({
           />
         </div>
         <div className="flex items-center gap-2 pl-1">
-          <p className="max-w-[220px] truncate text-[13px] font-medium text-foreground">
+          <p className="max-w-[180px] truncate text-[13px] font-medium text-foreground">
             {campaignName}
           </p>
           <span className="inline-flex h-5 items-center rounded-full bg-muted px-2.5 text-xs font-medium text-muted-foreground">
             {statusLabel}
           </span>
+          {onScenarioChange && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1.5 rounded px-2 text-xs font-semibold"
+                >
+                  <LayoutTemplate className="size-3.5" strokeWidth={1.75} />
+                  <span className="max-w-[120px] truncate">
+                    {activeScenario.label}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel>Editor scenarios</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {EDITOR_SCENARIOS.map((s) => (
+                  <DropdownMenuItem
+                    key={s.id}
+                    onClick={() => onScenarioChange(s.id)}
+                    className={cn(
+                      s.id === activeScenario.id && "bg-accent font-semibold"
+                    )}
+                  >
+                    {s.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -92,10 +143,19 @@ export function EditorTopBar({
           <div className="h-6 w-px bg-border" />
         </div>
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded px-2.5 text-[13px] font-semibold">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 rounded px-2.5 text-[13px] font-semibold"
+          >
             Preview
           </Button>
-          <Button type="button" size="sm" className="h-7 rounded px-2.5 text-[13px] font-semibold">
+          <Button
+            type="button"
+            size="sm"
+            className="h-7 rounded px-2.5 text-[13px] font-semibold"
+          >
             Save & Next
           </Button>
         </div>
