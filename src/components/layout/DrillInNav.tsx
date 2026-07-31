@@ -46,16 +46,16 @@ function LeafLink({ leaf }: { leaf: NavLeaf }) {
       to={leaf.path}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+          "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
           isActive &&
             !leaf.action &&
-            "bg-muted font-medium text-foreground"
+            "bg-accent font-medium text-accent-foreground hover:bg-accent"
         )
       }
     >
       {Icon && (
         <Icon
-          className="h-4 w-4 shrink-0 text-muted-foreground"
+          className="h-4 w-4 shrink-0 text-foreground"
           strokeWidth={1.75}
         />
       )}
@@ -117,14 +117,14 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
           to={item.path}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-              isActive && "bg-muted font-medium text-foreground"
+              "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+              isActive && "bg-accent font-medium text-accent-foreground hover:bg-accent"
             )
           }
         >
           {Icon && (
             <Icon
-              className="h-4 w-4 shrink-0 text-muted-foreground"
+              className="h-4 w-4 shrink-0 text-foreground"
               strokeWidth={1.75}
             />
           )}
@@ -158,13 +158,13 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
               if (!open && item.items?.[0]) navigate(item.items[0].path);
             }}
             className={cn(
-              "flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left text-sm text-muted-foreground outline-none",
-              sectionActive && "font-medium text-foreground"
+              "flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left text-sm text-foreground outline-none",
+              sectionActive && "font-medium"
             )}
           >
             {Icon && (
               <Icon
-                className="h-4 w-4 shrink-0 text-muted-foreground"
+                className="h-4 w-4 shrink-0 text-foreground"
                 strokeWidth={1.75}
               />
             )}
@@ -197,7 +197,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
 
   return (
     <nav
-      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-background py-4 text-muted-foreground"
+      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-background py-4 text-foreground"
       style={{ width: SETTINGS_NAV_WIDTH }}
     >
       <div className="flex shrink-0 items-center px-3 pb-3">
@@ -205,9 +205,9 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
           type="button"
           aria-label="Back to main menu"
           onClick={goBack}
-          className="flex min-w-0 items-center gap-1 rounded-md px-1 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex min-w-0 items-center gap-1 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-muted"
         >
-          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <ArrowLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="truncate text-sm font-semibold">Back to app</span>
         </button>
       </div>

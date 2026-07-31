@@ -243,8 +243,9 @@ export default function ExpandedNav({
               return;
             }
             navigate(firstChildPath(item));
-            if (expanded && hasSections) {
-              setOpenPath(open ? null : item.path);
+            if (expanded) {
+              // Direct items collapse any open accordion; section items toggle.
+              setOpenPath(hasSections ? (open ? null : item.path) : null);
             }
           }}
           className={cn(
@@ -486,8 +487,7 @@ export default function ExpandedNav({
                     onBlur={scheduleMoreClose}
                     className={cn(
                       "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
-                      !!moreFlyout &&
-                        "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
+                      !!moreFlyout && "bg-muted"
                     )}
                   >
                     <MoreHorizontal className="h-5 w-5" strokeWidth={1.75} />

@@ -9,8 +9,8 @@ const SIZE: Record<ProfileAvatarSize, string> = {
 };
 
 /**
- * Current-user mark. Dark fill + light initials so it reads on the white rail;
- * pass `onDark` when it sits inside the collapsed active pill.
+ * Current-user mark: soft neutral wash, hairline ring, and weighty initials.
+ * Pass `onDark` when it sits inside the collapsed active pill.
  */
 export default function ProfileAvatar({
   initials,
@@ -26,11 +26,16 @@ export default function ProfileAvatar({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold uppercase tracking-[0.04em]",
+        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold uppercase tracking-[0.06em]",
         SIZE[size],
         onDark
           ? "bg-background text-foreground ring-1 ring-inset ring-border"
-          : "bg-foreground text-background shadow-[0_1px_2px_hsl(var(--foreground)/0.12)]",
+          : [
+              "bg-[linear-gradient(180deg,hsl(var(--muted))_0%,hsl(var(--surface))_100%)]",
+              "text-foreground",
+              "ring-1 ring-inset ring-border",
+              "shadow-[inset_0_1px_0_hsl(var(--background)/0.85),0_1px_2px_hsl(var(--foreground)/0.06)]",
+            ],
         className
       )}
       aria-hidden
