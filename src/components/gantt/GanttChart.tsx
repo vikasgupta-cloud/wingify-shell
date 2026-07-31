@@ -396,6 +396,13 @@ export default function GanttChart() {
   const currentPage = Math.min(page, totalPages);
   const pageRows = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Footer reports the real result count + visible range, never the page size.
+  // Controls only appear once the list is long enough to split.
+  const totalResults = sorted.length;
+  const rangeStart = totalResults === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(currentPage * pageSize, totalResults);
+  const showControls = totalResults > PAGE_SIZES[0];
+
   const grouped = groupBy !== null;
   const groups = useMemo(
     () => (grouped ? groupRows(pageRows, groupBy) : []),
@@ -623,28 +630,32 @@ export default function GanttChart() {
         </div>
       </div>
 
-      {/* Controls + pagination */}
+      {/* Footer — short lists state their count; range + page-size + pager only
+          appear once the list is long enough to page. */}
+      {totalResults > 0 && (
       <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span>Showing</span>
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Results per page"
-              className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground outline-none transition-colors hover:bg-muted"
-            >
-              {PAGE_SIZES.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-            <span>results</span>
-          </div>
-        </div>
+        <span className="tabular-nums">
+          {showControls
+            ? `${rangeStart}–${rangeEnd} of ${totalResults}`
+            : `${totalResults} result${totalResults === 1 ? "" : "s"}`}
+        </span>
 
-        <div className="flex items-center gap-0.5">
+        {showControls && (
+        <div className="flex items-center gap-2">
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            aria-label="Rows per page"
+            className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground outline-none transition-colors hover:bg-muted"
+          >
+            {PAGE_SIZES.map((size) => (
+              <option key={size} value={size}>
+                {size} / page
+              </option>
+            ))}
+          </select>
+          {totalPages > 1 && (
+          <div className="flex items-center gap-0.5">
           <button
             type="button"
             aria-label="First page"
@@ -696,8 +707,12 @@ export default function GanttChart() {
           >
             <ChevronsRight className="h-4 w-4" />
           </button>
+          </div>
+          )}
         </div>
+        )}
       </div>
+      )}
     </div>
   );
 }
