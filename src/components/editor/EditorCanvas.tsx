@@ -1,11 +1,17 @@
 import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import {
   Copy,
   Link2,
   MoreHorizontal,
   Move,
   Pencil,
   Sparkles,
-  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,15 +35,58 @@ const DEVICE_HEIGHT: Record<EditorDevice, string> = {
   mobile: "844px",
 };
 
+type Box = { top: number; left: number; width: number; height: number };
+
+function describeElement(el: Element): EditorSelection {
+  const tag = el.tagName;
+  const id = el.id;
+  const classes = Array.from(el.classList);
+  const label = id || classes[0] || tag.toLowerCase();
+  const selector = id
+    ? `${tag}#${id}`
+    : classes.length > 0
+      ? `${tag}.${classes[0]}`
+      : tag;
+  return { tag, label, selector };
+}
+
+function findBySelection(
+  doc: Document,
+  selection: EditorSelection
+): Element | null {
+  const byClass = selection.selector.includes(".")
+    ? doc.querySelector(selection.selector.replace(/^([A-Z0-9]+)\./i, (_, t) => `${t}.`))
+    : null;
+  if (byClass) return byClass;
+  // Fallback: first class token
+  const classMatch = selection.selector.match(/\.([\w-]+)/);
+  if (classMatch) {
+    const el = doc.querySelector(`.${classMatch[1]}`);
+    if (el) return el;
+  }
+  const tag = selection.tag.toLowerCase();
+  return doc.querySelector(tag);
+}
+
+function rectInFrame(el: Element): Box {
+  const r = el.getBoundingClientRect();
+  return {
+    top: r.top,
+    left: r.left,
+    width: Math.max(r.width, 1),
+    height: Math.max(r.height, 1),
+  };
+}
+
 /**
- * Center stage: website preview with optional device frame, selection, and MVT popover.
+ * Center stage: website preview with real DOM selection from the iframe.
  */
 export function EditorCanvas({
   src = PREVIEW_SRC,
   device = "desktop",
   showDimensionsBar = false,
   selection = null,
-  onSelectDemo,
+  onSelect,
   onClearSelection,
   showSubtestPopover = false,
 }: {
@@ -45,15 +94,136 @@ export function EditorCanvas({
   device?: EditorDevice;
   showDimensionsBar?: boolean;
   selection?: EditorSelection | null;
-  onSelectDemo?: () => void;
+  onSelect?: (selection: EditorSelection) => void;
   onClearSelection?: () => void;
   showSubtestPopover?: boolean;
 }) {
   const width = DEVICE_WIDTH[device];
   const framed = device !== "desktop";
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const selectedElRef = useRef<Element | null>(null);
+  const hoverElRef = useRef<Element | null>(null);
+  const [box, setBox] = useState<Box | null>(null);
+  const [hoverBox, setHoverBox] = useState<Box | null>(null);
+  const [frameReady, setFrameReady] = useState(0);
+
+  const syncSelectedBox = useCallback(() => {
+    const el = selectedElRef.current;
+    if (!el || !el.isConnected) {
+      setBox(null);
+      return;
+    }
+    setBox(rectInFrame(el));
+  }, []);
+
+  const clearHover = useCallback(() => {
+    hoverElRef.current?.removeAttribute("data-editor-hover");
+    hoverElRef.current = null;
+    setHoverBox(null);
+  }, []);
+
+  const bindFrame = useCallback(() => {
+    const iframe = iframeRef.current;
+    const doc = iframe?.contentDocument;
+    if (!doc?.body) return;
+
+    const onClick = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const target = e.target as Element | null;
+      if (!target || target === doc.documentElement || target === doc.body) {
+        selectedElRef.current = null;
+        setBox(null);
+        clearHover();
+        onClearSelection?.();
+        return;
+      }
+      selectedElRef.current = target;
+      clearHover();
+      setBox(rectInFrame(target));
+      onSelect?.(describeElement(target));
+    };
+
+    const onMove = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (!target || target === doc.documentElement || target === doc.body) {
+        clearHover();
+        return;
+      }
+      if (target === selectedElRef.current) {
+        clearHover();
+        return;
+      }
+      if (hoverElRef.current !== target) {
+        hoverElRef.current?.removeAttribute("data-editor-hover");
+        hoverElRef.current = target;
+        target.setAttribute("data-editor-hover", "");
+      }
+      setHoverBox(rectInFrame(target));
+    };
+
+    const onLeave = () => clearHover();
+    const onScrollOrResize = () => {
+      syncSelectedBox();
+      if (hoverElRef.current?.isConnected) {
+        setHoverBox(rectInFrame(hoverElRef.current));
+      }
+    };
+
+    doc.addEventListener("click", onClick, true);
+    doc.addEventListener("mousemove", onMove, true);
+    doc.addEventListener("mouseleave", onLeave, true);
+    doc.addEventListener("scroll", onScrollOrResize, true);
+    iframe?.contentWindow?.addEventListener("resize", onScrollOrResize);
+
+    setFrameReady((n) => n + 1);
+
+    return () => {
+      doc.removeEventListener("click", onClick, true);
+      doc.removeEventListener("mousemove", onMove, true);
+      doc.removeEventListener("mouseleave", onLeave, true);
+      doc.removeEventListener("scroll", onScrollOrResize, true);
+      iframe?.contentWindow?.removeEventListener("resize", onScrollOrResize);
+      clearHover();
+    };
+  }, [clearHover, onClearSelection, onSelect, syncSelectedBox]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const onLoad = () => bindFrame();
+    iframe.addEventListener("load", onLoad);
+    if (iframe.contentDocument?.readyState === "complete") {
+      return bindFrame();
+    }
+    return () => iframe.removeEventListener("load", onLoad);
+  }, [bindFrame, src]);
+
+  // Scenario / external selection → find real element
+  useLayoutEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc?.body) return;
+    if (!selection) {
+      selectedElRef.current = null;
+      setBox(null);
+      return;
+    }
+    const el = findBySelection(doc, selection);
+    if (el) {
+      selectedElRef.current = el;
+      setBox(rectInFrame(el));
+      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }, [selection, frameReady]);
+
+  useEffect(() => {
+    const onWinScroll = () => syncSelectedBox();
+    window.addEventListener("resize", onWinScroll);
+    return () => window.removeEventListener("resize", onWinScroll);
+  }, [syncSelectedBox]);
 
   return (
-    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-muted/30">
+    <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-muted/30">
       {showDimensionsBar && (
         <div className="flex h-8 shrink-0 items-center gap-3 border-b border-border bg-background px-3 text-xs">
           <span className="font-medium text-muted-foreground">Dimensions:</span>
@@ -98,7 +268,8 @@ export function EditorCanvas({
         <div
           className={cn(
             "relative mx-auto h-full bg-background",
-            framed && "my-4 overflow-hidden rounded-lg border border-border shadow-sm"
+            framed &&
+              "my-4 overflow-hidden rounded-lg border border-border shadow-sm"
           )}
           style={{
             width: framed ? width : "100%",
@@ -107,27 +278,41 @@ export function EditorCanvas({
           }}
         >
           <iframe
+            ref={iframeRef}
             title="Website preview"
             src={src}
             className="absolute inset-0 size-full border-0 bg-background"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           />
 
-          {/* Demo hit target — click to select heading region */}
-          <button
-            type="button"
-            aria-label="Select demo heading"
-            onClick={onSelectDemo}
-            className="absolute left-[8%] top-[42%] z-10 h-[12%] w-[40%] cursor-crosshair bg-transparent outline-none"
-          />
+          {hoverBox && !selection && (
+            <div
+              className="pointer-events-none absolute z-10 border border-dashed border-foreground/40"
+              style={{
+                top: hoverBox.top,
+                left: hoverBox.left,
+                width: hoverBox.width,
+                height: hoverBox.height,
+              }}
+            />
+          )}
 
-          {selection && (
-            <div className="pointer-events-none absolute left-[8%] top-[38%] z-20 w-[48%]">
-              <div className="pointer-events-auto mb-1 inline-flex items-center gap-1.5 rounded bg-foreground px-2 py-0.5 text-[11px] font-semibold text-background">
-                {selection.selector}
+          {selection && box && (
+            <div
+              className="pointer-events-none absolute z-20"
+              style={{
+                top: box.top,
+                left: box.left,
+                width: box.width,
+                height: box.height,
+              }}
+            >
+              <div className="absolute inset-0 border-2 border-foreground bg-foreground/5" />
+              <div className="pointer-events-auto absolute -top-6 left-0 inline-flex max-w-[min(100%,280px)] items-center gap-1.5 rounded bg-foreground px-2 py-0.5 text-[11px] font-semibold text-background">
+                <span className="truncate">{selection.selector}</span>
                 <button
                   type="button"
-                  className="outline-none"
+                  className="shrink-0 outline-none"
                   aria-label="Copy selector"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -137,16 +322,13 @@ export function EditorCanvas({
                   <Copy className="size-3" strokeWidth={2} />
                 </button>
               </div>
-              <div className="rounded border-2 border-foreground bg-foreground/5">
-                <div className="h-16" />
-              </div>
-              <div className="pointer-events-auto mt-2 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-1 shadow-md">
+              <div className="pointer-events-auto absolute left-0 top-full mt-2 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-1 shadow-md">
                 {(
                   [
                     ["AI", Sparkles],
                     ["Edit", Pencil],
                     ["Move", Move],
-                    ["Style", Wand2],
+                    ["Link", Link2],
                     ["More", MoreHorizontal],
                   ] as const
                 ).map(([label, Icon]) => (
@@ -166,7 +348,7 @@ export function EditorCanvas({
               {onClearSelection && (
                 <button
                   type="button"
-                  className="pointer-events-auto ml-2 text-[10px] font-medium text-muted-foreground underline-offset-2 hover:underline"
+                  className="pointer-events-auto absolute left-[148px] top-full mt-3 text-[10px] font-medium text-muted-foreground underline-offset-2 hover:underline"
                   onClick={onClearSelection}
                 >
                   Clear

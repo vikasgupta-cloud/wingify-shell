@@ -26,7 +26,6 @@ import {
 } from "@/components/editor/EditorUtilityRail";
 import {
   DEFAULT_SCENARIO,
-  DEMO_SELECTION,
   EDITOR_SCENARIOS,
   type EditionTabId,
   type EditorDevice,
@@ -353,14 +352,16 @@ export default function EditorPage() {
                 <EditorLeftOverlay>{leftPanel}</EditorLeftOverlay>
               </div>
             )}
-            <EditorCanvas
-              device={device}
-              showDimensionsBar={showDimensionsBar}
-              selection={selection}
-              onSelectDemo={() => setSelection(DEMO_SELECTION)}
-              onClearSelection={() => setSelection(null)}
-              showSubtestPopover={showSubtestPopover}
-            />
+            <div className="absolute inset-0 flex flex-col">
+              <EditorCanvas
+                device={device}
+                showDimensionsBar={showDimensionsBar}
+                selection={selection}
+                onSelect={setSelection}
+                onClearSelection={() => setSelection(null)}
+                showSubtestPopover={showSubtestPopover}
+              />
+            </div>
           </div>
         </div>
         {dockedIds.map((id) => renderPanel(id, false))}

@@ -7,7 +7,7 @@
     <style>
       :root {
         color-scheme: light;
-        --ink: #1a1a1a;
+        --ink: #1a2a4a;
         --muted: #5c5c5c;
         --line: #e8e8e8;
       }
@@ -50,22 +50,25 @@
       }
       .hero-copy {
         position: absolute;
-        left: 28px;
-        bottom: 36px;
-        color: #fff;
-        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+        right: 8%;
+        top: 42%;
+        transform: translateY(-50%);
+        max-width: 320px;
+        color: var(--ink);
       }
-      .hero-copy h1 {
-        margin: 0 0 8px;
-        font-size: 42px;
+      .heading_h3,
+      .text-heading-3 {
+        margin: 0 0 10px;
+        font-size: 36px;
         font-weight: 400;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
       }
-      .hero-copy p {
-        margin: 0;
+      .hero-copy a {
+        color: var(--ink);
         font-family: system-ui, -apple-system, sans-serif;
         font-size: 13px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        letter-spacing: 0.04em;
       }
       .section {
         max-width: 960px;
@@ -107,6 +110,11 @@
         font-family: system-ui, -apple-system, sans-serif;
         font-size: 12px;
       }
+      /* Editor hover / select outlines live in the parent overlay */
+      [data-editor-hover] {
+        outline: 1px dashed rgba(0, 0, 0, 0.35);
+        outline-offset: 2px;
+      }
     </style>
   </head>
   <body>
@@ -125,11 +133,11 @@
     </header>
     <section class="hero" aria-label="Hero">
       <div class="hero-copy">
-        <h1>Balade en Ré</h1>
-        <p>Découvrir la collection</p>
+        <h3 class="heading_h3 text-heading-3">BALADE EN RÉ</h3>
+        <a href="#collection">Découvrir</a>
       </div>
     </section>
-    <section class="section">
+    <section class="section" id="collection">
       <h2>Petite île</h2>
       <p>Une collection douce pour l’été — aperçu local pour l’éditeur.</p>
     </section>
