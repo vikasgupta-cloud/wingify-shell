@@ -14,6 +14,7 @@ import PlaceholderPage from "../pages/PlaceholderPage";
 import WebExperimentation from "../pages/WebExperimentation";
 import ConfigPage from "../pages/config/ConfigPage";
 import ReportsPage from "../pages/reports/ReportsPage";
+import EditorPage from "../pages/editor/EditorPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -99,6 +100,11 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
 });
 
 export const router = createBrowserRouter([
+  // Full-tab editor — outside AppLayout / DetailShell so it opens blank.
+  {
+    path: "/web-experiment/c/:entityId/editor/:variationId",
+    element: <EditorPage />,
+  },
   ...detailRoutes,
   ...profileModeRoutes,
   {

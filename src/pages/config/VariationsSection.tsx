@@ -660,13 +660,18 @@ function EditWithCell({
   }
   return (
     <Button
-      type="button"
+      asChild
       variant="link"
       size="sm"
       className="h-auto p-0 text-sm font-medium"
-      // TODO: launch the visual editor
     >
-      Launch Editor
+      <a
+        href={`/web-experiment/c/${campaignId}/editor/${variation.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Launch Editor
+      </a>
     </Button>
   );
 }
