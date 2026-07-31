@@ -430,6 +430,16 @@ export default function CampaignTable() {
     ? sorted
     : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Real result count (post search/filter) and the visible range on this page —
+  // the footer reports these, never the page-size value.
+  const totalResults = sorted.length;
+  const rangeStart = totalResults === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(currentPage * pageSize, totalResults);
+  // Pagination controls only earn their space once the list is long enough to
+  // split (grouped view shows everything at once, so never). Short lists just
+  // state their count.
+  const showControls = !grouped && totalResults > PAGE_SIZES[0];
+
   // Rows the select-all checkbox governs: whole page, or all visible when grouped.
   const selectableRows = pageRows;
   const selectedVisible = selectableRows.filter((r) => selected.has(r.id)).length;
@@ -683,17 +693,24 @@ export default function CampaignTable() {
         </div>
       </div>
 
-      {/* Pagination — hidden entirely while grouped */}
-      {!grouped && (
+      {/* Footer — short/grouped lists state their count; only once the list is
+          long enough to page do the range, page-size, and pager appear. */}
+      {totalResults > 0 && (
         <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+          <span className="tabular-nums">
+            {showControls
+              ? `${rangeStart}–${rangeEnd} of ${totalResults}`
+              : `${totalResults} result${totalResults === 1 ? "" : "s"}`}
+          </span>
+
+          {showControls && (
           <div className="flex items-center gap-2">
-            <span>Showing</span>
             <Select
               value={String(pageSize)}
               onValueChange={(v) => setPageSize(Number(v))}
             >
               <SelectTrigger
-                aria-label="Results per page"
+                aria-label="Rows per page"
                 className="h-auto w-auto gap-1 bg-background px-2 py-1 text-sm text-foreground shadow-none hover:bg-muted focus:ring-0"
               >
                 <SelectValue />
@@ -701,14 +718,12 @@ export default function CampaignTable() {
               <SelectContent>
                 {PAGE_SIZES.map((size) => (
                   <SelectItem key={size} value={String(size)}>
-                    {size}
+                    {size} / page
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <span>results</span>
-          </div>
-
+          {totalPages > 1 && (
           <div className="flex items-center gap-0.5">
             <Button
               type="button"
@@ -770,6 +785,9 @@ export default function CampaignTable() {
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
+          )}
+          </div>
+          )}
         </div>
       )}
 
