@@ -33,7 +33,7 @@ function matchesQuery(label: string, q: string) {
 
 function CountPill({ count }: { count: number }) {
   return (
-    <span className="ml-auto shrink-0 rounded-full bg-background px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+    <span className="ml-auto shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
       {count}
     </span>
   );
@@ -46,11 +46,10 @@ function LeafLink({ leaf }: { leaf: NavLeaf }) {
       to={leaf.path}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-background",
-          leaf.action ? "text-muted-foreground" : "text-foreground",
+          "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
           isActive &&
             !leaf.action &&
-            "bg-background font-medium text-foreground"
+            "bg-muted font-medium text-foreground"
         )
       }
     >
@@ -118,8 +117,8 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
           to={item.path}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-background",
-              isActive && "bg-background font-medium text-foreground"
+              "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+              isActive && "bg-muted font-medium text-foreground"
             )
           }
         >
@@ -150,7 +149,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
 
     return (
       <div key={item.path}>
-        <div className="group flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-background">
+        <div className="group flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-muted">
           <button
             type="button"
             onClick={() => {
@@ -159,8 +158,8 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
               if (!open && item.items?.[0]) navigate(item.items[0].path);
             }}
             className={cn(
-              "flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left text-sm text-foreground outline-none",
-              sectionActive && "font-medium"
+              "flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left text-sm text-muted-foreground outline-none",
+              sectionActive && "font-medium text-foreground"
             )}
           >
             {Icon && (
@@ -198,7 +197,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
 
   return (
     <nav
-      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-muted py-4 text-panel-foreground"
+      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-background py-4 text-muted-foreground"
       style={{ width: SETTINGS_NAV_WIDTH }}
     >
       <div className="flex shrink-0 items-center px-3 pb-3">
@@ -206,9 +205,9 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
           type="button"
           aria-label="Back to main menu"
           onClick={goBack}
-          className="flex min-w-0 items-center gap-1 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-background"
+          className="flex min-w-0 items-center gap-1 rounded-md px-1 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <ArrowLeft className="h-4 w-4 shrink-0" />
           <span className="truncate text-sm font-semibold">Back to app</span>
         </button>
       </div>
@@ -221,7 +220,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={mode.searchPlaceholder}
-              className="h-8 bg-background pl-8 shadow-none"
+              className="h-8 bg-muted/50 pl-8 shadow-none"
               aria-label={mode.searchPlaceholder}
             />
           </div>

@@ -51,6 +51,17 @@
   a[aria-disabled="true"] {
     cursor: not-allowed !important;
   }
+
+  /* Kill the browser's blue/system accent focus ring. Keyboard focus uses the
+     neutral --ring token; components that already set focus-visible:ring keep
+     that look because utilities override this outline. */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 :root {

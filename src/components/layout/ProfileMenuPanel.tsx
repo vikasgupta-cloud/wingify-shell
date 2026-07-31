@@ -6,6 +6,7 @@ import {
   type NavItem,
 } from "../../config/navigation";
 import { cn } from "../../lib/utils";
+import ProfileAvatar from "./ProfileAvatar";
 
 const PANEL_WIDTH = 280;
 
@@ -37,13 +38,11 @@ export default function ProfileMenuPanel({
       <NavLink
         to={PROFILE_DETAILS_PATH}
         onClick={() => onRequestClose?.()}
-        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
+        className="flex items-center gap-3 border-b border-border bg-muted/40 px-4 py-3.5 transition-colors hover:bg-muted"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground">
-          {CURRENT_USER.initials}
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-sm font-semibold text-foreground">
+        <ProfileAvatar initials={CURRENT_USER.initials} size="lg" />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-sm font-semibold tracking-tight text-foreground">
             {CURRENT_USER.name}
           </span>
           <span className="truncate text-xs text-muted-foreground">

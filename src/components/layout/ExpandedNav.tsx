@@ -10,6 +10,7 @@ import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
 import WingifyLogoButton from "./WingifyLogoButton";
+import ProfileAvatar from "./ProfileAvatar";
 
 /** Width of the expanded (labeled) navigation sidebar — shared with the app grid. */
 export const EXPANDED_NAV_WIDTH = 280;
@@ -191,16 +192,11 @@ export default function ExpandedNav({
     const showUnpin = !inMore && item.pinnable && canUnpin(item.path);
 
     const leadingIcon = item.initials ? (
-      <span
-        className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground",
-          isActive &&
-            !expanded &&
-            "bg-rail-active text-rail-active-foreground"
-        )}
-      >
-        {item.initials}
-      </span>
+      <ProfileAvatar
+        initials={item.initials}
+        size="sm"
+        onDark={isActive && !expanded}
+      />
     ) : (
       <Icon
         className={cn(

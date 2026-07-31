@@ -8,7 +8,7 @@ export default function WorkspaceSwitcher() {
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+          className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
         >
           <Building2 className="h-4 w-4 text-muted-foreground" />
           <span>Wingify Delhi #4532345</span>

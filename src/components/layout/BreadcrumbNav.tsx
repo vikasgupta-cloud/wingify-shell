@@ -28,7 +28,7 @@ export default function BreadcrumbNav() {
     <div className="flex min-w-0 items-center gap-2 text-sm">
       <Link
         to={mainNavCrumbPath(pathname)}
-        className="flex items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="flex items-center gap-1.5 truncate rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
       >
         <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
         {item.label}
@@ -38,7 +38,7 @@ export default function BreadcrumbNav() {
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="flex items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-foreground transition-colors hover:bg-muted"
+            className="flex items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
           >
             <span className="truncate">{leaf.label}</span>
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />

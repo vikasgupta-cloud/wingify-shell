@@ -512,7 +512,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
             <Link
               to={mainNavCrumbPath(basePath)}
               title={item?.label ?? basePath}
-              className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
             >
               {item?.icon && (
                 <item.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
@@ -529,7 +529,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                     <button
                       type="button"
                       title={leaf.label}
-                      className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
                     >
                       <span className="max-w-[10rem] truncate">{leaf.label}</span>
                       <ChevronDown className="h-3.5 w-3.5 shrink-0" />
@@ -572,7 +572,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 <button
                   type="button"
                   title={selected?.name ?? "Untitled"}
-                  className="flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                  className="flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                 >
                   <span className="min-w-0 truncate">
                     {selected?.name ?? "Untitled"}
