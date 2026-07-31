@@ -50,7 +50,7 @@ export function EditorTopBar({
           <p className="max-w-[220px] truncate text-[13px] font-medium text-foreground">
             {campaignName}
           </p>
-          <span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex h-5 items-center rounded-full bg-muted px-2.5 text-xs font-medium text-muted-foreground">
             {statusLabel}
           </span>
         </div>
@@ -92,10 +92,10 @@ export function EditorTopBar({
           <div className="h-6 w-px bg-border" />
         </div>
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" className="h-7 rounded px-2 text-[13px] font-semibold">
+          <Button type="button" variant="outline" size="sm" className="h-7 rounded px-2.5 text-[13px] font-semibold">
             Preview
           </Button>
-          <Button type="button" size="sm" className="h-7 rounded px-2 text-[13px] font-semibold">
+          <Button type="button" size="sm" className="h-7 rounded px-2.5 text-[13px] font-semibold">
             Save & Next
           </Button>
         </div>

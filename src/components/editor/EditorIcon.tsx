@@ -14,10 +14,13 @@ export function EditorIcon({
 }) {
   return (
     <span
-      className={cn("relative inline-flex shrink-0 overflow-hidden", className)}
+      className={cn(
+        "relative inline-flex shrink-0 items-center justify-center overflow-hidden",
+        className
+      )}
       style={{ width: size, height: size }}
     >
-      <img src={src} alt={alt} className="block size-full max-w-none" />
+      <img src={src} alt={alt} className="block size-full object-contain" />
     </span>
   );
 }

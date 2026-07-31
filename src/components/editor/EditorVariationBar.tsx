@@ -1,48 +1,31 @@
 import { useState } from "react";
+import {
+  ChevronDown,
+  MoreHorizontal,
+  MoreVertical,
+  Monitor,
+  Smartphone,
+  Tablet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { EditorIcon } from "./EditorIcon";
 
 import plusSm from "@/assets/editor/plus-sm.svg";
-import chevronDown from "@/assets/editor/chevron-down.svg";
-import monitor from "@/assets/editor/monitor.svg";
-import tablet from "@/assets/editor/tablet.svg";
-import phone from "@/assets/editor/phone.svg";
-import dotsH from "@/assets/editor/dots-h.svg";
-import dotsV from "@/assets/editor/dots-v.svg";
 
 type VariationId = "control" | "v1" | "v2";
-type Device = "desktop" | "tablet" | "mobile";
+type Device = "desktop" | "mobile" | "tablet";
 
-const VARIATIONS: {
-  id: VariationId;
-  label: string;
-  chip: string;
-  chipClass: string;
-}[] = [
-  {
-    id: "control",
-    label: "Control",
-    chip: "C",
-    chipClass: "border-border bg-muted text-foreground",
-  },
-  {
-    id: "v1",
-    label: "Variation 01",
-    chip: "V1",
-    chipClass: "border-border bg-secondary text-foreground",
-  },
-  {
-    id: "v2",
-    label: "Variation 02",
-    chip: "V2",
-    chipClass: "border-border bg-muted text-muted-foreground",
-  },
+const VARIATIONS: { id: VariationId; label: string; chip: string }[] = [
+  { id: "control", label: "Control", chip: "C" },
+  { id: "v1", label: "Variation 01", chip: "V1" },
+  { id: "v2", label: "Variation 02", chip: "V2" },
 ];
-const DEVICES: { id: Device; icon: string; label: string }[] = [
-  { id: "desktop", icon: monitor, label: "Desktop" },
-  { id: "tablet", icon: tablet, label: "Tablet" },
-  { id: "mobile", icon: phone, label: "Mobile" },
+
+const DEVICES: { id: Device; icon: typeof Monitor; label: string }[] = [
+  { id: "desktop", icon: Monitor, label: "Desktop" },
+  { id: "mobile", icon: Smartphone, label: "Mobile" },
+  { id: "tablet", icon: Tablet, label: "Tablet" },
 ];
 
 export function EditorVariationBar({
@@ -61,7 +44,7 @@ export function EditorVariationBar({
   };
 
   return (
-    <div className="relative flex h-9 shrink-0 items-center justify-between border-b border-border bg-muted/60 px-0">
+    <div className="relative flex h-9 shrink-0 items-center justify-between border-b border-border bg-muted/60">
       <div className="flex h-full items-center">
         {VARIATIONS.map((v) => {
           const isActive = active === v.id;
@@ -69,26 +52,21 @@ export function EditorVariationBar({
             <div
               key={v.id}
               className={cn(
-                "relative flex h-full flex-col justify-end",
+                "relative flex h-full items-center",
                 isActive && "bg-background"
               )}
             >
               <button
                 type="button"
                 onClick={() => select(v.id)}
-                className="flex h-6 items-center gap-1.5 pl-3 pr-1.5 outline-none"
+                className="flex h-full items-center gap-1.5 px-3 outline-none"
               >
-                <span
-                  className={cn(
-                    "inline-flex items-center justify-center rounded-full border px-1.5 text-[11px] font-medium leading-4",
-                    v.chipClass
-                  )}
-                >
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-border bg-muted px-1.5 text-[11px] font-medium leading-none text-foreground">
                   {v.chip}
                 </span>
                 <span
                   className={cn(
-                    "max-w-[120px] truncate text-xs font-medium",
+                    "max-w-[120px] truncate text-[13px] font-medium leading-none",
                     isActive ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
@@ -96,12 +74,12 @@ export function EditorVariationBar({
                 </span>
                 <span
                   className={cn(
-                    "inline-flex size-6 items-center justify-center rounded-md",
+                    "inline-flex size-5 items-center justify-center text-foreground",
                     !isActive && "opacity-40"
                   )}
                   aria-hidden
                 >
-                  <EditorIcon src={dotsV} size={14} />
+                  <MoreVertical className="size-3.5" strokeWidth={1.75} />
                 </span>
               </button>
               {isActive && (
@@ -117,7 +95,7 @@ export function EditorVariationBar({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 gap-1.5 rounded-md px-2 text-xs font-medium text-foreground"
+          className="h-7 gap-1.5 rounded-md px-2 text-[13px] font-medium text-foreground"
         >
           <EditorIcon src={plusSm} size={14} />
           New variation
@@ -131,12 +109,16 @@ export function EditorVariationBar({
           aria-label="Language"
         >
           EN
-          <EditorIcon src={chevronDown} size={16} />
+          <ChevronDown
+            className="size-3.5 text-muted-foreground"
+            strokeWidth={1.75}
+          />
         </button>
 
-        <div className="flex h-6 items-center gap-1 rounded-md border border-border bg-muted p-px">
+        <div className="flex h-7 items-center gap-1 rounded-md border border-border bg-muted p-px">
           {DEVICES.map((d) => {
             const selected = device === d.id;
+            const DeviceIcon = d.icon;
             return (
               <button
                 key={d.id}
@@ -144,11 +126,13 @@ export function EditorVariationBar({
                 onClick={() => setDevice(d.id)}
                 aria-label={d.label}
                 className={cn(
-                  "inline-flex h-[22px] items-center justify-center rounded-md px-2 outline-none",
-                  selected && "bg-background shadow-sm"
+                  "inline-flex h-[26px] items-center justify-center rounded-[5px] px-2 text-foreground outline-none transition-colors",
+                  selected
+                    ? "bg-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <EditorIcon src={d.icon} size={16} />
+                <DeviceIcon className="size-4" strokeWidth={1.75} />
               </button>
             );
           })}
@@ -161,7 +145,7 @@ export function EditorVariationBar({
           className="size-6 rounded-md"
           aria-label="More options"
         >
-          <EditorIcon src={dotsH} size={14} />
+          <MoreHorizontal className="size-4" strokeWidth={1.75} />
         </Button>
       </div>
     </div>
