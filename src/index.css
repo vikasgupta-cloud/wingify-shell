@@ -194,6 +194,17 @@ body {
   font-variation-settings: "opsz" 32;
 }
 
+/* Editor chrome stays greyscale. Website preview iframe keeps full color. */
+[data-editor-shell] img {
+  filter: grayscale(1);
+}
+
+/* Flat panels — no elevation on docked editor chrome. */
+[data-editor-shell] aside,
+[data-editor-shell] nav {
+  box-shadow: none !important;
+}
+
 /* Respect the OS "Reduce motion" setting: collapse every transition and
    animation to effectively-instant. Elements settle in their resting (final)
    state, so nothing is left stuck mid-fade or hidden. */

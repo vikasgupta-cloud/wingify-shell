@@ -60,6 +60,15 @@ export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
     { id: "saved", label: "Saved changes" },
   ];
 
+  const q = query.trim().toLowerCase();
+  const match = (title: string, category: string) =>
+    !q ||
+    title.toLowerCase().includes(q) ||
+    category.toLowerCase().includes(q);
+  const presets = PRESETS.filter((w) => match(w.title, w.category));
+  const customs = CUSTOM.filter((w) => match(w.title, w.category));
+  const templates = TEMPLATES.filter((w) => match(w.title, w.category));
+
   return (
     <aside className="flex h-full w-full flex-col bg-background">
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-border px-3">
@@ -126,7 +135,7 @@ export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
                   All Widgets
                 </p>
                 <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  12
+                  {presets.length + customs.length + templates.length}
                 </span>
               </div>
 
@@ -144,38 +153,50 @@ export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
                 </Button>
               </div>
 
-              <section className="space-y-2">
-                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
-                  PRESETS
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {PRESETS.map((w) => (
-                    <WidgetCard key={w.title} {...w} />
-                  ))}
-                </div>
-              </section>
+              {presets.length > 0 && (
+                <section className="space-y-2">
+                  <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
+                    PRESETS
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {presets.map((w) => (
+                      <WidgetCard key={w.title} {...w} />
+                    ))}
+                  </div>
+                </section>
+              )}
 
-              <section className="space-y-2">
-                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
-                  CUSTOM WIDGETS
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {CUSTOM.map((w) => (
-                    <WidgetCard key={w.title} {...w} />
-                  ))}
-                </div>
-              </section>
+              {customs.length > 0 && (
+                <section className="space-y-2">
+                  <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
+                    CUSTOM WIDGETS
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {customs.map((w) => (
+                      <WidgetCard key={w.title} {...w} />
+                    ))}
+                  </div>
+                </section>
+              )}
 
-              <section className="space-y-2">
-                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
-                  TEMPLATES
+              {templates.length > 0 && (
+                <section className="space-y-2">
+                  <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
+                    TEMPLATES
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {templates.map((w) => (
+                      <WidgetCard key={w.title} {...w} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {presets.length + customs.length + templates.length === 0 && (
+                <p className="py-6 text-center text-xs text-muted-foreground">
+                  No widgets match “{query}”.
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {TEMPLATES.map((w) => (
-                    <WidgetCard key={w.title} {...w} />
-                  ))}
-                </div>
-              </section>
+              )}
             </div>
           )}
 

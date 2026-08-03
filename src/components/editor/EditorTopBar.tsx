@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import {
   EDITOR_SCENARIOS,
   type EditorScenarioId,
 } from "@/config/editorScenarios";
+import type { CampaignStatus } from "@/data/campaigns";
 
 import arrowLeft from "@/assets/editor/arrow-left.svg";
 import wingifyLogo from "@/assets/wingify-logo.png";
@@ -25,6 +25,8 @@ import codeIcon from "@/assets/editor/code-02.svg";
 
 type Mode = "design" | "navigate" | "code";
 
+export type { Mode as EditorTopBarMode };
+
 const MODES: { id: Mode; label: string; icon: string }[] = [
   { id: "design", label: "Design", icon: paletteIcon },
   { id: "navigate", label: "Navigate", icon: cursorIcon },
@@ -32,17 +34,20 @@ const MODES: { id: Mode; label: string; icon: string }[] = [
 ];
 
 export function EditorTopBar({
-  campaignName = "My Super Duper Campaign Name",
-  statusLabel = "Status",
+  campaignName = "Campaign",
+  status,
   scenarioId,
   onScenarioChange,
+  mode = "design",
+  onModeChange,
 }: {
   campaignName?: string;
-  statusLabel?: string;
+  status?: CampaignStatus;
   scenarioId?: EditorScenarioId;
   onScenarioChange?: (id: EditorScenarioId) => void;
+  mode?: Mode;
+  onModeChange?: (mode: Mode) => void;
 }) {
-  const [mode, setMode] = useState<Mode>("design");
   const activeScenario =
     EDITOR_SCENARIOS.find((s) => s.id === scenarioId) ?? EDITOR_SCENARIOS[0]!;
 
@@ -62,47 +67,21 @@ export function EditorTopBar({
           <img
             src={wingifyLogo}
             alt="Wingify"
-            className="h-5 w-auto object-contain"
+            className="h-5 w-auto object-contain grayscale"
           />
         </div>
         <div className="flex items-center gap-2 pl-1">
-          <p className="max-w-[180px] truncate text-[13px] font-medium text-foreground">
+          <p className="max-w-[220px] truncate text-[13px] font-medium text-foreground">
             {campaignName}
           </p>
-          <span className="inline-flex h-5 items-center rounded-full bg-muted px-2.5 text-xs font-medium text-muted-foreground">
-            {statusLabel}
-          </span>
-          {onScenarioChange && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1.5 rounded px-2 text-xs font-semibold"
-                >
-                  <LayoutTemplate className="size-3.5" strokeWidth={1.75} />
-                  <span className="max-w-[120px] truncate">
-                    {activeScenario.label}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuLabel>Editor scenarios</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {EDITOR_SCENARIOS.map((s) => (
-                  <DropdownMenuItem
-                    key={s.id}
-                    onClick={() => onScenarioChange(s.id)}
-                    className={cn(
-                      s.id === activeScenario.id && "bg-accent font-semibold"
-                    )}
-                  >
-                    {s.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {status ? (
+            <span className="inline-flex h-5 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-medium text-foreground">
+              {status}
+            </span>
+          ) : (
+            <span className="inline-flex h-5 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-medium text-muted-foreground">
+              —
+            </span>
           )}
         </div>
       </div>
@@ -114,7 +93,7 @@ export function EditorTopBar({
             <button
               key={m.id}
               type="button"
-              onClick={() => setMode(m.id)}
+              onClick={() => onModeChange?.(m.id)}
               className={cn(
                 "inline-flex h-[22px] items-center gap-2 rounded-md px-3 text-xs font-semibold outline-none transition-colors",
                 active
@@ -129,36 +108,65 @@ export function EditorTopBar({
         })}
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-7 w-8 rounded"
-            aria-label="Save"
-          >
-            <EditorIcon src={saveIcon} size={16} />
-          </Button>
-          <div className="h-6 w-px bg-border" />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 rounded px-2.5 text-[13px] font-semibold"
-          >
-            Preview
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="h-7 rounded px-2.5 text-[13px] font-semibold"
-          >
-            Save & Next
-          </Button>
-        </div>
+      <div className="flex h-7 items-center gap-2">
+        {onScenarioChange && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                title="Demo scenarios"
+              >
+                <LayoutTemplate className="size-4 shrink-0" strokeWidth={1.75} />
+                <span className="max-w-[120px] truncate leading-none">
+                  {activeScenario.label}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Demo scenarios</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {EDITOR_SCENARIOS.map((s) => (
+                <DropdownMenuItem
+                  key={s.id}
+                  onClick={() => onScenarioChange(s.id)}
+                  className={cn(
+                    s.id === activeScenario.id && "bg-accent font-semibold"
+                  )}
+                >
+                  {s.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-7 shrink-0 rounded-md"
+          aria-label="Save"
+        >
+          <EditorIcon src={saveIcon} size={14} />
+        </Button>
+        <div className="h-4 w-px shrink-0 bg-border" aria-hidden />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 rounded-md px-2.5 text-[13px] font-semibold"
+        >
+          Preview
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          className="h-7 rounded-md px-2.5 text-[13px] font-semibold"
+        >
+          Save & Next
+        </Button>
       </div>
     </header>
   );

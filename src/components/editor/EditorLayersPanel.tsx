@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  Pin,
   Search,
   X,
 } from "lucide-react";
@@ -116,6 +115,21 @@ function LayerRow({
   );
 }
 
+function filterTree(nodes: LayerNode[], q: string): LayerNode[] {
+  if (!q.trim()) return nodes;
+  const needle = q.trim().toLowerCase();
+  const walk = (node: LayerNode): LayerNode | null => {
+    const kids = node.children
+      ?.map(walk)
+      .filter((n): n is LayerNode => n != null);
+    if (node.name.toLowerCase().includes(needle) || (kids && kids.length > 0)) {
+      return { ...node, children: kids };
+    }
+    return null;
+  };
+  return nodes.map(walk).filter((n): n is LayerNode => n != null);
+}
+
 /** Left Layers panel — DOM tree for the preview page. */
 export function EditorLayersPanel({ onClose }: { onClose?: () => void }) {
   const [query, setQuery] = useState("");
@@ -134,6 +148,8 @@ export function EditorLayersPanel({ onClose }: { onClose?: () => void }) {
     });
   };
 
+  const visible = filterTree(TREE, query);
+
   return (
     <aside className="flex h-full w-full flex-col bg-background">
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-border px-3">
@@ -144,16 +160,8 @@ export function EditorLayersPanel({ onClose }: { onClose?: () => void }) {
             variant="ghost"
             size="icon"
             className="size-7"
-            aria-label="Pin panel"
-          >
-            <Pin className="size-3.5" strokeWidth={1.75} />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-7"
             aria-label="Search layers"
+            aria-pressed={searchOpen}
             onClick={() => setSearchOpen((v) => !v)}
           >
             <Search className="size-3.5" strokeWidth={1.75} />
@@ -178,32 +186,45 @@ export function EditorLayersPanel({ onClose }: { onClose?: () => void }) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search layers…"
             className="h-7 text-xs shadow-none"
+            autoFocus
           />
         </div>
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-        {TREE.map((node) => (
-          <LayerRow
-            key={node.id}
-            node={node}
-            depth={0}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            openIds={openIds}
-            toggle={toggle}
-          />
-        ))}
+        {visible.length === 0 ? (
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+            No layers match “{query}”.
+          </p>
+        ) : (
+          visible.map((node) => (
+            <LayerRow
+              key={node.id}
+              node={node}
+              depth={0}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              openIds={openIds}
+              toggle={toggle}
+            />
+          ))
+        )}
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-border p-3">
-        <Button type="button" className="h-8 w-full text-xs font-semibold">
+        <Button
+          type="button"
+          className="h-8 w-full text-xs font-semibold"
+          onClick={() => setSelectedId("section")}
+        >
           Select main container
         </Button>
         <Button
           type="button"
           variant="outline"
           className="h-8 w-full text-xs font-semibold"
+          disabled
+          title="Requires a live selection"
         >
           Select same CSS class
         </Button>

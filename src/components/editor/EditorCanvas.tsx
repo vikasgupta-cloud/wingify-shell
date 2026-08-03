@@ -12,6 +12,7 @@ import {
   Move,
   Pencil,
   Sparkles,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,51 +22,177 @@ import type {
   EditorSelection,
 } from "@/config/editorScenarios";
 
-const PREVIEW_SRC = "/editor-preview/index.html";
+export type EditorMode = "design" | "navigate" | "code";
 
-const DEVICE_WIDTH: Record<EditorDevice, number | "100%"> = {
-  desktop: "100%",
-  tablet: 768,
-  mobile: 390,
-};
+export const EDITOR_PREVIEW_SRC = "/editor-preview/index.html";
 
-const DEVICE_HEIGHT: Record<EditorDevice, string> = {
-  desktop: "100%",
-  tablet: "1024px",
-  mobile: "844px",
+const PREVIEW_SRC = EDITOR_PREVIEW_SRC;
+
+const DEVICE_PRESETS: Record<
+  EditorDevice,
+  { w: number | "100%"; h: number | "100%" }
+> = {
+  desktop: { w: "100%", h: "100%" },
+  tablet: { w: 768, h: 1024 },
+  mobile: { w: 390, h: 844 },
 };
 
 type Box = { top: number; left: number; width: number; height: number };
+
+const EDITOR_UID_ATTR = "data-editor-uid";
+let editorUidSeq = 0;
+
+function escapeIdent(value: string) {
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+    return CSS.escape(value);
+  }
+  return value.replace(/([^\w-])/g, "\\$1");
+}
+
+function ensureEditorUid(el: Element): string {
+  const existing = el.getAttribute(EDITOR_UID_ATTR);
+  if (existing) return existing;
+  const uid = `sel-${++editorUidSeq}`;
+  el.setAttribute(EDITOR_UID_ATTR, uid);
+  return uid;
+}
+
+function countMatches(doc: ParentNode, selector: string): number {
+  try {
+    return doc.querySelectorAll(selector).length;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+/** Build a selector that uniquely identifies `el` within its document. */
+function uniqueSelector(el: Element): string {
+  const doc = el.ownerDocument;
+
+  if (el.id) {
+    const idSel = `#${escapeIdent(el.id)}`;
+    if (countMatches(doc, idSel) === 1) return idSel;
+  }
+
+  const parts: string[] = [];
+  let current: Element | null = el;
+
+  while (current && current !== doc.documentElement) {
+    let part = current.tagName.toLowerCase();
+
+    if (current.id) {
+      part = `${part}#${escapeIdent(current.id)}`;
+      parts.unshift(part);
+      const trial = parts.join(" > ");
+      if (countMatches(doc, trial) === 1) return trial;
+      // Id on an ancestor isn't enough — keep walking with nth indexes below.
+      parts.shift();
+      part = current.tagName.toLowerCase();
+    }
+
+    const classes = Array.from(current.classList).filter(
+      (c) => c && !c.startsWith("data-")
+    );
+    // Prefer a class that uniquely identifies this node under its parent.
+    let classPart = "";
+    for (const cls of classes) {
+      const trialClass = `${part}.${escapeIdent(cls)}`;
+      if (
+        current.parentElement &&
+        countMatches(current.parentElement, trialClass) === 1
+      ) {
+        classPart = `.${escapeIdent(cls)}`;
+        break;
+      }
+    }
+    if (!classPart && classes[0]) {
+      classPart = `.${escapeIdent(classes[0])}`;
+    }
+    part += classPart;
+
+    const parent: Element | null = current.parentElement;
+    if (parent) {
+      const sameTag = Array.from(parent.children).filter(
+        (child) => child.tagName === current!.tagName
+      );
+      if (sameTag.length > 1) {
+        part += `:nth-of-type(${sameTag.indexOf(current) + 1})`;
+      } else if (countMatches(parent, part) > 1) {
+        const all = Array.from(parent.children);
+        part += `:nth-child(${all.indexOf(current) + 1})`;
+      }
+    }
+
+    parts.unshift(part);
+    const trial = parts.join(" > ");
+    if (countMatches(doc, trial) === 1) return trial;
+
+    current = parent;
+    if (parts.length >= 12) break;
+  }
+
+  // Last resort: stable stamp so selection can never collide.
+  const uid = ensureEditorUid(el);
+  return `[${EDITOR_UID_ATTR}="${uid}"]`;
+}
 
 function describeElement(el: Element): EditorSelection {
   const tag = el.tagName;
   const id = el.id;
   const classes = Array.from(el.classList);
-  const label = id || classes[0] || tag.toLowerCase();
-  const selector = id
-    ? `${tag}#${id}`
-    : classes.length > 0
-      ? `${tag}.${classes[0]}`
-      : tag;
-  return { tag, label, selector };
+  const text = el.textContent?.trim().replace(/\s+/g, " ").slice(0, 28);
+  const label = id || classes[0] || text || tag.toLowerCase();
+  // Stamp uid so re-find is exact even if the human selector is reused.
+  ensureEditorUid(el);
+  return { tag, label, selector: uniqueSelector(el) };
 }
 
 function findBySelection(
   doc: Document,
   selection: EditorSelection
 ): Element | null {
-  const byClass = selection.selector.includes(".")
-    ? doc.querySelector(selection.selector.replace(/^([A-Z0-9]+)\./i, (_, t) => `${t}.`))
-    : null;
-  if (byClass) return byClass;
-  // Fallback: first class token
-  const classMatch = selection.selector.match(/\.([\w-]+)/);
-  if (classMatch) {
-    const el = doc.querySelector(`.${classMatch[1]}`);
-    if (el) return el;
+  const candidates = [selection.selector, selection.selector.toLowerCase()];
+
+  for (const sel of candidates) {
+    try {
+      const matches = doc.querySelectorAll(sel);
+      if (matches.length === 1) return matches[0]!;
+      if (matches.length > 1) {
+        // Ambiguous — never silently pick the first unrelated sibling.
+        continue;
+      }
+    } catch {
+      /* invalid selector */
+    }
   }
-  const tag = selection.tag.toLowerCase();
-  return doc.querySelector(tag);
+
+  // Demo / legacy selectors like "H3.heading_h3"
+  const loose = selection.selector.replace(/^([A-Z0-9]+)/, (_, t) =>
+    String(t).toLowerCase()
+  );
+  if (loose !== selection.selector) {
+    try {
+      const matches = doc.querySelectorAll(loose);
+      if (matches.length === 1) return matches[0]!;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (selection.tag) {
+    try {
+      const byTagClass = doc.querySelectorAll(
+        `${selection.tag.toLowerCase()}.${escapeIdent(
+          selection.label.replace(/[^\w-]/g, "")
+        )}`
+      );
+      if (byTagClass.length === 1) return byTagClass[0]!;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return null;
 }
 
 function rectInFrame(el: Element): Box {
@@ -84,28 +211,71 @@ function rectInFrame(el: Element): Box {
 export function EditorCanvas({
   src = PREVIEW_SRC,
   device = "desktop",
+  mode = "design",
   showDimensionsBar = false,
   selection = null,
   onSelect,
   onClearSelection,
+  onOpenEdition,
+  onOpenCopilot,
   showSubtestPopover = false,
+  onDismissSubtest,
+  onLocationChange,
 }: {
   src?: string;
   device?: EditorDevice;
+  mode?: EditorMode;
   showDimensionsBar?: boolean;
   selection?: EditorSelection | null;
   onSelect?: (selection: EditorSelection) => void;
   onClearSelection?: () => void;
+  onOpenEdition?: () => void;
+  onOpenCopilot?: () => void;
   showSubtestPopover?: boolean;
+  onDismissSubtest?: () => void;
+  onLocationChange?: (url: string) => void;
 }) {
-  const width = DEVICE_WIDTH[device];
+  const preset = DEVICE_PRESETS[device];
   const framed = device !== "desktop";
+  const [frameW, setFrameW] = useState<number | "100%">(preset.w);
+  const [frameH, setFrameH] = useState<number | "100%">(preset.h);
+  const [dimsLinked, setDimsLinked] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const selectedElRef = useRef<Element | null>(null);
   const hoverElRef = useRef<Element | null>(null);
+  const modeRef = useRef(mode);
   const [box, setBox] = useState<Box | null>(null);
   const [hoverBox, setHoverBox] = useState<Box | null>(null);
   const [frameReady, setFrameReady] = useState(0);
+
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+
+  modeRef.current = mode;
+
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    if (toastTimerRef.current != null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 2000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current != null) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setFrameW(preset.w);
+    setFrameH(preset.h);
+  }, [preset.w, preset.h, device]);
 
   const syncSelectedBox = useCallback(() => {
     const el = selectedElRef.current;
@@ -122,12 +292,45 @@ export function EditorCanvas({
     setHoverBox(null);
   }, []);
 
+  const onClearSelectionRef = useRef(onClearSelection);
+  onClearSelectionRef.current = onClearSelection;
+  const onLocationChangeRef = useRef(onLocationChange);
+  onLocationChangeRef.current = onLocationChange;
+
+  const reportLocation = useCallback(() => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    try {
+      const href = win.location.href;
+      onLocationChangeRef.current?.(href);
+    } catch {
+      /* cross-origin */
+    }
+  }, []);
+
+  // Navigate / Code: drop design chrome so the site behaves like a normal page.
+  useEffect(() => {
+    if (mode === "design") return;
+    clearHover();
+    selectedElRef.current = null;
+    setBox(null);
+    onClearSelectionRef.current?.();
+  }, [mode, clearHover]);
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc?.documentElement) return;
+    doc.documentElement.dataset.editorMode = mode;
+  }, [mode, frameReady]);
+
   const bindFrame = useCallback(() => {
     const iframe = iframeRef.current;
     const doc = iframe?.contentDocument;
-    if (!doc?.body) return;
+    const win = iframe?.contentWindow;
+    if (!doc?.body || !win) return;
 
     const onClick = (e: MouseEvent) => {
+      if (modeRef.current !== "design") return;
       e.preventDefault();
       e.stopPropagation();
       const target = e.target as Element | null;
@@ -145,6 +348,10 @@ export function EditorCanvas({
     };
 
     const onMove = (e: MouseEvent) => {
+      if (modeRef.current !== "design") {
+        clearHover();
+        return;
+      }
       const target = e.target as Element | null;
       if (!target || target === doc.documentElement || target === doc.body) {
         clearHover();
@@ -170,23 +377,36 @@ export function EditorCanvas({
       }
     };
 
+    const onLoc = () => reportLocation();
+
     doc.addEventListener("click", onClick, true);
     doc.addEventListener("mousemove", onMove, true);
     doc.addEventListener("mouseleave", onLeave, true);
     doc.addEventListener("scroll", onScrollOrResize, true);
-    iframe?.contentWindow?.addEventListener("resize", onScrollOrResize);
+    win.addEventListener("resize", onScrollOrResize);
+    win.addEventListener("hashchange", onLoc);
+    win.addEventListener("popstate", onLoc);
 
     setFrameReady((n) => n + 1);
+    reportLocation();
 
     return () => {
       doc.removeEventListener("click", onClick, true);
       doc.removeEventListener("mousemove", onMove, true);
       doc.removeEventListener("mouseleave", onLeave, true);
       doc.removeEventListener("scroll", onScrollOrResize, true);
-      iframe?.contentWindow?.removeEventListener("resize", onScrollOrResize);
+      win.removeEventListener("resize", onScrollOrResize);
+      win.removeEventListener("hashchange", onLoc);
+      win.removeEventListener("popstate", onLoc);
       clearHover();
     };
-  }, [clearHover, onClearSelection, onSelect, syncSelectedBox]);
+  }, [
+    clearHover,
+    onClearSelection,
+    onSelect,
+    reportLocation,
+    syncSelectedBox,
+  ]);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -199,7 +419,6 @@ export function EditorCanvas({
     return () => iframe.removeEventListener("load", onLoad);
   }, [bindFrame, src]);
 
-  // Scenario / external selection → find real element
   useLayoutEffect(() => {
     const doc = iframeRef.current?.contentDocument;
     if (!doc?.body) return;
@@ -208,11 +427,29 @@ export function EditorCanvas({
       setBox(null);
       return;
     }
+
+    // Prefer the element from the live click if it still matches this selection.
+    const live = selectedElRef.current;
+    if (live?.isConnected) {
+      const liveSel = uniqueSelector(live);
+      if (
+        liveSel === selection.selector ||
+        live.getAttribute(EDITOR_UID_ATTR) ===
+          selection.selector.match(/data-editor-uid="([^"]+)"/)?.[1]
+      ) {
+        setBox(rectInFrame(live));
+        return;
+      }
+    }
+
     const el = findBySelection(doc, selection);
     if (el) {
       selectedElRef.current = el;
       setBox(rectInFrame(el));
-      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+      // Only scroll for externally applied selections (scenarios), not every click.
+      if (!live?.isConnected) {
+        el.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
     }
   }, [selection, frameReady]);
 
@@ -222,33 +459,72 @@ export function EditorCanvas({
     return () => window.removeEventListener("resize", onWinScroll);
   }, [syncSelectedBox]);
 
+  const fitToWindow = () => {
+    const shell = iframeRef.current?.parentElement?.parentElement?.parentElement;
+    if (!shell) return;
+    const { clientWidth, clientHeight } = shell;
+    const pad = 64;
+    setFrameW(Math.max(320, clientWidth - pad));
+    setFrameH(Math.max(480, clientHeight - pad));
+  };
+
+  const resetResponsive = () => {
+    setFrameW(preset.w);
+    setFrameH(preset.h);
+  };
+
+  const numericW = typeof frameW === "number" ? frameW : 0;
+  const numericH = typeof frameH === "number" ? frameH : 0;
+
   return (
-    <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-muted/30">
-      {showDimensionsBar && (
-        <div className="flex h-8 shrink-0 items-center gap-3 border-b border-border bg-background px-3 text-xs">
-          <span className="font-medium text-muted-foreground">Dimensions:</span>
+    <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-canvas">
+      {showDimensionsBar && framed && (
+        <div className="flex h-9 shrink-0 items-center gap-3 border-b border-border bg-background/95 px-4 text-xs backdrop-blur-sm">
+          <span className="text-[11px] font-medium tracking-wide text-muted-foreground">
+            Dimensions
+          </span>
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 font-semibold text-foreground"
+            onClick={resetResponsive}
+            className="inline-flex items-center rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted"
           >
-            Responsive
+            Device preset
           </button>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-1.5 py-0.5">
             <Input
-              defaultValue={device === "tablet" ? "768" : "390"}
-              className="h-6 w-14 px-1.5 text-xs shadow-none"
+              value={typeof frameW === "number" ? String(frameW) : ""}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (Number.isNaN(n)) return;
+                setFrameW(n);
+                if (dimsLinked && typeof frameH === "number" && numericW > 0) {
+                  const ratio = numericH / numericW;
+                  setFrameH(Math.round(n * ratio));
+                }
+              }}
+              className="h-6 w-14 border-0 bg-transparent px-1.5 text-xs shadow-none focus-visible:ring-0"
               aria-label="Width"
             />
-            <span className="text-muted-foreground">×</span>
+            <span className="text-muted-foreground/70">×</span>
             <Input
-              defaultValue={device === "tablet" ? "1024" : "844"}
-              className="h-6 w-14 px-1.5 text-xs shadow-none"
+              value={typeof frameH === "number" ? String(frameH) : ""}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (Number.isNaN(n)) return;
+                setFrameH(n);
+                if (dimsLinked && typeof frameW === "number" && numericH > 0) {
+                  const ratio = numericW / numericH;
+                  setFrameW(Math.round(n * ratio));
+                }
+              }}
+              className="h-6 w-14 border-0 bg-transparent px-1.5 text-xs shadow-none focus-visible:ring-0"
               aria-label="Height"
             />
           </div>
           <button
             type="button"
-            className="rounded-md px-2 py-0.5 font-medium text-muted-foreground hover:text-foreground"
+            onClick={fitToWindow}
+            className="rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             Fit to window
           </button>
@@ -256,38 +532,60 @@ export function EditorCanvas({
             type="button"
             variant="ghost"
             size="icon"
-            className="ml-auto size-6"
-            aria-label="Link dimensions"
+            className={cn(
+              "ml-auto size-7 rounded-md",
+              dimsLinked && "bg-accent text-foreground"
+            )}
+            aria-label={dimsLinked ? "Unlink dimensions" : "Link dimensions"}
+            aria-pressed={dimsLinked}
+            onClick={() => setDimsLinked((v) => !v)}
           >
             <Link2 className="size-3.5" strokeWidth={1.75} />
           </Button>
         </div>
       )}
 
-      <div className="relative min-h-0 flex-1 overflow-auto">
+      <div
+        className={cn(
+          "relative min-h-0 flex-1 overflow-auto",
+          framed ? "p-8" : "p-0"
+        )}
+      >
         <div
           className={cn(
-            "relative mx-auto h-full bg-background",
-            framed &&
-              "my-4 overflow-hidden rounded-lg border border-border shadow-sm"
+            "relative mx-auto bg-background",
+            framed
+              ? "my-6 overflow-visible rounded-xl border border-border shadow-sm ring-1 ring-border"
+              : "h-full"
           )}
           style={{
-            width: framed ? width : "100%",
-            height: framed ? DEVICE_HEIGHT[device] : "100%",
+            width: framed ? frameW : "100%",
+            height: framed ? frameH : "100%",
             maxWidth: "100%",
           }}
         >
-          <iframe
-            ref={iframeRef}
-            title="Website preview"
-            src={src}
-            className="absolute inset-0 size-full border-0 bg-background"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          />
+          <div
+            className={cn(
+              "relative size-full overflow-hidden bg-background",
+              framed && "rounded-xl"
+            )}
+          >
+            <iframe
+              ref={iframeRef}
+              title="Website preview"
+              src={src}
+              className={cn(
+                "absolute inset-0 size-full border-0 bg-background",
+                mode === "design" ? "cursor-default" : "cursor-auto"
+              )}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            />
+          </div>
 
-          {hoverBox && !selection && (
+          {/* Selection / hover chrome — Design mode only */}
+          {mode === "design" && hoverBox && (
             <div
-              className="pointer-events-none absolute z-10 border border-dashed border-foreground/40"
+              className="pointer-events-none absolute z-10 rounded-sm border border-dashed border-foreground/35"
               style={{
                 top: hoverBox.top,
                 left: hoverBox.left,
@@ -297,7 +595,7 @@ export function EditorCanvas({
             />
           )}
 
-          {selection && box && (
+          {mode === "design" && selection && box && (
             <div
               className="pointer-events-none absolute z-20"
               style={{
@@ -307,53 +605,103 @@ export function EditorCanvas({
                 height: box.height,
               }}
             >
-              <div className="absolute inset-0 border-2 border-foreground bg-foreground/5" />
-              <div className="pointer-events-auto absolute -top-6 left-0 inline-flex max-w-[min(100%,280px)] items-center gap-1.5 rounded bg-foreground px-2 py-0.5 text-[11px] font-semibold text-background">
+              <div className="absolute inset-0 rounded-sm border-2 border-foreground bg-foreground/[0.04]" />
+              <div className="pointer-events-auto absolute -top-8 left-0 inline-flex max-w-[min(100%,300px)] items-center gap-1.5 rounded-md bg-foreground px-2.5 py-1 text-[11px] font-medium tracking-tight text-background shadow-sm">
                 <span className="truncate">{selection.selector}</span>
+                <span className="mx-0.5 h-3 w-px shrink-0 bg-background/25" />
                 <button
                   type="button"
-                  className="shrink-0 outline-none"
+                  className="shrink-0 rounded outline-none opacity-70 transition-opacity hover:opacity-100"
                   aria-label="Copy selector"
                   onClick={(e) => {
                     e.stopPropagation();
-                    void navigator.clipboard?.writeText(selection.selector);
+                    void (async () => {
+                      try {
+                        await navigator.clipboard.writeText(selection.selector);
+                        showToast("Selector copied");
+                      } catch {
+                        showToast("Couldn't copy selector");
+                      }
+                    })();
                   }}
                 >
                   <Copy className="size-3" strokeWidth={2} />
                 </button>
-              </div>
-              <div className="pointer-events-auto absolute left-0 top-full mt-2 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-1 shadow-md">
-                {(
-                  [
-                    ["AI", Sparkles],
-                    ["Edit", Pencil],
-                    ["Move", Move],
-                    ["Link", Link2],
-                    ["More", MoreHorizontal],
-                  ] as const
-                ).map(([label, Icon]) => (
-                  <Button
-                    key={label}
+                {onClearSelection && (
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 rounded-full"
-                    aria-label={label}
-                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 rounded outline-none opacity-70 transition-opacity hover:opacity-100"
+                    aria-label="Clear selection"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearSelection();
+                    }}
                   >
-                    <Icon className="size-3.5" strokeWidth={1.75} />
-                  </Button>
-                ))}
+                    <X className="size-3" strokeWidth={2} />
+                  </button>
+                )}
               </div>
-              {onClearSelection && (
-                <button
+              <div className="pointer-events-auto absolute left-0 top-full mt-2.5 inline-flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 p-1 shadow-[0_8px_24px_-8px_hsl(var(--foreground)/0.25)] backdrop-blur-sm">
+                <Button
                   type="button"
-                  className="pointer-events-auto absolute left-[148px] top-full mt-3 text-[10px] font-medium text-muted-foreground underline-offset-2 hover:underline"
-                  onClick={onClearSelection}
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 rounded-full"
+                  aria-label="Ask Copilot"
+                  title="Ask Copilot"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenCopilot?.();
+                  }}
                 >
-                  Clear
-                </button>
-              )}
+                  <Sparkles className="size-3.5" strokeWidth={1.75} />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 rounded-full"
+                  aria-label="Edit in Edition"
+                  title="Edit in Edition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenEdition?.();
+                  }}
+                >
+                  <Pencil className="size-3.5" strokeWidth={1.75} />
+                </Button>
+                <span className="mx-0.5 h-4 w-px shrink-0 bg-border" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 rounded-full text-muted-foreground/50"
+                  aria-label="Move (coming soon)"
+                  disabled
+                >
+                  <Move className="size-3.5" strokeWidth={1.75} />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 rounded-full text-muted-foreground/50"
+                  aria-label="Link (coming soon)"
+                  disabled
+                >
+                  <Link2 className="size-3.5" strokeWidth={1.75} />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 rounded-full text-muted-foreground/50"
+                  aria-label="More (coming soon)"
+                  disabled
+                >
+                  <MoreHorizontal className="size-3.5" strokeWidth={1.75} />
+                </Button>
+              </div>
             </div>
           )}
 
@@ -361,14 +709,20 @@ export function EditorCanvas({
             <div className="absolute left-4 top-4 z-30 w-[240px] overflow-hidden rounded-lg border border-border bg-background shadow-lg">
               <div className="flex items-center justify-between border-b border-border px-3 py-2">
                 <p className="text-xs font-semibold text-foreground">Subtest 1</p>
-                <MoreHorizontal
-                  className="size-3.5 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-6"
+                  aria-label="Close subtest panel"
+                  onClick={onDismissSubtest}
+                >
+                  <X className="size-3.5" strokeWidth={1.75} />
+                </Button>
               </div>
               <div className="border-b border-border px-3 py-2">
                 <code className="block truncate text-[10px] text-muted-foreground">
-                  main .swiper-slide-active .text-heading-3
+                  {selection?.selector ?? "main .text-heading-3"}
                 </code>
               </div>
               <ul className="p-1.5">
@@ -417,6 +771,16 @@ export function EditorCanvas({
           )}
         </div>
       </div>
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none absolute bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-md border border-border bg-foreground px-3 py-2 text-xs font-medium text-background shadow-lg"
+        >
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

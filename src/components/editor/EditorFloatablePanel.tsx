@@ -104,6 +104,15 @@ export function EditorFloatablePanel({
   } | null>(null);
   const [dragging, setDragging] = useState(false);
 
+  useEffect(() => {
+    if (mode === "docked") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mode, onClose]);
+
   const setMode = useCallback(
     (nextMode: EditorPanelChromeMode, nextPos?: { x: number; y: number }) => {
       onChromeChange({
@@ -265,7 +274,7 @@ export function EditorFloatablePanel({
   if (mode === "docked") {
     return (
       <aside
-        className="flex w-[300px] shrink-0 flex-col border-l border-border bg-background"
+        className="flex w-[300px] shrink-0 flex-col border-l border-border bg-background shadow-none"
         aria-labelledby={titleId}
       >
         <div className="flex h-9 shrink-0 items-center justify-between border-b border-border px-3">
@@ -302,7 +311,7 @@ export function EditorFloatablePanel({
         "flex flex-col overflow-hidden bg-background",
         grouped
           ? "h-full min-h-0 w-full"
-          : "fixed z-50 rounded-lg border border-border shadow-lg",
+          : "fixed z-50 rounded-lg border border-border shadow-none",
         !grouped && dragging && "cursor-grabbing select-none"
       )}
       style={
@@ -393,11 +402,21 @@ export function EditorFloatingPanelGroup({
 
   const showTabs = tabs.length > 1;
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCloseActive?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCloseActive]);
+
   return createPortal(
     <div
       role="dialog"
+      aria-modal="true"
+      aria-label={tabs.find((t) => t.id === activeId)?.label ?? "Panel"}
       className={cn(
-        "fixed z-50 flex flex-col overflow-hidden rounded-lg border border-border bg-background shadow-lg",
+        "fixed z-50 flex flex-col overflow-hidden rounded-lg border border-border bg-background shadow-none",
         dragging && "cursor-grabbing select-none"
       )}
       style={{

@@ -2,9 +2,19 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Pencil, Sparkles } from "lucide-react";
 import { EditorTopBar } from "@/components/editor/EditorTopBar";
-import { EditorVariationBar } from "@/components/editor/EditorVariationBar";
+import {
+  EditorVariationBar,
+  type CodeScopeId,
+  type VariationId,
+} from "@/components/editor/EditorVariationBar";
 import { EditorToolRail } from "@/components/editor/EditorToolRail";
-import { EditorCanvas } from "@/components/editor/EditorCanvas";
+import {
+  EditorCanvas,
+  EDITOR_PREVIEW_SRC,
+  type EditorMode,
+} from "@/components/editor/EditorCanvas";
+import { EditorNavigateBar } from "@/components/editor/EditorNavigateBar";
+import { EditorCodeWorkspace } from "@/components/editor/EditorCodeWorkspace";
 import { EditorCopilotPanel } from "@/components/editor/EditorCopilotPanel";
 import { EditorEditionPanel } from "@/components/editor/EditorEditionPanel";
 import { EditorLayersPanel } from "@/components/editor/EditorLayersPanel";
@@ -34,6 +44,7 @@ import {
   type EditorScenarioId,
   type EditorSelection,
 } from "@/config/editorScenarios";
+import { useVisibleCampaigns } from "@/store/rows";
 
 type PanelState = {
   open: boolean;
@@ -53,6 +64,43 @@ const PANEL_META: Record<
 function isDetached(mode: EditorPanelChrome["mode"]) {
   return mode === "floating" || mode === "minimized";
 }
+
+function displayPreviewUrl(href: string) {
+  try {
+    const u = new URL(href, window.location.origin);
+    u.searchParams.delete("t");
+    const q = u.searchParams.toString();
+    return `${u.pathname}${q ? `?${q}` : ""}${u.hash}` || EDITOR_PREVIEW_SRC;
+  } catch {
+    return href;
+  }
+}
+
+function resolvePreviewSrc(input: string, currentSrc: string) {
+  const raw = input.trim();
+  if (!raw) return currentSrc;
+  if (raw.startsWith("#")) {
+    const base = currentSrc.split("#")[0] ?? EDITOR_PREVIEW_SRC;
+    return `${base}${raw}`;
+  }
+  if (raw.startsWith("/")) return raw;
+  try {
+    const u = new URL(raw, window.location.origin);
+    if (u.origin === window.location.origin) {
+      return `${u.pathname}${u.search}${u.hash}`;
+    }
+  } catch {
+    /* fall through */
+  }
+  return raw.startsWith("http") ? raw : `/${raw.replace(/^\.?\/+/, "")}`;
+}
+
+const CODE_SCOPE_LABEL: Record<CodeScopeId, string> = {
+  campaign: "Campaign code",
+  control: "Control",
+  v1: "Variation 01",
+  v2: "Variation 02",
+};
 
 function panelsFromOpen(rightOpen: EditorSidePanelId[]): Record<
   EditorSidePanelId,
@@ -80,6 +128,9 @@ export default function EditorPage() {
     variationId: string;
   }>();
 
+  const campaigns = useVisibleCampaigns();
+  const campaign = campaigns.find((c) => c.id === entityId);
+
   const [scenarioId, setScenarioId] = useState<EditorScenarioId>(
     DEFAULT_SCENARIO.id
   );
@@ -102,6 +153,14 @@ export default function EditorPage() {
   const [showDimensionsBar, setShowDimensionsBar] = useState(
     DEFAULT_SCENARIO.showDimensionsBar
   );
+  const [editorMode, setEditorMode] = useState<EditorMode>("design");
+  const [previewSrc, setPreviewSrc] = useState(EDITOR_PREVIEW_SRC);
+  const [previewUrlLabel, setPreviewUrlLabel] = useState(EDITOR_PREVIEW_SRC);
+  const [navHistory, setNavHistory] = useState<string[]>([EDITOR_PREVIEW_SRC]);
+  const [navIndex, setNavIndex] = useState(0);
+  const [activeVariationId, setActiveVariationId] =
+    useState<VariationId>("v1");
+  const [codeScope, setCodeScope] = useState<CodeScopeId>("v1");
 
   const [panels, setPanels] = useState<Record<EditorSidePanelId, PanelState>>(
     () => panelsFromOpen(DEFAULT_SCENARIO.rightOpen)
@@ -136,6 +195,69 @@ export default function EditorPage() {
     setShellMinimized(false);
     setFloatPos(defaultFloatPos());
   }, []);
+
+  const navigatePreview = useCallback((next: string) => {
+    setPreviewSrc(next);
+    setPreviewUrlLabel(displayPreviewUrl(next));
+    setNavHistory((prev) => {
+      const trimmed = prev.slice(0, navIndex + 1);
+      if (trimmed[trimmed.length - 1] === next) {
+        setNavIndex(trimmed.length - 1);
+        return trimmed;
+      }
+      const stack = [...trimmed, next];
+      setNavIndex(stack.length - 1);
+      return stack;
+    });
+  }, [navIndex]);
+
+  const handleLocationChange = useCallback((href: string) => {
+    const path = displayPreviewUrl(href);
+    setPreviewUrlLabel(path);
+    setNavHistory((prev) => {
+      if (prev[navIndex] === path || prev[navIndex] === href) return prev;
+      const trimmed = prev.slice(0, navIndex + 1);
+      const stack = [...trimmed, path];
+      setNavIndex(stack.length - 1);
+      return stack;
+    });
+  }, [navIndex]);
+
+  const goBack = useCallback(() => {
+    if (navIndex <= 0) return;
+    const nextIndex = navIndex - 1;
+    const next = navHistory[nextIndex];
+    if (!next) return;
+    setNavIndex(nextIndex);
+    setPreviewSrc(next);
+    setPreviewUrlLabel(displayPreviewUrl(next));
+  }, [navHistory, navIndex]);
+
+  const goForward = useCallback(() => {
+    if (navIndex >= navHistory.length - 1) return;
+    const nextIndex = navIndex + 1;
+    const next = navHistory[nextIndex];
+    if (!next) return;
+    setNavIndex(nextIndex);
+    setPreviewSrc(next);
+    setPreviewUrlLabel(displayPreviewUrl(next));
+  }, [navHistory, navIndex]);
+
+  const refreshPreview = useCallback(() => {
+    setPreviewSrc((src) => {
+      const [withoutHash, hash = ""] = src.split("#");
+      const base = (withoutHash ?? src).split("?")[0] ?? src;
+      return `${base}?t=${Date.now()}${hash ? `#${hash}` : ""}`;
+    });
+  }, []);
+
+  const handleModeChange = useCallback((mode: EditorMode) => {
+    setEditorMode(mode);
+    if (mode === "code") {
+      setCodeScope(activeVariationId);
+      setLeftTool(null);
+    }
+  }, [activeVariationId]);
 
   const detachedIds = PANEL_ORDER.filter(
     (id) => panels[id].open && isDetached(panels[id].chrome.mode)
@@ -277,6 +399,26 @@ export default function EditorPage() {
     });
   };
 
+  const openSidePanel = useCallback((id: EditorSidePanelId) => {
+    setPanels((prev) => {
+      const next = { ...prev };
+      if (prev[id].chrome.mode === "docked") {
+        for (const other of PANEL_ORDER) {
+          if (
+            other !== id &&
+            next[other].open &&
+            next[other].chrome.mode === "docked"
+          ) {
+            next[other] = { ...next[other], open: false };
+          }
+        }
+      }
+      next[id] = { ...next[id], open: true };
+      return next;
+    });
+    setActiveTab(id);
+  }, []);
+
   const toggleLeftTool = (id: EditorLeftTool) => {
     setLeftTool((current) => (current === id ? null : id));
   };
@@ -326,18 +468,23 @@ export default function EditorPage() {
 
   return (
     <div
-      className="flex h-screen flex-col overflow-hidden bg-background"
+      className="flex h-screen flex-col overflow-hidden bg-background text-foreground"
       data-campaign-id={entityId}
       data-variation-id={variationId}
       data-scenario={scenarioId}
+      data-editor-shell
     >
       <EditorTopBar
+        campaignName={campaign?.name}
+        status={campaign?.status}
         scenarioId={scenarioId}
         onScenarioChange={applyScenario}
+        mode={editorMode}
+        onModeChange={handleModeChange}
       />
       <div className="flex min-h-0 flex-1">
         <EditorToolRail activeTool={leftTool} onSelect={toggleLeftTool} />
-        <div className="relative flex min-w-0 flex-1 flex-col">
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <EditorVariationBar
             layoutMode={layoutMode}
             device={device}
@@ -345,26 +492,66 @@ export default function EditorPage() {
               setDevice(d);
               setShowDimensionsBar(d !== "desktop");
             }}
+            activeVariationId={activeVariationId}
+            onVariationChange={setActiveVariationId}
+            codeMode={editorMode === "code"}
+            codeScope={codeScope}
+            onCodeScopeChange={setCodeScope}
           />
-          <div className="relative min-h-0 flex-1">
+          {editorMode === "navigate" && (
+            <EditorNavigateBar
+              url={previewUrlLabel}
+              canGoBack={navIndex > 0}
+              canGoForward={navIndex < navHistory.length - 1}
+              onUrlChange={setPreviewUrlLabel}
+              onGo={(url) =>
+                navigatePreview(resolvePreviewSrc(url, previewSrc))
+              }
+              onBack={goBack}
+              onForward={goForward}
+              onRefresh={refreshPreview}
+              onSwitchToDesign={() => setEditorMode("design")}
+            />
+          )}
+          <div className="relative min-h-0 flex-1 overflow-hidden">
             {leftPanel && (
               <div className="absolute inset-y-0 left-0 z-20 flex">
                 <EditorLeftOverlay>{leftPanel}</EditorLeftOverlay>
               </div>
             )}
-            <div className="absolute inset-0 flex flex-col">
-              <EditorCanvas
-                device={device}
-                showDimensionsBar={showDimensionsBar}
-                selection={selection}
-                onSelect={setSelection}
-                onClearSelection={() => setSelection(null)}
-                showSubtestPopover={showSubtestPopover}
-              />
+            <div className="absolute inset-0 flex flex-col overflow-hidden">
+              {editorMode === "code" ? (
+                <EditorCodeWorkspace
+                  scopeLabel={CODE_SCOPE_LABEL[codeScope]}
+                  onDone={() => setEditorMode("design")}
+                />
+              ) : (
+                <EditorCanvas
+                  src={previewSrc}
+                  device={device}
+                  mode={editorMode}
+                  showDimensionsBar={
+                    showDimensionsBar && editorMode === "design"
+                  }
+                  selection={selection}
+                  onSelect={setSelection}
+                  onClearSelection={() => setSelection(null)}
+                  onOpenEdition={() => openSidePanel("edition")}
+                  onOpenCopilot={() => openSidePanel("copilot")}
+                  showSubtestPopover={
+                    showSubtestPopover && editorMode === "design"
+                  }
+                  onDismissSubtest={() => setShowSubtestPopover(false)}
+                  onLocationChange={handleLocationChange}
+                />
+              )}
             </div>
           </div>
         </div>
-        {dockedIds.map((id) => renderPanel(id, false))}
+        <div className="flex shrink-0 bg-background shadow-none">
+          {dockedIds.map((id) => renderPanel(id, false))}
+          <EditorUtilityRail activeIds={openIds} onToggle={toggleSidePanel} />
+        </div>
         {detachedIds.length > 0 && (
           <EditorFloatingPanelGroup
             pos={floatPos}
@@ -403,7 +590,6 @@ export default function EditorPage() {
             ))}
           </EditorFloatingPanelGroup>
         )}
-        <EditorUtilityRail activeIds={openIds} onToggle={toggleSidePanel} />
       </div>
     </div>
   );

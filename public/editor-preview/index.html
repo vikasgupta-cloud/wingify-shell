@@ -3,149 +3,1599 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Jacadi Paris — Preview</title>
+    <title>Northline — Summer Collection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
         color-scheme: light;
-        --ink: #1a2a4a;
-        --muted: #5c5c5c;
-        --line: #e8e8e8;
+        --ink: #121417;
+        --ink-soft: #3d4450;
+        --muted: #6b7280;
+        --line: #e6e8ec;
+        --surface: #f6f5f2;
+        --accent: #1f4b3a;
       }
       * {
         box-sizing: border-box;
       }
+      html {
+        scroll-behavior: smooth;
+      }
       body {
         margin: 0;
-        font-family: Georgia, "Times New Roman", serif;
+        font-family: "DM Sans", system-ui, -apple-system, sans-serif;
         color: var(--ink);
         background: #fff;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
       }
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 24px;
-        padding: 18px 28px;
-        border-bottom: 1px solid var(--line);
-        font-family: system-ui, -apple-system, sans-serif;
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button {
+        font: inherit;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        color: inherit;
+      }
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      .promo {
+        background: var(--ink);
+        color: #f5f5f4;
+        text-align: center;
         font-size: 12px;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
+        padding: 10px 16px;
+      }
+      .promo strong {
+        font-weight: 600;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+      .header-inner {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 28px;
+      }
+      .nav-primary {
+        display: flex;
+        gap: 22px;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+      .nav-item {
+        color: var(--ink-soft);
+        transition: color 0.15s ease;
+      }
+      .nav-item:hover {
+        color: var(--ink);
       }
       .logo {
-        font-size: 22px;
-        letter-spacing: 0.18em;
-        font-weight: 500;
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 28px;
+        letter-spacing: 0.04em;
+        font-weight: 400;
+        text-align: center;
       }
-      nav {
+      .nav-actions {
         display: flex;
+        justify-content: flex-end;
         gap: 18px;
-        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-soft);
       }
+      .nav-actions .cart {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .cart-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
       .hero {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        min-height: min(72vh, 640px);
+        background: var(--surface);
+      }
+      .hero-image {
         position: relative;
-        min-height: 70vh;
-        background: #9bb7c9 center / cover no-repeat;
-        background-image: url("./hero.png");
+        overflow: hidden;
+        background: #c9d6df;
+      }
+      .hero-image img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .hero-image::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          transparent 55%,
+          rgba(246, 245, 242, 0.35)
+        );
+        pointer-events: none;
+      }
+      .hero-visual-label {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+        z-index: 1;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.88);
+        padding: 8px 12px;
+        border-radius: 999px;
+        backdrop-filter: blur(6px);
       }
       .hero-copy {
-        position: absolute;
-        right: 8%;
-        top: 42%;
-        transform: translateY(-50%);
-        max-width: 320px;
-        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 56px 48px 56px 40px;
+        max-width: 440px;
+      }
+      .eyebrow {
+        margin: 0 0 14px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
       }
       .heading_h3,
       .text-heading-3 {
-        margin: 0 0 10px;
-        font-size: 36px;
+        margin: 0 0 16px;
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: clamp(36px, 4.2vw, 52px);
         font-weight: 400;
-        letter-spacing: 0.02em;
-        line-height: 1.15;
-      }
-      .hero-copy a {
+        letter-spacing: -0.01em;
+        line-height: 1.08;
         color: var(--ink);
-        font-family: system-ui, -apple-system, sans-serif;
-        font-size: 13px;
-        letter-spacing: 0.04em;
       }
-      .section {
-        max-width: 960px;
-        margin: 0 auto;
-        padding: 56px 24px;
+      .hero-lede {
+        margin: 0 0 20px;
+        font-size: 15px;
+        line-height: 1.65;
+        color: var(--ink-soft);
+        max-width: 34ch;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        margin: 0 0 28px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .hero-meta strong {
+        color: var(--ink-soft);
+        font-weight: 600;
+      }
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      .cta-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        width: fit-content;
+        padding: 12px 20px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        transition: background 0.15s ease, transform 0.15s ease;
+      }
+      .cta-link:hover {
+        background: var(--accent);
+        transform: translateY(-1px);
+      }
+      .cta-link span {
+        font-size: 16px;
+        line-height: 1;
+      }
+      .cta-secondary {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 2px;
+      }
+
+      .trust {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .trust article {
+        background: #fff;
+        padding: 22px 24px;
         text-align: center;
       }
-      .section h2 {
-        margin: 0 0 12px;
+      .trust h4 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .trust p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 72px 28px 28px;
+      }
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      .section-head h2 {
+        margin: 0;
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 36px;
+        font-weight: 400;
+        letter-spacing: -0.01em;
+      }
+      .section-head p {
+        margin: 8px 0 0;
+        max-width: 42ch;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .section-link {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        white-space: nowrap;
+        border-bottom: 1px solid transparent;
+      }
+      .section-link:hover {
+        border-bottom-color: var(--accent);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 28px 72px;
+      }
+      .card {
+        transition: transform 0.2s ease;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+      }
+      .card-media {
+        aspect-ratio: 4 / 5;
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--surface);
+        position: relative;
+      }
+      .card-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.35s ease;
+      }
+      .card:hover .card-media img {
+        transform: scale(1.04);
+      }
+      .card-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 1;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: #fff;
+        padding: 6px 8px;
+        border-radius: 999px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      .card-body {
+        padding: 14px 4px 0;
+      }
+      .card-body h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .price {
+        color: var(--ink);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .price s {
+        color: var(--muted);
+        font-weight: 500;
+        margin-right: 6px;
+      }
+      .swatches {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+      }
+      .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+      }
+      .rating {
+        margin-top: 8px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .rating span {
+        color: var(--ink);
+        letter-spacing: 0.04em;
+      }
+
+      .story {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 420px;
+        background: var(--accent);
+        color: #f4f7f5;
+      }
+      .story-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 56px 48px;
+        max-width: 520px;
+      }
+      .story-copy h2 {
+        margin: 0 0 14px;
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 40px;
+        font-weight: 400;
+        line-height: 1.1;
+      }
+      .story-copy p {
+        margin: 0 0 18px;
+        font-size: 15px;
+        line-height: 1.65;
+        color: rgba(244, 247, 245, 0.82);
+      }
+      .story-stats {
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        gap: 18px;
+        margin: 0 0 28px;
+      }
+      .story-stats strong {
+        display: block;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .story-stats span {
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: rgba(244, 247, 245, 0.7);
+      }
+      .story-copy a {
+        width: fit-content;
+        font-size: 13px;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+        padding-bottom: 2px;
+      }
+      .story-visual {
+        position: relative;
+        overflow: hidden;
+        min-height: 280px;
+      }
+      .story-visual img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .stores {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 28px 72px;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+      .store-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 28px;
+        background: #fff;
+      }
+      .store-card h2 {
+        margin: 0 0 8px;
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 28px;
+        font-weight: 400;
+      }
+      .store-card p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .store-list {
+        display: grid;
+        gap: 14px;
+      }
+      .store-row {
+        display: grid;
+        gap: 2px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+      }
+      .store-row strong {
+        font-size: 14px;
+      }
+      .store-row span {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .hours-card {
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+      }
+      .hours-card img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+      }
+      .hours-body {
+        padding: 22px 24px 24px;
+      }
+      .hours-body h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      .hours-body ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .hours-body li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .hours-body li span:last-child {
+        color: var(--muted);
+      }
+
+      .newsletter {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 24px 28px 72px;
+        text-align: center;
+      }
+      .newsletter h2 {
+        margin: 0 0 10px;
+        font-family: "Instrument Serif", Georgia, serif;
         font-size: 32px;
         font-weight: 400;
       }
-      .section p {
-        margin: 0 auto;
-        max-width: 420px;
+      .newsletter p {
+        margin: 0 auto 24px;
+        max-width: 42ch;
         color: var(--muted);
-        line-height: 1.6;
-        font-family: system-ui, -apple-system, sans-serif;
         font-size: 14px;
       }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        max-width: 960px;
-        margin: 0 auto 64px;
-        padding: 0 24px;
+      .newsletter-form {
+        display: flex;
+        gap: 8px;
+        max-width: 420px;
+        margin: 0 auto;
       }
-      .card {
-        aspect-ratio: 1;
-        background: linear-gradient(160deg, #d9e6ef, #f4f7fa);
+      .newsletter-form input {
+        flex: 1;
+        height: 44px;
         border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0 18px;
+        font: inherit;
+        font-size: 14px;
+        outline: none;
       }
+      .newsletter-form input:focus {
+        border-color: var(--ink);
+      }
+      .newsletter-form button {
+        height: 44px;
+        padding: 0 20px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
       footer {
         border-top: 1px solid var(--line);
-        padding: 28px;
-        text-align: center;
-        color: var(--muted);
-        font-family: system-ui, -apple-system, sans-serif;
-        font-size: 12px;
+        background: var(--surface);
       }
-      /* Editor hover / select outlines live in the parent overlay */
-      [data-editor-hover] {
-        outline: 1px dashed rgba(0, 0, 0, 0.35);
-        outline-offset: 2px;
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1.4fr repeat(3, 1fr);
+        gap: 32px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 28px 36px;
+      }
+      .footer-brand {
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      .footer-grid p {
+        margin: 0 0 12px;
+        max-width: 30ch;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .footer-contact {
+        font-size: 13px;
+        color: var(--ink-soft);
+        display: grid;
+        gap: 4px;
+      }
+      .footer-grid h5 {
+        margin: 0 0 14px;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink);
+      }
+      .footer-grid ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+      .footer-grid li {
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .footer-bottom {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 28px 28px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+      }
+
+      a:hover {
+        opacity: 0.85;
+      }
+      .nav-item.is-active {
+        color: var(--ink);
+        box-shadow: inset 0 -2px 0 var(--ink);
+      }
+      .card-link {
+        color: inherit;
+        display: block;
+      }
+      .footer-grid a:hover {
+        color: var(--ink);
+        opacity: 1;
+      }
+
+      /* Overlays: search + cart */
+      .sheet-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(18, 20, 23, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 40;
+      }
+      .sheet-backdrop.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .sheet {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: min(380px, 92vw);
+        background: #fff;
+        z-index: 50;
+        transform: translateX(100%);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        box-shadow: none;
+        display: flex;
+        flex-direction: column;
+        pointer-events: none;
+        visibility: hidden;
+      }
+      .sheet.is-open {
+        transform: translateX(0);
+        box-shadow: -12px 0 40px rgba(0, 0, 0, 0.12);
+        pointer-events: auto;
+        visibility: visible;
+      }
+      .sheet-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .sheet-header h2 {
+        margin: 0;
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 24px;
+        font-weight: 400;
+      }
+      .sheet-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 18px;
+        line-height: 1;
+      }
+      .sheet-body {
+        padding: 20px;
+        overflow: auto;
+        flex: 1;
+      }
+      .search-field {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .search-field input {
+        flex: 1;
+        height: 44px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0 16px;
+        font: inherit;
+        font-size: 14px;
+        outline: none;
+      }
+      .search-field input:focus {
+        border-color: var(--ink);
+      }
+      .search-field button,
+      .sheet-cta {
+        height: 44px;
+        padding: 0 18px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .search-suggestions {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 2px;
+      }
+      .search-suggestions a {
+        display: block;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      .search-suggestions a:hover {
+        background: var(--surface);
+        opacity: 1;
+      }
+      .cart-line {
+        display: grid;
+        grid-template-columns: 64px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .cart-thumb {
+        width: 64px;
+        height: 80px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--surface);
+      }
+      .cart-line h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+      }
+      .cart-line p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .cart-line strong {
+        font-size: 14px;
+      }
+      .cart-total {
+        display: flex;
+        justify-content: space-between;
+        margin: 16px 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .sheet-cta {
+        width: 100%;
+      }
+      .form-success {
+        display: none;
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--accent-soft, #e8f0ec);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .form-success.is-visible {
+        display: block;
+      }
+      .product-highlight {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+        border-radius: 12px;
+      }
+
+      @media (max-width: 900px) {
+        .header-inner {
+          grid-template-columns: auto 1fr auto;
+          padding: 14px 18px;
+        }
+        .nav-primary {
+          display: none;
+        }
+        .hero {
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
+        .hero-image {
+          min-height: 280px;
+        }
+        .hero-copy {
+          padding: 36px 24px 48px;
+          max-width: none;
+        }
+        .trust {
+          grid-template-columns: 1fr;
+        }
+        .grid {
+          grid-template-columns: repeat(2, 1fr);
+          padding: 0 18px 56px;
+        }
+        .section {
+          padding: 56px 18px 20px;
+        }
+        .section-head {
+          flex-direction: column;
+          align-items: start;
+        }
+        .story {
+          grid-template-columns: 1fr;
+        }
+        .story-visual {
+          min-height: 220px;
+          order: -1;
+        }
+        .story-copy {
+          padding: 40px 24px;
+        }
+        .stores {
+          grid-template-columns: 1fr;
+          padding: 0 18px 56px;
+        }
+        .footer-grid {
+          grid-template-columns: 1fr 1fr;
+          padding: 40px 18px 28px;
+        }
+        .footer-bottom {
+          flex-direction: column;
+          padding: 16px 18px 24px;
+        }
       }
     </style>
   </head>
   <body>
-    <header>
-      <nav>
-        <span>Fille</span>
-        <span>Garçon</span>
-        <span>Bébé</span>
-      </nav>
-      <div class="logo">JACADI</div>
-      <nav>
-        <span>Recherche</span>
-        <span>Compte</span>
-        <span>Panier</span>
-      </nav>
-    </header>
-    <section class="hero" aria-label="Hero">
-      <div class="hero-copy">
-        <h3 class="heading_h3 text-heading-3">BALADE EN RÉ</h3>
-        <a href="#collection">Découvrir</a>
-      </div>
-    </section>
-    <section class="section" id="collection">
-      <h2>Petite île</h2>
-      <p>Une collection douce pour l’été — aperçu local pour l’éditeur.</p>
-    </section>
-    <div class="grid">
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
+    <div class="promo" id="promo-bar">
+      Free shipping on orders over <strong>$75</strong> · Members earn 2× points
+      through Aug 31
     </div>
-    <footer>Preview website · editor wireframe</footer>
+
+    <header id="site-header">
+      <div class="header-inner">
+        <nav class="nav-primary" id="nav-primary" aria-label="Primary">
+          <a class="nav-item nav-link-women" id="nav-women" href="#section-women"
+            >Women</a
+          >
+          <a class="nav-item nav-link-men" id="nav-men" href="#section-men"
+            >Men</a
+          >
+          <a class="nav-item nav-link-kids" id="nav-kids" href="#section-kids"
+            >Kids</a
+          >
+          <a
+            class="nav-item nav-link-new"
+            id="nav-new-in"
+            href="#section-collection"
+            >New In</a
+          >
+        </nav>
+        <div class="logo" id="site-logo">Northline</div>
+        <nav class="nav-actions" id="nav-actions" aria-label="Account">
+          <a class="nav-action-search" id="nav-search" href="#search">Search</a>
+          <a class="nav-action-account" id="nav-account" href="#account"
+            >Account</a
+          >
+          <a class="cart nav-action-cart" id="nav-cart" href="#cart"
+            >Bag <span class="cart-count" id="cart-count">2</span></a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <main id="site-main">
+      <section class="hero" id="section-hero" aria-label="Hero">
+        <div class="hero-image" id="hero-image">
+          <img
+            id="hero-photo"
+            src="./images/hero.jpg"
+            alt="Sunlit coastline with turquoise water and sandy beach"
+          />
+          <div class="hero-visual-label" id="hero-label">Lookbook SS26</div>
+        </div>
+        <div class="hero-copy" id="hero-copy">
+          <p class="eyebrow" id="hero-eyebrow">Summer edit · Vol. 04</p>
+          <h3 class="heading_h3 text-heading-3" id="hero-heading">
+            Coastal weekends
+          </h3>
+          <p class="hero-lede" id="hero-lede">
+            Soft linen layers, sun-washed color, and easy silhouettes made for
+            long days by the water — from Montauk mornings to late ferry rides.
+          </p>
+          <div class="hero-meta" id="hero-meta">
+            <span id="hero-meta-styles"><strong>28</strong> new styles</span>
+            <span id="hero-meta-price"><strong>From $64</strong></span>
+            <span id="hero-meta-shipping"
+              ><strong>Ships in 2–4 days</strong></span
+            >
+          </div>
+          <div class="cta-row" id="hero-cta-row">
+            <a class="cta-link" id="hero-cta-shop" href="#section-collection"
+              >Shop the collection <span id="hero-cta-arrow">→</span></a
+            >
+            <a class="cta-secondary" id="hero-cta-stores" href="#section-stores"
+              >Find a store</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="trust" id="section-trust" aria-label="Benefits">
+        <article class="trust-card trust-fabrics" id="trust-fabrics">
+          <h4 id="trust-fabrics-title">Thoughtful fabrics</h4>
+          <p id="trust-fabrics-copy">
+            Breathable linen, organic cotton, and recycled blends.
+          </p>
+        </article>
+        <article class="trust-card trust-quality" id="trust-quality">
+          <h4 id="trust-quality-title">Designed to last</h4>
+          <p id="trust-quality-copy">
+            Seasonless pieces you’ll wear for years, not weeks.
+          </p>
+        </article>
+        <article class="trust-card trust-shipping" id="trust-shipping">
+          <h4 id="trust-shipping-title">Ships from Brooklyn</h4>
+          <p id="trust-shipping-copy">
+            Most U.S. orders arrive in 2–4 business days.
+          </p>
+        </article>
+      </section>
+
+      <section class="section" id="section-collection">
+        <div class="section-head" id="collection-head">
+          <div id="collection-intro">
+            <h2 id="collection-title">New arrivals</h2>
+            <p id="collection-copy">
+              Fresh staples for warmer days — light layers, easy trousers, and
+              weekend-ready knits. Updated weekly from our Brooklyn studio.
+            </p>
+          </div>
+          <a class="section-link" id="collection-view-all" href="#section-women"
+            >View all 48 styles →</a
+          >
+        </div>
+      </section>
+
+      <div class="grid" id="section-men">
+        <a class="card product-card card-link" id="product-linen-shirt" href="#product-linen-shirt">
+          <div class="card-media" id="product-linen-shirt-media">
+            <img
+              id="product-linen-shirt-img"
+              src="./images/product-1.jpg"
+              alt="Beige linen camp shirt on a hanger"
+            />
+            <span class="card-badge" id="product-linen-shirt-badge">New</span>
+          </div>
+          <div class="card-body" id="product-linen-shirt-body">
+            <h3 id="product-linen-shirt-title">Linen camp shirt</h3>
+            <div class="card-meta" id="product-linen-shirt-meta">
+              <span id="product-linen-shirt-variant">Sand · S–XXL</span>
+              <span class="price" id="product-linen-shirt-price">$88</span>
+            </div>
+            <div
+              class="swatches"
+              id="product-linen-shirt-swatches"
+              aria-hidden="true"
+            >
+              <i
+                class="swatch swatch-sand"
+                id="product-linen-shirt-swatch-1"
+                style="background: #d6c3a5"
+              ></i>
+              <i
+                class="swatch swatch-ivory"
+                id="product-linen-shirt-swatch-2"
+                style="background: #f4f1ea"
+              ></i>
+              <i
+                class="swatch swatch-forest"
+                id="product-linen-shirt-swatch-3"
+                style="background: #2f4f45"
+              ></i>
+            </div>
+            <p class="rating" id="product-linen-shirt-rating">
+              <span>★★★★★</span> 128 reviews
+            </p>
+          </div>
+        </a>
+        <a class="card product-card card-link" id="product-chino" href="#product-chino">
+          <div class="card-media" id="product-chino-media">
+            <img
+              id="product-chino-img"
+              src="./images/product-2.jpg"
+              alt="Olive relaxed chino trousers"
+            />
+            <span class="card-badge" id="product-chino-badge">Bestseller</span>
+          </div>
+          <div class="card-body" id="product-chino-body">
+            <h3 id="product-chino-title">Relaxed chino</h3>
+            <div class="card-meta" id="product-chino-meta">
+              <span id="product-chino-variant">Olive · 28–36</span>
+              <span class="price" id="product-chino-price">$98</span>
+            </div>
+            <div
+              class="swatches"
+              id="product-chino-swatches"
+              aria-hidden="true"
+            >
+              <i
+                class="swatch swatch-olive"
+                id="product-chino-swatch-1"
+                style="background: #5c6b4a"
+              ></i>
+              <i
+                class="swatch swatch-black"
+                id="product-chino-swatch-2"
+                style="background: #2c2c2c"
+              ></i>
+              <i
+                class="swatch swatch-khaki"
+                id="product-chino-swatch-3"
+                style="background: #8a7a63"
+              ></i>
+            </div>
+            <p class="rating" id="product-chino-rating">
+              <span>★★★★★</span> 312 reviews
+            </p>
+          </div>
+        </a>
+        <a class="card product-card card-link" id="section-women" href="#section-women">
+          <div class="card-media" id="product-tee-media">
+            <img
+              id="product-tee-img"
+              src="./images/product-3.jpg"
+              alt="Folded white cotton t-shirts"
+            />
+          </div>
+          <div class="card-body" id="product-tee-body">
+            <h3 id="product-tee-title">Everyday tee, 2-pack</h3>
+            <div class="card-meta" id="product-tee-meta">
+              <span id="product-tee-variant">White / Navy</span>
+              <span class="price" id="product-tee-price"
+                ><s>$78</s>$64</span
+              >
+            </div>
+            <div class="swatches" id="product-tee-swatches" aria-hidden="true">
+              <i
+                class="swatch swatch-white"
+                id="product-tee-swatch-1"
+                style="background: #fff"
+              ></i>
+              <i
+                class="swatch swatch-navy"
+                id="product-tee-swatch-2"
+                style="background: #1c2b4a"
+              ></i>
+              <i
+                class="swatch swatch-sage"
+                id="product-tee-swatch-3"
+                style="background: #b8c4c0"
+              ></i>
+            </div>
+            <p class="rating" id="product-tee-rating">
+              <span>★★★★☆</span> 89 reviews
+            </p>
+          </div>
+        </a>
+        <a class="card product-card card-link" id="product-sweater" href="#product-sweater">
+          <div class="card-media" id="product-sweater-media">
+            <img
+              id="product-sweater-img"
+              src="./images/product-4.jpg"
+              alt="Seafoam open-knit sweater flat lay"
+            />
+          </div>
+          <div class="card-body" id="product-sweater-body">
+            <h3 id="product-sweater-title">Open-knit sweater</h3>
+            <div class="card-meta" id="product-sweater-meta">
+              <span id="product-sweater-variant">Seafoam · XS–L</span>
+              <span class="price" id="product-sweater-price">$120</span>
+            </div>
+            <div
+              class="swatches"
+              id="product-sweater-swatches"
+              aria-hidden="true"
+            >
+              <i
+                class="swatch swatch-seafoam"
+                id="product-sweater-swatch-1"
+                style="background: #9bb9b0"
+              ></i>
+              <i
+                class="swatch swatch-sand"
+                id="product-sweater-swatch-2"
+                style="background: #e7d7c4"
+              ></i>
+              <i
+                class="swatch swatch-mist"
+                id="product-sweater-swatch-3"
+                style="background: #d9dee8"
+              ></i>
+            </div>
+            <p class="rating" id="product-sweater-rating">
+              <span>★★★★★</span> 54 reviews
+            </p>
+          </div>
+        </a>
+      </div>
+
+      <section class="story" id="section-kids" aria-label="Brand story">
+        <div class="story-copy" id="story-copy">
+          <h2 id="story-title">Built for real life, not just lookbooks.</h2>
+          <p id="story-lede">
+            Northline makes everyday clothing with a quieter kind of polish —
+            durable enough for travel, soft enough for Sunday mornings, and
+            designed in New York since 2014.
+          </p>
+          <div class="story-stats" id="story-stats">
+            <div id="story-stat-stores">
+              <strong>11</strong>
+              <span>U.S. stores</span>
+            </div>
+            <div id="story-stat-repeat">
+              <strong>92%</strong>
+              <span>repeat rate</span>
+            </div>
+            <div id="story-stat-rating">
+              <strong>4.8</strong>
+              <span>avg rating</span>
+            </div>
+          </div>
+          <a id="story-link" href="#section-about">Read our story</a>
+        </div>
+        <div class="story-visual" id="story-visual">
+          <img
+            id="story-photo"
+            src="./images/story.jpg"
+            alt="Northline retail floor with apparel displays"
+          />
+        </div>
+      </section>
+
+      <section
+        class="section"
+        id="section-stores"
+        style="padding-bottom: 20px"
+      >
+        <div class="section-head" id="stores-head">
+          <div id="stores-intro">
+            <h2 id="stores-title">Visit us</h2>
+            <p id="stores-copy">
+              Try pieces on in person — stylists on the floor seven days a week,
+              alterations available at select locations.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="stores" id="stores-grid">
+        <div class="store-card" id="store-list-card">
+          <h2 id="store-list-title">Flagship &amp; neighborhood shops</h2>
+          <p id="store-list-copy">
+            Walk-ins welcome. Book a 30-minute fitting online if you want a
+            quieter appointment.
+          </p>
+          <div class="store-list" id="store-list">
+            <div class="store-row" id="store-brooklyn">
+              <strong>Brooklyn Flagship</strong>
+              <span>184 Berry St, Brooklyn, NY 11249 · (718) 555-0142</span>
+            </div>
+            <div class="store-row" id="store-soho">
+              <strong>SoHo</strong>
+              <span>91 Mercer St, New York, NY 10012 · (212) 555-0198</span>
+            </div>
+            <div class="store-row" id="store-chicago">
+              <strong>Chicago West Loop</strong>
+              <span
+                >820 W Fulton Market, Chicago, IL 60607 · (312) 555-0164</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="hours-card" id="store-hours-card">
+          <img
+            id="store-hours-photo"
+            src="./images/story.jpg"
+            alt="Interior of a Northline store"
+          />
+          <div class="hours-body" id="store-hours-body">
+            <h3 id="store-hours-title">Brooklyn Flagship hours</h3>
+            <ul id="store-hours-list">
+              <li id="store-hours-weekday">
+                <span>Mon – Fri</span><span>10:00 am – 8:00 pm</span>
+              </li>
+              <li id="store-hours-saturday">
+                <span>Saturday</span><span>10:00 am – 9:00 pm</span>
+              </li>
+              <li id="store-hours-sunday">
+                <span>Sunday</span><span>11:00 am – 6:00 pm</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <section class="newsletter" id="account">
+        <h2 id="newsletter-title">Stay in the loop</h2>
+        <p id="newsletter-copy">
+          Early access to drops, styling notes from our Brooklyn team, and
+          members-only offers. About one email a week.
+        </p>
+        <form class="newsletter-form" id="newsletter-form" action="#">
+          <input
+            id="newsletter-email"
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            aria-label="Email address"
+            autocomplete="email"
+            required
+          />
+          <button type="submit" id="newsletter-submit">Subscribe</button>
+        </form>
+        <p class="form-success" id="newsletter-success" role="status">
+          You’re on the list — watch your inbox this week.
+        </p>
+      </section>
+    </main>
+
+    <footer id="section-about">
+      <div class="footer-grid" id="footer-grid">
+        <div id="footer-brand-block">
+          <div class="footer-brand" id="footer-brand">Northline</div>
+          <p id="footer-tagline">
+            Modern essentials for work, weekends, and everything in between.
+            Designed in New York. Made to be worn hard.
+          </p>
+          <div class="footer-contact" id="footer-contact">
+            <a id="footer-email" href="mailto:hello@northline.co"
+              >hello@northline.co</a
+            >
+            <a id="footer-phone" href="tel:18005550190">1-800-555-0190</a>
+          </div>
+        </div>
+        <div id="footer-shop">
+          <h5>Shop</h5>
+          <ul>
+            <li id="footer-shop-women">
+              <a href="#section-women">Women</a>
+            </li>
+            <li id="footer-shop-men"><a href="#section-men">Men</a></li>
+            <li id="footer-shop-kids"><a href="#section-kids">Kids</a></li>
+            <li id="footer-shop-sale">
+              <a href="#section-collection">Sale · up to 40% off</a>
+            </li>
+          </ul>
+        </div>
+        <div id="footer-help">
+          <h5>Help</h5>
+          <ul>
+            <li id="footer-help-shipping">
+              <a href="#section-stores">Shipping &amp; delivery</a>
+            </li>
+            <li id="footer-help-returns">
+              <a href="#section-stores">Returns &amp; exchanges</a>
+            </li>
+            <li id="footer-help-size">
+              <a href="#section-collection">Size guide</a>
+            </li>
+            <li id="footer-help-contact">
+              <a href="#account">Contact support</a>
+            </li>
+          </ul>
+        </div>
+        <div id="footer-company">
+          <h5>Company</h5>
+          <ul>
+            <li id="footer-company-about">
+              <a href="#section-about">About Northline</a>
+            </li>
+            <li id="footer-company-stores">
+              <a href="#section-stores">Store locator</a>
+            </li>
+            <li id="footer-company-careers">
+              <a href="#section-about">Careers</a>
+            </li>
+            <li id="footer-company-press">
+              <a href="#section-about">Press kit</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom" id="footer-bottom">
+        <span id="footer-legal"
+          >© 2026 Northline Clothing Co. · Brooklyn, NY</span
+        >
+        <span id="footer-policies">Privacy · Terms · Accessibility</span>
+      </div>
+    </footer>
+
+    <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+
+    <aside class="sheet" id="search" aria-label="Search" hidden>
+      <div class="sheet-header">
+        <h2>Search</h2>
+        <button type="button" class="sheet-close" data-close-sheet aria-label="Close">
+          ×
+        </button>
+      </div>
+      <div class="sheet-body">
+        <form class="search-field" id="search-form" action="#">
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Try “linen”, “chino”, “tee”…"
+            aria-label="Search products"
+          />
+          <button type="submit">Go</button>
+        </form>
+        <ul class="search-suggestions" id="search-results">
+          <li><a href="#product-linen-shirt">Linen camp shirt</a></li>
+          <li><a href="#product-chino">Relaxed chino</a></li>
+          <li><a href="#section-women">Everyday tee, 2-pack</a></li>
+          <li><a href="#product-sweater">Open-knit sweater</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <aside class="sheet" id="cart" aria-label="Cart" hidden>
+      <div class="sheet-header">
+        <h2>Your bag</h2>
+        <button type="button" class="sheet-close" data-close-sheet aria-label="Close">
+          ×
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="cart-line" id="cart-line-1">
+          <img
+            class="cart-thumb"
+            src="./images/product-1.jpg"
+            alt="Linen camp shirt"
+          />
+          <div>
+            <h3>Linen camp shirt</h3>
+            <p>Sand · M</p>
+          </div>
+          <strong>$88</strong>
+        </div>
+        <div class="cart-line" id="cart-line-2">
+          <img
+            class="cart-thumb"
+            src="./images/product-2.jpg"
+            alt="Relaxed chino"
+          />
+          <div>
+            <h3>Relaxed chino</h3>
+            <p>Olive · 32</p>
+          </div>
+          <strong>$98</strong>
+        </div>
+        <div class="cart-total">
+          <span>Subtotal</span>
+          <span>$186</span>
+        </div>
+        <button type="button" class="sheet-cta" id="cart-checkout">
+          Checkout
+        </button>
+      </div>
+    </aside>
+
+    <script>
+      (function () {
+        var backdrop = document.getElementById("sheet-backdrop");
+        var searchSheet = document.getElementById("search");
+        var cartSheet = document.getElementById("cart");
+        var navLinks = document.querySelectorAll("#nav-primary .nav-item");
+        var catalog = [
+          { id: "product-linen-shirt", label: "Linen camp shirt", keywords: "linen camp shirt sand" },
+          { id: "product-chino", label: "Relaxed chino", keywords: "chino olive pants" },
+          { id: "section-women", label: "Everyday tee, 2-pack", keywords: "tee tshirt cotton white navy" },
+          { id: "product-sweater", label: "Open-knit sweater", keywords: "sweater knit seafoam" },
+        ];
+
+        function openSheet(sheet) {
+          closeSheets();
+          if (!sheet || !backdrop) return;
+          sheet.hidden = false;
+          backdrop.hidden = false;
+          // force reflow for transition
+          sheet.offsetHeight;
+          sheet.classList.add("is-open");
+          backdrop.classList.add("is-open");
+          var focusable = sheet.querySelector("input, button");
+          if (focusable) focusable.focus();
+        }
+
+        function closeSheets() {
+          [searchSheet, cartSheet].forEach(function (sheet) {
+            if (!sheet) return;
+            sheet.classList.remove("is-open");
+            window.setTimeout(function () {
+              if (!sheet.classList.contains("is-open")) sheet.hidden = true;
+            }, 220);
+          });
+          if (backdrop) {
+            backdrop.classList.remove("is-open");
+            window.setTimeout(function () {
+              if (!backdrop.classList.contains("is-open")) backdrop.hidden = true;
+            }, 220);
+          }
+        }
+
+        function scrollToHash(hash, highlight) {
+          if (!hash || hash === "#") return false;
+          if (hash === "#search") {
+            openSheet(searchSheet);
+            return true;
+          }
+          if (hash === "#cart") {
+            openSheet(cartSheet);
+            return true;
+          }
+          closeSheets();
+          var el = document.getElementById(hash.slice(1));
+          if (!el) return false;
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (highlight) {
+            document
+              .querySelectorAll(".product-highlight")
+              .forEach(function (node) {
+                node.classList.remove("product-highlight");
+              });
+            el.classList.add("product-highlight");
+            window.setTimeout(function () {
+              el.classList.remove("product-highlight");
+            }, 1600);
+          }
+          navLinks.forEach(function (link) {
+            link.classList.toggle("is-active", link.getAttribute("href") === hash);
+          });
+          return true;
+        }
+
+        document.addEventListener("click", function (e) {
+          var closeBtn = e.target.closest("[data-close-sheet]");
+          if (closeBtn) {
+            e.preventDefault();
+            closeSheets();
+            if (location.hash === "#search" || location.hash === "#cart") {
+              history.replaceState(null, "", location.pathname + location.search);
+            }
+            return;
+          }
+          if (e.target === backdrop) {
+            closeSheets();
+            if (location.hash === "#search" || location.hash === "#cart") {
+              history.replaceState(null, "", location.pathname + location.search);
+            }
+            return;
+          }
+          var anchor = e.target.closest('a[href^="#"]');
+          if (!anchor) return;
+          var hash = anchor.getAttribute("href");
+          if (!hash) return;
+          e.preventDefault();
+          if (hash === "#search" || hash === "#cart") {
+            history.pushState(null, "", hash);
+            scrollToHash(hash, false);
+            return;
+          }
+          history.pushState(null, "", hash);
+          scrollToHash(hash, true);
+        });
+
+        window.addEventListener("hashchange", function () {
+          scrollToHash(location.hash || "", true);
+        });
+
+        if (location.hash) {
+          scrollToHash(location.hash, true);
+        }
+
+        var form = document.getElementById("newsletter-form");
+        var success = document.getElementById("newsletter-success");
+        if (form) {
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (success) success.classList.add("is-visible");
+            form.reset();
+          });
+        }
+
+        var searchForm = document.getElementById("search-form");
+        var searchInput = document.getElementById("search-input");
+        var searchResults = document.getElementById("search-results");
+        function renderSearch(query) {
+          if (!searchResults) return;
+          var q = (query || "").trim().toLowerCase();
+          var matches = catalog.filter(function (item) {
+            return !q || item.keywords.indexOf(q) !== -1 || item.label.toLowerCase().indexOf(q) !== -1;
+          });
+          searchResults.innerHTML = matches.length
+            ? matches
+                .map(function (item) {
+                  return (
+                    '<li><a href="#' +
+                    item.id +
+                    '">' +
+                    item.label +
+                    "</a></li>"
+                  );
+                })
+                .join("")
+            : '<li style="padding:10px 12px;color:#6b7280;font-size:14px;">No matches</li>';
+        }
+        if (searchInput) {
+          searchInput.addEventListener("input", function () {
+            renderSearch(searchInput.value);
+          });
+        }
+        if (searchForm) {
+          searchForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            renderSearch(searchInput && searchInput.value);
+            var first = searchResults && searchResults.querySelector("a");
+            if (first) first.click();
+          });
+        }
+
+        var checkout = document.getElementById("cart-checkout");
+        if (checkout) {
+          checkout.addEventListener("click", function () {
+            checkout.textContent = "Order placed";
+            window.setTimeout(function () {
+              checkout.textContent = "Checkout";
+              closeSheets();
+            }, 1200);
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

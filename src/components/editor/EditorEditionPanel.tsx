@@ -841,10 +841,17 @@ export function EditorEditionPanel({
   initialTab?: EditionTab;
 }) {
   const [tab, setTab] = useState<EditionTab>(initialTab);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = window.setTimeout(() => setToast(null), 2000);
+    return () => window.clearTimeout(id);
+  }, [toast]);
 
   const tabs: { id: EditionTab; label: string }[] = [
     { id: "styles", label: "Styles" },
@@ -874,23 +881,6 @@ export function EditorEditionPanel({
               <Checkbox disabled />
               None selected
             </label>
-            <div className="mt-2 flex gap-1 rounded-md border border-border bg-muted p-0.5">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTab(t.id)}
-                  className={cn(
-                    "h-7 flex-1 rounded-[5px] text-xs font-semibold outline-none transition-colors",
-                    tab === t.id
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
           </div>
           <EditionEmptyState />
         </div>
@@ -916,7 +906,7 @@ export function EditorEditionPanel({
             </div>
             <div className="inline-flex max-w-full items-center gap-1 rounded-md border border-border bg-muted px-1.5 py-0.5">
               <code className="truncate text-[11px] text-muted-foreground">
-                .text-heading-3
+                {selection!.selector}
               </code>
               <Button
                 type="button"
@@ -924,9 +914,16 @@ export function EditorEditionPanel({
                 size="icon"
                 className="size-5 shrink-0"
                 aria-label="Copy selector"
-                onClick={() =>
-                  void navigator.clipboard?.writeText(".text-heading-3")
-                }
+                onClick={() => {
+                  void (async () => {
+                    try {
+                      await navigator.clipboard.writeText(selection!.selector);
+                      setToast("Selector copied");
+                    } catch {
+                      setToast("Couldn't copy selector");
+                    }
+                  })();
+                }}
               >
                 <Copy className="size-3" strokeWidth={1.75} />
               </Button>
@@ -950,7 +947,16 @@ export function EditorEditionPanel({
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="relative min-h-0 flex-1 overflow-y-auto">
+            {toast && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="sticky top-2 z-10 mx-auto mb-2 w-fit rounded-md border border-border bg-foreground px-3 py-1.5 text-xs font-medium text-background shadow-md"
+              >
+                {toast}
+              </div>
+            )}
             {tab === "styles" && <StylesTab />}
             {tab === "attributes" && <AttributesTab />}
             {tab === "tracking" && <TrackingTab />}

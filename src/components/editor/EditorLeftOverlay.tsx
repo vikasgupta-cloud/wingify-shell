@@ -6,8 +6,6 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { Minus, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const MIN_WIDTH = 240;
@@ -17,7 +15,7 @@ const STEP = 40;
 
 /**
  * Overlay shell for left tool panels — sits on the canvas without pushing layout.
- * Drag the right edge or use +/- to resize.
+ * Drag the right edge to resize (arrow keys when handle focused).
  */
 export function EditorLeftOverlay({
   children,
@@ -86,11 +84,10 @@ export function EditorLeftOverlay({
       style={{ width }}
       data-left-overlay
     >
-      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-r border-border bg-background shadow-[6px_0_16px_-4px_rgba(0,0,0,0.14)]">
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-r border-border bg-background">
         {children}
       </div>
 
-      {/* Resize handle */}
       <div
         role="separator"
         aria-orientation="vertical"
@@ -113,45 +110,26 @@ export function EditorLeftOverlay({
           }
         }}
         className={cn(
-          "group absolute inset-y-0 -right-1 z-10 flex w-3 cursor-col-resize items-center justify-center",
-          dragging && "bg-foreground/5"
+          "group/handle absolute inset-y-0 -right-2 z-10 flex w-4 cursor-col-resize items-center justify-center outline-none",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         )}
       >
+        {/* Soft edge highlight on hover / drag */}
         <span
           className={cn(
-            "h-10 w-1 rounded-full bg-border transition-colors group-hover:bg-foreground/40",
-            dragging && "bg-foreground/50"
+            "pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/0 transition-colors",
+            "group-hover/handle:bg-foreground/20",
+            dragging && "bg-foreground/35"
           )}
         />
-      </div>
-
-      {/* Size controls */}
-      <div className="absolute bottom-3 right-3 z-10 flex items-center gap-0.5 rounded-md border border-border bg-background/95 p-0.5 shadow-sm backdrop-blur-sm">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-6"
-          aria-label="Decrease panel width"
-          disabled={width <= MIN_WIDTH}
-          onClick={() => setWidth((w) => clamp(w - STEP))}
-        >
-          <Minus className="size-3.5" strokeWidth={1.75} />
-        </Button>
-        <span className="min-w-[2.5rem] text-center text-[10px] font-medium tabular-nums text-muted-foreground">
-          {width}
-        </span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-6"
-          aria-label="Increase panel width"
-          disabled={width >= MAX_WIDTH}
-          onClick={() => setWidth((w) => clamp(w + STEP))}
-        >
-          <Plus className="size-3.5" strokeWidth={1.75} />
-        </Button>
+        {/* Grip pill — only appears when interacting */}
+        <span
+          className={cn(
+            "pointer-events-none relative h-8 w-1 rounded-full bg-muted-foreground/0 transition-all duration-150",
+            "group-hover/handle:h-10 group-hover/handle:bg-muted-foreground/45",
+            dragging && "h-12 bg-foreground/55"
+          )}
+        />
       </div>
     </div>
   );

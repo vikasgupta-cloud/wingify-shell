@@ -55,7 +55,7 @@ export function EditorCopilotPanel({
   return (
     <EditorFloatablePanel
       title="Wandz Copilot"
-      icon={<EditorIcon src={aiSparkle} size={14} className="grayscale" />}
+      icon={<EditorIcon src={aiSparkle} size={14} />}
       onClose={onClose}
       bodyClassName="relative"
       chrome={chrome}
@@ -89,7 +89,7 @@ export function EditorCopilotPanel({
 
       <div className="flex flex-1 flex-col items-center overflow-y-auto px-4 pb-28 pt-16">
         <div className="mb-5 flex size-[50px] items-center justify-center rounded-full bg-muted">
-          <EditorIcon src={aiSparkle} size={24} className="grayscale" />
+          <EditorIcon src={aiSparkle} size={24} />
         </div>
         <div className="mb-12 flex w-full flex-col items-center gap-2 text-center">
           <p className="text-sm font-semibold text-foreground">
@@ -111,7 +111,7 @@ export function EditorCopilotPanel({
               type="button"
               variant="outline"
               size="sm"
-              className="h-[26px] justify-start gap-2 rounded-md px-2 text-xs font-medium"
+              className="h-[26px] justify-start gap-2 rounded-md px-2 text-xs font-medium shadow-none"
               onClick={() => setDraft(s.label)}
             >
               <EditorIcon
@@ -126,7 +126,7 @@ export function EditorCopilotPanel({
             type="button"
             className="inline-flex h-[26px] items-center gap-1.5 px-1 text-xs font-semibold text-foreground outline-none hover:underline"
           >
-            <EditorIcon src={aiSparkle} size={13} className="grayscale" />
+            <EditorIcon src={aiSparkle} size={13} />
             See how VWO AI can help you
             <ChevronRight className="size-3.5" strokeWidth={2} />
           </button>
@@ -149,7 +149,7 @@ export function EditorCopilotPanel({
             </button>
           </div>
         )}
-        <div className="relative flex h-24 items-end justify-between overflow-hidden rounded-lg border border-border bg-background p-3 transition-colors focus-within:border-input">
+        <div className="relative flex h-24 items-end justify-between overflow-hidden rounded-lg border border-border bg-background p-3 shadow-none transition-colors focus-within:border-input">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -182,7 +182,7 @@ export function EditorCopilotPanel({
             <Button
               type="button"
               size="icon"
-              className="size-7 rounded-md"
+              className="size-7 rounded-md shadow-none"
               aria-label="Send"
             >
               <EditorIcon src={send} size={15} />

@@ -39,7 +39,7 @@ export function EditorUtilityRail({
   return (
     <TooltipProvider delayDuration={200}>
       <nav
-        className="flex h-full shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4"
+        className="flex h-full shrink-0 flex-col items-center gap-3 border-l border-border bg-background py-4 shadow-none"
         style={{ width: UTILITY_RAIL_WIDTH }}
       >
         {RAIL_ITEMS.map(({ id, label, icon: Icon }) => {

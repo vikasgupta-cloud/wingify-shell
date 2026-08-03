@@ -19,7 +19,7 @@ export type EditorSelection = {
 export const DEMO_SELECTION: EditorSelection = {
   tag: "H3",
   label: "heading_h3",
-  selector: "H3.heading_h3",
+  selector: "#hero-heading",
 };
 
 export type EditorScenarioId =
