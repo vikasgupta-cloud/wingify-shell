@@ -36,7 +36,7 @@ export type EditorFloatingTab = {
 };
 
 type EditorFloatablePanelProps = {
-  title: string;
+  title: ReactNode;
   icon?: ReactNode;
   onClose?: () => void;
   children: ReactNode;
@@ -267,7 +267,11 @@ export function EditorFloatablePanel({
   const titleRow = (
     <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-foreground">
       {icon}
-      <span className="truncate">{title}</span>
+      {typeof title === "string" ? (
+        <span className="truncate">{title}</span>
+      ) : (
+        title
+      )}
     </div>
   );
 

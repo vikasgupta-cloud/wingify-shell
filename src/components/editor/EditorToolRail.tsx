@@ -1,3 +1,5 @@
+// Left rail UI kept for reference/undo — tools now render on EditorUtilityRail (right).
+// EditorPage no longer mounts this component.
 import type { ComponentType } from "react";
 import { Languages, Plus, Redo2, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";

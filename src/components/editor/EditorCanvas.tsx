@@ -21,6 +21,7 @@ import type {
   EditorDevice,
   EditorSelection,
 } from "@/config/editorScenarios";
+import { EditorWandzStubs } from "./EditorWandzStubs";
 
 export type EditorMode = "design" | "navigate" | "code";
 
@@ -216,8 +217,9 @@ export function EditorCanvas({
   selection = null,
   onSelect,
   onClearSelection,
-  onOpenEdition,
   onOpenCopilot,
+  wandzOpen = false,
+  onCloseWandz,
   showSubtestPopover = false,
   onDismissSubtest,
   onLocationChange,
@@ -229,8 +231,12 @@ export function EditorCanvas({
   selection?: EditorSelection | null;
   onSelect?: (selection: EditorSelection) => void;
   onClearSelection?: () => void;
-  onOpenEdition?: () => void;
+  // @undo: restore onOpenEdition for the floating edit (pencil) control
+  // onOpenEdition?: () => void;
   onOpenCopilot?: () => void;
+  /** Floating Wandz card anchored to the selected element. */
+  wandzOpen?: boolean;
+  onCloseWandz?: () => void;
   showSubtestPopover?: boolean;
   onDismissSubtest?: () => void;
   onLocationChange?: (url: string) => void;
@@ -646,29 +652,19 @@ export function EditorCanvas({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-7 rounded-full"
+                  className={cn(
+                    "size-7 rounded-full",
+                    wandzOpen && "bg-accent text-foreground"
+                  )}
                   aria-label="Ask Copilot"
                   title="Ask Copilot"
+                  aria-pressed={wandzOpen}
                   onClick={(e) => {
                     e.stopPropagation();
                     onOpenCopilot?.();
                   }}
                 >
                   <Sparkles className="size-3.5" strokeWidth={1.75} />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-full"
-                  aria-label="Edit in Edition"
-                  title="Edit in Edition"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenEdition?.();
-                  }}
-                >
-                  <Pencil className="size-3.5" strokeWidth={1.75} />
                 </Button>
                 <span className="mx-0.5 h-4 w-px shrink-0 bg-border" />
                 <Button
@@ -702,6 +698,15 @@ export function EditorCanvas({
                   <MoreHorizontal className="size-3.5" strokeWidth={1.75} />
                 </Button>
               </div>
+
+              {wandzOpen && (
+                <div className="pointer-events-auto absolute left-0 top-full z-30 mt-12">
+                  <EditorWandzStubs
+                    variant="float"
+                    onClose={onCloseWandz}
+                  />
+                </div>
+              )}
             </div>
           )}
 

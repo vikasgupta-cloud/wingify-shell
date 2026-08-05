@@ -1,3 +1,6 @@
+// Summary: Tool icons on the right rail replace Edition in the same dock slot
+// (Layers/Add/etc. never stack beside Edition). Left tool rail removed from layout.
+// @undo: restore EditorToolRail import + JSX on the left of the canvas.
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Pencil, Sparkles } from "lucide-react";
@@ -7,7 +10,7 @@ import {
   type CodeScopeId,
   type VariationId,
 } from "@/components/editor/EditorVariationBar";
-import { EditorToolRail } from "@/components/editor/EditorToolRail";
+// import { EditorToolRail } from "@/components/editor/EditorToolRail";
 import {
   EditorCanvas,
   EDITOR_PREVIEW_SRC,
@@ -22,11 +25,13 @@ import { EditorAddPanel } from "@/components/editor/EditorAddPanel";
 import { EditorMetricsPanel } from "@/components/editor/EditorMetricsPanel";
 import { EditorChangesPanel } from "@/components/editor/EditorChangesPanel";
 import { EditorTranslatePanel } from "@/components/editor/EditorTranslatePanel";
-import { EditorLeftOverlay } from "@/components/editor/EditorLeftOverlay";
+// @undo: restore EditorLeftOverlay when tool panels overlay the canvas again.
+// import { EditorLeftOverlay } from "@/components/editor/EditorLeftOverlay";
 import {
   defaultFloatPos,
   defaultPanelChrome,
   EditorFloatingPanelGroup,
+  EDITOR_PANEL_WIDTH,
   useFloatingGroupDrag,
   type EditorPanelChrome,
 } from "@/components/editor/EditorFloatablePanel";
@@ -147,6 +152,8 @@ export default function EditorPage() {
   const [editionTab, setEditionTab] = useState<EditionTabId>(
     DEFAULT_SCENARIO.editionTab
   );
+  // Floating Wandz card near the selected element (does not replace Edition body).
+  const [wandzOpen, setWandzOpen] = useState(false);
   const [showSubtestPopover, setShowSubtestPopover] = useState(
     DEFAULT_SCENARIO.showSubtestPopover
   );
@@ -188,6 +195,7 @@ export default function EditorPage() {
     setLeftTool(scenario.leftTool);
     setSelection(scenario.selection);
     setEditionTab(scenario.editionTab);
+    setWandzOpen(false);
     setShowSubtestPopover(scenario.showSubtestPopover);
     setShowDimensionsBar(scenario.showDimensionsBar);
     setPanels(panelsFromOpen(scenario.rightOpen));
@@ -397,30 +405,53 @@ export default function EditorPage() {
       next[id] = { ...current, open: true };
       return next;
     });
+    // Opening Edition (or another side panel) replaces any tool panel.
+    if (id === "edition") {
+      setLeftTool(null);
+    }
   };
 
-  const openSidePanel = useCallback((id: EditorSidePanelId) => {
-    setPanels((prev) => {
-      const next = { ...prev };
-      if (prev[id].chrome.mode === "docked") {
-        for (const other of PANEL_ORDER) {
-          if (
-            other !== id &&
-            next[other].open &&
-            next[other].chrome.mode === "docked"
-          ) {
-            next[other] = { ...next[other], open: false };
-          }
-        }
-      }
-      next[id] = { ...next[id], open: true };
-      return next;
-    });
-    setActiveTab(id);
+  // @undo: restore when floating selection menu reopens Edition via pencil.
+  // const openSidePanel = useCallback((id: EditorSidePanelId) => {
+  //   setPanels((prev) => {
+  //     const next = { ...prev };
+  //     if (prev[id].chrome.mode === "docked") {
+  //       for (const other of PANEL_ORDER) {
+  //         if (
+  //           other !== id &&
+  //           next[other].open &&
+  //           next[other].chrome.mode === "docked"
+  //         ) {
+  //           next[other] = { ...next[other], open: false };
+  //         }
+  //       }
+  //     }
+  //     next[id] = { ...next[id], open: true };
+  //     return next;
+  //   });
+  //   setActiveTab(id);
+  // }, []);
+
+  // Floating Ask Copilot → Wandz float only; do not open Edition (rail icon does that).
+  const openWandzFloat = useCallback(() => {
+    setWandzOpen((open) => !open);
   }, []);
 
+  // Tool rail icons replace Edition in the right dock (never stack beside it).
   const toggleLeftTool = (id: EditorLeftTool) => {
-    setLeftTool((current) => (current === id ? null : id));
+    setLeftTool((current) => {
+      if (current === id) return null;
+      setPanels((prev) => {
+        const next = { ...prev };
+        for (const panelId of PANEL_ORDER) {
+          if (next[panelId].open && next[panelId].chrome.mode === "docked") {
+            next[panelId] = { ...next[panelId], open: false };
+          }
+        }
+        return next;
+      });
+      return id;
+    });
   };
 
   const renderPanel = (id: EditorSidePanelId, inShell: boolean) => {
@@ -453,7 +484,7 @@ export default function EditorPage() {
     );
   };
 
-  const leftPanel =
+  const toolPanel =
     leftTool === "layers" ? (
       <EditorLayersPanel onClose={() => setLeftTool(null)} />
     ) : leftTool === "add" ? (
@@ -483,7 +514,8 @@ export default function EditorPage() {
         onModeChange={handleModeChange}
       />
       <div className="flex min-h-0 flex-1">
-        <EditorToolRail activeTool={leftTool} onSelect={toggleLeftTool} />
+        {/* Left tool rail removed — tools live on the right utility rail. */}
+        {/* <EditorToolRail activeTool={leftTool} onSelect={toggleLeftTool} /> */}
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <EditorVariationBar
             layoutMode={layoutMode}
@@ -514,11 +546,7 @@ export default function EditorPage() {
             />
           )}
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            {leftPanel && (
-              <div className="absolute inset-y-0 left-0 z-20 flex">
-                <EditorLeftOverlay>{leftPanel}</EditorLeftOverlay>
-              </div>
-            )}
+            {/* Tool panels dock on the right and replace Edition — not canvas overlays. */}
             <div className="absolute inset-0 flex flex-col overflow-hidden">
               {editorMode === "code" ? (
                 <EditorCodeWorkspace
@@ -535,9 +563,14 @@ export default function EditorPage() {
                   }
                   selection={selection}
                   onSelect={setSelection}
-                  onClearSelection={() => setSelection(null)}
-                  onOpenEdition={() => openSidePanel("edition")}
-                  onOpenCopilot={() => openSidePanel("copilot")}
+                  onClearSelection={() => {
+                    setSelection(null);
+                    setWandzOpen(false);
+                  }}
+                  // onOpenEdition={() => openSidePanel("edition")}
+                  onOpenCopilot={openWandzFloat}
+                  wandzOpen={wandzOpen}
+                  onCloseWandz={() => setWandzOpen(false)}
                   showSubtestPopover={
                     showSubtestPopover && editorMode === "design"
                   }
@@ -549,8 +582,22 @@ export default function EditorPage() {
           </div>
         </div>
         <div className="flex shrink-0 bg-background shadow-none">
-          {dockedIds.map((id) => renderPanel(id, false))}
-          <EditorUtilityRail activeIds={openIds} onToggle={toggleSidePanel} />
+          {toolPanel ? (
+            <div
+              className="flex h-full shrink-0 flex-col border-l border-border bg-background shadow-none"
+              style={{ width: EDITOR_PANEL_WIDTH }}
+            >
+              {toolPanel}
+            </div>
+          ) : (
+            dockedIds.map((id) => renderPanel(id, false))
+          )}
+          <EditorUtilityRail
+            activeIds={openIds}
+            onToggle={toggleSidePanel}
+            activeTool={leftTool}
+            onSelectTool={toggleLeftTool}
+          />
         </div>
         {detachedIds.length > 0 && (
           <EditorFloatingPanelGroup

@@ -1,3 +1,5 @@
+// Summary: Edition empty state keeps the original Wandz chat zero state.
+// With a selection, the element editor stays in this panel; Wandz opens as a float on the canvas.
 import { useEffect, useState } from "react";
 import {
   AlignCenter,
@@ -6,6 +8,7 @@ import {
   AlignRight,
   Bold,
   ChevronDown,
+  ChevronRight,
   Columns2,
   Copy,
   Eye,
@@ -15,12 +18,14 @@ import {
   Link2Off,
   List,
   ListOrdered,
+  Mic,
   Minus,
-  Pencil,
+  MoreVertical,
   Plus,
   RotateCcw,
   Rows2,
   Strikethrough,
+  Sparkles,
   Underline,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +47,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { EditorIcon } from "./EditorIcon";
 import { EditorFloatablePanel } from "./EditorFloatablePanel";
+import aiSparkle from "@/assets/editor/ai-sparkle.svg";
+import send from "@/assets/editor/send.svg";
+import paletteSm from "@/assets/editor/palette-sm.svg";
+import move from "@/assets/editor/move.svg";
 import type {
   EditorPanelChrome,
   EditorPanelGroupDragHandlers,
@@ -800,25 +810,135 @@ function TrackingTab() {
   );
 }
 
+const WANDZ_ZERO_SUGGESTIONS: { icon: string; label: string }[] = [
+  { icon: paletteSm, label: "Make the headline text larger" },
+  { icon: move, label: "Move the image to the left" },
+  { icon: paletteSm, label: "Change the button color to green" },
+];
+
+/** Original Wandz chat zero state — shown when no element is selected. */
 function EditionEmptyState() {
+  const [draft, setDraft] = useState("");
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
-      <div className="relative size-24 rounded-lg border border-dashed border-border bg-muted/40">
-        <span className="absolute left-3 top-3 size-8 rounded border-2 border-foreground/40" />
-        <span className="absolute bottom-4 right-4 size-3 rotate-45 border-b-2 border-r-2 border-foreground" />
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="flex items-center justify-between px-4 pt-3">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-foreground outline-none"
+        >
+          New chat
+          <ChevronDown
+            className="size-4 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+        </button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-6 rounded-md"
+          aria-label="Chat options"
+        >
+          <MoreVertical className="size-3.5" strokeWidth={1.75} />
+        </Button>
       </div>
-      <p className="text-sm font-semibold text-foreground">
-        Select an element on page
-      </p>
-      <p className="max-w-[220px] text-xs leading-5 text-muted-foreground">
-        Click any element in the preview to inspect styles, attributes, and
-        tracking.
-      </p>
+
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-4 pb-28 pt-16">
+        <div className="mb-5 flex size-[50px] items-center justify-center rounded-full bg-muted">
+          <EditorIcon src={aiSparkle} size={24} />
+        </div>
+        <div className="mb-12 flex w-full flex-col items-center gap-2 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            Hi! How can I help you today?
+          </p>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Quickly modify your variation using natural language - just type or
+            speak your commands.
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col gap-3 px-3">
+          <p className="text-xs text-muted-foreground">
+            Try asking something like:
+          </p>
+          {WANDZ_ZERO_SUGGESTIONS.map((s) => (
+            <Button
+              key={s.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-[26px] justify-start gap-2 rounded-md px-2 text-xs font-medium shadow-none"
+              onClick={() => setDraft(s.label)}
+            >
+              <EditorIcon
+                src={s.icon}
+                size={14}
+                className="text-muted-foreground"
+              />
+              {s.label}
+            </Button>
+          ))}
+          <button
+            type="button"
+            className="inline-flex h-[26px] items-center gap-1.5 px-1 text-xs font-semibold text-foreground outline-none hover:underline"
+          >
+            <EditorIcon src={aiSparkle} size={13} />
+            See how VWO AI can help you
+            <ChevronRight className="size-3.5" strokeWidth={2} />
+          </button>
+        </div>
+      </div>
+
+      <div className="absolute inset-x-4 bottom-3">
+        <div className="relative flex h-24 items-end justify-between overflow-hidden rounded-lg border border-border bg-background p-3 shadow-none transition-colors focus-within:border-input">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Ask anything....."
+            className="absolute inset-x-3 bottom-10 top-3 resize-none bg-transparent text-[13px] leading-5 text-foreground outline-none placeholder:text-muted-foreground"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="relative z-10 size-7 rounded-md"
+            aria-label="Attach"
+          >
+            <Plus className="size-[18px]" strokeWidth={1.75} />
+          </Button>
+          <div className="relative z-10 flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-7 rounded-md"
+              aria-label="Voice input"
+            >
+              <Mic className="size-4" strokeWidth={1.75} />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              className="size-7 rounded-md shadow-none"
+              aria-label="Send"
+            >
+              <EditorIcon src={send} size={15} />
+            </Button>
+          </div>
+        </div>
+        <p className="mt-1.5 whitespace-nowrap text-center text-[10.5px] leading-4 text-muted-foreground">
+          AI can make mistakes. Please verify the information.
+        </p>
+      </div>
     </div>
   );
 }
 
-/** Edition inspector — Styles / Attributes / Tracking for the selected element. */
+/** Edition inspector — Styles / Attributes / Tracking for the selected element.
+ *  With no selection, the original Wandz chat zero state fills the panel.
+ *  With selection, Wandz opens as a floating card near the element (not here).
+ */
 export function EditorEditionPanel({
   onClose,
   chrome,
@@ -863,8 +983,16 @@ export function EditorEditionPanel({
 
   return (
     <EditorFloatablePanel
-      title="Edition"
-      icon={<Pencil className="size-3.5 shrink-0" strokeWidth={1.75} />}
+      title={
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <span className="truncate">Edition</span>
+          {/* Display-only for now — header click handled in a later pass. */}
+          <Sparkles
+            className="size-3.5 shrink-0 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+        </span>
+      }
       onClose={onClose}
       bodyClassName="min-h-0 overflow-hidden"
       chrome={chrome}
@@ -875,15 +1003,7 @@ export function EditorEditionPanel({
       groupDrag={groupDrag}
     >
       {!hasSelection ? (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 border-b border-border px-3 py-2.5">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Checkbox disabled />
-              None selected
-            </label>
-          </div>
-          <EditionEmptyState />
-        </div>
+        <EditionEmptyState />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 space-y-2 border-b border-border px-3 py-2.5">

@@ -1,3 +1,5 @@
+// Summary: Tool-panel overlay for Layers/Add/etc. Supports left or right
+// anchoring — right is used now that tools live on the utility rail.
 import {
   useCallback,
   useEffect,
@@ -14,15 +16,18 @@ const DEFAULT_WIDTH = 300;
 const STEP = 40;
 
 /**
- * Overlay shell for left tool panels — sits on the canvas without pushing layout.
- * Drag the right edge to resize (arrow keys when handle focused).
+ * Overlay shell for tool panels — sits on the canvas without pushing layout.
+ * `side="right"` places the panel on the canvas’s right edge (next to the rail).
+ * Drag the inner edge to resize (arrow keys when handle focused).
  */
 export function EditorLeftOverlay({
   children,
   className,
+  side = "left",
 }: {
   children: ReactNode;
   className?: string;
+  side?: "left" | "right";
 }) {
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const dragRef = useRef<{
@@ -31,6 +36,7 @@ export function EditorLeftOverlay({
     originW: number;
   } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const isRight = side === "right";
 
   const clamp = useCallback(
     (w: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(w))),
@@ -51,7 +57,9 @@ export function EditorLeftOverlay({
   const onHandlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
-    setWidth(clamp(drag.originW + (e.clientX - drag.startX)));
+    const delta = e.clientX - drag.startX;
+    // Left panel grows to the right; right panel grows to the left.
+    setWidth(clamp(drag.originW + (isRight ? -delta : delta)));
   };
 
   const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -82,9 +90,14 @@ export function EditorLeftOverlay({
     <div
       className={cn("relative flex h-full", className)}
       style={{ width }}
-      data-left-overlay
+      data-left-overlay={side}
     >
-      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-r border-border bg-background">
+      <div
+        className={cn(
+          "flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-background",
+          isRight ? "border-l border-border" : "border-r border-border"
+        )}
+      >
         {children}
       </div>
 
@@ -103,18 +116,18 @@ export function EditorLeftOverlay({
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") {
             e.preventDefault();
-            setWidth((w) => clamp(w - STEP));
+            setWidth((w) => clamp(w + (isRight ? STEP : -STEP)));
           } else if (e.key === "ArrowRight") {
             e.preventDefault();
-            setWidth((w) => clamp(w + STEP));
+            setWidth((w) => clamp(w + (isRight ? -STEP : STEP)));
           }
         }}
         className={cn(
-          "group/handle absolute inset-y-0 -right-2 z-10 flex w-4 cursor-col-resize items-center justify-center outline-none",
+          "group/handle absolute inset-y-0 z-10 flex w-4 cursor-col-resize items-center justify-center outline-none",
+          isRight ? "-left-2" : "-right-2",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         )}
       >
-        {/* Soft edge highlight on hover / drag */}
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/0 transition-colors",
@@ -122,7 +135,6 @@ export function EditorLeftOverlay({
             dragging && "bg-foreground/35"
           )}
         />
-        {/* Grip pill — only appears when interacting */}
         <span
           className={cn(
             "pointer-events-none relative h-8 w-1 rounded-full bg-muted-foreground/0 transition-all duration-150",
