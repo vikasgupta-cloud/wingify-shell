@@ -1,4 +1,4 @@
-import { LayoutTemplate } from "lucide-react";
+import { ArrowLeft, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,8 +16,6 @@ import {
 } from "@/config/editorScenarios";
 import type { CampaignStatus } from "@/data/campaigns";
 
-import arrowLeft from "@/assets/editor/arrow-left.svg";
-import wingifyLogo from "@/assets/wingify-logo.png";
 import saveIcon from "@/assets/editor/save-01.svg";
 import paletteIcon from "@/assets/editor/palette.svg";
 import cursorIcon from "@/assets/editor/cursor-04.svg";
@@ -53,37 +51,28 @@ export function EditorTopBar({
 
   return (
     <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-border bg-background px-2">
-      <div className="flex h-7 items-center gap-3 pl-1">
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8 rounded-lg"
-            aria-label="Back"
-          >
-            <EditorIcon src={arrowLeft} size={20} />
-          </Button>
-          <img
-            src={wingifyLogo}
-            alt="Wingify"
-            className="h-5 w-auto object-contain grayscale"
-          />
-        </div>
-        <div className="flex items-center gap-2 pl-1">
-          <p className="max-w-[220px] truncate text-[13px] font-medium text-foreground">
-            {campaignName}
-          </p>
-          {status ? (
-            <span className="inline-flex h-5 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-medium text-foreground">
-              {status}
-            </span>
-          ) : (
-            <span className="inline-flex h-5 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-medium text-muted-foreground">
-              —
-            </span>
-          )}
-        </div>
+      <div className="flex h-7 items-center gap-1.5 pl-0.5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0 rounded-md"
+          aria-label="Back"
+        >
+          <ArrowLeft className="size-4" strokeWidth={1.75} />
+        </Button>
+        <p className="max-w-[220px] truncate text-[13px] font-medium leading-none text-foreground">
+          {campaignName}
+        </p>
+        {status ? (
+          <span className="inline-flex h-5 shrink-0 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-medium leading-none text-foreground">
+            {status}
+          </span>
+        ) : (
+          <span className="inline-flex h-5 shrink-0 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-medium leading-none text-muted-foreground">
+            —
+          </span>
+        )}
       </div>
 
       <div className="absolute left-1/2 top-1/2 flex h-6 -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-md border border-border bg-muted p-px">

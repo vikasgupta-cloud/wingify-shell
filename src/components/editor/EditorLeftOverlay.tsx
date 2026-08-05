@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const MIN_WIDTH = 240;
-const MAX_WIDTH = 560;
+const MAX_WIDTH = 640;
 const DEFAULT_WIDTH = 300;
 const STEP = 40;
 
@@ -20,11 +20,15 @@ const STEP = 40;
 export function EditorLeftOverlay({
   children,
   className,
+  defaultWidth = DEFAULT_WIDTH,
 }: {
   children: ReactNode;
   className?: string;
+  defaultWidth?: number;
 }) {
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
+  const [width, setWidth] = useState(() =>
+    Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(defaultWidth)))
+  );
   const dragRef = useRef<{
     pointerId: number;
     startX: number;

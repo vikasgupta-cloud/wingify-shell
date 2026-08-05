@@ -71,7 +71,7 @@ function RailItem({
       aria-disabled={disabled}
       title={disabled ? `${label} (unavailable)` : label}
       className={cn(
-        "flex w-full flex-col items-center gap-1.5 outline-none transition-colors",
+        "flex w-full flex-col items-center gap-0.5 outline-none transition-colors",
         disabled
           ? "cursor-not-allowed text-muted-foreground/40"
           : active
@@ -112,7 +112,7 @@ export function EditorToolRail({
 }) {
   return (
     <aside className="relative flex w-[60px] shrink-0 flex-col border-r border-border bg-background px-1.5 pb-3 pt-3">
-      <div className="flex w-full flex-col items-stretch gap-2.5">
+      <div className="flex w-full flex-col items-stretch gap-5">
         {TOP.map((t) => (
           <RailItem
             key={t.id}
@@ -134,7 +134,11 @@ export function EditorToolRail({
         ))}
       </div>
 
-      <div className="mt-auto flex w-full flex-col items-stretch gap-2.5 pt-3">
+      <div className="mt-auto flex w-full flex-col items-stretch gap-5 pt-3">
+        {BOTTOM_ACTIONS.map((t) => (
+          <RailItem key={t.id} label={t.label} icon={t.icon} disabled />
+        ))}
+        <RailDivider />
         {BOTTOM_TOOLS.map((t) => (
           <RailItem
             key={t.id}
@@ -143,10 +147,6 @@ export function EditorToolRail({
             active={activeTool === t.id}
             onClick={() => onSelect?.(t.id)}
           />
-        ))}
-        <RailDivider />
-        {BOTTOM_ACTIONS.map((t) => (
-          <RailItem key={t.id} label={t.label} icon={t.icon} disabled />
         ))}
       </div>
     </aside>

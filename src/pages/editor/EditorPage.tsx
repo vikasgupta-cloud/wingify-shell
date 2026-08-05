@@ -514,9 +514,16 @@ export default function EditorPage() {
             />
           )}
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            {leftPanel && (
+            {leftPanel && leftTool && (
               <div className="absolute inset-y-0 left-0 z-20 flex">
-                <EditorLeftOverlay>{leftPanel}</EditorLeftOverlay>
+                <EditorLeftOverlay
+                  key={leftTool}
+                  defaultWidth={
+                    leftTool === "add" || leftTool === "metrics" ? 440 : 300
+                  }
+                >
+                  {leftPanel}
+                </EditorLeftOverlay>
               </div>
             )}
             <div className="absolute inset-0 flex flex-col overflow-hidden">
