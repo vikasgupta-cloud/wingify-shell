@@ -800,20 +800,110 @@ function TrackingTab() {
   );
 }
 
+function EmptySelectionArt() {
+  return (
+    <svg
+      viewBox="0 0 168 128"
+      className="h-[104px] w-[136px] text-muted-foreground"
+      fill="none"
+      aria-hidden
+    >
+      <rect
+        x="10"
+        y="8"
+        width="132"
+        height="100"
+        rx="10"
+        className="fill-muted stroke-border"
+        strokeWidth="1.25"
+      />
+      <rect
+        x="10"
+        y="8"
+        width="132"
+        height="22"
+        rx="10"
+        className="fill-muted"
+      />
+      <rect
+        x="10"
+        y="18"
+        width="132"
+        height="12"
+        className="fill-muted"
+      />
+      <circle cx="24" cy="19" r="3" className="fill-border" />
+      <circle cx="34" cy="19" r="3" className="fill-border" />
+      <circle cx="44" cy="19" r="3" className="fill-border" />
+      <rect
+        x="22"
+        y="40"
+        width="52"
+        height="8"
+        rx="2"
+        className="fill-border"
+      />
+      <rect
+        x="22"
+        y="54"
+        width="72"
+        height="5"
+        rx="1.5"
+        className="fill-border/80"
+      />
+      <rect
+        x="22"
+        y="64"
+        width="60"
+        height="5"
+        rx="1.5"
+        className="fill-border/80"
+      />
+      <rect
+        x="22"
+        y="80"
+        width="40"
+        height="16"
+        rx="3"
+        className="fill-border"
+      />
+      <rect
+        x="78"
+        y="36"
+        width="48"
+        height="40"
+        rx="4"
+        className="stroke-foreground/55"
+        strokeWidth="1.5"
+        strokeDasharray="3.5 2.5"
+      />
+      <path
+        d="M118 86 L126 104 L122 104 L126 114 L120 114 L116 104 L112 104 Z"
+        className="fill-foreground"
+      />
+      <path
+        d="M132 92 L136 88 L140 92 L136 96 Z M136 82 V88 M136 96 V100 M128 92 H132 M140 92 H144"
+        className="stroke-foreground"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function EditionEmptyState() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
-      <div className="relative size-24 rounded-lg border border-dashed border-border bg-muted/40">
-        <span className="absolute left-3 top-3 size-8 rounded border-2 border-foreground/40" />
-        <span className="absolute bottom-4 right-4 size-3 rotate-45 border-b-2 border-r-2 border-foreground" />
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-10 text-center">
+      <EmptySelectionArt />
+      <div className="space-y-2">
+        <p className="text-[15px] font-semibold leading-snug text-foreground">
+          Select an element on page
+        </p>
+        <p className="max-w-[240px] text-xs leading-5 text-muted-foreground">
+          Select any element to access its properties, adjust settings, and make
+          changes as needed.
+        </p>
       </div>
-      <p className="text-sm font-semibold text-foreground">
-        Select an element on page
-      </p>
-      <p className="max-w-[220px] text-xs leading-5 text-muted-foreground">
-        Click any element in the preview to inspect styles, attributes, and
-        tracking.
-      </p>
     </div>
   );
 }
@@ -875,15 +965,7 @@ export function EditorEditionPanel({
       groupDrag={groupDrag}
     >
       {!hasSelection ? (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 border-b border-border px-3 py-2.5">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Checkbox disabled />
-              None selected
-            </label>
-          </div>
-          <EditionEmptyState />
-        </div>
+        <EditionEmptyState />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 space-y-2 border-b border-border px-3 py-2.5">

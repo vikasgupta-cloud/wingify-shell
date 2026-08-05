@@ -103,7 +103,7 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
   },
   {
     id: "mvt",
-    label: "Multivariate",
+    label: "MVT",
     layoutMode: "mvt",
     device: "desktop",
     leftTool: null,
@@ -237,3 +237,7 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
 
 export const DEFAULT_SCENARIO =
   EDITOR_SCENARIOS.find((s) => s.id === "default-copilot")!;
+
+export const FLOAT_EDITOR_SCENARIOS = EDITOR_SCENARIOS.filter(
+  (s) => s.id === "multipage" || s.id === "mvt"
+);

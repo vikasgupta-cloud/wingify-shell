@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Pencil, Sparkles } from "lucide-react";
 import { EditorTopBar } from "@/components/editor/EditorTopBar";
+import { EditorScenarioFloat } from "@/components/editor/EditorScenarioFloat";
 import {
   EditorVariationBar,
   type CodeScopeId,
@@ -468,7 +469,7 @@ export default function EditorPage() {
 
   return (
     <div
-      className="flex h-screen flex-col overflow-hidden bg-background text-foreground"
+      className="relative flex h-screen flex-col overflow-hidden bg-background text-foreground"
       data-campaign-id={entityId}
       data-variation-id={variationId}
       data-scenario={scenarioId}
@@ -477,8 +478,9 @@ export default function EditorPage() {
       <EditorTopBar
         campaignName={campaign?.name}
         status={campaign?.status}
-        scenarioId={scenarioId}
-        onScenarioChange={applyScenario}
+        backHref={
+          entityId ? `/web-experiment/c/${entityId}` : "/web-experiment"
+        }
         mode={editorMode}
         onModeChange={handleModeChange}
       />
@@ -598,6 +600,10 @@ export default function EditorPage() {
           </EditorFloatingPanelGroup>
         )}
       </div>
+      <EditorScenarioFloat
+        scenarioId={scenarioId}
+        onScenarioChange={applyScenario}
+      />
     </div>
   );
 }

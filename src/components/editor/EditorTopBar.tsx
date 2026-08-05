@@ -1,19 +1,8 @@
-import { ArrowLeft, LayoutTemplate } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { EditorIcon } from "./EditorIcon";
-import {
-  EDITOR_SCENARIOS,
-  type EditorScenarioId,
-} from "@/config/editorScenarios";
 import type { CampaignStatus } from "@/data/campaigns";
 
 import saveIcon from "@/assets/editor/save-01.svg";
@@ -34,32 +23,29 @@ const MODES: { id: Mode; label: string; icon: string }[] = [
 export function EditorTopBar({
   campaignName = "Campaign",
   status,
-  scenarioId,
-  onScenarioChange,
+  backHref = "/web-experiment",
   mode = "design",
   onModeChange,
 }: {
   campaignName?: string;
   status?: CampaignStatus;
-  scenarioId?: EditorScenarioId;
-  onScenarioChange?: (id: EditorScenarioId) => void;
+  backHref?: string;
   mode?: Mode;
   onModeChange?: (mode: Mode) => void;
 }) {
-  const activeScenario =
-    EDITOR_SCENARIOS.find((s) => s.id === scenarioId) ?? EDITOR_SCENARIOS[0]!;
-
   return (
     <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-border bg-background px-2">
       <div className="flex h-7 items-center gap-1.5 pl-0.5">
         <Button
-          type="button"
           variant="ghost"
           size="icon"
           className="size-7 shrink-0 rounded-md"
-          aria-label="Back"
+          aria-label="Back to campaign"
+          asChild
         >
-          <ArrowLeft className="size-4" strokeWidth={1.75} />
+          <Link to={backHref}>
+            <ArrowLeft className="size-4" strokeWidth={1.75} />
+          </Link>
         </Button>
         <p className="max-w-[220px] truncate text-[13px] font-medium leading-none text-foreground">
           {campaignName}
@@ -98,39 +84,6 @@ export function EditorTopBar({
       </div>
 
       <div className="flex h-7 items-center gap-2">
-        {onScenarioChange && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-                title="Demo scenarios"
-              >
-                <LayoutTemplate className="size-4 shrink-0" strokeWidth={1.75} />
-                <span className="max-w-[120px] truncate leading-none">
-                  {activeScenario.label}
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Demo scenarios</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {EDITOR_SCENARIOS.map((s) => (
-                <DropdownMenuItem
-                  key={s.id}
-                  onClick={() => onScenarioChange(s.id)}
-                  className={cn(
-                    s.id === activeScenario.id && "bg-accent font-semibold"
-                  )}
-                >
-                  {s.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
         <Button
           type="button"
           variant="outline"
