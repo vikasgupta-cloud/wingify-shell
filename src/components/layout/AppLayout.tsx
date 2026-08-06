@@ -10,7 +10,7 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <ExpandedNav />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col bg-background">
         <TopBar />
         <main className="flex-1 overflow-y-auto bg-canvas">
           <Outlet />

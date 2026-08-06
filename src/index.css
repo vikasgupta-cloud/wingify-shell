@@ -74,76 +74,108 @@
 }
 
 :root {
-  /* ── Brand primitives (from brand-colors.tokens.json) ─────────────── */
-  --brand-yellow: 67 100% 71.4%;       /* #EEFF6D */
-  --brand-sky: 212 100% 78.4%;         /* #91C5FF */
-  --brand-maroon: 335 66.7% 15.3%;     /* #410D23 */
-  --brand-white: 0 0% 100%;            /* #FFFFFF */
-  --brand-grey: 40 33.3% 94.7%;        /* #F6F3ED */
-  --brand-feather: 40 22.4% 86.9%;     /* #E5E0D6 */
-  --brand-dusk: 42 9.9% 66.5%;         /* #B2ADA1 */
-  --brand-twilight: 45 6.7% 34.9%;     /* #5F5C53 */
-  --brand-midnight: 210 6.3% 12.5%;    /* #1E2022 */
+  /*
+   * Palette — color.json only (main / primary).
+   * Extras — tokens.json scales (hover, mid steps, soft tints).
+   * Semantic roles follow tokens.json semantic.light where applicable.
+   */
 
-  --brand-green-rich: 175 100% 14.1%;  /* #004842 */
+  /* ── color.json: Primary ──────────────────────────────────────────── */
+  --brand-yellow: 67 100% 71.4%;        /* Primary Yellow #EEFF6D */
+  --brand-sky: 212 100% 78.4%;          /* Primary Blue #91C5FF */
+  --brand-maroon: 335 66.7% 15.3%;      /* Primary Maroon #410D23 */
+
+  /* ── color.json: Neutrals ─────────────────────────────────────────── */
+  --brand-white: 0 0% 100%;             /* White #FFFFFF */
+  --brand-grey: 40 33.3% 94.7%;         /* Grey #F6F3ED */
+  --brand-feather: 40 22.4% 86.9%;      /* Feather #E5E0D6 */
+  --brand-dusk: 42 9.9% 66.5%;          /* Dusk #B2ADA1 */
+  --brand-twilight: 45 6.7% 34.9%;      /* Twilight #5F5C53 */
+  --brand-midnight: 210 6.3% 12.5%;     /* Midnight #1E2022 */
+
+  /* ── color.json: Families (Rich / Bright / Tint) ──────────────────── */
+  --brand-green-rich: 175 100% 14.1%;   /* #004842 */
   --brand-green-bright: 160 93.2% 40.4%; /* #07C787 */
-  --brand-green-tint: 176 27.9% 88%;   /* #D8E9E8 */
-  --brand-cherry-rich: 12 98.2% 43.9%; /* #DE2D02 */
-  --brand-cherry-bright: 12 100% 61%; /* #FF6038 */
-  --brand-cherry-tint: 0 42.1% 92.5%;  /* #F4E4E4 */
-  --brand-berry-rich: 316 58.7% 50.6%; /* #CB37A4 */
+  --brand-green-tint: 176 27.9% 88%;    /* #D8E9E8 */
+  --brand-cherry-rich: 12 98.2% 43.9%;  /* #DE2D02 */
+  --brand-cherry-bright: 12 100% 61%;   /* #FF6038 */
+  --brand-cherry-tint: 0 42.1% 92.5%;   /* #F4E4E4 */
+  --brand-berry-rich: 316 58.7% 50.6%;  /* #CB37A4 */
   --brand-berry-bright: 316 89.6% 73.5%; /* #F87FD8 */
-  --brand-berry-tint: 304 42.1% 92.5%; /* #F4E4F3 */
-  --brand-ocean-rich: 225 68.2% 17.3%; /* #0E1D4A */
-  --brand-ocean-bright: 225 82.8% 59%; /* #406BED */
-  --brand-ocean-tint: 211 100% 91.4%;  /* #D3E8FF */
+  --brand-berry-tint: 304 42.1% 92.5%;  /* #F4E4F3 */
+  --brand-ocean-rich: 225 68.2% 17.3%;  /* #0E1D4A */
+  --brand-ocean-bright: 225 82.8% 59%;  /* #406BED — also tokens ocean.600 */
+  --brand-ocean-tint: 211 100% 91.4%;   /* #D3E8FF — also tokens ocean.100 */
 
-  /* ── App semantic tokens (brand-mapped) ───────────────────────────── */
-  --background: var(--brand-grey);
+  /* ── tokens.json extras (only steps not in color.json) ────────────── */
+  --scale-ocean-50: 215 85.7% 97.3%;    /* ocean.50 */
+  --scale-ocean-700: 225 58.7% 47.5%;   /* ocean.700 — primary.hover */
+  --scale-ocean-800: 225 60.4% 35.7%;   /* ocean.800 — primary.active */
+  --scale-neutral-100: 40 27.3% 91.4%;  /* neutral.100 */
+  --scale-neutral-300: 42 13.6% 75.5%;  /* neutral.300 */
+  --scale-green-50: 176 58.3% 95.3%;    /* green.50 */
+  --scale-green-300: 165 55% 66.9%;     /* green.300 */
+  --scale-green-600: 167 100% 28%;      /* green.600 */
+  --scale-yellow-100: 67 91.2% 68.8%;   /* yellow.100 */
+  --scale-yellow-300: 66 60.3% 53.5%;   /* yellow.300 */
+  --scale-maroon-50: 348 83.3% 97.6%;   /* maroon.50 */
+  --scale-berry-50: 305 84.6% 97.5%;    /* berry.50 */
+  --scale-cherry-50: 0 100% 97.8%;      /* cherry.50 */
+  --scale-sky-50: 210 100% 97.3%;       /* sky.50 */
+
+  /* ── App semantic ─────────────────────────────────────────────────── */
+  /* White chrome; warm grey canvas for depth */
+  --background: var(--brand-white);
   --foreground: var(--brand-midnight);
   --card: var(--brand-white);
   --card-foreground: var(--brand-midnight);
   --popover: var(--brand-white);
   --popover-foreground: var(--brand-midnight);
 
-  /* Primary CTA — maroon for readable filled buttons */
-  --primary: var(--brand-maroon);
-  --primary-foreground: var(--brand-white);
+  /* Primary Yellow — CTAs only; midnight ink for contrast */
+  --primary: var(--brand-yellow);
+  --primary-foreground: var(--brand-midnight);
+  --primary-hover: var(--scale-yellow-100);
+  --primary-active: var(--scale-yellow-300);
+  --primary-subtle: var(--scale-yellow-100);
 
-  /* Secondary — soft sky wash */
-  --secondary: var(--brand-ocean-tint);
-  --secondary-foreground: var(--brand-ocean-rich);
+  /* Soft fills — never neon */
+  --secondary: var(--brand-grey);
+  --secondary-foreground: var(--brand-midnight);
 
-  --muted: var(--brand-feather);
+  --muted: var(--brand-grey);
   --muted-foreground: var(--brand-twilight);
-  --canvas: 40 28% 91%;
-  --surface: var(--brand-feather);
-  --surface-border: var(--brand-dusk);
+  --canvas: var(--brand-grey);
+  --surface: var(--brand-grey);
+  --surface-border: var(--brand-feather);
 
-  /* Accent — Wingify yellow highlight */
-  --accent: var(--brand-yellow);
+  /* Accent = quiet hover/selection wash (not Primary Yellow) */
+  --accent: var(--brand-grey);
   --accent-foreground: var(--brand-midnight);
 
+  /* brand.deepSurface = Primary Maroon */
+  --brand-deep: var(--brand-maroon);
+
   --border: var(--brand-feather);
-  --input: var(--brand-dusk);
-  --ring: var(--brand-maroon);
-  --radius: 0.5rem;
+  --input: var(--brand-feather);
+  --ring: var(--brand-midnight);
+  --radius: 0.625rem;
 
   --destructive: var(--brand-cherry-rich);
   --destructive-foreground: var(--brand-white);
 
   --rail: var(--brand-white);
   --rail-foreground: var(--brand-midnight);
-  --rail-active: var(--brand-maroon);
+  --rail-active: var(--brand-midnight);
   --rail-active-foreground: var(--brand-white);
   --panel: var(--brand-white);
   --panel-foreground: var(--brand-midnight);
   --panel-border: var(--brand-feather);
 
-  /* Semantic status — brand brights / tints / rich */
+  /* Status — color.json rich/tint; soft yellow from tokens yellow.100 */
   --status-draft-bg: var(--brand-ocean-tint);
   --status-draft-fg: var(--brand-ocean-rich);
-  --status-qa-bg: 67 80% 90%;
+  --status-qa-bg: var(--brand-grey);
   --status-qa-fg: var(--brand-maroon);
   --status-ready-bg: var(--brand-feather);
   --status-ready-fg: var(--brand-twilight);
@@ -164,14 +196,14 @@
   --success-fg: var(--brand-green-rich);
   --danger-fg: var(--brand-cherry-rich);
 
-  /* Report tokens — remapped to brand families */
+  /* Report — color.json families; mid/soft from tokens.json */
   --report-green-deep: var(--brand-green-rich);
   --report-green: var(--brand-green-bright);
-  --report-green-mid: 160 70% 32%;
+  --report-green-mid: var(--scale-green-600);
   --report-green-bar: var(--brand-green-bright);
   --report-green-badge: var(--brand-green-tint);
-  --report-green-tint: 176 40% 96%;
-  --report-green-border: 160 40% 55%;
+  --report-green-tint: var(--scale-green-50);
+  --report-green-border: var(--scale-green-300);
   --report-red: var(--brand-cherry-rich);
   --report-amber: var(--brand-cherry-bright);
   --report-track: var(--brand-feather);
@@ -186,7 +218,7 @@
   --report-conclusion-bg: var(--brand-green-tint);
   --report-brand: var(--brand-maroon);
   --report-brand-fg: var(--brand-maroon);
-  --report-brand-tint: 335 40% 96%;
+  --report-brand-tint: var(--scale-maroon-50);
   --report-ctrl-bg: var(--brand-berry-tint);
   --report-ctrl-border: var(--brand-berry-bright);
   --report-ctrl-fg: var(--brand-berry-rich);
@@ -198,7 +230,7 @@
   --report-v2-fg: var(--brand-green-rich);
   --report-prob-fill: var(--brand-green-bright);
   --report-info-bg: var(--brand-ocean-tint);
-  --report-threshold: 160 40% 55%;
+  --report-threshold: var(--scale-green-300);
 }
 
 * {
@@ -224,7 +256,13 @@ select:-webkit-autofill {
 
 body {
   margin: 0;
-  @apply bg-background text-foreground font-sans;
+  @apply bg-background text-foreground font-sans antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: hsl(var(--brand-midnight));
+  color: hsl(var(--brand-white));
 }
 
 /* Brand experiment: keep editor chrome in color (icons stay as-authored). */

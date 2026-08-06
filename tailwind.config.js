@@ -16,6 +16,7 @@ export default {
         foreground: "hsl(var(--foreground))",
         brand: {
           yellow: "hsl(var(--brand-yellow))",
+          blue: "hsl(var(--brand-sky))",
           sky: "hsl(var(--brand-sky))",
           maroon: "hsl(var(--brand-maroon))",
           white: "hsl(var(--brand-white))",
@@ -24,6 +25,7 @@ export default {
           dusk: "hsl(var(--brand-dusk))",
           twilight: "hsl(var(--brand-twilight))",
           midnight: "hsl(var(--brand-midnight))",
+          deep: "hsl(var(--brand-deep))",
           "green-rich": "hsl(var(--brand-green-rich))",
           "green-bright": "hsl(var(--brand-green-bright))",
           "green-tint": "hsl(var(--brand-green-tint))",
@@ -48,6 +50,9 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
+          active: "hsl(var(--primary-active))",
+          subtle: "hsl(var(--primary-subtle))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",

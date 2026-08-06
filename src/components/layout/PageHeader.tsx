@@ -8,8 +8,14 @@ export default function PageHeader({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="flex items-center gap-2.5 pt-10 pl-12">
-      {Icon && <Icon className="h-6 w-6 shrink-0 text-foreground" aria-hidden />}
+    <div className="flex items-center gap-3 px-12 pt-10">
+      {Icon && (
+        <Icon
+          className="h-6 w-6 shrink-0 text-muted-foreground"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      )}
       <h1 className="text-3xl font-semibold tracking-tight text-foreground">
         {title}
       </h1>
