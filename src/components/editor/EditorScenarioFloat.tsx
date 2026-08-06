@@ -29,6 +29,10 @@ export function EditorScenarioFloat({
   const dockPlacement = useEditorPanelsStore((s) => s.dockPlacement);
   const dockOnLeft =
     dockPlacement.mode === "edge" && dockPlacement.edge === "left";
+  const dockBottomStart =
+    dockPlacement.mode === "edge" &&
+    dockPlacement.edge === "bottom" &&
+    dockPlacement.align === "start";
   const active =
     FLOAT_EDITOR_SCENARIOS.find((s) => s.id === scenarioId) ?? null;
 
@@ -37,7 +41,11 @@ export function EditorScenarioFloat({
       <div
         className={cn(
           "pointer-events-auto absolute bottom-5",
-          dockOnLeft ? "left-[5.75rem]" : "left-4"
+          dockOnLeft
+            ? "left-[5.75rem]"
+            : dockBottomStart
+              ? "right-4"
+              : "left-4"
         )}
       >
         <DropdownMenu>

@@ -19,8 +19,8 @@ const STEP = 40;
 const SIDE_SHEET_MAX_HEIGHT = 480;
 /** Clears the floating bottom dock (bottom-5 + h-11 + gap). */
 const DOCK_CLEARANCE_BOTTOM = 80;
-/** Clears the floating left dock (left-5 + rail + gap). */
-const DOCK_CLEARANCE_LEFT = 88;
+/** Clears the floating left dock (left-5 + icon rail + gap). */
+const DOCK_CLEARANCE_LEFT = 72;
 
 /**
  * Tool sheet for Add / Metrics / Variations.
@@ -36,6 +36,7 @@ export function EditorBottomSheet({
   defaultWidth = DEFAULT_WIDTH,
   onWidthChange,
   dockEdge = "bottom",
+  dockAlign = "center",
 }: {
   open: boolean;
   onClose?: () => void;
@@ -46,6 +47,7 @@ export function EditorBottomSheet({
   defaultWidth?: number;
   onWidthChange?: (width: number) => void;
   dockEdge?: "bottom" | "left";
+  dockAlign?: "start" | "center" | "end";
 }) {
   const fromLeft = dockEdge === "left";
   const [height, setHeight] = useState(() =>
@@ -159,8 +161,19 @@ export function EditorBottomSheet({
       className={cn(
         "pointer-events-none absolute z-40",
         fromLeft
-          ? "inset-y-0 left-0 flex items-center py-6"
-          : "inset-x-0 bottom-0 flex flex-col justify-end px-4",
+          ? cn(
+              "inset-y-0 left-0 flex py-6",
+              dockAlign === "start" && "items-start",
+              dockAlign === "end" && "items-end",
+              dockAlign === "center" && "items-center"
+            )
+          : cn(
+              "inset-x-0 bottom-0 flex flex-col px-4",
+              "justify-end",
+              dockAlign === "start" && "items-start",
+              dockAlign === "end" && "items-end",
+              dockAlign === "center" && "items-center"
+            ),
         className
       )}
       style={
@@ -170,6 +183,7 @@ export function EditorBottomSheet({
       }
       data-bottom-sheet
       data-sheet-edge={dockEdge}
+      data-sheet-align={dockAlign}
     >
       <button
         type="button"
@@ -191,7 +205,7 @@ export function EditorBottomSheet({
         aria-modal="true"
         className={cn(
           "pointer-events-auto relative flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_16px_48px_-16px_hsl(var(--foreground)/0.35)] will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          fromLeft ? "group/sheet my-0" : "group/sheet mx-auto w-full max-w-[720px]",
+          fromLeft ? "group/sheet my-0" : "group/sheet w-full max-w-[720px]",
           entered
             ? "translate-x-0 translate-y-0 opacity-100"
             : fromLeft

@@ -113,7 +113,7 @@ export function EditorTopBar({
   const viewingOlder = isViewingOlderVersion(versions, activeVersionId);
   const navigate = useNavigate();
   const isNavigateMode = mode === "navigate";
-  const showDeviceChrome = showPreviewChrome && !isNavigateMode;
+  const showDeviceChrome = showPreviewChrome;
 
   const [composeOpen, setComposeOpen] = useState(false);
   const [message, setMessage] = useState("");

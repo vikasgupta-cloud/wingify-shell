@@ -19,16 +19,24 @@ import type {
 
 export type EditorDockEdge = "bottom" | "left";
 export type EditorDockMode = "edge" | "free";
+/** Along the docked edge: start = top/left, end = bottom/right. */
+export type EditorDockAlign = "start" | "center" | "end";
 
 export type EditorDockPlacement = {
   mode: EditorDockMode;
   edge: EditorDockEdge;
+  align: EditorDockAlign;
   /** Top-left when `mode === "free"`. */
   pos: { x: number; y: number };
 };
 
 export function defaultDockPlacement(): EditorDockPlacement {
-  return { mode: "edge", edge: "bottom", pos: { x: 24, y: 24 } };
+  return {
+    mode: "edge",
+    edge: "bottom",
+    align: "center",
+    pos: { x: 24, y: 24 },
+  };
 }
 
 export type EditorPanelState = {
@@ -41,6 +49,7 @@ export type EditorPanelsMap = Record<EditorSidePanelId, EditorPanelState>;
 const LEFT_TOOLS: EditorLeftTool[] = ["add", "metrics", "variations"];
 const DOCK_EDGES: EditorDockEdge[] = ["bottom", "left"];
 const DOCK_MODES: EditorDockMode[] = ["edge", "free"];
+const DOCK_ALIGNS: EditorDockAlign[] = ["start", "center", "end"];
 const CHROME_MODES: EditorPanelChrome["mode"][] = [
   "docked",
   "floating",
@@ -138,8 +147,11 @@ function parseDockPlacement(raw: unknown): EditorDockPlacement {
   const edge = DOCK_EDGES.includes(rec.edge as EditorDockEdge)
     ? (rec.edge as EditorDockEdge)
     : fallback.edge;
+  const align = DOCK_ALIGNS.includes(rec.align as EditorDockAlign)
+    ? (rec.align as EditorDockAlign)
+    : fallback.align;
   const pos = parsePos(rec.pos);
-  return { mode, edge, pos };
+  return { mode, edge, align, pos };
 }
 
 type EditorPanelsStore = {

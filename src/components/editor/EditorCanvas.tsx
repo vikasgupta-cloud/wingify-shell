@@ -293,15 +293,6 @@ export function EditorCanvas({
     return () => window.cancelAnimationFrame(id);
   }, [wandzOpen]);
 
-  useEffect(() => {
-    if (!wandzOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setWandzOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [wandzOpen]);
-
   const showToast = useCallback((message: string) => {
     setToast(message);
     if (toastTimerRef.current != null) {
@@ -340,6 +331,24 @@ export function EditorCanvas({
     hoverElRef.current = null;
     setHoverBox(null);
   }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (wandzOpen) {
+        setWandzOpen(false);
+        return;
+      }
+      if (!selection) return;
+      e.preventDefault();
+      selectedElRef.current = null;
+      setBox(null);
+      clearHover();
+      onClearSelection?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [wandzOpen, selection, onClearSelection, clearHover]);
 
   const onClearSelectionRef = useRef(onClearSelection);
   onClearSelectionRef.current = onClearSelection;
@@ -436,10 +445,22 @@ export function EditorCanvas({
 
     const onLoc = () => reportLocation();
 
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (modeRef.current !== "design") return;
+      e.preventDefault();
+      e.stopPropagation();
+      selectedElRef.current = null;
+      setBox(null);
+      clearHover();
+      onClearSelectionRef.current?.();
+    };
+
     doc.addEventListener("click", onClick, true);
     doc.addEventListener("mousemove", onMove, true);
     doc.addEventListener("mouseleave", onLeave, true);
     doc.addEventListener("scroll", onScrollOrResize, true);
+    doc.addEventListener("keydown", onKey, true);
     win.addEventListener("resize", onScrollOrResize);
     win.addEventListener("hashchange", onLoc);
     win.addEventListener("popstate", onLoc);
@@ -452,6 +473,7 @@ export function EditorCanvas({
       doc.removeEventListener("mousemove", onMove, true);
       doc.removeEventListener("mouseleave", onLeave, true);
       doc.removeEventListener("scroll", onScrollOrResize, true);
+      doc.removeEventListener("keydown", onKey, true);
       win.removeEventListener("resize", onScrollOrResize);
       win.removeEventListener("hashchange", onLoc);
       win.removeEventListener("popstate", onLoc);

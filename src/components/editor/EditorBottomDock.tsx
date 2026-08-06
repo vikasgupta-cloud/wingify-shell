@@ -19,6 +19,7 @@ import type { EditorMode } from "./EditorCanvas";
 import type { EditorLeftTool } from "@/config/editorScenarios";
 import {
   useEditorPanelsStore,
+  type EditorDockAlign,
   type EditorDockEdge,
   type EditorDockPlacement,
 } from "@/store/editorPanels";
@@ -28,10 +29,41 @@ import cursorIcon from "@/assets/editor/cursor-04.svg";
 import codeIcon from "@/assets/editor/code-02.svg";
 import metricsIcon from "@/assets/editor/metrics.svg";
 
-const MODES: { id: EditorMode; label: string; icon: string }[] = [
-  { id: "design", label: "Design", icon: paletteIcon },
-  { id: "navigate", label: "Navigate", icon: cursorIcon },
-  { id: "code", label: "Code", icon: codeIcon },
+const MODES: {
+  id: EditorMode;
+  label: string;
+  icon: string;
+  shortcut: string;
+  /** key matching KeyboardEvent.key (lowercase) */
+  key: string;
+}[] = [
+  { id: "design", label: "Design", icon: paletteIcon, shortcut: "D", key: "d" },
+  {
+    id: "navigate",
+    label: "Navigate",
+    icon: cursorIcon,
+    shortcut: "N",
+    key: "n",
+  },
+  { id: "code", label: "Code", icon: codeIcon, shortcut: "C", key: "c" },
+];
+
+const TOOLS: {
+  id: EditorLeftTool;
+  label: string;
+  shortcut: string;
+  key: string;
+  designOnly?: boolean;
+}[] = [
+  { id: "add", label: "Add", shortcut: "A", key: "a", designOnly: true },
+  {
+    id: "metrics",
+    label: "Metrics",
+    shortcut: "M",
+    key: "m",
+    designOnly: true,
+  },
+  { id: "variations", label: "Variations", shortcut: "V", key: "v" },
 ];
 
 const SHOW_DELAY_MS = 400;
@@ -40,6 +72,104 @@ const PREVIEW_IFRAME_SELECTOR = 'iframe[title="Website preview"]';
 const DRAG_THRESHOLD_PX = 6;
 /** Drop near these edges to re-dock; otherwise stay free anywhere. */
 const SNAP_ZONE_PX = 72;
+/** Along an edge, outer thirds snap to the extreme; middle stays centered. */
+const ALIGN_EDGE_RATIO = 0.33;
+
+/** All edge dock slots — shown as silhouettes while dragging. */
+const DOCK_SLOTS: { edge: EditorDockEdge; align: EditorDockAlign }[] = [
+  { edge: "left", align: "start" },
+  { edge: "left", align: "center" },
+  { edge: "left", align: "end" },
+  { edge: "bottom", align: "start" },
+  { edge: "bottom", align: "center" },
+  { edge: "bottom", align: "end" },
+];
+
+type SnapTarget =
+  | { kind: "edge"; edge: EditorDockEdge; align: EditorDockAlign }
+  | { kind: "free"; edge: "bottom"; align: "center" };
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  return Boolean(
+    target.closest(
+      "input, textarea, select, [contenteditable='true'], [role='textbox']"
+    )
+  );
+}
+
+function DockTip({
+  label,
+  shortcut,
+}: {
+  label: string;
+  shortcut?: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span>{label}</span>
+      {shortcut ? (
+        <kbd className="rounded border border-primary-foreground/30 bg-primary-foreground/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-none tracking-wide text-primary-foreground">
+          {shortcut}
+        </kbd>
+      ) : null}
+    </span>
+  );
+}
+
+function alignAlongAxis(value: number, size: number): EditorDockAlign {
+  if (value <= size * ALIGN_EDGE_RATIO) return "start";
+  if (value >= size * (1 - ALIGN_EDGE_RATIO)) return "end";
+  return "center";
+}
+
+function snapTargetFromPoint(
+  clientX: number,
+  clientY: number,
+  bounds: DOMRect
+): SnapTarget {
+  const x = clientX - bounds.left;
+  const y = clientY - bounds.top;
+  const w = bounds.width;
+  const h = bounds.height;
+  const nearLeft = x <= SNAP_ZONE_PX;
+  const nearBottom = y >= h - SNAP_ZONE_PX;
+  const nearTop = y <= SNAP_ZONE_PX;
+  const nearRight = x >= w - SNAP_ZONE_PX;
+
+  // Corners — pick the nearer edge and park at that extreme.
+  if (nearLeft && nearBottom) {
+    return x <= h - y
+      ? { kind: "edge", edge: "left", align: "end" }
+      : { kind: "edge", edge: "bottom", align: "start" };
+  }
+  if (nearLeft && nearTop) {
+    return { kind: "edge", edge: "left", align: "start" };
+  }
+  if (nearRight && nearBottom) {
+    return { kind: "edge", edge: "bottom", align: "end" };
+  }
+
+  if (nearLeft) {
+    return {
+      kind: "edge",
+      edge: "left",
+      align: alignAlongAxis(y, h),
+    };
+  }
+  if (nearBottom) {
+    return {
+      kind: "edge",
+      edge: "bottom",
+      align: alignAlongAxis(x, w),
+    };
+  }
+
+  return { kind: "free", edge: "bottom", align: "center" };
+}
 
 function readPreviewScrollY(): number | null {
   const iframe = document.querySelector<HTMLIFrameElement>(
@@ -57,25 +187,15 @@ function readPreviewScrollY(): number | null {
   );
 }
 
-function snapTargetFromPoint(
-  x: number,
-  y: number
-): { kind: "edge"; edge: EditorDockEdge } | { kind: "free"; edge: "bottom" } {
-  const { innerHeight: h } = window;
-  if (x <= SNAP_ZONE_PX) return { kind: "edge", edge: "left" };
-  if (y >= h - SNAP_ZONE_PX) return { kind: "edge", edge: "bottom" };
-  // Free float stays horizontal — vertical only when docked to the left.
-  return { kind: "free", edge: "bottom" };
-}
-
 function clampPos(
   x: number,
   y: number,
-  size: { width: number; height: number }
+  size: { width: number; height: number },
+  bounds: { width: number; height: number }
 ): { x: number; y: number } {
   const margin = 8;
-  const maxX = Math.max(margin, window.innerWidth - size.width - margin);
-  const maxY = Math.max(margin, window.innerHeight - size.height - margin);
+  const maxX = Math.max(margin, bounds.width - size.width - margin);
+  const maxY = Math.max(margin, bounds.height - size.height - margin);
   return {
     x: Math.min(Math.max(margin, Math.round(x)), maxX),
     y: Math.min(Math.max(margin, Math.round(y)), maxY),
@@ -102,9 +222,7 @@ export function EditorBottomDock({
   const [hidden, setHidden] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
-  const [hoverSnap, setHoverSnap] = useState<ReturnType<
-    typeof snapTargetFromPoint
-  > | null>(null);
+  const [hoverSnap, setHoverSnap] = useState<SnapTarget | null>(null);
   const idleTimerRef = useRef<number | null>(null);
   const scrollStartedAtRef = useRef<number | null>(null);
   const dragRef = useRef<{
@@ -116,6 +234,7 @@ export function EditorBottomDock({
     offsetY: number;
   } | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
   const sheetOpen =
     leftTool === "add" || leftTool === "metrics" || leftTool === "variations";
   const sheetOpenRef = useRef(sheetOpen);
@@ -136,6 +255,30 @@ export function EditorBottomDock({
       scrollStartedAtRef.current = null;
     }
   }, [sheetOpen]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isEditableTarget(e.target)) return;
+      const key = e.key.toLowerCase();
+      if (e.shiftKey) return;
+
+      const modeMatch = MODES.find((m) => m.key === key);
+      if (modeMatch) {
+        e.preventDefault();
+        onModeChange(modeMatch.id);
+        return;
+      }
+
+      const toolMatch = TOOLS.find((t) => t.key === key);
+      if (!toolMatch) return;
+      if (toolMatch.designOnly && mode !== "design") return;
+      e.preventDefault();
+      onToggleLeftTool(toolMatch.id);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mode, onModeChange, onToggleLeftTool]);
 
   useEffect(() => {
     let lastY: number | null = null;
@@ -228,10 +371,17 @@ export function EditorBottomDock({
       setDragging(true);
       setHidden(false);
     }
-    const x = e.clientX - drag.offsetX;
-    const y = e.clientY - drag.offsetY;
-    setDragPos({ x, y });
-    setHoverSnap(snapTargetFromPoint(e.clientX, e.clientY));
+    const host = hostRef.current?.getBoundingClientRect();
+    if (!host) return;
+    const bar = barRef.current;
+    const approxSize = {
+      width: bar?.offsetWidth || 520,
+      height: bar?.offsetHeight || 44,
+    };
+    const rawX = e.clientX - drag.offsetX - host.left;
+    const rawY = e.clientY - drag.offsetY - host.top;
+    setDragPos(clampPos(rawX, rawY, approxSize, host));
+    setHoverSnap(snapTargetFromPoint(e.clientX, e.clientY, host));
   };
 
   const endGripDrag = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -244,26 +394,29 @@ export function EditorBottomDock({
       /* already released */
     }
     if (drag.moved) {
-      const snap = snapTargetFromPoint(e.clientX, e.clientY);
-      const willBeVertical = snap.kind === "edge" && snap.edge === "left";
-      const bar = barRef.current;
-      const size = bar
-        ? {
-            width: bar.offsetWidth || (willBeVertical ? 60 : 520),
-            height: bar.offsetHeight || (willBeVertical ? 320 : 44),
-          }
-        : {
-            width: willBeVertical ? 60 : 520,
-            height: willBeVertical ? 320 : 44,
-          };
-      const rawX = e.clientX - drag.offsetX;
-      const rawY = e.clientY - drag.offsetY;
-      const pos = clampPos(rawX, rawY, size);
-      const next: EditorDockPlacement =
-        snap.kind === "edge"
-          ? { mode: "edge", edge: snap.edge, pos }
-          : { mode: "free", edge: "bottom", pos };
-      setDockPlacement(next);
+      const host = hostRef.current?.getBoundingClientRect();
+      if (host) {
+        const snap = snapTargetFromPoint(e.clientX, e.clientY, host);
+        const willBeVertical = snap.kind === "edge" && snap.edge === "left";
+        const bar = barRef.current;
+        const size = bar
+          ? {
+              width: bar.offsetWidth || (willBeVertical ? 60 : 520),
+              height: bar.offsetHeight || (willBeVertical ? 320 : 44),
+            }
+          : {
+              width: willBeVertical ? 60 : 520,
+              height: willBeVertical ? 320 : 44,
+            };
+        const rawX = e.clientX - drag.offsetX - host.left;
+        const rawY = e.clientY - drag.offsetY - host.top;
+        const pos = clampPos(rawX, rawY, size, host);
+        const next: EditorDockPlacement =
+          snap.kind === "edge"
+            ? { mode: "edge", edge: snap.edge, align: snap.align, pos }
+            : { mode: "free", edge: "bottom", align: "center", pos };
+        setDockPlacement(next);
+      }
     }
     setDragging(false);
     setDragPos(null);
@@ -275,31 +428,30 @@ export function EditorBottomDock({
     interactive: boolean;
   }) => {
     const { layoutVertical, interactive } = opts;
+    const tipSide = layoutVertical ? "right" : "top";
     const itemClass = (active: boolean) =>
       cn(
-        "rounded-lg text-[10px] font-semibold outline-none transition-colors",
-        layoutVertical
-          ? "flex w-full flex-col items-center gap-1.5 px-1.5 py-2"
-          : "inline-flex h-9 items-center gap-1.5 px-3 text-xs",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-lg outline-none transition-colors",
         active
           ? "bg-muted text-foreground"
           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       );
-    const labelClass = layoutVertical
-      ? "max-w-full truncate leading-none"
-      : undefined;
     const separatorClass = layoutVertical
-      ? "mx-1.5 my-1.5 h-px w-auto shrink-0 bg-border"
-      : "mx-1 h-6 w-px shrink-0 bg-border";
+      ? "mx-auto my-0.5 h-px w-5 shrink-0 bg-border"
+      : "mx-0.5 h-5 w-px shrink-0 bg-border";
     const tabOff = !interactive || (hidden && !dragging) ? -1 : undefined;
 
-    const withTip = (label: string, node: ReactElement) => {
-      if (!layoutVertical || !interactive) return node;
+    const withTip = (
+      label: string,
+      node: ReactElement,
+      shortcut?: string
+    ) => {
+      if (!interactive) return node;
       return (
         <Tooltip>
           <TooltipTrigger asChild>{node}</TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8}>
-            {label}
+          <TooltipContent side={tipSide} sideOffset={8}>
+            <DockTip label={label} shortcut={shortcut} />
           </TooltipContent>
         </Tooltip>
       );
@@ -309,24 +461,24 @@ export function EditorBottomDock({
     const withTipMaybeDisabled = (
       label: string,
       disabled: boolean,
-      node: ReactElement
+      node: ReactElement,
+      shortcut?: string
     ) => {
-      if (!layoutVertical || !interactive) return node;
-      if (!disabled) return withTip(label, node);
+      if (!interactive) return node;
+      if (!disabled) return withTip(label, node, shortcut);
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex w-full">{node}</span>
+            <span className="inline-flex">{node}</span>
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8}>
-            {label}
+          <TooltipContent side={tipSide} sideOffset={8}>
+            <DockTip label={label} shortcut={shortcut} />
           </TooltipContent>
         </Tooltip>
       );
     };
 
-    const toolsDisabled = mode === "navigate";
-    const showEditTools = mode !== "code";
+    const toolsDisabled = mode === "navigate" || mode === "code";
     const toolItemClass = (active: boolean, disabled: boolean) =>
       cn(
         itemClass(active && !disabled),
@@ -338,7 +490,7 @@ export function EditorBottomDock({
       <>
         {interactive ? (
           withTip(
-            "Drag anywhere · snap to edges",
+            "Move dock",
             <button
               type="button"
               aria-label="Move dock"
@@ -348,10 +500,8 @@ export function EditorBottomDock({
               onPointerCancel={endGripDrag}
               tabIndex={tabOff}
               className={cn(
-                "inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground",
-                layoutVertical
-                  ? "h-7 w-full cursor-grab active:cursor-grabbing"
-                  : "h-9 w-7 cursor-grab active:cursor-grabbing"
+                "inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground",
+                "!cursor-grab active:!cursor-grabbing"
               )}
             >
               <GripVertical
@@ -362,10 +512,7 @@ export function EditorBottomDock({
           )
         ) : (
           <span
-            className={cn(
-              "inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground",
-              layoutVertical ? "h-7 w-full" : "h-9 w-7"
-            )}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground"
             aria-hidden
           >
             <GripVertical
@@ -383,73 +530,69 @@ export function EditorBottomDock({
                 m.label,
                 <button
                   type="button"
-                  aria-label={m.label}
+                  aria-label={`${m.label} (${m.shortcut})`}
                   onClick={interactive ? () => onModeChange(m.id) : undefined}
                   tabIndex={tabOff}
                   className={itemClass(active)}
                 >
                   <EditorIcon src={m.icon} size={14} />
-                  <span className={labelClass}>{m.label}</span>
-                </button>
+                </button>,
+                m.shortcut
               )}
             </div>
           );
         })}
 
-        {showEditTools ? (
-          <>
-            <span className={separatorClass} aria-hidden />
+        <span className={separatorClass} aria-hidden />
 
-            {withTipMaybeDisabled(
-              toolsDisabled ? "Switch to Design to add" : "Add",
-              toolsDisabled,
-              <button
-                type="button"
-                aria-label="Add"
-                title={toolsDisabled ? "Switch to Design to add" : "Add"}
-                aria-disabled={toolsDisabled || undefined}
-                disabled={toolsDisabled}
-                onClick={
-                  interactive && !toolsDisabled
-                    ? () => onToggleLeftTool("add")
-                    : undefined
-                }
-                tabIndex={toolsDisabled ? -1 : tabOff}
-                className={toolItemClass(leftTool === "add", toolsDisabled)}
-              >
-                <Plus className="size-3.5 shrink-0" strokeWidth={1.75} />
-                <span className={labelClass}>Add</span>
-              </button>
-            )}
-            {withTipMaybeDisabled(
-              toolsDisabled ? "Switch to Design for Metrics" : "Metrics",
-              toolsDisabled,
-              <button
-                type="button"
-                aria-label="Metrics"
-                title={
-                  toolsDisabled ? "Switch to Design for Metrics" : "Metrics"
-                }
-                aria-disabled={toolsDisabled || undefined}
-                disabled={toolsDisabled}
-                onClick={
-                  interactive && !toolsDisabled
-                    ? () => onToggleLeftTool("metrics")
-                    : undefined
-                }
-                tabIndex={toolsDisabled ? -1 : tabOff}
-                className={toolItemClass(leftTool === "metrics", toolsDisabled)}
-              >
-                <EditorIcon
-                  src={metricsIcon}
-                  size={14}
-                  className={cn(toolsDisabled && "opacity-45")}
-                />
-                <span className={labelClass}>Metrics</span>
-              </button>
-            )}
-          </>
-        ) : null}
+        {withTipMaybeDisabled(
+          toolsDisabled ? "Switch to Design to add" : "Add",
+          toolsDisabled,
+          <button
+            type="button"
+            aria-label={
+              toolsDisabled ? "Add (unavailable)" : "Add (A)"
+            }
+            aria-disabled={toolsDisabled || undefined}
+            disabled={toolsDisabled}
+            onClick={
+              interactive && !toolsDisabled
+                ? () => onToggleLeftTool("add")
+                : undefined
+            }
+            tabIndex={toolsDisabled ? -1 : tabOff}
+            className={toolItemClass(leftTool === "add", toolsDisabled)}
+          >
+            <Plus className="size-3.5 shrink-0" strokeWidth={1.75} />
+          </button>,
+          toolsDisabled ? undefined : "A"
+        )}
+        {withTipMaybeDisabled(
+          toolsDisabled ? "Switch to Design for Metrics" : "Metrics",
+          toolsDisabled,
+          <button
+            type="button"
+            aria-label={
+              toolsDisabled ? "Metrics (unavailable)" : "Metrics (M)"
+            }
+            aria-disabled={toolsDisabled || undefined}
+            disabled={toolsDisabled}
+            onClick={
+              interactive && !toolsDisabled
+                ? () => onToggleLeftTool("metrics")
+                : undefined
+            }
+            tabIndex={toolsDisabled ? -1 : tabOff}
+            className={toolItemClass(leftTool === "metrics", toolsDisabled)}
+          >
+            <EditorIcon
+              src={metricsIcon}
+              size={14}
+              className={cn(toolsDisabled && "opacity-45")}
+            />
+          </button>,
+          toolsDisabled ? undefined : "M"
+        )}
 
         <span className={separatorClass} aria-hidden />
 
@@ -457,7 +600,7 @@ export function EditorBottomDock({
           "Variations",
           <button
             type="button"
-            aria-label="Variations"
+            aria-label="Variations (V)"
             onClick={
               interactive ? () => onToggleLeftTool("variations") : undefined
             }
@@ -465,13 +608,13 @@ export function EditorBottomDock({
             className={itemClass(leftTool === "variations")}
           >
             <CopyPlus className="size-3.5 shrink-0" strokeWidth={1.75} />
-            <span className={labelClass}>Variations</span>
-          </button>
+          </button>,
+          "V"
         )}
       </>
     );
 
-    if (layoutVertical && interactive) {
+    if (interactive) {
       return (
         <TooltipProvider delayDuration={200}>{items}</TooltipProvider>
       );
@@ -483,15 +626,49 @@ export function EditorBottomDock({
     cn(
       "rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_hsl(var(--foreground)/0.28),0_0_0_1px_hsl(var(--foreground)/0.04)]",
       layoutVertical
-        ? "inline-flex w-[3.75rem] flex-col gap-1.5"
-        : "inline-flex h-11 items-center gap-1",
+        ? "inline-flex w-11 max-h-[calc(100%-2.5rem)] flex-col items-center gap-0.5 overflow-y-auto"
+        : "inline-flex h-11 max-w-[calc(100%-2.5rem)] items-center gap-0.5",
       inert ? "pointer-events-none" : "pointer-events-auto"
+    );
+
+  const silhouetteClass = (layoutVertical: boolean, active: boolean) =>
+    cn(
+      "rounded-xl border border-dashed transition-[opacity,border-color,background-color,transform] duration-150",
+      active
+        ? cn(
+            "border-foreground/45 bg-background/80 opacity-80 shadow-sm",
+            layoutVertical
+              ? "inline-flex w-11 flex-col items-center gap-0.5 p-1"
+              : "inline-flex h-11 items-center gap-0.5 p-1"
+          )
+        : cn(
+            "border-foreground/25 bg-foreground/[0.05] opacity-40",
+            // Compact markers so left slots don’t stack into a double bar
+            layoutVertical ? "h-10 w-2.5" : "h-2.5 w-10"
+          )
     );
 
   const ghostVertical =
     hoverSnap?.kind === "edge" && hoverSnap.edge === "left";
-  const snapHighlight =
-    hoverSnap?.kind === "edge" ? hoverSnap.edge : null;
+  const parkedAlign = dockPlacement.align ?? "center";
+  const activeSlot =
+    hoverSnap?.kind === "edge"
+      ? { edge: hoverSnap.edge, align: hoverSnap.align }
+      : null;
+
+  const placementClass = (
+    edge: EditorDockEdge,
+    align: EditorDockAlign
+  ): string => {
+    if (edge === "left") {
+      if (align === "start") return "left-5 top-5";
+      if (align === "end") return "left-5 bottom-5";
+      return "left-5 top-1/2 -translate-y-1/2";
+    }
+    if (align === "start") return "bottom-5 left-5";
+    if (align === "end") return "bottom-5 right-5";
+    return "inset-x-0 bottom-5 flex justify-center px-4";
+  };
 
   const parkedStyle =
     free && !dragging
@@ -501,48 +678,66 @@ export function EditorBottomDock({
         }
       : undefined;
 
-  return (
-    <>
-      {dragging ? (
-        <div className="pointer-events-none absolute inset-0 z-50">
-          <div
-            className={cn(
-              "absolute inset-y-0 left-0 transition-colors duration-150",
-              "w-[72px]",
-              snapHighlight === "left"
-                ? "bg-foreground/[0.07]"
-                : "bg-transparent"
-            )}
-          />
-          <div
-            className={cn(
-              "absolute inset-x-0 bottom-0 transition-colors duration-150",
-              "h-[72px]",
-              snapHighlight === "bottom"
-                ? "bg-foreground/[0.07]"
-                : "bg-transparent"
-            )}
-          />
-        </div>
-      ) : null}
+  const edgeParkedClass =
+    !free && !dragging
+      ? placementClass(dockPlacement.edge, parkedAlign)
+      : null;
 
+  const hiddenSlideClass = (() => {
+    if (!hidden || dragging) return null;
+    if (vertical) {
+      if (parkedAlign === "start") {
+        return "-translate-x-[calc(100%+1.75rem)]";
+      }
+      if (parkedAlign === "end") {
+        return "-translate-x-[calc(100%+1.75rem)]";
+      }
+      return "-translate-x-[calc(100%+1.75rem)] -translate-y-1/2";
+    }
+    return "translate-y-[calc(100%+1.75rem)]";
+  })();
+
+  return (
+    <div ref={hostRef} className="pointer-events-none absolute inset-0 z-50">
+      {/* Slot hints: compact markers everywhere; full dock silhouette only on active target */}
+      {dragging
+        ? DOCK_SLOTS.map((slot) => {
+            const isVertical = slot.edge === "left";
+            const active =
+              activeSlot?.edge === slot.edge &&
+              activeSlot.align === slot.align;
+            return (
+              <div
+                key={`${slot.edge}-${slot.align}`}
+                className={cn(
+                  "pointer-events-none absolute z-[55]",
+                  placementClass(slot.edge, slot.align)
+                )}
+                aria-hidden
+              >
+                <div className={silhouetteClass(isVertical, active)}>
+                  {active
+                    ? renderItems({
+                        layoutVertical: isVertical,
+                        interactive: false,
+                      })
+                    : null}
+                </div>
+              </div>
+            );
+          })
+        : null}
+
+      {/* Keep this node mounted while dragging so grip pointer-capture isn’t lost */}
       <div
         className={cn(
           "pointer-events-none absolute z-50 will-change-transform",
           !dragging &&
             "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          !free &&
-            !dragging &&
-            (vertical
-              ? "left-5 top-1/2 -translate-y-1/2"
-              : "inset-x-0 bottom-5 flex justify-center px-4"),
+          edgeParkedClass,
           free && !dragging && "left-0 top-0",
-          !dragging &&
-            hidden &&
-            (vertical
-              ? "-translate-x-[calc(100%+1.75rem)] -translate-y-1/2"
-              : "translate-y-[calc(100%+1.75rem)]"),
-          dragging && "opacity-40"
+          hiddenSlideClass,
+          dragging && "invisible"
         )}
         style={parkedStyle}
         aria-hidden={hidden || dragging || undefined}
@@ -561,9 +756,7 @@ export function EditorBottomDock({
           className="pointer-events-none absolute z-[60]"
           style={{ left: dragPos.x, top: dragPos.y }}
         >
-          <div
-            className={cn(barClass(ghostVertical, true), "opacity-95")}
-          >
+          <div className={cn(barClass(ghostVertical, true), "opacity-95")}>
             {renderItems({
               layoutVertical: ghostVertical,
               interactive: false,
@@ -571,6 +764,6 @@ export function EditorBottomDock({
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
