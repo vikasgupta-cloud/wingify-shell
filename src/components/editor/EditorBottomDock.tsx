@@ -81,7 +81,8 @@ const DOCK_SIZE = {
   },
   labels: {
     horizontal: { width: 560, height: 44 },
-    vertical: { width: 124, height: 292 },
+    // Stacked icon-over-label column — slim and tall.
+    vertical: { width: 56, height: 480 },
   },
 } as const;
 /** Pull past this delta (px) from an end handle to flip density. */
@@ -298,6 +299,8 @@ export function EditorBottomDock({
     leftTool === "add" || leftTool === "metrics" || leftTool === "variations";
   const sheetOpenRef = useRef(sheetOpen);
   sheetOpenRef.current = sheetOpen;
+  const freeRef = useRef(dockPlacement.mode === "free");
+  freeRef.current = dockPlacement.mode === "free";
 
   const free = dockPlacement.mode === "free";
   // Vertical when docked on left or right — top/bottom/free stay horizontal.
@@ -324,6 +327,17 @@ export function EditorBottomDock({
       scrollStartedAtRef.current = null;
     }
   }, [sheetOpen]);
+
+  // Free-floating dock stays visible while the preview scrolls.
+  useEffect(() => {
+    if (!free) return;
+    setHidden(false);
+    if (idleTimerRef.current != null) {
+      window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+    scrollStartedAtRef.current = null;
+  }, [free]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -365,7 +379,7 @@ export function EditorBottomDock({
     };
 
     const onScrollActivity = () => {
-      if (sheetOpenRef.current) return;
+      if (sheetOpenRef.current || freeRef.current) return;
       const now = performance.now();
       if (scrollStartedAtRef.current == null) {
         scrollStartedAtRef.current = now;
@@ -547,26 +561,52 @@ export function EditorBottomDock({
     showLabels: boolean;
   }) => {
     const { layoutVertical, interactive, showLabels } = opts;
+    const iconPx = 14;
     const itemClass = (active: boolean) =>
       cn(
-        "inline-flex shrink-0 items-center justify-center rounded-lg outline-none transition-colors",
+        "group inline-flex shrink-0 items-center justify-center rounded-md outline-none transition-colors",
         showLabels
           ? layoutVertical
-            ? "h-9 w-full justify-start gap-2 px-2"
-            : "h-9 gap-1.5 px-2.5"
+            ? "w-full flex-col gap-1 px-0.5 py-1.5"
+            : "h-8 flex-row gap-1.5 px-2"
           : "size-9",
         active
           ? "bg-muted text-foreground"
           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       );
-    const labelClass =
-      "max-w-[5.5rem] truncate text-left text-[11px] font-medium leading-none tracking-tight";
+    const labelClass = cn(
+      "w-full truncate font-medium leading-none tracking-tight",
+      layoutVertical
+        ? "max-w-full text-center text-[10px]"
+        : "max-w-[5.5rem] text-left text-xs"
+    );
     const separatorClass = layoutVertical
       ? showLabels
-        ? "mx-1.5 my-0.5 h-px w-auto shrink-0 self-stretch bg-border"
+        ? "mx-1.5 my-1.5 h-px shrink-0 self-stretch bg-border"
         : "mx-auto my-0.5 h-px w-5 shrink-0 bg-border"
-      : "mx-0.5 h-5 w-px shrink-0 bg-border";
+      : "mx-0.5 h-4 w-px shrink-0 bg-border";
     const tabOff = !interactive || (hidden && !dragging) ? -1 : undefined;
+
+    /** Raster editor assets → same black weight as Lucide via brightness + opacity. */
+    const assetIcon = (src: string, active: boolean, disabled = false) => (
+      <EditorIcon
+        src={src}
+        size={iconPx}
+        className={cn(
+          "[&_img]:brightness-0 [&_img]:transition-opacity",
+          disabled
+            ? "opacity-45"
+            : active
+              ? "opacity-100"
+              : "opacity-[0.55] group-hover:opacity-100"
+        )}
+      />
+    );
+    const lucideIconClass = (disabled = false) =>
+      cn(
+        "size-3.5 shrink-0 transition-opacity",
+        disabled && "opacity-45"
+      );
 
     const withTip = (
       label: string,
@@ -616,6 +656,16 @@ export function EditorBottomDock({
     const ItemLabel = ({ children }: { children: string }) =>
       showLabels ? <span className={labelClass}>{children}</span> : null;
 
+    const gripClass = cn(
+      "inline-flex shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground",
+      showLabels
+        ? layoutVertical
+          ? "h-7 w-full px-0.5"
+          : "h-8 px-1.5"
+        : "size-9",
+      "!cursor-grab active:!cursor-grabbing"
+    );
+
     const items = (
       <>
         {interactive ? (
@@ -629,36 +679,18 @@ export function EditorBottomDock({
               onPointerUp={endGripDrag}
               onPointerCancel={endGripDrag}
               tabIndex={tabOff}
-              className={cn(
-                "inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground",
-                showLabels
-                  ? layoutVertical
-                    ? "h-9 w-full px-2"
-                    : "h-9 px-2"
-                  : "size-9",
-                "!cursor-grab active:!cursor-grabbing"
-              )}
+              className={gripClass}
             >
               <GripVertical
-                className={cn("size-3.5", layoutVertical && "rotate-90")}
+                className={cn(lucideIconClass(), layoutVertical && "rotate-90")}
                 strokeWidth={1.75}
               />
             </button>
           )
         ) : (
-          <span
-            className={cn(
-              "inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground",
-              showLabels
-                ? layoutVertical
-                  ? "h-9 w-full px-2"
-                  : "h-9 px-2"
-                : "size-9"
-            )}
-            aria-hidden
-          >
+          <span className={cn(gripClass, "pointer-events-none")} aria-hidden>
             <GripVertical
-              className={cn("size-3.5", layoutVertical && "rotate-90")}
+              className={cn(lucideIconClass(), layoutVertical && "rotate-90")}
               strokeWidth={1.75}
             />
           </span>
@@ -677,7 +709,7 @@ export function EditorBottomDock({
                   tabIndex={tabOff}
                   className={itemClass(active)}
                 >
-                  <EditorIcon src={m.icon} size={14} />
+                  {assetIcon(m.icon, active)}
                   <ItemLabel>{m.label}</ItemLabel>
                 </button>,
                 m.shortcut
@@ -706,7 +738,10 @@ export function EditorBottomDock({
             tabIndex={toolsDisabled ? -1 : tabOff}
             className={toolItemClass(leftTool === "add", toolsDisabled)}
           >
-            <Plus className="size-3.5 shrink-0" strokeWidth={1.75} />
+            <Plus
+              className={lucideIconClass(toolsDisabled)}
+              strokeWidth={1.75}
+            />
             <ItemLabel>Add</ItemLabel>
           </button>,
           toolsDisabled ? undefined : "A"
@@ -729,11 +764,11 @@ export function EditorBottomDock({
             tabIndex={toolsDisabled ? -1 : tabOff}
             className={toolItemClass(leftTool === "metrics", toolsDisabled)}
           >
-            <EditorIcon
-              src={metricsIcon}
-              size={14}
-              className={cn(toolsDisabled && "opacity-45")}
-            />
+            {assetIcon(
+              metricsIcon,
+              leftTool === "metrics" && !toolsDisabled,
+              toolsDisabled
+            )}
             <ItemLabel>Metrics</ItemLabel>
           </button>,
           toolsDisabled ? undefined : "M"
@@ -752,7 +787,7 @@ export function EditorBottomDock({
             tabIndex={tabOff}
             className={itemClass(leftTool === "variations")}
           >
-            <CopyPlus className="size-3.5 shrink-0" strokeWidth={1.75} />
+            <CopyPlus className={lucideIconClass()} strokeWidth={1.75} />
             <ItemLabel>Variations</ItemLabel>
           </button>,
           "V"
@@ -838,8 +873,10 @@ export function EditorBottomDock({
       "relative flex rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_hsl(var(--foreground)/0.28),0_0_0_1px_hsl(var(--foreground)/0.04)]",
       layoutVertical
         ? cn(
-            "max-h-[calc(100%-2.5rem)] flex-col items-stretch gap-0.5 overflow-y-auto",
-            showLabels ? "w-[7.75rem]" : "w-11 items-center"
+            "max-h-[calc(100%-2.5rem)] flex-col items-stretch overflow-y-auto",
+            showLabels
+              ? "w-[3.5rem] gap-2 p-1"
+              : "w-11 items-center gap-0.5"
           )
         : cn(
             "h-11 w-max flex-row items-center gap-0.5",
@@ -860,7 +897,7 @@ export function EditorBottomDock({
             "border-foreground/50 bg-foreground/[0.07] opacity-90",
             layoutVertical
               ? showLabels
-                ? "h-[18.25rem] w-[7.75rem]"
+                ? "h-[30rem] w-[3.5rem]"
                 : "h-[18.25rem] w-11"
               : showLabels
                 ? "h-11 w-[35rem]"

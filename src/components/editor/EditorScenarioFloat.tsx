@@ -39,7 +39,7 @@ export function EditorScenarioFloat({
   const leftInset =
     edge === "left"
       ? dockDensity === "labels"
-        ? "left-[9.25rem]"
+        ? "left-[6rem]"
         : "left-[5.5rem]"
       : onRight
         ? null

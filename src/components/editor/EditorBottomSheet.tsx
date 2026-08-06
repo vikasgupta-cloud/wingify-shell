@@ -28,12 +28,12 @@ const DOCK_CLEARANCE_BOTTOM = 80;
 const DOCK_CLEARANCE_TOP = 80;
 /** Clears the floating left dock (left-5 + icon rail + gap). */
 const DOCK_CLEARANCE_LEFT = 72;
-/** Clears the floating left dock when labels are shown. */
-const DOCK_CLEARANCE_LEFT_LABELED = 148;
+/** Clears the floating left dock when labels are shown (stacked column). */
+const DOCK_CLEARANCE_LEFT_LABELED = 84;
 /** Clears the floating right dock (right-5 + icon rail + gap). */
 const DOCK_CLEARANCE_RIGHT = 72;
-/** Clears the floating right dock when labels are shown. */
-const DOCK_CLEARANCE_RIGHT_LABELED = 148;
+/** Clears the floating right dock when labels are shown (stacked column). */
+const DOCK_CLEARANCE_RIGHT_LABELED = 84;
 const EXIT_MS = 300;
 
 function isSideEdge(edge: EditorDockEdge): boolean {
