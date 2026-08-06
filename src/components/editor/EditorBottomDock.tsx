@@ -20,6 +20,7 @@ import type { EditorLeftTool } from "@/config/editorScenarios";
 import {
   useEditorPanelsStore,
   type EditorDockAlign,
+  type EditorDockDensity,
   type EditorDockEdge,
   type EditorDockPlacement,
 } from "@/store/editorPanels";
@@ -70,6 +71,21 @@ const SHOW_DELAY_MS = 400;
 const HIDE_DELAY_MS = 200;
 const PREVIEW_IFRAME_SELECTOR = 'iframe[title="Website preview"]';
 const DRAG_THRESHOLD_PX = 6;
+/** Approx grip center inside the icon dock (size-9 button). */
+const GRIP_OFFSET_PX = 18;
+/** Measured dock shell while dragging (orientation + density). */
+const DOCK_SIZE = {
+  icons: {
+    horizontal: { width: 320, height: 44 },
+    vertical: { width: 44, height: 292 },
+  },
+  labels: {
+    horizontal: { width: 560, height: 44 },
+    vertical: { width: 124, height: 292 },
+  },
+} as const;
+/** Pull past this delta (px) from an end handle to flip density. */
+const DENSITY_PULL_PX = 28;
 /** Drop near these edges to re-dock; otherwise stay free anywhere. */
 const SNAP_ZONE_PX = 72;
 /** Along an edge, outer thirds snap to the extreme; middle stays centered. */
@@ -77,12 +93,18 @@ const ALIGN_EDGE_RATIO = 0.33;
 
 /** All edge dock slots — shown as silhouettes while dragging. */
 const DOCK_SLOTS: { edge: EditorDockEdge; align: EditorDockAlign }[] = [
-  { edge: "left", align: "start" },
-  { edge: "left", align: "center" },
-  { edge: "left", align: "end" },
+  { edge: "top", align: "start" },
+  { edge: "top", align: "center" },
+  { edge: "top", align: "end" },
+  { edge: "right", align: "start" },
+  { edge: "right", align: "center" },
+  { edge: "right", align: "end" },
   { edge: "bottom", align: "start" },
   { edge: "bottom", align: "center" },
   { edge: "bottom", align: "end" },
+  { edge: "left", align: "start" },
+  { edge: "left", align: "center" },
+  { edge: "left", align: "end" },
 ];
 
 type SnapTarget =
@@ -126,6 +148,17 @@ function alignAlongAxis(value: number, size: number): EditorDockAlign {
   return "center";
 }
 
+function isVerticalEdge(edge: EditorDockEdge): boolean {
+  return edge === "left" || edge === "right";
+}
+
+function dockShellSize(
+  vertical: boolean,
+  density: EditorDockDensity
+): { width: number; height: number } {
+  return vertical ? DOCK_SIZE[density].vertical : DOCK_SIZE[density].horizontal;
+}
+
 function snapTargetFromPoint(
   clientX: number,
   clientY: number,
@@ -135,40 +168,55 @@ function snapTargetFromPoint(
   const y = clientY - bounds.top;
   const w = bounds.width;
   const h = bounds.height;
-  const nearLeft = x <= SNAP_ZONE_PX;
-  const nearBottom = y >= h - SNAP_ZONE_PX;
-  const nearTop = y <= SNAP_ZONE_PX;
-  const nearRight = x >= w - SNAP_ZONE_PX;
+  const distLeft = x;
+  const distRight = w - x;
+  const distTop = y;
+  const distBottom = h - y;
 
-  // Corners — pick the nearer edge and park at that extreme.
-  if (nearLeft && nearBottom) {
-    return x <= h - y
-      ? { kind: "edge", edge: "left", align: "end" }
-      : { kind: "edge", edge: "bottom", align: "start" };
-  }
-  if (nearLeft && nearTop) {
-    return { kind: "edge", edge: "left", align: "start" };
-  }
-  if (nearRight && nearBottom) {
-    return { kind: "edge", edge: "bottom", align: "end" };
-  }
+  const candidates: { edge: EditorDockEdge; dist: number }[] = [];
+  if (distLeft <= SNAP_ZONE_PX) candidates.push({ edge: "left", dist: distLeft });
+  if (distRight <= SNAP_ZONE_PX)
+    candidates.push({ edge: "right", dist: distRight });
+  if (distTop <= SNAP_ZONE_PX) candidates.push({ edge: "top", dist: distTop });
+  if (distBottom <= SNAP_ZONE_PX)
+    candidates.push({ edge: "bottom", dist: distBottom });
 
-  if (nearLeft) {
-    return {
-      kind: "edge",
-      edge: "left",
-      align: alignAlongAxis(y, h),
-    };
-  }
-  if (nearBottom) {
-    return {
-      kind: "edge",
-      edge: "bottom",
-      align: alignAlongAxis(x, w),
-    };
+  if (candidates.length === 0) {
+    return { kind: "free", edge: "bottom", align: "center" };
   }
 
-  return { kind: "free", edge: "bottom", align: "center" };
+  candidates.sort((a, b) => a.dist - b.dist);
+  const edge = candidates[0]!.edge;
+  const align = isVerticalEdge(edge)
+    ? alignAlongAxis(y, h)
+    : alignAlongAxis(x, w);
+
+  return { kind: "edge", edge, align };
+}
+
+function placementClass(
+  edge: EditorDockEdge,
+  align: EditorDockAlign
+): string {
+  if (edge === "left") {
+    if (align === "start") return "left-5 top-5";
+    if (align === "end") return "left-5 bottom-5";
+    return "left-5 top-1/2 -translate-y-1/2";
+  }
+  if (edge === "right") {
+    if (align === "start") return "right-5 top-5";
+    if (align === "end") return "right-5 bottom-5";
+    return "right-5 top-1/2 -translate-y-1/2";
+  }
+  if (edge === "top") {
+    if (align === "start") return "top-5 left-5";
+    if (align === "end") return "top-5 right-5";
+    return "top-5 left-1/2 -translate-x-1/2";
+  }
+  // bottom
+  if (align === "start") return "bottom-5 left-5";
+  if (align === "end") return "bottom-5 right-5";
+  return "bottom-5 left-1/2 -translate-x-1/2";
 }
 
 function readPreviewScrollY(): number | null {
@@ -203,8 +251,8 @@ function clampPos(
 }
 
 /**
- * Floating tool dock — free-drag stays horizontal; vertical only when
- * snapped to the left edge.
+ * Floating tool dock — free-drag stays horizontal; vertical when
+ * snapped to the left or right edge.
  */
 export function EditorBottomDock({
   mode,
@@ -219,6 +267,8 @@ export function EditorBottomDock({
 }) {
   const dockPlacement = useEditorPanelsStore((s) => s.dockPlacement);
   const setDockPlacement = useEditorPanelsStore((s) => s.setDockPlacement);
+  const dockDensity = useEditorPanelsStore((s) => s.dockDensity);
+  const setDockDensity = useEditorPanelsStore((s) => s.setDockDensity);
   const [hidden, setHidden] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
@@ -232,6 +282,15 @@ export function EditorBottomDock({
     moved: boolean;
     offsetX: number;
     offsetY: number;
+    /** Last ghost orientation — when it flips, re-pin the cursor to the grip. */
+    ghostVertical: boolean;
+  } | null>(null);
+  const densityDragRef = useRef<{
+    pointerId: number;
+    side: "start" | "end";
+    startX: number;
+    startY: number;
+    origin: EditorDockDensity;
   } | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -241,9 +300,19 @@ export function EditorBottomDock({
   sheetOpenRef.current = sheetOpen;
 
   const free = dockPlacement.mode === "free";
-  // Vertical only when docked on the left — free float stays horizontal.
+  // Vertical when docked on left or right — top/bottom/free stay horizontal.
   const vertical =
-    dockPlacement.mode === "edge" && dockPlacement.edge === "left";
+    dockPlacement.mode === "edge" && isVerticalEdge(dockPlacement.edge);
+  const labeled = dockDensity === "labels";
+  const tipSide: "top" | "right" | "bottom" | "left" = !free
+    ? dockPlacement.edge === "right"
+      ? "left"
+      : dockPlacement.edge === "left"
+        ? "right"
+        : dockPlacement.edge === "top"
+          ? "bottom"
+          : "top"
+    : "top";
 
   useEffect(() => {
     if (sheetOpen) {
@@ -357,6 +426,7 @@ export function EditorBottomDock({
       moved: false,
       offsetX: e.clientX - rect.left,
       offsetY: e.clientY - rect.top,
+      ghostVertical: vertical,
     };
   };
 
@@ -373,15 +443,22 @@ export function EditorBottomDock({
     }
     const host = hostRef.current?.getBoundingClientRect();
     if (!host) return;
-    const bar = barRef.current;
-    const approxSize = {
-      width: bar?.offsetWidth || 520,
-      height: bar?.offsetHeight || 44,
-    };
+    const snap = snapTargetFromPoint(e.clientX, e.clientY, host);
+    const ghostIsVertical =
+      snap.kind === "edge" && isVerticalEdge(snap.edge);
+    // Orientation flip (left ↔ bottom): keep the cursor on the grip, not mid-bar.
+    if (drag.ghostVertical !== ghostIsVertical) {
+      drag.ghostVertical = ghostIsVertical;
+      drag.offsetX = GRIP_OFFSET_PX;
+      drag.offsetY = GRIP_OFFSET_PX;
+    }
+    const size = ghostIsVertical
+      ? dockShellSize(true, dockDensity)
+      : dockShellSize(false, dockDensity);
     const rawX = e.clientX - drag.offsetX - host.left;
     const rawY = e.clientY - drag.offsetY - host.top;
-    setDragPos(clampPos(rawX, rawY, approxSize, host));
-    setHoverSnap(snapTargetFromPoint(e.clientX, e.clientY, host));
+    setDragPos(clampPos(rawX, rawY, size, host));
+    setHoverSnap(snap);
   };
 
   const endGripDrag = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -397,17 +474,11 @@ export function EditorBottomDock({
       const host = hostRef.current?.getBoundingClientRect();
       if (host) {
         const snap = snapTargetFromPoint(e.clientX, e.clientY, host);
-        const willBeVertical = snap.kind === "edge" && snap.edge === "left";
-        const bar = barRef.current;
-        const size = bar
-          ? {
-              width: bar.offsetWidth || (willBeVertical ? 60 : 520),
-              height: bar.offsetHeight || (willBeVertical ? 320 : 44),
-            }
-          : {
-              width: willBeVertical ? 60 : 520,
-              height: willBeVertical ? 320 : 44,
-            };
+        const willBeVertical =
+          snap.kind === "edge" && isVerticalEdge(snap.edge);
+        const size = willBeVertical
+          ? dockShellSize(true, dockDensity)
+          : dockShellSize(false, dockDensity);
         const rawX = e.clientX - drag.offsetX - host.left;
         const rawY = e.clientY - drag.offsetY - host.top;
         const pos = clampPos(rawX, rawY, size, host);
@@ -423,21 +494,77 @@ export function EditorBottomDock({
     setHoverSnap(null);
   };
 
+  const onDensityPointerDown = (
+    side: "start" | "end",
+    e: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    densityDragRef.current = {
+      pointerId: e.pointerId,
+      side,
+      startX: e.clientX,
+      startY: e.clientY,
+      origin: dockDensity,
+    };
+  };
+
+  const onDensityPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = densityDragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    // Ends of the long axis: left/right on horizontal docks, top/bottom on vertical.
+    const signed = vertical
+      ? drag.side === "end"
+        ? e.clientY - drag.startY
+        : drag.startY - e.clientY
+      : drag.side === "end"
+        ? e.clientX - drag.startX
+        : drag.startX - e.clientX;
+    if (signed >= DENSITY_PULL_PX) {
+      if (dockDensity !== "labels") setDockDensity("labels");
+    } else if (signed <= -DENSITY_PULL_PX) {
+      if (dockDensity !== "icons") setDockDensity("icons");
+    } else if (drag.origin !== dockDensity) {
+      setDockDensity(drag.origin);
+    }
+  };
+
+  const endDensityDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = densityDragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    densityDragRef.current = null;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
+
   const renderItems = (opts: {
     layoutVertical: boolean;
     interactive: boolean;
+    showLabels: boolean;
   }) => {
-    const { layoutVertical, interactive } = opts;
-    const tipSide = layoutVertical ? "right" : "top";
+    const { layoutVertical, interactive, showLabels } = opts;
     const itemClass = (active: boolean) =>
       cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-lg outline-none transition-colors",
+        "inline-flex shrink-0 items-center justify-center rounded-lg outline-none transition-colors",
+        showLabels
+          ? layoutVertical
+            ? "h-9 w-full justify-start gap-2 px-2"
+            : "h-9 gap-1.5 px-2.5"
+          : "size-9",
         active
           ? "bg-muted text-foreground"
           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       );
+    const labelClass =
+      "max-w-[5.5rem] truncate text-left text-[11px] font-medium leading-none tracking-tight";
     const separatorClass = layoutVertical
-      ? "mx-auto my-0.5 h-px w-5 shrink-0 bg-border"
+      ? showLabels
+        ? "mx-1.5 my-0.5 h-px w-auto shrink-0 self-stretch bg-border"
+        : "mx-auto my-0.5 h-px w-5 shrink-0 bg-border"
       : "mx-0.5 h-5 w-px shrink-0 bg-border";
     const tabOff = !interactive || (hidden && !dragging) ? -1 : undefined;
 
@@ -446,7 +573,7 @@ export function EditorBottomDock({
       node: ReactElement,
       shortcut?: string
     ) => {
-      if (!interactive) return node;
+      if (!interactive || showLabels) return node;
       return (
         <Tooltip>
           <TooltipTrigger asChild>{node}</TooltipTrigger>
@@ -464,7 +591,7 @@ export function EditorBottomDock({
       node: ReactElement,
       shortcut?: string
     ) => {
-      if (!interactive) return node;
+      if (!interactive || showLabels) return node;
       if (!disabled) return withTip(label, node, shortcut);
       return (
         <Tooltip>
@@ -486,6 +613,9 @@ export function EditorBottomDock({
           "cursor-not-allowed text-muted-foreground/45 hover:bg-transparent hover:text-muted-foreground/45"
       );
 
+    const ItemLabel = ({ children }: { children: string }) =>
+      showLabels ? <span className={labelClass}>{children}</span> : null;
+
     const items = (
       <>
         {interactive ? (
@@ -500,7 +630,12 @@ export function EditorBottomDock({
               onPointerCancel={endGripDrag}
               tabIndex={tabOff}
               className={cn(
-                "inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground",
+                "inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground",
+                showLabels
+                  ? layoutVertical
+                    ? "h-9 w-full px-2"
+                    : "h-9 px-2"
+                  : "size-9",
                 "!cursor-grab active:!cursor-grabbing"
               )}
             >
@@ -512,7 +647,14 @@ export function EditorBottomDock({
           )
         ) : (
           <span
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground"
+            className={cn(
+              "inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground",
+              showLabels
+                ? layoutVertical
+                  ? "h-9 w-full px-2"
+                  : "h-9 px-2"
+                : "size-9"
+            )}
             aria-hidden
           >
             <GripVertical
@@ -536,6 +678,7 @@ export function EditorBottomDock({
                   className={itemClass(active)}
                 >
                   <EditorIcon src={m.icon} size={14} />
+                  <ItemLabel>{m.label}</ItemLabel>
                 </button>,
                 m.shortcut
               )}
@@ -564,6 +707,7 @@ export function EditorBottomDock({
             className={toolItemClass(leftTool === "add", toolsDisabled)}
           >
             <Plus className="size-3.5 shrink-0" strokeWidth={1.75} />
+            <ItemLabel>Add</ItemLabel>
           </button>,
           toolsDisabled ? undefined : "A"
         )}
@@ -590,6 +734,7 @@ export function EditorBottomDock({
               size={14}
               className={cn(toolsDisabled && "opacity-45")}
             />
+            <ItemLabel>Metrics</ItemLabel>
           </button>,
           toolsDisabled ? undefined : "M"
         )}
@@ -608,67 +753,133 @@ export function EditorBottomDock({
             className={itemClass(leftTool === "variations")}
           >
             <CopyPlus className="size-3.5 shrink-0" strokeWidth={1.75} />
+            <ItemLabel>Variations</ItemLabel>
           </button>,
           "V"
         )}
       </>
     );
 
-    if (interactive) {
-      return (
-        <TooltipProvider delayDuration={200}>{items}</TooltipProvider>
-      );
-    }
     return items;
   };
 
-  const barClass = (layoutVertical: boolean, inert: boolean) =>
+  const densityHandle = (
+    side: "start" | "end",
+    layoutVertical: boolean,
+    interactive: boolean
+  ) => {
+    if (!interactive) return null;
+    const expandKey = layoutVertical
+      ? side === "start"
+        ? "ArrowUp"
+        : "ArrowDown"
+      : side === "start"
+        ? "ArrowLeft"
+        : "ArrowRight";
+    const collapseKey = layoutVertical
+      ? side === "start"
+        ? "ArrowDown"
+        : "ArrowUp"
+      : side === "start"
+        ? "ArrowRight"
+        : "ArrowLeft";
+    return (
+      <div
+        role="separator"
+        aria-orientation={layoutVertical ? "horizontal" : "vertical"}
+        aria-label="Expand or collapse dock"
+        aria-valuetext={labeled ? "Labels" : "Icons"}
+        tabIndex={hidden && !dragging ? -1 : 0}
+        onPointerDown={(e) => onDensityPointerDown(side, e)}
+        onPointerMove={onDensityPointerMove}
+        onPointerUp={endDensityDrag}
+        onPointerCancel={endDensityDrag}
+        onKeyDown={(e) => {
+          if (e.key === expandKey) {
+            e.preventDefault();
+            setDockDensity("labels");
+          } else if (e.key === collapseKey) {
+            e.preventDefault();
+            setDockDensity("icons");
+          }
+        }}
+        className={cn(
+          "group/density absolute z-20 flex outline-none",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+          layoutVertical
+            ? cn(
+                "left-0 h-2.5 w-full cursor-ns-resize items-center justify-center",
+                side === "start"
+                  ? "top-0 -translate-y-1/2"
+                  : "bottom-0 translate-y-1/2"
+              )
+            : cn(
+                "top-0 h-full w-2.5 cursor-ew-resize items-center",
+                side === "start"
+                  ? "left-0 -translate-x-1/2 justify-start"
+                  : "right-0 translate-x-1/2 justify-end"
+              )
+        )}
+      >
+        <span
+          className={cn(
+            "rounded-full bg-muted-foreground/0 transition-colors",
+            "group-hover/density:bg-muted-foreground/35",
+            "group-focus-visible/density:bg-muted-foreground/45",
+            layoutVertical ? "h-1 w-5" : "h-5 w-1"
+          )}
+        />
+      </div>
+    );
+  };
+
+  const barClass = (layoutVertical: boolean, inert: boolean, showLabels: boolean) =>
     cn(
-      "rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_hsl(var(--foreground)/0.28),0_0_0_1px_hsl(var(--foreground)/0.04)]",
+      "relative flex rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_hsl(var(--foreground)/0.28),0_0_0_1px_hsl(var(--foreground)/0.04)]",
       layoutVertical
-        ? "inline-flex w-11 max-h-[calc(100%-2.5rem)] flex-col items-center gap-0.5 overflow-y-auto"
-        : "inline-flex h-11 max-w-[calc(100%-2.5rem)] items-center gap-0.5",
+        ? cn(
+            "max-h-[calc(100%-2.5rem)] flex-col items-stretch gap-0.5 overflow-y-auto",
+            showLabels ? "w-[7.75rem]" : "w-11 items-center"
+          )
+        : cn(
+            "h-11 w-max flex-row items-center gap-0.5",
+            showLabels && "px-0.5"
+          ),
       inert ? "pointer-events-none" : "pointer-events-auto"
     );
 
-  const silhouetteClass = (layoutVertical: boolean, active: boolean) =>
+  const silhouetteClass = (
+    layoutVertical: boolean,
+    active: boolean,
+    showLabels: boolean
+  ) =>
     cn(
-      "rounded-xl border border-dashed transition-[opacity,border-color,background-color,transform] duration-150",
+      "rounded-xl border border-dashed transition-[opacity,border-color,background-color,transform,width,height] duration-150",
       active
         ? cn(
-            "border-foreground/45 bg-background/80 opacity-80 shadow-sm",
+            "border-foreground/50 bg-foreground/[0.07] opacity-90",
             layoutVertical
-              ? "inline-flex w-11 flex-col items-center gap-0.5 p-1"
-              : "inline-flex h-11 items-center gap-0.5 p-1"
+              ? showLabels
+                ? "h-[18.25rem] w-[7.75rem]"
+                : "h-[18.25rem] w-11"
+              : showLabels
+                ? "h-11 w-[35rem]"
+                : "h-11 w-80"
           )
         : cn(
             "border-foreground/25 bg-foreground/[0.05] opacity-40",
-            // Compact markers so left slots don’t stack into a double bar
             layoutVertical ? "h-10 w-2.5" : "h-2.5 w-10"
           )
     );
 
   const ghostVertical =
-    hoverSnap?.kind === "edge" && hoverSnap.edge === "left";
+    hoverSnap?.kind === "edge" && isVerticalEdge(hoverSnap.edge);
   const parkedAlign = dockPlacement.align ?? "center";
   const activeSlot =
     hoverSnap?.kind === "edge"
       ? { edge: hoverSnap.edge, align: hoverSnap.align }
       : null;
-
-  const placementClass = (
-    edge: EditorDockEdge,
-    align: EditorDockAlign
-  ): string => {
-    if (edge === "left") {
-      if (align === "start") return "left-5 top-5";
-      if (align === "end") return "left-5 bottom-5";
-      return "left-5 top-1/2 -translate-y-1/2";
-    }
-    if (align === "start") return "bottom-5 left-5";
-    if (align === "end") return "bottom-5 right-5";
-    return "inset-x-0 bottom-5 flex justify-center px-4";
-  };
+  const parkedEdge = dockPlacement.edge;
 
   const parkedStyle =
     free && !dragging
@@ -685,24 +896,33 @@ export function EditorBottomDock({
 
   const hiddenSlideClass = (() => {
     if (!hidden || dragging) return null;
-    if (vertical) {
-      if (parkedAlign === "start") {
-        return "-translate-x-[calc(100%+1.75rem)]";
-      }
-      if (parkedAlign === "end") {
-        return "-translate-x-[calc(100%+1.75rem)]";
-      }
-      return "-translate-x-[calc(100%+1.75rem)] -translate-y-1/2";
+    if (parkedEdge === "left") {
+      return parkedAlign === "center"
+        ? "-translate-x-[calc(100%+1.75rem)] -translate-y-1/2"
+        : "-translate-x-[calc(100%+1.75rem)]";
     }
-    return "translate-y-[calc(100%+1.75rem)]";
+    if (parkedEdge === "right") {
+      return parkedAlign === "center"
+        ? "translate-x-[calc(100%+1.75rem)] -translate-y-1/2"
+        : "translate-x-[calc(100%+1.75rem)]";
+    }
+    if (parkedEdge === "top") {
+      return parkedAlign === "center"
+        ? "-translate-x-1/2 -translate-y-[calc(100%+1.75rem)]"
+        : "-translate-y-[calc(100%+1.75rem)]";
+    }
+    // bottom
+    return parkedAlign === "center"
+      ? "-translate-x-1/2 translate-y-[calc(100%+1.75rem)]"
+      : "translate-y-[calc(100%+1.75rem)]";
   })();
 
   return (
     <div ref={hostRef} className="pointer-events-none absolute inset-0 z-50">
-      {/* Slot hints: compact markers everywhere; full dock silhouette only on active target */}
+      {/* Slot hints: compact markers everywhere; stronger shell on active target */}
       {dragging
         ? DOCK_SLOTS.map((slot) => {
-            const isVertical = slot.edge === "left";
+            const isVertical = isVerticalEdge(slot.edge);
             const active =
               activeSlot?.edge === slot.edge &&
               activeSlot.align === slot.align;
@@ -715,14 +935,9 @@ export function EditorBottomDock({
                 )}
                 aria-hidden
               >
-                <div className={silhouetteClass(isVertical, active)}>
-                  {active
-                    ? renderItems({
-                        layoutVertical: isVertical,
-                        interactive: false,
-                      })
-                    : null}
-                </div>
+                <div
+                  className={silhouetteClass(isVertical, active, labeled)}
+                />
               </div>
             );
           })
@@ -745,9 +960,17 @@ export function EditorBottomDock({
         <div
           ref={barRef}
           onWheel={forwardWheelToPreview}
-          className={barClass(vertical, hidden && !dragging)}
+          className={barClass(vertical, hidden && !dragging, labeled)}
         >
-          {renderItems({ layoutVertical: vertical, interactive: true })}
+          {densityHandle("start", vertical, true)}
+          <TooltipProvider delayDuration={200}>
+            {renderItems({
+              layoutVertical: vertical,
+              interactive: true,
+              showLabels: labeled,
+            })}
+          </TooltipProvider>
+          {densityHandle("end", vertical, true)}
         </div>
       </div>
 
@@ -756,10 +979,13 @@ export function EditorBottomDock({
           className="pointer-events-none absolute z-[60]"
           style={{ left: dragPos.x, top: dragPos.y }}
         >
-          <div className={cn(barClass(ghostVertical, true), "opacity-95")}>
+          <div
+            className={cn(barClass(ghostVertical, true, labeled), "opacity-95")}
+          >
             {renderItems({
               layoutVertical: ghostVertical,
               interactive: false,
+              showLabels: labeled,
             })}
           </div>
         </div>

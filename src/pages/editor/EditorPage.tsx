@@ -166,11 +166,11 @@ export default function EditorPage() {
   const sideSheetWidth = useEditorPanelsStore((s) => s.sideSheetWidth);
   const dockPlacement = useEditorPanelsStore((s) => s.dockPlacement);
   const dockEdge =
-    dockPlacement.mode === "edge" && dockPlacement.edge === "left"
-      ? "left"
-      : "bottom";
+    dockPlacement.mode === "edge" ? dockPlacement.edge : "bottom";
   const dockAlign =
     dockPlacement.mode === "edge" ? dockPlacement.align : "center";
+  const dockDensity = useEditorPanelsStore((s) => s.dockDensity);
+  const sheetCompact = dockEdge === "left" || dockEdge === "right";
   const setBottomSheetHeight = useEditorPanelsStore(
     (s) => s.setBottomSheetHeight
   );
@@ -687,11 +687,12 @@ export default function EditorPage() {
               onWidthChange={setSideSheetWidth}
               dockEdge={dockEdge}
               dockAlign={dockAlign}
+              dockDensity={dockDensity}
             >
               {leftTool === "metrics" ? (
                 <EditorMetricsPanel
                   onClose={closeLeftTool}
-                  compact={dockEdge === "left"}
+                  compact={sheetCompact}
                 />
               ) : leftTool === "variations" ? (
                 <EditorVariationsPanel
@@ -705,12 +706,12 @@ export default function EditorPage() {
                   onVariationsChange={setVariations}
                   versionFoldKey={versionFoldKey}
                   onClose={closeLeftTool}
-                  compact={dockEdge === "left"}
+                  compact={sheetCompact}
                 />
               ) : (
                 <EditorAddPanel
                   onClose={closeLeftTool}
-                  compact={dockEdge === "left"}
+                  compact={sheetCompact}
                 />
               )}
             </EditorBottomSheet>
