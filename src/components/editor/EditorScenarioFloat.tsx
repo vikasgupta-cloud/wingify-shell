@@ -30,7 +30,7 @@ export function EditorScenarioFloat({
 
   return (
     <div className="pointer-events-none absolute inset-0 z-40">
-      <div className="pointer-events-auto absolute bottom-4 left-4">
+      <div className="pointer-events-auto absolute bottom-5 left-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

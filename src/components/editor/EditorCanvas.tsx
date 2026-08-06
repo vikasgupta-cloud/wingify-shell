@@ -7,20 +7,33 @@ import {
 } from "react";
 import {
   Copy,
+  CopyPlus,
+  CaseSensitive,
   Link2,
   MoreHorizontal,
   Move,
   Pencil,
+  Plus,
   Sparkles,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { EditorIcon } from "./EditorIcon";
 import type {
   EditorDevice,
+  EditorPreviewWidthMode,
   EditorSelection,
 } from "@/config/editorScenarios";
+import {
+  applyFirstFold,
+  resolveFirstFold,
+} from "@/config/editorFirstFold";
+
+import aiSparkle from "@/assets/editor/ai-sparkle.svg";
+import micIcon from "@/assets/editor/mic.svg";
+import xClose from "@/assets/editor/x-close.svg";
 
 export type EditorMode = "design" | "navigate" | "code";
 
@@ -36,6 +49,8 @@ const DEVICE_PRESETS: Record<
   tablet: { w: 768, h: 1024 },
   mobile: { w: 390, h: 844 },
 };
+
+const FIXED_DESKTOP_WIDTH = 1440;
 
 type Box = { top: number; left: number; width: number; height: number };
 
@@ -218,9 +233,14 @@ export function EditorCanvas({
   onClearSelection,
   onOpenEdition,
   onOpenCopilot,
+  onAskAi,
+  previewWidthMode = "fit",
   showSubtestPopover = false,
   onDismissSubtest,
   onLocationChange,
+  variationId = "control",
+  versionFoldKey = "initial",
+  onPreviewScroll,
 }: {
   src?: string;
   device?: EditorDevice;
@@ -231,12 +251,21 @@ export function EditorCanvas({
   onClearSelection?: () => void;
   onOpenEdition?: () => void;
   onOpenCopilot?: () => void;
+  onAskAi?: (prompt: string, selection: EditorSelection) => void;
+  previewWidthMode?: EditorPreviewWidthMode;
   showSubtestPopover?: boolean;
   onDismissSubtest?: () => void;
   onLocationChange?: (url: string) => void;
+  /** Active variation — drives first-fold A/B treatment. */
+  variationId?: string;
+  /** Active save version fold key — drives first-fold history snapshot. */
+  versionFoldKey?: string;
+  /** Fired when the preview document scrolls (same-origin iframe). */
+  onPreviewScroll?: (info: { deltaY: number; scrollY: number }) => void;
 }) {
   const preset = DEVICE_PRESETS[device];
   const framed = device !== "desktop";
+  const fixedDesktop = !framed && previewWidthMode === "fixed";
   const [frameW, setFrameW] = useState<number | "100%">(preset.w);
   const [frameH, setFrameH] = useState<number | "100%">(preset.h);
   const [dimsLinked, setDimsLinked] = useState(true);
@@ -250,8 +279,31 @@ export function EditorCanvas({
 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const [aiDraft, setAiDraft] = useState("");
+  const [wandzOpen, setWandzOpen] = useState(false);
+  const aiInputRef = useRef<HTMLInputElement>(null);
 
   modeRef.current = mode;
+
+  useEffect(() => {
+    setAiDraft("");
+    setWandzOpen(false);
+  }, [selection?.selector]);
+
+  useEffect(() => {
+    if (!wandzOpen) return;
+    const id = window.requestAnimationFrame(() => aiInputRef.current?.focus());
+    return () => window.cancelAnimationFrame(id);
+  }, [wandzOpen]);
+
+  useEffect(() => {
+    if (!wandzOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setWandzOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [wandzOpen]);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -296,6 +348,8 @@ export function EditorCanvas({
   onClearSelectionRef.current = onClearSelection;
   const onLocationChangeRef = useRef(onLocationChange);
   onLocationChangeRef.current = onLocationChange;
+  const onPreviewScrollRef = useRef(onPreviewScroll);
+  onPreviewScrollRef.current = onPreviewScroll;
 
   const reportLocation = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
@@ -322,6 +376,14 @@ export function EditorCanvas({
     if (!doc?.documentElement) return;
     doc.documentElement.dataset.editorMode = mode;
   }, [mode, frameReady]);
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc?.getElementById("section-hero")) return;
+    applyFirstFold(doc, resolveFirstFold(variationId, versionFoldKey));
+    // Re-measure selection after DOM text/layout changes.
+    syncSelectedBox();
+  }, [variationId, versionFoldKey, frameReady, syncSelectedBox]);
 
   const bindFrame = useCallback(() => {
     const iframe = iframeRef.current;
@@ -370,7 +432,22 @@ export function EditorCanvas({
     };
 
     const onLeave = () => clearHover();
+    let lastScrollY =
+      win.scrollY ||
+      doc.documentElement.scrollTop ||
+      doc.body.scrollTop ||
+      0;
     const onScrollOrResize = () => {
+      const scrollY =
+        win.scrollY ||
+        doc.documentElement.scrollTop ||
+        doc.body.scrollTop ||
+        0;
+      const deltaY = scrollY - lastScrollY;
+      lastScrollY = scrollY;
+      if (deltaY !== 0) {
+        onPreviewScrollRef.current?.({ deltaY, scrollY });
+      }
       syncSelectedBox();
       if (hoverElRef.current?.isConnected) {
         setHoverBox(rectInFrame(hoverElRef.current));
@@ -548,20 +625,31 @@ export function EditorCanvas({
       <div
         className={cn(
           "relative min-h-0 flex-1 overflow-auto",
-          framed ? "p-8" : "p-0"
+          framed
+            ? "p-8"
+            : fixedDesktop
+              ? "flex flex-col py-8"
+              : "p-0"
         )}
       >
         <div
           className={cn(
-            "relative mx-auto bg-background",
+            "relative bg-background",
             framed
-              ? "my-6 overflow-visible rounded-xl border border-border shadow-sm ring-1 ring-border"
-              : "h-full"
+              ? "mx-auto my-6 overflow-visible rounded-xl border border-border shadow-sm ring-1 ring-border"
+              : fixedDesktop
+                ? "mx-auto min-h-0 w-full flex-1"
+                : "mx-auto h-full"
           )}
           style={{
-            width: framed ? frameW : "100%",
-            height: framed ? frameH : "100%",
-            maxWidth: "100%",
+            width: framed
+              ? frameW
+              : fixedDesktop
+                ? FIXED_DESKTOP_WIDTH
+                : "100%",
+            minWidth: fixedDesktop ? FIXED_DESKTOP_WIDTH : undefined,
+            height: framed ? frameH : fixedDesktop ? undefined : "100%",
+            maxWidth: fixedDesktop ? undefined : "100%",
           }}
         >
           <div
@@ -641,66 +729,197 @@ export function EditorCanvas({
                   </button>
                 )}
               </div>
-              <div className="pointer-events-auto absolute left-0 top-full mt-2.5 inline-flex items-center gap-0.5 rounded-full border border-border/80 bg-background/95 p-1 shadow-[0_8px_24px_-8px_hsl(var(--foreground)/0.25)] backdrop-blur-sm">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-full"
-                  aria-label="Ask Copilot"
-                  title="Ask Copilot"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenCopilot?.();
-                  }}
-                >
-                  <Sparkles className="size-3.5" strokeWidth={1.75} />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-full"
-                  aria-label="Edit in Edition"
-                  title="Edit in Edition"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenEdition?.();
-                  }}
-                >
-                  <Pencil className="size-3.5" strokeWidth={1.75} />
-                </Button>
-                <span className="mx-0.5 h-4 w-px shrink-0 bg-border" />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-full text-muted-foreground/50"
-                  aria-label="Move (coming soon)"
-                  disabled
-                >
-                  <Move className="size-3.5" strokeWidth={1.75} />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-full text-muted-foreground/50"
-                  aria-label="Link (coming soon)"
-                  disabled
-                >
-                  <Link2 className="size-3.5" strokeWidth={1.75} />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-full text-muted-foreground/50"
-                  aria-label="More (coming soon)"
-                  disabled
-                >
-                  <MoreHorizontal className="size-3.5" strokeWidth={1.75} />
-                </Button>
+              <div className="pointer-events-auto absolute left-0 top-full mt-2.5 flex w-[min(340px,max(100%,280px))] flex-col gap-2">
+                <div className="inline-flex w-fit items-center gap-0.5 rounded-full border border-border bg-background p-1 shadow-sm">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "size-7 rounded-full",
+                      wandzOpen && "bg-muted text-foreground"
+                    )}
+                    aria-label="Wandz"
+                    aria-pressed={wandzOpen}
+                    title="Wandz"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWandzOpen((open) => !open);
+                    }}
+                  >
+                    <EditorIcon src={aiSparkle} size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 rounded-full"
+                    aria-label="Edit in Edition"
+                    title="Edit in Edition"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWandzOpen(false);
+                      onOpenEdition?.();
+                    }}
+                  >
+                    <Pencil className="size-3.5" strokeWidth={1.75} />
+                  </Button>
+                  <span className="mx-0.5 h-4 w-px shrink-0 bg-border" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 rounded-full text-muted-foreground/50"
+                    aria-label="Move (coming soon)"
+                    disabled
+                  >
+                    <Move className="size-3.5" strokeWidth={1.75} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 rounded-full text-muted-foreground/50"
+                    aria-label="Link (coming soon)"
+                    disabled
+                  >
+                    <Link2 className="size-3.5" strokeWidth={1.75} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 rounded-full text-muted-foreground/50"
+                    aria-label="More (coming soon)"
+                    disabled
+                  >
+                    <MoreHorizontal className="size-3.5" strokeWidth={1.75} />
+                  </Button>
+                </div>
+
+                {wandzOpen && (
+                  <div
+                    className="relative rounded-xl border border-border bg-background p-3 pt-4 shadow-[0_12px_40px_-12px_hsl(var(--foreground)/0.28)]"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="absolute -right-2 -top-2 size-7 rounded-full border-border bg-background shadow-sm hover:bg-muted"
+                      aria-label="Close Wandz"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setWandzOpen(false);
+                        setAiDraft("");
+                      }}
+                    >
+                      <EditorIcon src={xClose} size={12} />
+                    </Button>
+
+                    <form
+                      className="flex items-center gap-1.5 rounded-full border border-border bg-background px-2 py-1.5"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const next = aiDraft.trim();
+                        if (!next) return;
+                        onAskAi?.(next, selection);
+                        setAiDraft("");
+                        setWandzOpen(false);
+                        showToast("Sent to AI thread");
+                      }}
+                    >
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 shrink-0 rounded-full"
+                        aria-label="Add context"
+                      >
+                        <Plus className="size-3.5" strokeWidth={1.75} />
+                      </Button>
+                      <input
+                        ref={aiInputRef}
+                        value={aiDraft}
+                        onChange={(e) => setAiDraft(e.target.value)}
+                        placeholder="Describe your idea"
+                        className="h-7 min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
+                        aria-label="Describe your idea"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 shrink-0 rounded-full text-muted-foreground"
+                        aria-label="Formatting"
+                      >
+                        <CaseSensitive className="size-3.5" strokeWidth={1.75} />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        className="size-7 shrink-0 rounded-full"
+                        aria-label="Voice input"
+                      >
+                        <EditorIcon src={micIcon} size={14} />
+                      </Button>
+                    </form>
+
+                    <div className="mt-2 overflow-hidden rounded-lg border border-border">
+                      {(
+                        [
+                          {
+                            id: "variations",
+                            label: "Create variations",
+                            Icon: CopyPlus,
+                          },
+                          {
+                            id: "content",
+                            label: "Generate content",
+                            Icon: Sparkles,
+                          },
+                          {
+                            id: "more",
+                            label: "See more",
+                            Icon: MoreHorizontal,
+                          },
+                        ] as const
+                      ).map(({ id, label, Icon }, index) => (
+                        <button
+                          key={id}
+                          type="button"
+                          className={cn(
+                            "flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-medium text-foreground outline-none transition-colors hover:bg-muted",
+                            index > 0 && "border-t border-border"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (id === "more") {
+                              setWandzOpen(false);
+                              onOpenCopilot?.();
+                              return;
+                            }
+                            const prompt =
+                              id === "variations"
+                                ? "Create variations of this element"
+                                : "Generate content for this element";
+                            onAskAi?.(prompt, selection);
+                            setWandzOpen(false);
+                            showToast("Sent to AI thread");
+                          }}
+                        >
+                          <Icon
+                            className="size-3.5 shrink-0 text-muted-foreground"
+                            strokeWidth={1.75}
+                          />
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

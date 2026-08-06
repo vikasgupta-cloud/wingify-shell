@@ -21,10 +21,12 @@ export function EditorLeftOverlay({
   children,
   className,
   defaultWidth = DEFAULT_WIDTH,
+  onWidthChange,
 }: {
   children: ReactNode;
   className?: string;
   defaultWidth?: number;
+  onWidthChange?: (width: number) => void;
 }) {
   const [width, setWidth] = useState(() =>
     Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(defaultWidth)))
@@ -41,6 +43,15 @@ export function EditorLeftOverlay({
     []
   );
 
+  const commitWidth = useCallback(
+    (w: number) => {
+      const next = clamp(w);
+      setWidth(next);
+      onWidthChange?.(next);
+    },
+    [clamp, onWidthChange]
+  );
+
   const onHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -55,7 +66,7 @@ export function EditorLeftOverlay({
   const onHandlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
-    setWidth(clamp(drag.originW + (e.clientX - drag.startX)));
+    commitWidth(drag.originW + (e.clientX - drag.startX));
   };
 
   const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -107,10 +118,10 @@ export function EditorLeftOverlay({
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") {
             e.preventDefault();
-            setWidth((w) => clamp(w - STEP));
+            commitWidth(width - STEP);
           } else if (e.key === "ArrowRight") {
             e.preventDefault();
-            setWidth((w) => clamp(w + STEP));
+            commitWidth(width + STEP);
           }
         }}
         className={cn(

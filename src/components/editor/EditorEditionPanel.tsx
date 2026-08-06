@@ -919,6 +919,7 @@ export function EditorEditionPanel({
   groupDrag,
   selection = null,
   initialTab = "styles",
+  onTabChange,
 }: {
   onClose?: () => void;
   chrome: EditorPanelChrome;
@@ -929,6 +930,7 @@ export function EditorEditionPanel({
   groupDrag?: EditorPanelGroupDragHandlers;
   selection?: EditorSelection | null;
   initialTab?: EditionTab;
+  onTabChange?: (tab: EditionTab) => void;
 }) {
   const [tab, setTab] = useState<EditionTab>(initialTab);
   const [toast, setToast] = useState<string | null>(null);
@@ -1015,7 +1017,10 @@ export function EditorEditionPanel({
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setTab(t.id)}
+                  onClick={() => {
+                    setTab(t.id);
+                    onTabChange?.(t.id);
+                  }}
                   className={cn(
                     "h-7 flex-1 rounded-[5px] text-xs font-semibold outline-none transition-colors",
                     tab === t.id

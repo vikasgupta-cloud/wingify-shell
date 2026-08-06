@@ -1,23 +1,42 @@
-import { Languages, X } from "lucide-react";
+import { Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EditorFloatablePanel } from "./EditorFloatablePanel";
+import type {
+  EditorPanelChrome,
+  EditorPanelGroupDragHandlers,
+} from "./EditorFloatablePanel";
 
-/** Left Translate panel — greyscale shell (no dedicated Figma frame). */
-export function EditorTranslatePanel({ onClose }: { onClose?: () => void }) {
+/** Translate panel — dockable / detachable shell. */
+export function EditorTranslatePanel({
+  onClose,
+  chrome,
+  onChromeChange,
+  onReattach,
+  grouped,
+  tabPane,
+  groupDrag,
+}: {
+  onClose?: () => void;
+  chrome: EditorPanelChrome;
+  onChromeChange: (next: EditorPanelChrome) => void;
+  onReattach?: () => void;
+  grouped?: boolean;
+  tabPane?: boolean;
+  groupDrag?: EditorPanelGroupDragHandlers;
+}) {
   return (
-    <aside className="flex h-full w-full flex-col bg-background">
-      <div className="flex h-9 shrink-0 items-center justify-between border-b border-border px-3">
-        <p className="text-sm font-semibold text-foreground">Translate</p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7"
-          aria-label="Close"
-          onClick={onClose}
-        >
-          <X className="size-4" strokeWidth={1.75} />
-        </Button>
-      </div>
+    <EditorFloatablePanel
+      title="Translate"
+      icon={<Languages className="size-3.5 shrink-0" strokeWidth={1.75} />}
+      onClose={onClose}
+      bodyClassName="min-h-0 overflow-hidden"
+      chrome={chrome}
+      onChromeChange={onChromeChange}
+      onReattach={onReattach}
+      grouped={grouped}
+      tabPane={tabPane}
+      groupDrag={groupDrag}
+    >
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
         <span className="inline-flex size-12 items-center justify-center rounded-full bg-muted">
           <Languages className="size-5 text-muted-foreground" strokeWidth={1.5} />
@@ -33,6 +52,6 @@ export function EditorTranslatePanel({ onClose }: { onClose?: () => void }) {
           Add language
         </Button>
       </div>
-    </aside>
+    </EditorFloatablePanel>
   );
 }

@@ -23,6 +23,40 @@ export const EDITOR_PANEL_WIDTH = 300;
 export const EDITOR_FLOAT_HEIGHT = 560;
 export const EDITOR_MINIMIZED_WIDTH = 240;
 
+export const EDITOR_FLOAT_SIZE = {
+  minW: 280,
+  maxW: 560,
+  minH: 360,
+  maxH: 840,
+  stepW: 40,
+  stepH: 60,
+  defaultW: EDITOR_PANEL_WIDTH,
+  defaultH: EDITOR_FLOAT_HEIGHT,
+} as const;
+
+export function clampFloatSize(size: {
+  width: number;
+  height: number;
+}): { width: number; height: number } {
+  return {
+    width: Math.min(
+      EDITOR_FLOAT_SIZE.maxW,
+      Math.max(EDITOR_FLOAT_SIZE.minW, Math.round(size.width))
+    ),
+    height: Math.min(
+      EDITOR_FLOAT_SIZE.maxH,
+      Math.max(EDITOR_FLOAT_SIZE.minH, Math.round(size.height))
+    ),
+  };
+}
+
+export function defaultFloatSize(): { width: number; height: number } {
+  return {
+    width: EDITOR_FLOAT_SIZE.defaultW,
+    height: EDITOR_FLOAT_SIZE.defaultH,
+  };
+}
+
 export type EditorPanelGroupDragHandlers = {
   onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
@@ -360,6 +394,8 @@ export function EditorFloatablePanel({
 type EditorFloatingPanelGroupProps = {
   pos: { x: number; y: number };
   onPosChange: (pos: { x: number; y: number }) => void;
+  size: { width: number; height: number };
+  onSizeChange: (size: { width: number; height: number }) => void;
   tabs: EditorFloatingTab[];
   activeId: string;
   onActiveIdChange: (id: string) => void;
@@ -377,6 +413,8 @@ type EditorFloatingPanelGroupProps = {
 export function EditorFloatingPanelGroup({
   pos,
   onPosChange,
+  size,
+  onSizeChange,
   tabs,
   activeId,
   onActiveIdChange,
@@ -389,26 +427,176 @@ export function EditorFloatingPanelGroup({
   dragging,
   children,
 }: EditorFloatingPanelGroupProps) {
+  type ResizeEdge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+
+  const resizeRef = useRef<{
+    pointerId: number;
+    edge: ResizeEdge;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+    originW: number;
+    originH: number;
+  } | null>(null);
+  const [resizeEdge, setResizeEdge] = useState<ResizeEdge | null>(null);
+  const [exiting, setExiting] = useState(false);
+  const exitTimerRef = useRef<number | null>(null);
+
+  const requestClose = useCallback(() => {
+    if (exiting) return;
+    // Multi-tab: just drop the active tab without dismissing the window.
+    if (tabs.length > 1) {
+      onCloseActive?.();
+      return;
+    }
+    setExiting(true);
+  }, [exiting, onCloseActive, tabs.length]);
+
   useEffect(() => {
-    const onResize = () => {
+    if (!exiting) return;
+    exitTimerRef.current = window.setTimeout(() => {
+      onCloseActive?.();
+      setExiting(false);
+      exitTimerRef.current = null;
+    }, 320);
+    return () => {
+      if (exitTimerRef.current != null) {
+        window.clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = null;
+      }
+    };
+  }, [exiting, onCloseActive]);
+
+  useEffect(() => {
+    const onWinResize = () => {
       onPosChange({
         x: Math.min(pos.x, Math.max(8, window.innerWidth - 80)),
         y: Math.min(pos.y, Math.max(8, window.innerHeight - 48)),
       });
     };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.addEventListener("resize", onWinResize);
+    return () => window.removeEventListener("resize", onWinResize);
   }, [onPosChange, pos.x, pos.y]);
 
-  const showTabs = tabs.length > 1;
+  const showTabs = tabs.length > 0;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCloseActive?.();
+      if (e.key === "Escape") requestClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onCloseActive]);
+  }, [requestClose]);
+
+  const cursorForEdge = (edge: ResizeEdge) => {
+    if (edge === "n" || edge === "s") return "ns-resize";
+    if (edge === "e" || edge === "w") return "ew-resize";
+    if (edge === "ne" || edge === "sw") return "nesw-resize";
+    return "nwse-resize";
+  };
+
+  useEffect(() => {
+    if (!resizeEdge) return;
+    const prev = document.body.style.cursor;
+    const select = document.body.style.userSelect;
+    document.body.style.cursor = cursorForEdge(resizeEdge);
+    document.body.style.userSelect = "none";
+    return () => {
+      document.body.style.cursor = prev;
+      document.body.style.userSelect = select;
+    };
+  }, [resizeEdge]);
+
+  const beginResize =
+    (edge: ResizeEdge) => (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (exiting) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      resizeRef.current = {
+        pointerId: e.pointerId,
+        edge,
+        startX: e.clientX,
+        startY: e.clientY,
+        originX: pos.x,
+        originY: pos.y,
+        originW: size.width,
+        originH: size.height,
+      };
+      setResizeEdge(edge);
+    };
+
+  const onResizePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const state = resizeRef.current;
+    if (!state || state.pointerId !== e.pointerId) return;
+
+    const dx = e.clientX - state.startX;
+    const dy = e.clientY - state.startY;
+    let nextW = state.originW;
+    let nextH = state.originH;
+    let nextX = state.originX;
+    let nextY = state.originY;
+
+    if (state.edge.includes("e")) nextW = state.originW + dx;
+    if (state.edge.includes("s")) nextH = state.originH + dy;
+    if (state.edge.includes("w")) {
+      nextW = state.originW - dx;
+      const clampedW = Math.min(
+        EDITOR_FLOAT_SIZE.maxW,
+        Math.max(EDITOR_FLOAT_SIZE.minW, Math.round(nextW))
+      );
+      nextX = state.originX + (state.originW - clampedW);
+      nextW = clampedW;
+    }
+    if (state.edge.includes("n")) {
+      nextH = state.originH - dy;
+      const clampedH = Math.min(
+        EDITOR_FLOAT_SIZE.maxH,
+        Math.max(EDITOR_FLOAT_SIZE.minH, Math.round(nextH))
+      );
+      nextY = state.originY + (state.originH - clampedH);
+      nextH = clampedH;
+    }
+
+    const clamped = clampFloatSize({ width: nextW, height: nextH });
+    onSizeChange(clamped);
+    if (state.edge.includes("w") || state.edge.includes("n")) {
+      onPosChange({
+        x: Math.min(Math.max(8, nextX), window.innerWidth - 48),
+        y: Math.min(Math.max(8, nextY), window.innerHeight - 40),
+      });
+    }
+  };
+
+  const endResize = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const state = resizeRef.current;
+    if (!state || state.pointerId !== e.pointerId) return;
+    resizeRef.current = null;
+    setResizeEdge(null);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
+
+  const edgeProps = (edge: ResizeEdge) => ({
+    onPointerDown: beginResize(edge),
+    onPointerMove: onResizePointerMove,
+    onPointerUp: endResize,
+    onPointerCancel: endResize,
+  });
+
+  const panelW = minimized ? EDITOR_MINIMIZED_WIDTH : size.width;
+  const railInset = 56;
+  const slideX = Math.max(
+    120,
+    (typeof window !== "undefined" ? window.innerWidth : 1200) -
+      pos.x -
+      panelW / 2 -
+      railInset
+  );
 
   return createPortal(
     <div
@@ -416,15 +604,25 @@ export function EditorFloatingPanelGroup({
       aria-modal="true"
       aria-label={tabs.find((t) => t.id === activeId)?.label ?? "Panel"}
       className={cn(
-        "fixed z-50 flex flex-col overflow-hidden rounded-lg border border-border bg-background shadow-none",
-        dragging && "cursor-grabbing select-none"
+        "fixed z-50 flex flex-col overflow-hidden rounded-lg border border-border bg-background shadow-none will-change-transform",
+        (dragging || resizeEdge || exiting) && "select-none",
+        dragging && "cursor-grabbing",
+        exiting && "pointer-events-none"
       )}
       style={{
         left: pos.x,
         top: pos.y,
-        width: minimized ? EDITOR_MINIMIZED_WIDTH : EDITOR_PANEL_WIDTH,
-        height: minimized ? 36 : EDITOR_FLOAT_HEIGHT,
+        width: panelW,
+        height: minimized ? 36 : size.height,
         maxHeight: minimized ? 36 : "calc(100vh - 24px)",
+        opacity: exiting ? 0 : 1,
+        transform: exiting
+          ? `translateX(${slideX}px) scale(0.86)`
+          : "translateX(0) scale(1)",
+        transformOrigin: "right center",
+        transition: exiting
+          ? "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease"
+          : undefined,
       }}
     >
       <div
@@ -444,16 +642,18 @@ export function EditorFloatingPanelGroup({
               <button
                 key={tab.id}
                 type="button"
+                title={tab.label}
+                aria-label={tab.label}
+                aria-pressed={tab.id === activeId}
                 onClick={() => onActiveIdChange(tab.id)}
                 className={cn(
-                  "inline-flex h-7 min-w-0 max-w-[50%] items-center gap-1 truncate rounded-md px-2 text-xs font-semibold outline-none transition-colors",
+                  "inline-flex size-7 shrink-0 items-center justify-center rounded-md outline-none transition-colors",
                   tab.id === activeId
                     ? "bg-accent text-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 {tab.icon}
-                <span className="truncate">{tab.label}</span>
               </button>
             ))}
           </div>
@@ -506,7 +706,7 @@ export function EditorFloatingPanelGroup({
             size="icon"
             className="size-7 rounded-lg"
             aria-label="Close panel"
-            onClick={onCloseActive}
+            onClick={requestClose}
           >
             <X className="size-4" strokeWidth={1.75} />
           </Button>
@@ -514,7 +714,61 @@ export function EditorFloatingPanelGroup({
       </div>
 
       {!minimized && (
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {children}
+        </div>
+      )}
+
+      {!minimized && (
+        <>
+          <div
+            aria-hidden
+            {...edgeProps("n")}
+            className="absolute inset-x-3 top-0 z-20 h-1.5 cursor-ns-resize"
+          />
+          <div
+            aria-hidden
+            {...edgeProps("s")}
+            className="absolute inset-x-3 bottom-0 z-20 h-1.5 cursor-ns-resize"
+          />
+          <div
+            aria-hidden
+            {...edgeProps("e")}
+            className="absolute inset-y-3 right-0 z-20 w-1.5 cursor-ew-resize"
+          />
+          <div
+            aria-hidden
+            {...edgeProps("w")}
+            className="absolute inset-y-3 left-0 z-20 w-1.5 cursor-ew-resize"
+          />
+          <div
+            aria-hidden
+            {...edgeProps("nw")}
+            className="absolute left-0 top-0 z-30 size-3 cursor-nwse-resize"
+          />
+          <div
+            aria-hidden
+            {...edgeProps("ne")}
+            className="absolute right-0 top-0 z-30 size-3 cursor-nesw-resize"
+          />
+          <div
+            aria-hidden
+            {...edgeProps("sw")}
+            className="absolute bottom-0 left-0 z-30 size-3 cursor-nesw-resize"
+          />
+          <div
+            aria-hidden
+            {...edgeProps("se")}
+            className="absolute bottom-0 right-0 z-30 flex size-3.5 cursor-nwse-resize items-end justify-end p-0.5"
+          >
+            <span
+              className={cn(
+                "h-2 w-2 rounded-sm border-b-2 border-r-2 border-muted-foreground/40 transition-colors",
+                resizeEdge === "se" && "border-foreground/70"
+              )}
+            />
+          </div>
+        </>
       )}
     </div>,
     document.body
