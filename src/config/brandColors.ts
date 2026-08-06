@@ -56,12 +56,19 @@ export const TOKEN_EXTRAS = {
   neutral300: "#C9C4B8",
   green50: "#ECFAF9",
   green300: "#7CD9C1",
+  green500: "#03AC7F",
   green600: "#008F71",
+  green700: "#05715F",
   yellow100: "#E7F867",
+  yellow400: "#ABB927",
+  yellow700: "#5F6701",
   maroon50: "#FEF4F6",
   berry50: "#FEF3FD",
   cherry50: "#FFF4F4",
+  cherry700: "#B02101",
   sky50: "#F1F8FF",
+  sky100: "#DEEDFE",
+  sky700: "#396391",
 } as const;
 
 /** @deprecated Prefer `BRAND_COLORS.blue` — Primary Blue from color.json */

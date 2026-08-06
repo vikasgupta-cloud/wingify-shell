@@ -101,7 +101,7 @@ export default function TopBar() {
             <DropdownMenu.Trigger asChild>
               <Button
                 type="button"
-                className="h-auto gap-1.5 px-3 py-1.5 shadow-none [&>svg:last-child]:size-3.5"
+                className="h-8 gap-1.5 px-3.5 [&>svg:last-child]:size-3.5"
               >
                 <Plus className="h-4 w-4" />
                 Create

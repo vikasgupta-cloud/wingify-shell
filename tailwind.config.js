@@ -57,6 +57,7 @@ export default {
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          hover: "hsl(var(--secondary-hover))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -107,6 +108,25 @@ export default {
         // Result tokens — used only for uplift values and the confidence bar.
         "success-fg": "hsl(var(--success-fg))",
         "danger-fg": "hsl(var(--danger-fg))",
+        // Semantic families — tokens.json semantic.light (text / solid / subtleBg).
+        "success-solid": "hsl(var(--success-solid))",
+        "success-bg": "hsl(var(--success-bg))",
+        "danger-bg": "hsl(var(--danger-bg))",
+        "danger-on-subtle": "hsl(var(--danger-on-subtle))",
+        "warning-fg": "hsl(var(--warning-fg))",
+        "warning-solid": "hsl(var(--warning-solid))",
+        "warning-bg": "hsl(var(--warning-bg))",
+        "info-fg": "hsl(var(--info-fg))",
+        "info-bg": "hsl(var(--info-bg))",
+        "highlight-fg": "hsl(var(--highlight-fg))",
+        "highlight-bg": "hsl(var(--highlight-bg))",
+        // Selection + links — tokens.json primary.subtleBg / primary.default.
+        "selected-bg": "hsl(var(--selected-bg))",
+        "selected-fg": "hsl(var(--selected-fg))",
+        link: {
+          DEFAULT: "hsl(var(--link))",
+          hover: "hsl(var(--link-hover))",
+        },
         // Report tokens — used only by the campaign Reports page.
         report: {
           "green-deep": "hsl(var(--report-green-deep))",

@@ -121,7 +121,14 @@
   --scale-maroon-50: 348 83.3% 97.6%;   /* maroon.50 */
   --scale-berry-50: 305 84.6% 97.5%;    /* berry.50 */
   --scale-cherry-50: 0 100% 97.8%;      /* cherry.50 */
+  --scale-cherry-700: 11 98.9% 34.7%;   /* cherry.700 — error.onSubtle */
   --scale-sky-50: 210 100% 97.3%;       /* sky.50 */
+  --scale-sky-100: 212 94.1% 93.3%;     /* sky.100 — info.subtleBg */
+  --scale-sky-700: 211 43.6% 39.6%;     /* sky.700 — info.text */
+  --scale-yellow-400: 66 65.2% 43.9%;   /* yellow.400 — warning.solid */
+  --scale-yellow-700: 65 98.1% 20.4%;   /* yellow.700 — warning.text */
+  --scale-green-500: 164 96.6% 34.3%;   /* green.500 — success.solid */
+  --scale-green-700: 170 91.5% 23.1%;   /* green.700 — success.text */
 
   /* ── App semantic ─────────────────────────────────────────────────── */
   /* White chrome; warm grey canvas for depth */
@@ -142,6 +149,7 @@
   /* Soft fills — never neon */
   --secondary: var(--brand-grey);
   --secondary-foreground: var(--brand-midnight);
+  --secondary-hover: var(--scale-neutral-100);
 
   --muted: var(--brand-grey);
   --muted-foreground: var(--brand-twilight);
@@ -149,16 +157,26 @@
   --surface: var(--brand-grey);
   --surface-border: var(--brand-feather);
 
-  /* Accent = quiet hover/selection wash (not Primary Yellow) */
-  --accent: var(--brand-grey);
+  /* Accent = selection wash, one step firmer than the muted hover so
+     "selected" reads distinctly from "hovered" (neutral.100). */
+  --accent: var(--scale-neutral-100);
   --accent-foreground: var(--brand-midnight);
+
+  /* Selected rows / active tabs — tokens.json primary.subtleBg (ocean.100) */
+  --selected-bg: var(--brand-ocean-tint);
+  --selected-fg: var(--scale-ocean-800);
+
+  /* Links — tokens.json primary.default / hover (ocean.600 / 700) */
+  --link: var(--brand-ocean-bright);
+  --link-hover: var(--scale-ocean-700);
 
   /* brand.deepSurface = Primary Maroon */
   --brand-deep: var(--brand-maroon);
 
   --border: var(--brand-feather);
   --input: var(--brand-feather);
-  --ring: var(--brand-midnight);
+  /* Keyboard focus in Ocean Bright — tokens.json primary.default */
+  --ring: var(--brand-ocean-bright);
   --radius: 0.625rem;
 
   --destructive: var(--brand-cherry-rich);
@@ -193,8 +211,20 @@
   --decision-winner-fg: var(--brand-green-rich);
   --decision-baseline-fg: var(--brand-cherry-rich);
 
-  --success-fg: var(--brand-green-rich);
+  /* Semantic families — tokens.json semantic.light (text / solid / subtleBg) */
+  --success-fg: var(--scale-green-700);
+  --success-solid: var(--scale-green-500);
+  --success-bg: var(--brand-green-tint);
   --danger-fg: var(--brand-cherry-rich);
+  --danger-bg: var(--brand-cherry-tint);
+  --danger-on-subtle: var(--scale-cherry-700);
+  --warning-fg: var(--scale-yellow-700);
+  --warning-solid: var(--scale-yellow-400);
+  --warning-bg: var(--scale-yellow-100);
+  --info-fg: var(--scale-sky-700);
+  --info-bg: var(--scale-sky-100);
+  --highlight-fg: var(--brand-berry-rich);
+  --highlight-bg: var(--brand-berry-tint);
 
   /* Report — color.json families; mid/soft from tokens.json */
   --report-green-deep: var(--brand-green-rich);
@@ -260,9 +290,10 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Text selection in Primary Yellow — tokens.json brand.accent. */
 ::selection {
-  background: hsl(var(--brand-midnight));
-  color: hsl(var(--brand-white));
+  background: hsl(var(--brand-yellow));
+  color: hsl(var(--brand-midnight));
 }
 
 /* Brand experiment: keep editor chrome in color (icons stay as-authored). */
