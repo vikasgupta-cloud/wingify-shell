@@ -1,4 +1,5 @@
-/* Brand experiment fonts — Ergon (titles) + Lyon (body). Trial cuts only. */
+/* Brand experiment fonts — Ergon (titles) + Lyon Display.
+   Body / UI uses Google DM Sans (loaded from fonts.googleapis.com). */
 
 /* ── Ergon — titles / headings ───────────────────────────────────────── */
 @font-face {
@@ -81,78 +82,6 @@
 @font-face {
   font-family: "Ergon";
   src: url("./ergon/Ergon-BlackItalic-Trial.otf") format("opentype");
-  font-weight: 900;
-  font-style: italic;
-  font-display: swap;
-}
-
-/* ── Lyon Text — body / UI copy ─────────────────────────────────────── */
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-Regular-Trial.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-RegularItalic-Trial.otf") format("opentype");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-RegularNo2-Trial.otf") format("opentype");
-  font-weight: 450;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-RegularNo2Italic-Trial.otf") format("opentype");
-  font-weight: 450;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-Semibold-Trial.otf") format("opentype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-SemiboldItalic-Trial.otf") format("opentype");
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-Bold-Trial.otf") format("opentype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-BoldItalic-Trial.otf") format("opentype");
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-Black-Trial.otf") format("opentype");
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Lyon Text";
-  src: url("./lyon-text/LyonText-BlackItalic-Trial.otf") format("opentype");
   font-weight: 900;
   font-style: italic;
   font-display: swap;

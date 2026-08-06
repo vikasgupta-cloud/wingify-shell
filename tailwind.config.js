@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Body / UI — Lyon Text
-        sans: ['"Lyon Text"', "Georgia", "Times New Roman", "serif"],
+        // Body / UI — Google DM Sans
+        sans: ['"DM Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
         // Titles — Ergon
         heading: ['"Ergon"', "ui-sans-serif", "system-ui", "sans-serif"],
         // Large display / hero — Lyon Display
