@@ -67,18 +67,38 @@ function MetricRow({
 }
 
 /** Metrics content in the bottom sheet. */
-export function EditorMetricsPanel({ onClose }: { onClose?: () => void }) {
+/** Metrics content in the bottom / side sheet. */
+export function EditorMetricsPanel({
+  onClose,
+  compact = false,
+}: {
+  onClose?: () => void;
+  compact?: boolean;
+}) {
   const [tab, setTab] = useState<MetricsTab>("added");
+  const gridClass = compact
+    ? "grid grid-cols-1 gap-2"
+    : "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3";
 
   return (
     <aside className="flex h-full w-full flex-col bg-background">
-      <div className="flex h-10 shrink-0 items-center gap-3 border-b border-border px-4">
-        <p className="text-sm font-semibold text-foreground">Metrics</p>
-        <nav className="flex min-w-0 flex-1 items-center gap-1">
+      <div
+        className={cn(
+          "flex h-10 shrink-0 items-center border-b border-border",
+          compact ? "gap-2 px-3" : "gap-3 px-4"
+        )}
+      >
+        <p className="shrink-0 text-sm font-semibold text-foreground">Metrics</p>
+        <nav
+          className={cn(
+            "flex min-w-0 flex-1 items-center overflow-x-auto",
+            compact ? "gap-0.5" : "gap-1"
+          )}
+        >
           {(
             [
-              ["added", "Added metrics"],
-              ["suggested", "Suggested metrics"],
+              ["added", compact ? "Added" : "Added metrics"],
+              ["suggested", compact ? "Suggested" : "Suggested metrics"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -86,7 +106,8 @@ export function EditorMetricsPanel({ onClose }: { onClose?: () => void }) {
               type="button"
               onClick={() => setTab(id)}
               className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-semibold outline-none transition-colors",
+                "shrink-0 rounded-md py-1 font-semibold outline-none transition-colors",
+                compact ? "px-2 text-[11px]" : "px-2.5 text-xs",
                 tab === id
                   ? "bg-accent text-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -108,16 +129,21 @@ export function EditorMetricsPanel({ onClose }: { onClose?: () => void }) {
         </Button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto",
+          compact ? "p-3" : "p-4"
+        )}
+      >
         {tab === "added" ? (
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <div className={cn(compact ? "space-y-4" : "space-y-5")}>
+            <div className={gridClass}>
               {ADDED.map((m) => (
                 <MetricRow key={m.id} {...m} />
               ))}
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
                   MORE METRICS
                 </p>
@@ -131,7 +157,7 @@ export function EditorMetricsPanel({ onClose }: { onClose?: () => void }) {
                   Add
                 </Button>
               </div>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+              <div className={gridClass}>
                 {SECONDARY.map((m) => (
                   <MetricRow key={m.id} {...m} />
                 ))}
@@ -139,7 +165,7 @@ export function EditorMetricsPanel({ onClose }: { onClose?: () => void }) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <div className={gridClass}>
             {SUGGESTED.map((m) => (
               <MetricRow key={m.id} {...m} />
             ))}

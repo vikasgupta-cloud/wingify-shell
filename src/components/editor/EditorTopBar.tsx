@@ -34,6 +34,8 @@ import {
   isViewingOlderVersion,
   useEditorSavesStore,
 } from "@/store/editorSaves";
+import { EditorNavigateBar } from "./EditorNavigateBar";
+import type { EditorMode } from "./EditorCanvas";
 
 const DEVICES: { id: EditorDevice; icon: typeof Monitor; label: string }[] = [
   { id: "desktop", icon: Monitor, label: "Desktop" },
@@ -68,6 +70,16 @@ export function EditorTopBar({
   onReloadOnDeviceSwitchChange,
   applyChangesToAllDevices = true,
   onApplyChangesToAllDevicesChange,
+  mode = "design",
+  navigateUrl,
+  canGoBack = false,
+  canGoForward = false,
+  onNavigateUrlChange,
+  onNavigateGo,
+  onNavigateBack,
+  onNavigateForward,
+  onNavigateRefresh,
+  onSwitchToDesign,
 }: {
   campaignName?: string;
   status?: CampaignStatus;
@@ -84,12 +96,24 @@ export function EditorTopBar({
   onReloadOnDeviceSwitchChange?: (next: boolean) => void;
   applyChangesToAllDevices?: boolean;
   onApplyChangesToAllDevicesChange?: (next: boolean) => void;
+  mode?: EditorMode;
+  navigateUrl?: string;
+  canGoBack?: boolean;
+  canGoForward?: boolean;
+  onNavigateUrlChange?: (url: string) => void;
+  onNavigateGo?: (url: string) => void;
+  onNavigateBack?: () => void;
+  onNavigateForward?: () => void;
+  onNavigateRefresh?: () => void;
+  onSwitchToDesign?: () => void;
 }) {
   const versions = useEditorSavesStore((s) => s.versions);
   const activeVersionId = useEditorSavesStore((s) => s.activeVersionId);
   const save = useEditorSavesStore((s) => s.save);
   const viewingOlder = isViewingOlderVersion(versions, activeVersionId);
   const navigate = useNavigate();
+  const isNavigateMode = mode === "navigate";
+  const showDeviceChrome = showPreviewChrome && !isNavigateMode;
 
   const [composeOpen, setComposeOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -115,8 +139,8 @@ export function EditorTopBar({
   };
 
   return (
-    <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-border bg-background px-2">
-      <div className="flex h-7 items-center gap-1.5 pl-0.5">
+    <header className="relative flex h-11 shrink-0 items-center gap-2 border-b border-border bg-background px-2">
+      <div className="flex h-7 shrink-0 items-center gap-1.5 pl-0.5">
         <Button
           variant="ghost"
           size="icon"
@@ -128,7 +152,7 @@ export function EditorTopBar({
             <ArrowLeft className="size-4" strokeWidth={1.75} />
           </Link>
         </Button>
-        <p className="max-w-[220px] truncate text-[13px] font-medium leading-none text-foreground">
+        <p className="max-w-[160px] truncate text-[13px] font-medium leading-none text-foreground xl:max-w-[220px]">
           {campaignName}
         </p>
         {status ? (
@@ -142,8 +166,27 @@ export function EditorTopBar({
         )}
       </div>
 
-      <div className="flex h-7 items-center gap-2">
-        {showPreviewChrome && (
+      {isNavigateMode && navigateUrl != null ? (
+        <>
+          <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
+          <EditorNavigateBar
+            embedded
+            url={navigateUrl}
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            onUrlChange={onNavigateUrlChange}
+            onGo={onNavigateGo}
+            onBack={onNavigateBack}
+            onForward={onNavigateForward}
+            onRefresh={onNavigateRefresh}
+            onSwitchToDesign={onSwitchToDesign}
+          />
+          <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
+        </>
+      ) : null}
+
+      <div className="ml-auto flex h-7 shrink-0 items-center gap-2">
+        {showDeviceChrome && (
           <>
             <button
               type="button"

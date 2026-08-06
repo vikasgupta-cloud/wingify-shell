@@ -159,7 +159,6 @@ export function EditorLayersPanel({
   const [openIds, setOpenIds] = useState(
     () => new Set(["body", "main", "header", "section"])
   );
-  const [searchOpen, setSearchOpen] = useState(false);
 
   const toggle = (id: string) => {
     setOpenIds((prev) => {
@@ -185,31 +184,20 @@ export function EditorLayersPanel({
       tabPane={tabPane}
       groupDrag={groupDrag}
     >
-      <div className="flex h-9 shrink-0 items-center justify-end border-b border-border px-3">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7"
+      <div className="relative shrink-0 border-b border-border px-3 py-2">
+        <Search
+          className="pointer-events-none absolute left-5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search layers…"
           aria-label="Search layers"
-          aria-pressed={searchOpen}
-          onClick={() => setSearchOpen((v) => !v)}
-        >
-          <Search className="size-3.5" strokeWidth={1.75} />
-        </Button>
+          className="h-7 pl-8 text-xs shadow-none"
+        />
       </div>
-
-      {searchOpen && (
-        <div className="border-b border-border px-3 py-2">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search layers…"
-            className="h-7 text-xs shadow-none"
-            autoFocus
-          />
-        </div>
-      )}
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
         {visible.length === 0 ? (

@@ -16,7 +16,6 @@ import {
   EDITOR_PREVIEW_SRC,
   type EditorMode,
 } from "@/components/editor/EditorCanvas";
-import { EditorNavigateBar } from "@/components/editor/EditorNavigateBar";
 import { EditorCodeWorkspace } from "@/components/editor/EditorCodeWorkspace";
 import { EditorCopilotPanel } from "@/components/editor/EditorCopilotPanel";
 import { useEditorAi } from "@/components/editor/useEditorAi";
@@ -166,9 +165,16 @@ export default function EditorPage() {
   const overlayWidths = useEditorPanelsStore((s) => s.overlayWidths);
   const setOverlayWidth = useEditorPanelsStore((s) => s.setOverlayWidth);
   const bottomSheetHeight = useEditorPanelsStore((s) => s.bottomSheetHeight);
+  const sideSheetWidth = useEditorPanelsStore((s) => s.sideSheetWidth);
+  const dockPlacement = useEditorPanelsStore((s) => s.dockPlacement);
+  const dockEdge =
+    dockPlacement.mode === "edge" && dockPlacement.edge === "left"
+      ? "left"
+      : "bottom";
   const setBottomSheetHeight = useEditorPanelsStore(
     (s) => s.setBottomSheetHeight
   );
+  const setSideSheetWidth = useEditorPanelsStore((s) => s.setSideSheetWidth);
   const hydrateFromScenario = useEditorPanelsStore((s) => s.hydrateFromScenario);
   const floatPos = useEditorPanelsStore((s) => s.floatPos);
   const setFloatPos = useEditorPanelsStore((s) => s.setFloatPos);
@@ -270,9 +276,15 @@ export default function EditorPage() {
     setEditorMode(mode);
     if (mode === "code") {
       setCodeScope(activeVariationId);
-      setLeftTool(null);
+      setLeftTool((current) =>
+        current === "add" || current === "metrics" ? null : current
+      );
+    } else if (mode === "navigate") {
+      setLeftTool((current) =>
+        current === "add" || current === "metrics" ? null : current
+      );
     }
-  }, [activeVariationId]);
+  }, [activeVariationId, setLeftTool]);
 
   const detachedIds = PANEL_ORDER.filter(
     (id) => panels[id].open && isDetached(panels[id].chrome.mode)
@@ -592,6 +604,7 @@ export default function EditorPage() {
           entityId ? `/web-experiment/c/${entityId}` : "/web-experiment"
         }
         showPreviewChrome={editorMode !== "code"}
+        mode={editorMode}
         device={device}
         onDeviceChange={(d) => {
           setDevice(d);
@@ -607,25 +620,21 @@ export default function EditorPage() {
         onReloadOnDeviceSwitchChange={setReloadOnDeviceSwitch}
         applyChangesToAllDevices={applyChangesToAllDevices}
         onApplyChangesToAllDevicesChange={setApplyChangesToAllDevices}
+        navigateUrl={previewUrlLabel}
+        canGoBack={navIndex > 0}
+        canGoForward={navIndex < navHistory.length - 1}
+        onNavigateUrlChange={setPreviewUrlLabel}
+        onNavigateGo={(url) =>
+          navigatePreview(resolvePreviewSrc(url, previewSrc))
+        }
+        onNavigateBack={goBack}
+        onNavigateForward={goForward}
+        onNavigateRefresh={refreshPreview}
+        onSwitchToDesign={() => setEditorMode("design")}
       />
       <EditorVersionBanner />
       <div className="relative flex min-h-0 flex-1">
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-          {editorMode === "navigate" && (
-            <EditorNavigateBar
-              url={previewUrlLabel}
-              canGoBack={navIndex > 0}
-              canGoForward={navIndex < navHistory.length - 1}
-              onUrlChange={setPreviewUrlLabel}
-              onGo={(url) =>
-                navigatePreview(resolvePreviewSrc(url, previewSrc))
-              }
-              onBack={goBack}
-              onForward={goForward}
-              onRefresh={refreshPreview}
-              onSwitchToDesign={() => setEditorMode("design")}
-            />
-          )}
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <div className="absolute inset-0 flex flex-col overflow-hidden">
               {editorMode === "code" ? (
@@ -725,9 +734,15 @@ export default function EditorPage() {
         onClose={closeLeftTool}
         defaultHeight={bottomSheetHeight}
         onHeightChange={setBottomSheetHeight}
+        defaultWidth={sideSheetWidth}
+        onWidthChange={setSideSheetWidth}
+        dockEdge={dockEdge}
       >
         {leftTool === "metrics" ? (
-          <EditorMetricsPanel onClose={closeLeftTool} />
+          <EditorMetricsPanel
+            onClose={closeLeftTool}
+            compact={dockEdge === "left"}
+          />
         ) : leftTool === "variations" ? (
           <EditorVariationsPanel
             variations={variations}
@@ -735,13 +750,18 @@ export default function EditorPage() {
             onSelect={(id) => {
               setActiveVariationId(id);
               setCodeScope(id);
+              closeLeftTool();
             }}
             onVariationsChange={setVariations}
             versionFoldKey={versionFoldKey}
             onClose={closeLeftTool}
+            compact={dockEdge === "left"}
           />
         ) : (
-          <EditorAddPanel onClose={closeLeftTool} />
+          <EditorAddPanel
+            onClose={closeLeftTool}
+            compact={dockEdge === "left"}
+          />
         )}
       </EditorBottomSheet>
       <EditorBottomDock

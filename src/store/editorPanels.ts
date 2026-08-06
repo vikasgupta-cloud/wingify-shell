@@ -17,6 +17,20 @@ import type {
   EditorPreviewWidthMode,
 } from "@/config/editorScenarios";
 
+export type EditorDockEdge = "bottom" | "left";
+export type EditorDockMode = "edge" | "free";
+
+export type EditorDockPlacement = {
+  mode: EditorDockMode;
+  edge: EditorDockEdge;
+  /** Top-left when `mode === "free"`. */
+  pos: { x: number; y: number };
+};
+
+export function defaultDockPlacement(): EditorDockPlacement {
+  return { mode: "edge", edge: "bottom", pos: { x: 24, y: 24 } };
+}
+
 export type EditorPanelState = {
   open: boolean;
   chrome: EditorPanelChrome;
@@ -25,6 +39,8 @@ export type EditorPanelState = {
 export type EditorPanelsMap = Record<EditorSidePanelId, EditorPanelState>;
 
 const LEFT_TOOLS: EditorLeftTool[] = ["add", "metrics", "variations"];
+const DOCK_EDGES: EditorDockEdge[] = ["bottom", "left"];
+const DOCK_MODES: EditorDockMode[] = ["edge", "free"];
 const CHROME_MODES: EditorPanelChrome["mode"][] = [
   "docked",
   "floating",
@@ -106,6 +122,26 @@ function parseOverlayWidths(raw: unknown): Partial<Record<EditorLeftTool, number
   return next;
 }
 
+function parseDockPlacement(raw: unknown): EditorDockPlacement {
+  const fallback = defaultDockPlacement();
+  if (!raw || typeof raw !== "object") return fallback;
+  const rec = raw as Partial<EditorDockPlacement> & {
+    dockEdge?: unknown;
+  };
+  // Migrate older persisted `dockEdge` string-only shape.
+  if (typeof rec.dockEdge === "string" && DOCK_EDGES.includes(rec.dockEdge as EditorDockEdge)) {
+    return { ...fallback, edge: rec.dockEdge as EditorDockEdge };
+  }
+  const mode = DOCK_MODES.includes(rec.mode as EditorDockMode)
+    ? (rec.mode as EditorDockMode)
+    : fallback.mode;
+  const edge = DOCK_EDGES.includes(rec.edge as EditorDockEdge)
+    ? (rec.edge as EditorDockEdge)
+    : fallback.edge;
+  const pos = parsePos(rec.pos);
+  return { mode, edge, pos };
+}
+
 type EditorPanelsStore = {
   panels: EditorPanelsMap;
   leftTool: EditorLeftTool | null;
@@ -117,6 +153,8 @@ type EditorPanelsStore = {
   editionTab: EditionTabId;
   overlayWidths: Partial<Record<EditorLeftTool, number>>;
   bottomSheetHeight: number;
+  sideSheetWidth: number;
+  dockPlacement: EditorDockPlacement;
   setPanels: (
     update: EditorPanelsMap | ((prev: EditorPanelsMap) => EditorPanelsMap)
   ) => void;
@@ -134,6 +172,8 @@ type EditorPanelsStore = {
   setEditionTab: (tab: EditionTabId) => void;
   setOverlayWidth: (tool: EditorLeftTool, width: number) => void;
   setBottomSheetHeight: (height: number) => void;
+  setSideSheetWidth: (width: number) => void;
+  setDockPlacement: (placement: EditorDockPlacement) => void;
   hydrateFromScenario: (input: {
     leftTool: EditorLeftTool | null;
     editionTab: EditionTabId;
@@ -154,6 +194,8 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
       editionTab: "styles",
       overlayWidths: {},
       bottomSheetHeight: 420,
+      sideSheetWidth: 400,
+      dockPlacement: defaultDockPlacement(),
       setPanels: (update) =>
         set((state) => ({
           panels: typeof update === "function" ? update(state.panels) : update,
@@ -174,6 +216,8 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
           overlayWidths: { ...state.overlayWidths, [tool]: width },
         })),
       setBottomSheetHeight: (bottomSheetHeight) => set({ bottomSheetHeight }),
+      setSideSheetWidth: (sideSheetWidth) => set({ sideSheetWidth }),
+      setDockPlacement: (dockPlacement) => set({ dockPlacement }),
       hydrateFromScenario: ({ leftTool, editionTab, rightOpen }) => {
         const panels = defaultEditorPanels();
         for (const id of EDITOR_SIDE_PANEL_ORDER) {
@@ -205,7 +249,7 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
       },
     }),
     {
-      name: "wingify-editor-panels-v5",
+      name: "wingify-editor-panels-v7",
       partialize: (state) => ({
         panels: state.panels,
         leftTool: state.leftTool,
@@ -217,9 +261,13 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
         editionTab: state.editionTab,
         overlayWidths: state.overlayWidths,
         bottomSheetHeight: state.bottomSheetHeight,
+        sideSheetWidth: state.sideSheetWidth,
+        dockPlacement: state.dockPlacement,
       }),
       merge: (persisted, current) => {
-        const saved = (persisted ?? {}) as Partial<EditorPanelsStore>;
+        const saved = (persisted ?? {}) as Partial<EditorPanelsStore> & {
+          dockEdge?: unknown;
+        };
         const leftTool =
           saved.leftTool === null ||
           (typeof saved.leftTool === "string" &&
@@ -231,6 +279,11 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
           Number.isFinite(saved.bottomSheetHeight)
             ? Math.min(640, Math.max(280, Math.round(saved.bottomSheetHeight)))
             : current.bottomSheetHeight;
+        const sideSheetWidth =
+          typeof saved.sideSheetWidth === "number" &&
+          Number.isFinite(saved.sideSheetWidth)
+            ? Math.min(480, Math.max(280, Math.round(saved.sideSheetWidth)))
+            : current.sideSheetWidth;
         const rawSize =
           saved.floatSize && typeof saved.floatSize === "object"
             ? (saved.floatSize as { width?: unknown; height?: unknown })
@@ -246,6 +299,15 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
               ? rawSize.height
               : current.floatSize.height,
         });
+        const dockPlacement = saved.dockPlacement
+          ? parseDockPlacement(saved.dockPlacement)
+          : typeof saved.dockEdge === "string" &&
+              DOCK_EDGES.includes(saved.dockEdge as EditorDockEdge)
+            ? {
+                ...defaultDockPlacement(),
+                edge: saved.dockEdge as EditorDockEdge,
+              }
+            : current.dockPlacement;
         return {
           ...current,
           panels: parsePanels(saved.panels),
@@ -266,6 +328,8 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
             : current.editionTab,
           overlayWidths: parseOverlayWidths(saved.overlayWidths),
           bottomSheetHeight,
+          sideSheetWidth,
+          dockPlacement,
         };
       },
     }

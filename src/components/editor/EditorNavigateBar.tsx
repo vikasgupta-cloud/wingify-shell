@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Browser chrome for Navigate mode — browse the preview without selecting.
+ * `embedded` renders inline in the top bar (no own row chrome).
  */
 export function EditorNavigateBar({
   url,
@@ -22,6 +23,8 @@ export function EditorNavigateBar({
   onForward,
   onRefresh,
   onSwitchToDesign,
+  embedded = false,
+  className,
 }: {
   url: string;
   canGoBack?: boolean;
@@ -32,6 +35,8 @@ export function EditorNavigateBar({
   onForward?: () => void;
   onRefresh?: () => void;
   onSwitchToDesign?: () => void;
+  embedded?: boolean;
+  className?: string;
 }) {
   const [draft, setDraft] = useState(url);
 
@@ -46,7 +51,14 @@ export function EditorNavigateBar({
   };
 
   return (
-    <div className="flex h-10 shrink-0 items-center gap-3 border-b border-border bg-background px-3">
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-2",
+        embedded ? "h-7 flex-1" : "h-10 shrink-0 gap-3 border-b border-border bg-background px-3",
+        className
+      )}
+      data-navigate-chrome
+    >
       <div className="flex shrink-0 items-center gap-0.5">
         <Button
           type="button"
@@ -83,7 +95,7 @@ export function EditorNavigateBar({
       </div>
 
       <form
-        className="flex min-w-0 flex-1 items-center gap-2"
+        className="flex min-w-0 flex-1 items-center gap-1.5"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -110,11 +122,11 @@ export function EditorNavigateBar({
         type="button"
         onClick={onSwitchToDesign}
         className={cn(
-          "hidden shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
+          "hidden shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground lg:inline-flex"
         )}
       >
         <Info className="size-3.5 shrink-0" strokeWidth={1.75} />
-        <span className="leading-snug">
+        <span className="max-w-[200px] truncate leading-snug xl:max-w-none">
           Go to Design mode to make a change
         </span>
       </button>

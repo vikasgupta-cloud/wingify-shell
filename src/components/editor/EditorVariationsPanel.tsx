@@ -17,6 +17,7 @@ export function EditorVariationsPanel({
   onVariationsChange,
   versionFoldKey = "initial",
   onClose,
+  compact = false,
 }: {
   variations: EditorVariationTab[];
   activeVariationId: VariationId;
@@ -24,6 +25,7 @@ export function EditorVariationsPanel({
   onVariationsChange: (next: EditorVariationTab[]) => void;
   versionFoldKey?: string;
   onClose?: () => void;
+  compact?: boolean;
 }) {
   const addVariation = () => {
     const next = createNextVariation(variations);
@@ -54,7 +56,12 @@ export function EditorVariationsPanel({
 
   return (
     <aside className="flex h-full w-full flex-col bg-background">
-      <div className="flex h-10 shrink-0 items-center justify-between gap-3 border-b border-border px-4">
+      <div
+        className={cn(
+          "flex h-10 shrink-0 items-center justify-between border-b border-border",
+          compact ? "gap-2 px-3" : "gap-3 px-4"
+        )}
+      >
         <div className="flex min-w-0 items-center gap-2">
           <p className="text-sm font-semibold text-foreground">Variations</p>
           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
@@ -70,7 +77,7 @@ export function EditorVariationsPanel({
             onClick={addVariation}
           >
             <Plus className="size-3.5" strokeWidth={1.75} />
-            New variation
+            {compact ? "New" : "New variation"}
           </Button>
           <Button
             type="button"
@@ -85,8 +92,20 @@ export function EditorVariationsPanel({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto",
+          compact ? "p-3" : "p-4"
+        )}
+      >
+        <ul
+          className={cn(
+            "grid gap-2.5",
+            compact
+              ? "grid-cols-1 min-[360px]:grid-cols-2"
+              : "grid-cols-2 gap-3 sm:grid-cols-3"
+          )}
+        >
           {variations.map((v) => {
             const active = v.id === activeVariationId;
             const fold = resolveFirstFold(v.id, versionFoldKey);

@@ -14,6 +14,7 @@ import {
   FLOAT_EDITOR_SCENARIOS,
   type EditorScenarioId,
 } from "@/config/editorScenarios";
+import { useEditorPanelsStore } from "@/store/editorPanels";
 
 /**
  * Floating demo switcher — Multipage / MVT only.
@@ -25,12 +26,20 @@ export function EditorScenarioFloat({
   scenarioId?: EditorScenarioId;
   onScenarioChange: (id: EditorScenarioId) => void;
 }) {
+  const dockPlacement = useEditorPanelsStore((s) => s.dockPlacement);
+  const dockOnLeft =
+    dockPlacement.mode === "edge" && dockPlacement.edge === "left";
   const active =
     FLOAT_EDITOR_SCENARIOS.find((s) => s.id === scenarioId) ?? null;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-40">
-      <div className="pointer-events-auto absolute bottom-5 left-4">
+      <div
+        className={cn(
+          "pointer-events-auto absolute bottom-5",
+          dockOnLeft ? "left-[5.75rem]" : "left-4"
+        )}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

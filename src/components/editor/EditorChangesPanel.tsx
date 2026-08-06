@@ -82,39 +82,39 @@ export function EditorChangesPanel({
       tabPane={tabPane}
       groupDrag={groupDrag}
     >
-      <div className="flex h-9 shrink-0 items-center justify-end border-b border-border px-3">
+      <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border px-3">
+        <nav className="flex min-w-0 flex-1 items-center gap-1">
+          {(
+            [
+              ["changes", "Changes"],
+              ["variables", "Variables"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-semibold outline-none",
+                tab === id
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-7"
-          aria-label="Filter"
+          className="size-7 shrink-0"
+          aria-label="Filter changes"
+          title="Filter"
         >
           <Filter className="size-3.5" strokeWidth={1.75} />
         </Button>
-      </div>
-
-      <div className="flex gap-1 border-b border-border px-3 py-2">
-        {(
-          [
-            ["changes", "Changes"],
-            ["variables", "Variables"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={cn(
-              "rounded-md px-2.5 py-1 text-xs font-semibold outline-none",
-              tab === id
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            {label}
-          </button>
-        ))}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
