@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type WheelEvent as ReactWheelEvent } from "react";
 import { CopyPlus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditorIcon } from "./EditorIcon";
@@ -15,37 +16,128 @@ const MODES: { id: EditorMode; label: string; icon: string }[] = [
   { id: "code", label: "Code", icon: codeIcon },
 ];
 
+const SHOW_DELAY_MS = 900;
+const PREVIEW_IFRAME_SELECTOR = 'iframe[title="Website preview"]';
+
+function readPreviewScrollY(): number | null {
+  const iframe = document.querySelector<HTMLIFrameElement>(
+    PREVIEW_IFRAME_SELECTOR
+  );
+  const win = iframe?.contentWindow;
+  const doc = iframe?.contentDocument;
+  if (!win || !doc?.documentElement) return null;
+  return (
+    win.pageYOffset ||
+    win.scrollY ||
+    doc.documentElement.scrollTop ||
+    doc.body.scrollTop ||
+    0
+  );
+}
+
 /**
  * Floating bottom chrome — modes and primary tools.
+ * Hides while the preview is scrolling (either direction).
  */
 export function EditorBottomDock({
   mode,
   onModeChange,
   leftTool,
   onToggleLeftTool,
-  hidden = false,
 }: {
   mode: EditorMode;
   onModeChange: (mode: EditorMode) => void;
   leftTool: EditorLeftTool | null;
   onToggleLeftTool: (id: EditorLeftTool) => void;
-  /** Slide off-screen while the preview is being scrolled. */
-  hidden?: boolean;
 }) {
+  const [hidden, setHidden] = useState(false);
+  const idleTimerRef = useRef<number | null>(null);
+  const sheetOpen =
+    leftTool === "add" || leftTool === "metrics" || leftTool === "variations";
+  const sheetOpenRef = useRef(sheetOpen);
+  sheetOpenRef.current = sheetOpen;
+
+  useEffect(() => {
+    if (sheetOpen) {
+      setHidden(false);
+      if (idleTimerRef.current != null) {
+        window.clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+    }
+  }, [sheetOpen]);
+
+  // Poll the preview scroll position from the shell. This stays reliable across
+  // hide/show cycles (iframe wheel/scroll listeners were only firing once).
+  useEffect(() => {
+    let lastY: number | null = null;
+    let raf = 0;
+
+    const scheduleShow = () => {
+      if (idleTimerRef.current != null) {
+        window.clearTimeout(idleTimerRef.current);
+      }
+      idleTimerRef.current = window.setTimeout(() => {
+        setHidden(false);
+        idleTimerRef.current = null;
+      }, SHOW_DELAY_MS);
+    };
+
+    const onScrollActivity = () => {
+      if (sheetOpenRef.current) return;
+      setHidden(true);
+      scheduleShow();
+    };
+
+    const tick = () => {
+      const y = readPreviewScrollY();
+      if (y != null) {
+        if (lastY != null && y !== lastY) {
+          onScrollActivity();
+        }
+        lastY = y;
+      }
+      raf = window.requestAnimationFrame(tick);
+    };
+
+    raf = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      if (idleTimerRef.current != null) {
+        window.clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const forwardWheelToPreview = (e: ReactWheelEvent<HTMLDivElement>) => {
+    const iframe = document.querySelector<HTMLIFrameElement>(
+      PREVIEW_IFRAME_SELECTOR
+    );
+    const win = iframe?.contentWindow;
+    if (!win) return;
+    e.preventDefault();
+    win.scrollBy({
+      top: e.deltaY,
+      left: e.deltaX,
+      behavior: "instant" as ScrollBehavior,
+    });
+  };
+
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-x-0 bottom-5 z-50 flex justify-center px-4 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        hidden
-          ? "translate-y-[calc(100%+1.75rem)]"
-          : "translate-y-0"
+        "pointer-events-none absolute inset-x-0 bottom-5 z-50 flex justify-center px-4 will-change-transform transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        hidden ? "translate-y-[calc(100%+1.75rem)]" : "translate-y-0"
       )}
       aria-hidden={hidden || undefined}
     >
       <div
+        onWheel={forwardWheelToPreview}
         className={cn(
-          "pointer-events-auto inline-flex h-11 items-center gap-1 rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_hsl(var(--foreground)/0.28),0_0_0_1px_hsl(var(--foreground)/0.04)] transition-opacity duration-300",
-          hidden && "pointer-events-none opacity-0"
+          "pointer-events-auto inline-flex h-11 items-center gap-1 rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_hsl(var(--foreground)/0.28),0_0_0_1px_hsl(var(--foreground)/0.04)]",
+          hidden && "pointer-events-none"
         )}
       >
         {MODES.map((m) => {
@@ -55,6 +147,7 @@ export function EditorBottomDock({
               key={m.id}
               type="button"
               onClick={() => onModeChange(m.id)}
+              tabIndex={hidden ? -1 : undefined}
               className={cn(
                 "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold outline-none transition-colors",
                 active
@@ -73,6 +166,7 @@ export function EditorBottomDock({
         <button
           type="button"
           onClick={() => onToggleLeftTool("add")}
+          tabIndex={hidden ? -1 : undefined}
           className={cn(
             "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold outline-none transition-colors",
             leftTool === "add"
@@ -86,6 +180,7 @@ export function EditorBottomDock({
         <button
           type="button"
           onClick={() => onToggleLeftTool("metrics")}
+          tabIndex={hidden ? -1 : undefined}
           className={cn(
             "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold outline-none transition-colors",
             leftTool === "metrics"
@@ -102,6 +197,7 @@ export function EditorBottomDock({
         <button
           type="button"
           onClick={() => onToggleLeftTool("variations")}
+          tabIndex={hidden ? -1 : undefined}
           className={cn(
             "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold outline-none transition-colors",
             leftTool === "variations"

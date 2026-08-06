@@ -240,7 +240,6 @@ export function EditorCanvas({
   onLocationChange,
   variationId = "control",
   versionFoldKey = "initial",
-  onPreviewScroll,
 }: {
   src?: string;
   device?: EditorDevice;
@@ -260,8 +259,6 @@ export function EditorCanvas({
   variationId?: string;
   /** Active save version fold key — drives first-fold history snapshot. */
   versionFoldKey?: string;
-  /** Fired when the preview document scrolls (same-origin iframe). */
-  onPreviewScroll?: (info: { deltaY: number; scrollY: number }) => void;
 }) {
   const preset = DEVICE_PRESETS[device];
   const framed = device !== "desktop";
@@ -348,8 +345,6 @@ export function EditorCanvas({
   onClearSelectionRef.current = onClearSelection;
   const onLocationChangeRef = useRef(onLocationChange);
   onLocationChangeRef.current = onLocationChange;
-  const onPreviewScrollRef = useRef(onPreviewScroll);
-  onPreviewScrollRef.current = onPreviewScroll;
 
   const reportLocation = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
@@ -432,22 +427,7 @@ export function EditorCanvas({
     };
 
     const onLeave = () => clearHover();
-    let lastScrollY =
-      win.scrollY ||
-      doc.documentElement.scrollTop ||
-      doc.body.scrollTop ||
-      0;
     const onScrollOrResize = () => {
-      const scrollY =
-        win.scrollY ||
-        doc.documentElement.scrollTop ||
-        doc.body.scrollTop ||
-        0;
-      const deltaY = scrollY - lastScrollY;
-      lastScrollY = scrollY;
-      if (deltaY !== 0) {
-        onPreviewScrollRef.current?.({ deltaY, scrollY });
-      }
       syncSelectedBox();
       if (hoverElRef.current?.isConnected) {
         setHoverBox(rectInFrame(hoverElRef.current));

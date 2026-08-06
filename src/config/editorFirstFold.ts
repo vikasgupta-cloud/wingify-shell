@@ -198,10 +198,4 @@ export function applyFirstFold(doc: Document, state: FirstFoldState) {
   if (hero) {
     hero.style.background = state.heroSurface;
   }
-
-  try {
-    doc.defaultView?.scrollTo(0, 0);
-  } catch {
-    /* ignore */
-  }
 }

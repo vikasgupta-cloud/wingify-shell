@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { History, Languages, Layers, ListTree, Pencil, Sparkles } from "lucide-react";
 import { EditorTopBar } from "@/components/editor/EditorTopBar";
@@ -147,6 +147,9 @@ export default function EditorPage() {
   const [showDimensionsBar, setShowDimensionsBar] = useState(
     DEFAULT_SCENARIO.showDimensionsBar
   );
+  const [reloadOnDeviceSwitch, setReloadOnDeviceSwitch] = useState(false);
+  const [applyChangesToAllDevices, setApplyChangesToAllDevices] =
+    useState(true);
   const [editorMode, setEditorMode] = useState<EditorMode>("design");
   const [previewSrc, setPreviewSrc] = useState(EDITOR_PREVIEW_SRC);
   const [previewUrlLabel, setPreviewUrlLabel] = useState(EDITOR_PREVIEW_SRC);
@@ -157,8 +160,6 @@ export default function EditorPage() {
   const [activeVariationId, setActiveVariationId] =
     useState<VariationId>("v1");
   const [codeScope, setCodeScope] = useState<CodeScopeId>("v1");
-  const [dockHidden, setDockHidden] = useState(false);
-  const dockIdleTimerRef = useRef<number | null>(null);
 
   const panels = useEditorPanelsStore((s) => s.panels);
   const setPanels = useEditorPanelsStore((s) => s.setPanels);
@@ -272,43 +273,6 @@ export default function EditorPage() {
       setLeftTool(null);
     }
   }, [activeVariationId]);
-
-  const handlePreviewScroll = useCallback(
-    ({ deltaY }: { deltaY: number; scrollY: number }) => {
-      // Keep the dock visible while a bottom sheet is open.
-      if (leftTool === "add" || leftTool === "metrics" || leftTool === "variations") {
-        setDockHidden(false);
-        if (dockIdleTimerRef.current != null) {
-          window.clearTimeout(dockIdleTimerRef.current);
-          dockIdleTimerRef.current = null;
-        }
-        return;
-      }
-      if (deltaY > 4) setDockHidden(true);
-      if (dockIdleTimerRef.current != null) {
-        window.clearTimeout(dockIdleTimerRef.current);
-      }
-      dockIdleTimerRef.current = window.setTimeout(() => {
-        setDockHidden(false);
-        dockIdleTimerRef.current = null;
-      }, 900);
-    },
-    [leftTool]
-  );
-
-  useEffect(() => {
-    return () => {
-      if (dockIdleTimerRef.current != null) {
-        window.clearTimeout(dockIdleTimerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (leftTool === "add" || leftTool === "metrics" || leftTool === "variations") {
-      setDockHidden(false);
-    }
-  }, [leftTool]);
 
   const detachedIds = PANEL_ORDER.filter(
     (id) => panels[id].open && isDetached(panels[id].chrome.mode)
@@ -631,10 +595,18 @@ export default function EditorPage() {
         device={device}
         onDeviceChange={(d) => {
           setDevice(d);
-          setShowDimensionsBar(d !== "desktop");
+          if (reloadOnDeviceSwitch) {
+            refreshPreview();
+          }
         }}
         previewWidthMode={previewWidthMode}
         onPreviewWidthModeChange={setPreviewWidthMode}
+        showViewportDimensions={showDimensionsBar}
+        onShowViewportDimensionsChange={setShowDimensionsBar}
+        reloadOnDeviceSwitch={reloadOnDeviceSwitch}
+        onReloadOnDeviceSwitchChange={setReloadOnDeviceSwitch}
+        applyChangesToAllDevices={applyChangesToAllDevices}
+        onApplyChangesToAllDevicesChange={setApplyChangesToAllDevices}
       />
       <EditorVersionBanner />
       <div className="relative flex min-h-0 flex-1">
@@ -685,7 +657,6 @@ export default function EditorPage() {
                   onLocationChange={handleLocationChange}
                   variationId={activeVariationId}
                   versionFoldKey={versionFoldKey}
-                  onPreviewScroll={handlePreviewScroll}
                 />
               )}
             </div>
@@ -778,7 +749,6 @@ export default function EditorPage() {
         onModeChange={handleModeChange}
         leftTool={leftTool}
         onToggleLeftTool={toggleLeftTool}
-        hidden={dockHidden}
       />
     </div>
   );

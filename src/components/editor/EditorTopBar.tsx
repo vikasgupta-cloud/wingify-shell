@@ -1,12 +1,15 @@
 import { useState } from "react";
 import {
   ArrowLeft,
+  Check,
   ChevronDown,
+  CircleHelp,
   Eye,
+  Info,
   Monitor,
-  MoreHorizontal,
   RectangleHorizontal,
   Save,
+  Settings,
   Smartphone,
   Tablet,
   UnfoldHorizontal,
@@ -15,6 +18,12 @@ import { Link, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { CampaignStatus } from "@/data/campaigns";
 import type {
@@ -53,6 +62,12 @@ export function EditorTopBar({
   onDeviceChange,
   previewWidthMode = "fit",
   onPreviewWidthModeChange,
+  showViewportDimensions = false,
+  onShowViewportDimensionsChange,
+  reloadOnDeviceSwitch = false,
+  onReloadOnDeviceSwitchChange,
+  applyChangesToAllDevices = true,
+  onApplyChangesToAllDevicesChange,
 }: {
   campaignName?: string;
   status?: CampaignStatus;
@@ -63,6 +78,12 @@ export function EditorTopBar({
   onDeviceChange?: (device: EditorDevice) => void;
   previewWidthMode?: EditorPreviewWidthMode;
   onPreviewWidthModeChange?: (mode: EditorPreviewWidthMode) => void;
+  showViewportDimensions?: boolean;
+  onShowViewportDimensionsChange?: (next: boolean) => void;
+  reloadOnDeviceSwitch?: boolean;
+  onReloadOnDeviceSwitchChange?: (next: boolean) => void;
+  applyChangesToAllDevices?: boolean;
+  onApplyChangesToAllDevicesChange?: (next: boolean) => void;
 }) {
   const versions = useEditorSavesStore((s) => s.versions);
   const activeVersionId = useEditorSavesStore((s) => s.activeVersionId);
@@ -72,6 +93,7 @@ export function EditorTopBar({
 
   const [composeOpen, setComposeOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [viewportOpen, setViewportOpen] = useState(false);
 
   const saveWithoutMessage = () => {
     save();
@@ -158,6 +180,105 @@ export function EditorTopBar({
               })}
             </div>
 
+            <Popover open={viewportOpen} onOpenChange={setViewportOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "size-7 rounded-md border border-border",
+                    viewportOpen && "bg-muted"
+                  )}
+                  aria-label="Viewport options"
+                  aria-expanded={viewportOpen}
+                >
+                  <Settings className="size-3.5" strokeWidth={1.75} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                sideOffset={8}
+                className="w-[340px] gap-0 overflow-hidden rounded-xl border border-border p-0 shadow-lg"
+              >
+                <div className="border-b border-border px-3.5 py-2.5">
+                  <p className="text-[13px] font-semibold text-foreground">
+                    Viewport options
+                  </p>
+                </div>
+
+                <div className="space-y-4 px-3.5 py-3.5">
+                  <label className="flex cursor-pointer items-start gap-2.5">
+                    <Switch
+                      checked={showViewportDimensions}
+                      onCheckedChange={onShowViewportDimensionsChange}
+                      className="mt-0.5"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1 text-[13px] font-medium text-foreground">
+                        Show viewport dimension controls
+                        <CircleHelp
+                          className="size-3.5 shrink-0 text-muted-foreground"
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                      </span>
+                    </span>
+                  </label>
+
+                  <div className="flex items-start gap-2.5">
+                    <Switch
+                      checked={reloadOnDeviceSwitch}
+                      onCheckedChange={onReloadOnDeviceSwitchChange}
+                      className="mt-0.5"
+                    />
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <p className="text-[13px] font-medium text-foreground">
+                        Reload page on device switch
+                      </p>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        Reload page to get a more accurate version of the
+                        website for the device. Turn off for a faster transition
+                        by resizing.
+                      </p>
+                      <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <Info className="size-3 shrink-0" strokeWidth={1.75} />
+                        <span className="min-w-0 truncate">
+                          Requires Wingify Chrome Extension
+                        </span>
+                        <span className="inline-flex shrink-0 items-center gap-0.5 font-medium text-foreground">
+                          <Check
+                            className="size-3 text-foreground"
+                            strokeWidth={2.25}
+                          />
+                          Installed
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border px-3.5 py-3.5">
+                  <label className="flex cursor-pointer items-start gap-2.5">
+                    <Switch
+                      checked={applyChangesToAllDevices}
+                      onCheckedChange={onApplyChangesToAllDevicesChange}
+                      className="mt-0.5"
+                    />
+                    <span className="min-w-0 flex-1 space-y-1">
+                      <span className="block text-[13px] font-medium text-foreground">
+                        Apply changes to all devices
+                      </span>
+                      <span className="block text-[11px] leading-relaxed text-muted-foreground">
+                        Turn toggle off to keep changes unique to the currently
+                        selected device.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <div className="flex h-7 items-center gap-1 rounded-md border border-border bg-muted p-px">
               {WIDTH_MODES.map((m) => {
                 const selected = previewWidthMode === m.id;
@@ -181,16 +302,6 @@ export function EditorTopBar({
                 );
               })}
             </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-6 rounded-md"
-              aria-label="More options"
-            >
-              <MoreHorizontal className="size-4" strokeWidth={1.75} />
-            </Button>
 
             <span className="mx-0.5 h-5 w-px shrink-0 bg-border" aria-hidden />
           </>
