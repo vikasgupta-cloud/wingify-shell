@@ -4,11 +4,39 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Inter Variable"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Body / UI — Lyon Text
+        sans: ['"Lyon Text"', "Georgia", "Times New Roman", "serif"],
+        // Titles — Ergon
+        heading: ['"Ergon"', "ui-sans-serif", "system-ui", "sans-serif"],
+        // Large display / hero — Lyon Display
+        display: ['"Lyon Display"', "Georgia", "Times New Roman", "serif"],
       },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        brand: {
+          yellow: "hsl(var(--brand-yellow))",
+          sky: "hsl(var(--brand-sky))",
+          maroon: "hsl(var(--brand-maroon))",
+          white: "hsl(var(--brand-white))",
+          grey: "hsl(var(--brand-grey))",
+          feather: "hsl(var(--brand-feather))",
+          dusk: "hsl(var(--brand-dusk))",
+          twilight: "hsl(var(--brand-twilight))",
+          midnight: "hsl(var(--brand-midnight))",
+          "green-rich": "hsl(var(--brand-green-rich))",
+          "green-bright": "hsl(var(--brand-green-bright))",
+          "green-tint": "hsl(var(--brand-green-tint))",
+          "cherry-rich": "hsl(var(--brand-cherry-rich))",
+          "cherry-bright": "hsl(var(--brand-cherry-bright))",
+          "cherry-tint": "hsl(var(--brand-cherry-tint))",
+          "berry-rich": "hsl(var(--brand-berry-rich))",
+          "berry-bright": "hsl(var(--brand-berry-bright))",
+          "berry-tint": "hsl(var(--brand-berry-tint))",
+          "ocean-rich": "hsl(var(--brand-ocean-rich))",
+          "ocean-bright": "hsl(var(--brand-ocean-bright))",
+          "ocean-tint": "hsl(var(--brand-ocean-tint))",
+        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",

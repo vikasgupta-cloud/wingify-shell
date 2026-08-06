@@ -1,0 +1,231 @@
+/* Brand experiment fonts — Ergon (titles) + Lyon (body). Trial cuts only. */
+
+/* ── Ergon — titles / headings ───────────────────────────────────────── */
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-Thin-Trial.otf") format("opentype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-ThinItalic-Trial.otf") format("opentype");
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-Light-Trial.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-LightItalic-Trial.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-Regular-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-RegularItalic-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-Medium-Trial.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-MediumItalic-Trial.otf") format("opentype");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-Bold-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-BoldItalic-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-Black-Trial.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ergon";
+  src: url("./ergon/Ergon-BlackItalic-Trial.otf") format("opentype");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ── Lyon Text — body / UI copy ─────────────────────────────────────── */
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-Regular-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-RegularItalic-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-RegularNo2-Trial.otf") format("opentype");
+  font-weight: 450;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-RegularNo2Italic-Trial.otf") format("opentype");
+  font-weight: 450;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-Semibold-Trial.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-SemiboldItalic-Trial.otf") format("opentype");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-Bold-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-BoldItalic-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-Black-Trial.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Text";
+  src: url("./lyon-text/LyonText-BlackItalic-Trial.otf") format("opentype");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ── Lyon Display — large display / hero (optional) ──────────────────── */
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-Light-Trial.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-LightItalic-Trial.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-Regular-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-RegularItalic-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-Medium-Trial.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-MediumItalic-Trial.otf") format("opentype");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-Bold-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-BoldItalic-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-Black-Trial.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lyon Display";
+  src: url("./lyon-display/LyonDisplay-BlackItalic-Trial.otf") format("opentype");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}

@@ -7,6 +7,15 @@
     @apply font-sans antialiased;
   }
 
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading tracking-tight;
+  }
+
   /* Clickable controls use the pointer cursor across the app. */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -65,105 +74,131 @@
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 0%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 0%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 0%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --canvas: 0 0% 93.5%;
-  --surface: 0 0% 91%;
-  --surface-border: 0 0% 87%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 80%;
-  --ring: 0 0% 0%;
+  /* ── Brand primitives (from brand-colors.tokens.json) ─────────────── */
+  --brand-yellow: 67 100% 71.4%;       /* #EEFF6D */
+  --brand-sky: 212 100% 78.4%;         /* #91C5FF */
+  --brand-maroon: 335 66.7% 15.3%;     /* #410D23 */
+  --brand-white: 0 0% 100%;            /* #FFFFFF */
+  --brand-grey: 40 33.3% 94.7%;        /* #F6F3ED */
+  --brand-feather: 40 22.4% 86.9%;     /* #E5E0D6 */
+  --brand-dusk: 42 9.9% 66.5%;         /* #B2ADA1 */
+  --brand-twilight: 45 6.7% 34.9%;     /* #5F5C53 */
+  --brand-midnight: 210 6.3% 12.5%;    /* #1E2022 */
+
+  --brand-green-rich: 175 100% 14.1%;  /* #004842 */
+  --brand-green-bright: 160 93.2% 40.4%; /* #07C787 */
+  --brand-green-tint: 176 27.9% 88%;   /* #D8E9E8 */
+  --brand-cherry-rich: 12 98.2% 43.9%; /* #DE2D02 */
+  --brand-cherry-bright: 12 100% 61%; /* #FF6038 */
+  --brand-cherry-tint: 0 42.1% 92.5%;  /* #F4E4E4 */
+  --brand-berry-rich: 316 58.7% 50.6%; /* #CB37A4 */
+  --brand-berry-bright: 316 89.6% 73.5%; /* #F87FD8 */
+  --brand-berry-tint: 304 42.1% 92.5%; /* #F4E4F3 */
+  --brand-ocean-rich: 225 68.2% 17.3%; /* #0E1D4A */
+  --brand-ocean-bright: 225 82.8% 59%; /* #406BED */
+  --brand-ocean-tint: 211 100% 91.4%;  /* #D3E8FF */
+
+  /* ── App semantic tokens (brand-mapped) ───────────────────────────── */
+  --background: var(--brand-grey);
+  --foreground: var(--brand-midnight);
+  --card: var(--brand-white);
+  --card-foreground: var(--brand-midnight);
+  --popover: var(--brand-white);
+  --popover-foreground: var(--brand-midnight);
+
+  /* Primary CTA — maroon for readable filled buttons */
+  --primary: var(--brand-maroon);
+  --primary-foreground: var(--brand-white);
+
+  /* Secondary — soft sky wash */
+  --secondary: var(--brand-ocean-tint);
+  --secondary-foreground: var(--brand-ocean-rich);
+
+  --muted: var(--brand-feather);
+  --muted-foreground: var(--brand-twilight);
+  --canvas: 40 28% 91%;
+  --surface: var(--brand-feather);
+  --surface-border: var(--brand-dusk);
+
+  /* Accent — Wingify yellow highlight */
+  --accent: var(--brand-yellow);
+  --accent-foreground: var(--brand-midnight);
+
+  --border: var(--brand-feather);
+  --input: var(--brand-dusk);
+  --ring: var(--brand-maroon);
   --radius: 0.5rem;
 
-  /* shadcn destructive tokens — required by Button/AlertDialog destructive variants. */
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: var(--brand-cherry-rich);
+  --destructive-foreground: var(--brand-white);
 
-  --rail: 0 0% 100%;
-  --rail-foreground: 0 0% 0%;
-  --rail-active: 0 0% 9%;
-  --rail-active-foreground: 0 0% 98%;
-  --panel: 0 0% 100%;
-  --panel-foreground: 0 0% 9%;
-  --panel-border: 0 0% 90%;
+  --rail: var(--brand-white);
+  --rail-foreground: var(--brand-midnight);
+  --rail-active: var(--brand-maroon);
+  --rail-active-foreground: var(--brand-white);
+  --panel: var(--brand-white);
+  --panel-foreground: var(--brand-midnight);
+  --panel-border: var(--brand-feather);
 
-  /* Semantic status tokens — the ONLY colored tokens in the app.
-     Used exclusively by StatusBadge and the vitals icon; never by chrome. */
-  --status-draft-bg: 214 95% 93%;
-  --status-draft-fg: 214 70% 38%;
-  --status-qa-bg: 45 93% 89%;
-  --status-qa-fg: 32 81% 33%;
-  --status-ready-bg: 215 25% 92%;
-  --status-ready-fg: 215 25% 34%;
-  --status-running-bg: 141 76% 92%;
-  --status-running-fg: 142 64% 26%;
-  --status-analysis-bg: 262 83% 94%;
-  --status-analysis-fg: 262 52% 42%;
-  --status-paused-bg: 27 96% 91%;
-  --status-paused-fg: 24 75% 34%;
-  --status-ended-bg: 0 0% 91%;
-  --status-ended-fg: 0 0% 24%;
-  --vitals-healthy: 142 64% 34%;
-  --vitals-unhealthy: 0 72% 46%;
+  /* Semantic status — brand brights / tints / rich */
+  --status-draft-bg: var(--brand-ocean-tint);
+  --status-draft-fg: var(--brand-ocean-rich);
+  --status-qa-bg: 67 80% 90%;
+  --status-qa-fg: var(--brand-maroon);
+  --status-ready-bg: var(--brand-feather);
+  --status-ready-fg: var(--brand-twilight);
+  --status-running-bg: var(--brand-green-tint);
+  --status-running-fg: var(--brand-green-rich);
+  --status-analysis-bg: var(--brand-berry-tint);
+  --status-analysis-fg: var(--brand-berry-rich);
+  --status-paused-bg: var(--brand-cherry-tint);
+  --status-paused-fg: var(--brand-cherry-rich);
+  --status-ended-bg: var(--brand-feather);
+  --status-ended-fg: var(--brand-twilight);
+  --vitals-healthy: var(--brand-green-bright);
+  --vitals-unhealthy: var(--brand-cherry-rich);
 
-  /* Decision tokens — the only colored tokens outside status/vitals.
-     Reuse the running green and QA amber values. */
-  --decision-winner-fg: 142 64% 26%;
-  --decision-baseline-fg: 32 81% 33%;
+  --decision-winner-fg: var(--brand-green-rich);
+  --decision-baseline-fg: var(--brand-cherry-rich);
 
-  /* Result tokens — used ONLY for uplift values and the confidence bar. */
-  --success-fg: 142 64% 26%;
-  --danger-fg: 0 72% 46%;
+  --success-fg: var(--brand-green-rich);
+  --danger-fg: var(--brand-cherry-rich);
 
-  /* Report tokens — used ONLY by the campaign Reports page. These mirror the
-     Figma report design (semantic result colors, not chrome). */
-  --report-green-deep: 155 90% 24%;   /* uplift values, winner text */
-  --report-green: 142 76% 36%;        /* decision-banner accent + rollout CTA */
-  --report-green-mid: 151 86% 33%;    /* preview CTA, revenue bars */
-  --report-green-bar: 152 77% 39%;    /* projected-impact bar fill */
-  --report-green-badge: 141 84% 93%;  /* status pill / winner pill bg */
-  --report-green-tint: 139 76% 97%;   /* decision-banner gradient start */
-  --report-green-border: 148 63% 67%; /* decision-banner + winner card border */
-  --report-red: 0 72% 51%;            /* negative uplift */
-  --report-amber: 42 77% 62%;         /* browser-mock traffic light */
-  --report-track: 0 0% 85%;           /* revenue bar rail */
-  --report-link: 249 47% 43%;         /* "View full result" style links */
-  --report-blue-bg: 201 82% 89%;      /* variation series chip (blue) */
-  --report-blue-border: 207 71% 66%;
-  --report-blue-fg: 218 88% 26%;
-  --report-purple-bg: 272 88% 97%;    /* variation series chip (purple) */
-  --report-purple-border: 270 47% 83%;
-  --report-purple-fg: 272 35% 46%;
+  /* Report tokens — remapped to brand families */
+  --report-green-deep: var(--brand-green-rich);
+  --report-green: var(--brand-green-bright);
+  --report-green-mid: 160 70% 32%;
+  --report-green-bar: var(--brand-green-bright);
+  --report-green-badge: var(--brand-green-tint);
+  --report-green-tint: 176 40% 96%;
+  --report-green-border: 160 40% 55%;
+  --report-red: var(--brand-cherry-rich);
+  --report-amber: var(--brand-cherry-bright);
+  --report-track: var(--brand-feather);
+  --report-link: var(--brand-ocean-bright);
+  --report-blue-bg: var(--brand-ocean-tint);
+  --report-blue-border: var(--brand-sky);
+  --report-blue-fg: var(--brand-ocean-rich);
+  --report-purple-bg: var(--brand-berry-tint);
+  --report-purple-border: var(--brand-berry-bright);
+  --report-purple-fg: var(--brand-berry-rich);
 
-  /* Results-tab tokens — metric table + graph on the Reports page. */
-  --report-conclusion-bg: 145 81% 96%; /* conclusion banner background */
-  --report-brand: 249 43% 52%;         /* active inner-tab underline */
-  --report-brand-fg: 250 47% 45%;      /* active inner-tab label */
-  --report-brand-tint: 252 100% 97%;   /* selected metric-list item bg */
-  --report-ctrl-bg: 254 72% 92%;       /* Control graph badge (purple) */
-  --report-ctrl-border: 252 58% 71%;
-  --report-ctrl-fg: 247 59% 27%;
-  --report-v1-bg: 33 92% 91%;          /* Variation 1 graph badge (amber) */
-  --report-v1-border: 25 87% 72%;
-  --report-v1-fg: 9 81% 35%;
-  --report-v2-bg: 128 85% 90%;         /* Variation 2 graph badge (green) */
-  --report-v2-border: 140 72% 67%;
-  --report-v2-fg: 170 87% 22%;
-  --report-prob-fill: 148 63% 67%;     /* "probability of better" green bar */
-  --report-info-bg: 209 100% 91%;      /* expected-improvement median band */
-  --report-threshold: 148 40% 69%;     /* winner-threshold dashed divider */
+  --report-conclusion-bg: var(--brand-green-tint);
+  --report-brand: var(--brand-maroon);
+  --report-brand-fg: var(--brand-maroon);
+  --report-brand-tint: 335 40% 96%;
+  --report-ctrl-bg: var(--brand-berry-tint);
+  --report-ctrl-border: var(--brand-berry-bright);
+  --report-ctrl-fg: var(--brand-berry-rich);
+  --report-v1-bg: var(--brand-cherry-tint);
+  --report-v1-border: var(--brand-cherry-bright);
+  --report-v1-fg: var(--brand-cherry-rich);
+  --report-v2-bg: var(--brand-green-tint);
+  --report-v2-border: var(--brand-green-bright);
+  --report-v2-fg: var(--brand-green-rich);
+  --report-prob-fill: var(--brand-green-bright);
+  --report-info-bg: var(--brand-ocean-tint);
+  --report-threshold: 160 40% 55%;
 }
 
 * {
@@ -189,17 +224,10 @@ select:-webkit-autofill {
 
 body {
   margin: 0;
-  @apply bg-background text-foreground;
-  font-feature-settings: "cv11", "ss01";
-  font-variation-settings: "opsz" 32;
+  @apply bg-background text-foreground font-sans;
 }
 
-/* Editor chrome stays greyscale. Website preview iframe keeps full color. */
-[data-editor-shell] img {
-  filter: grayscale(1);
-}
-
-/* Flat panels — no elevation on docked editor chrome. */
+/* Brand experiment: keep editor chrome in color (icons stay as-authored). */
 [data-editor-shell] aside,
 [data-editor-shell] nav {
   box-shadow: none !important;

@@ -20,11 +20,15 @@ export default function WingifyLogoButton({
       aria-label="Go to Home dashboard"
       onClick={() => navigate("/home/dashboard")}
       className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted",
+        "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg transition-opacity hover:opacity-90",
         className
       )}
     >
-      <img src={logoUrl} alt="Wingify" className="h-5 w-auto object-contain" />
+      <img
+        src={logoUrl}
+        alt="Wingify"
+        className="size-8 rounded-lg object-cover"
+      />
     </button>
   );
 }
