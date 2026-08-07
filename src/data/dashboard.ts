@@ -44,7 +44,7 @@ export const METRIC_REPORT_RANGE = ["Last 7 days", "Last 30 days"] as const;
 export const METRIC_REPORTS = {
   count: 69,
   chartLabel: "Unique Visitors",
-  chartPoints: [0, 0, 0, 0, 0, 0, 0],
+  chartPoints: [42, 38, 55, 48, 72, 68, 81],
   dayLabels: ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"],
   dateStart: "Aug 01",
   dateEnd: "Aug 07",

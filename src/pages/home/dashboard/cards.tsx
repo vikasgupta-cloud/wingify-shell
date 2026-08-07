@@ -57,6 +57,11 @@ import {
   WANDZ_RECENT_CHATS,
 } from "@/data/dashboard";
 import { cn } from "@/lib/utils";
+import {
+  CHART,
+  chartSeries,
+  chartSeriesAlpha,
+} from "@/config/chartTokens";
 
 const WANDZ_CTA_ICONS = {
   analyze: BarChart3,
@@ -309,7 +314,28 @@ export function MetricReportsCard() {
   const [active, setActive] = useState(0);
   const w = 360;
   const h = 160;
-  const y = h - 24;
+  const padX = 12;
+  const padTop = 16;
+  const padBottom = 28;
+  const plotH = h - padTop - padBottom;
+  const points = METRIC_REPORTS.chartPoints;
+  const max = Math.max(...points, 1);
+  const coords = points.map((v, i) => {
+    const x =
+      padX +
+      (points.length === 1
+        ? (w - padX * 2) / 2
+        : (i / (points.length - 1)) * (w - padX * 2));
+    const y = padTop + plotH - (v / max) * plotH;
+    return { x, y };
+  });
+  const linePoints = coords.map((p) => `${p.x},${p.y}`).join(" ");
+  const areaPath = [
+    `M ${coords[0]?.x ?? padX} ${h - padBottom}`,
+    ...coords.map((p) => `L ${p.x} ${p.y}`),
+    `L ${coords[coords.length - 1]?.x ?? w - padX} ${h - padBottom}`,
+    "Z",
+  ].join(" ");
 
   return (
     <CardShell
@@ -321,7 +347,9 @@ export function MetricReportsCard() {
         <div className="min-w-0">
           <div className="mb-1 flex justify-end">
             <div className="text-right">
-              <p className="text-xs font-medium text-foreground">0</p>
+              <p className="text-xs font-medium text-foreground">
+                {points[points.length - 1] ?? 0}
+              </p>
               <p className="text-[10px] text-muted-foreground">
                 {METRIC_REPORTS.chartLabel}
               </p>
@@ -329,31 +357,40 @@ export function MetricReportsCard() {
           </div>
           <svg
             viewBox={`0 0 ${w} ${h}`}
-            className="h-40 w-full text-foreground"
+            className="h-40 w-full"
             role="img"
             aria-label="Unique visitors chart"
           >
             {[0, 1, 2, 3, 4].map((i) => {
-              const gy = 16 + i * ((h - 40) / 4);
+              const gy = padTop + i * (plotH / 4);
               return (
                 <line
                   key={i}
-                  x1="8"
-                  x2={w - 8}
+                  x1={padX}
+                  x2={w - padX}
                   y1={gy}
                   y2={gy}
-                  stroke="hsl(var(--border))"
+                  stroke={CHART.grid}
                   strokeWidth="1"
                 />
               );
             })}
+            <path d={areaPath} fill={chartSeriesAlpha(0, 0.18)} />
+            <polyline
+              fill="none"
+              stroke={chartSeries(0)}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points={linePoints}
+            />
             <line
-              x1="8"
-              x2={w - 8}
-              y1={y}
-              y2={y}
-              stroke="currentColor"
-              strokeWidth="2"
+              x1={padX}
+              x2={w - padX}
+              y1={h - padBottom}
+              y2={h - padBottom}
+              stroke={CHART.axisLine}
+              strokeWidth="1.5"
             />
           </svg>
           <div className="mt-1 flex justify-between px-1 text-[10px] text-muted-foreground">
@@ -455,8 +492,11 @@ export function FunnelReportsCard() {
                 </p>
                 <div className="relative flex h-24 w-full flex-col justify-end overflow-hidden rounded-sm bg-muted">
                   <div
-                    className="w-full bg-foreground/80"
-                    style={{ height: `${Math.max(step.percent, 0)}%` }}
+                    className="w-full"
+                    style={{
+                      height: `${Math.max(step.percent, 0)}%`,
+                      backgroundColor: chartSeries(i),
+                    }}
                   />
                 </div>
                 <p className="mt-2 truncate text-center text-[10px] text-muted-foreground">
@@ -608,7 +648,13 @@ export function PersonalizationCard() {
   const total = PERSONALIZATION.donut.reduce((a, b) => a + b, 0) || 1;
   const r = 26;
   const c = 2 * Math.PI * r;
-  const first = (PERSONALIZATION.donut[0] / total) * c;
+  let offset = 0;
+  const arcs = PERSONALIZATION.donut.map((value, i) => {
+    const len = (value / total) * c;
+    const dash = { len, offset };
+    offset += len;
+    return { ...dash, color: chartSeries(i) };
+  });
 
   return (
     <CardShell title="Personalization" count={PERSONALIZATION.count}>
@@ -621,35 +667,41 @@ export function PersonalizationCard() {
 
       <div className="flex flex-wrap items-start gap-4">
         <div className="flex flex-col items-center">
-          <svg viewBox="0 0 72 72" className="size-16 text-foreground" aria-hidden>
+          <svg viewBox="0 0 72 72" className="size-16" aria-hidden>
             <circle
               cx="36"
               cy="36"
               r={r}
               fill="none"
-              stroke="hsl(var(--muted))"
+              stroke={CHART.grid}
               strokeWidth="9"
             />
-            <circle
-              cx="36"
-              cy="36"
-              r={r}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="9"
-              strokeDasharray={`${first} ${c - first}`}
-              transform="rotate(-90 36 36)"
-              className="opacity-70"
-            />
+            {arcs.map((arc, i) => (
+              <circle
+                key={i}
+                cx="36"
+                cy="36"
+                r={r}
+                fill="none"
+                stroke={arc.color}
+                strokeWidth="9"
+                strokeDasharray={`${arc.len} ${c - arc.len}`}
+                strokeDashoffset={-arc.offset}
+                transform="rotate(-90 36 36)"
+              />
+            ))}
           </svg>
           <p className="mt-1 text-[10px] text-muted-foreground">Visitor Split</p>
         </div>
 
         <div className="grid min-w-0 flex-1 gap-4 sm:grid-cols-2">
-          {PERSONALIZATION.experiences.map((e) => (
+          {PERSONALIZATION.experiences.map((e, i) => (
             <div key={e.id} className="min-w-0 space-y-1">
               <div className="flex items-center gap-1.5">
-                <span className="inline-flex size-5 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-foreground">
+                <span
+                  className="inline-flex size-5 items-center justify-center rounded-full text-[10px] font-medium text-primary-foreground"
+                  style={{ backgroundColor: chartSeries(i) }}
+                >
                   {e.id}
                 </span>
                 <p className="truncate text-sm font-medium text-foreground">
@@ -824,17 +876,16 @@ export function FormsCard() {
               </p>
               <div className="relative flex h-20 w-full flex-col justify-end overflow-hidden rounded-sm bg-muted">
                 <div
-                  className={cn(
-                    "w-full",
-                    step.fill === "full"
-                      ? "bg-foreground/80"
-                      : "bg-foreground/40"
-                  )}
+                  className="w-full"
                   style={{
                     height:
                       step.fill === "full"
                         ? "100%"
                         : `${Math.max(step.percent, 4)}%`,
+                    backgroundColor:
+                      step.fill === "full"
+                        ? chartSeries(0)
+                        : chartSeriesAlpha(0, 0.45),
                   }}
                 />
               </div>
@@ -884,11 +935,14 @@ export function SurveysCard() {
       <div className="flex flex-wrap items-start gap-4">
         <div className="flex flex-1 items-end gap-4 rounded-lg bg-muted p-4">
           <div className="flex h-20 items-end gap-1.5">
-            {SURVEYS_REPORT.answers.map((a) => (
+            {SURVEYS_REPORT.answers.map((a, i) => (
               <div key={a.n} className="flex flex-col items-center gap-1">
                 <div
-                  className="w-4 rounded-t-sm bg-foreground/70"
-                  style={{ height: `${(a.value / max) * 64}px` }}
+                  className="w-4 rounded-t-sm"
+                  style={{
+                    height: `${(a.value / max) * 64}px`,
+                    backgroundColor: chartSeries(i),
+                  }}
                 />
                 <span className="text-[10px] text-muted-foreground">{a.n}</span>
               </div>

@@ -77,6 +77,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import {
+  CHART,
+  chartSeries,
+  chartSeriesAlpha,
+} from "@/config/chartTokens";
 import learningIcon from "@/assets/icons/learning.png";
 import {
   REPORT_DIMENSION_OPTIONS,
@@ -4039,15 +4044,15 @@ const CHART_PLOT_W = 100;
 const CHART_MARKER_X = 62;
 
 const CHART_STROKE: Record<Exclude<BadgeTone, "total">, string> = {
-  ctrl: "hsl(var(--muted-foreground))",
-  v1: "hsl(var(--foreground) / 0.45)",
-  v2: "hsl(var(--foreground))",
+  ctrl: chartSeries(0),
+  v1: chartSeries(1),
+  v2: chartSeries(2),
 };
 
 const CHART_RANGE_FILL: Record<Exclude<BadgeTone, "total">, string> = {
-  ctrl: "hsl(var(--muted-foreground) / 0.18)",
-  v1: "hsl(var(--foreground) / 0.1)",
-  v2: "hsl(var(--foreground) / 0.14)",
+  ctrl: chartSeriesAlpha(0, 0.18),
+  v1: chartSeriesAlpha(1, 0.14),
+  v2: chartSeriesAlpha(2, 0.14),
 };
 
 function chartY(value: number, yMin: number, yMax: number): number {
@@ -4282,7 +4287,7 @@ function DateRangeLineChart({
             x2={CHART_MARKER_X}
             y1={0}
             y2={CHART_PLOT_H}
-            stroke="hsl(var(--border))"
+            stroke={CHART.gridStrong}
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"
             strokeDasharray="4 4"
@@ -4385,8 +4390,8 @@ const DENSITY_PLOT_W = 100;
 const DENSITY_PLOT_H = 200;
 
 const DENSITY_STROKE = {
-  ctrl: "hsl(var(--muted-foreground))",
-  v1: "hsl(var(--foreground) / 0.55)",
+  ctrl: chartSeries(0),
+  v1: chartSeries(1),
 } as const;
 
 function UnderstandGraphLink() {
