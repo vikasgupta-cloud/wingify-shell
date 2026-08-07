@@ -34,19 +34,6 @@ export const WANDZ_RECENT_CHATS = [
     prompt:
       "Help me analyze free trial sign-up drop-off and suggest what to test next.",
   },
-  {
-    id: "rc2",
-    title: "Mobile banner variation insights",
-    ago: "2 hours ago",
-    prompt:
-      "Summarize how Mobile Main Banner Redesign Variation 1 is performing.",
-  },
-  {
-    id: "rc3",
-    title: "Pricing page heatmap questions",
-    ago: "Yesterday",
-    prompt: "What should I look for in heatmaps on the pricing page?",
-  },
 ] as const;
 
 export const WANDZ_DEFAULT_PROMPT =
