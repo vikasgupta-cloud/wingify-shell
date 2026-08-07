@@ -238,13 +238,7 @@ export function EditorBottomSheet({
         ? { paddingTop: DOCK_CLEARANCE_TOP }
         : { paddingBottom: DOCK_CLEARANCE_BOTTOM };
 
-  const scrimGradient = fromLeft
-    ? "linear-gradient(to right, hsl(var(--foreground) / 0.42) 0%, hsl(var(--foreground) / 0.08) 42%, transparent 100%)"
-    : fromRight
-      ? "linear-gradient(to left, hsl(var(--foreground) / 0.42) 0%, hsl(var(--foreground) / 0.08) 42%, transparent 100%)"
-      : fromTop
-        ? "linear-gradient(to top, transparent 0%, hsl(var(--foreground) / 0.08) 42%, hsl(var(--foreground) / 0.42) 100%)"
-        : "linear-gradient(to bottom, transparent 0%, hsl(var(--foreground) / 0.08) 42%, hsl(var(--foreground) / 0.42) 100%)";
+  const scrim = "hsl(var(--foreground) / 0.28)";
 
   const exitTransform = fromLeft
     ? "-translate-x-4 opacity-0"
@@ -269,7 +263,7 @@ export function EditorBottomSheet({
           "pointer-events-auto absolute inset-0 transition-opacity duration-300 ease-out",
           entered ? "opacity-100" : "opacity-0"
         )}
-        style={{ background: scrimGradient }}
+        style={{ background: scrim }}
         onClick={onClose}
         tabIndex={open ? undefined : -1}
         aria-hidden={!open || undefined}

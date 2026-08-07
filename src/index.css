@@ -591,8 +591,16 @@
   --report-track: var(--vwo-dark-border-default);
 }
 
-/* ── Accent × mode — primary button color only.
-   Do not tint canvas, borders, or text from the accent family. */
+/* ── Accent × mode — CTA color plus its harmonized surround.
+   Each theme tints the roles that sit next to the CTA — focus ring,
+   selection/hover wash, links, deep brand surface, report brand accents —
+   from the SAME VWO family, at steps picked for contrast:
+     wash = family/100, selected text = family/700, links = family/500→600,
+     ring ≈ the CTA step, deep surface = family/900.
+   Canvas, borders, body text, and the semantic status families stay
+   neutral/semantic in every theme. Yellow and Midnight keep the neutral
+   wash + ocean links: yellow/100 is too neon for a hover wash, and a
+   monochrome CTA reads best with classic blue links. */
 
 [data-theme="yellow"][data-mode="light"] {
   --primary: var(--vwo-yellow-50);
@@ -600,6 +608,10 @@
   --primary-hover: var(--vwo-yellow-100);
   --primary-active: var(--vwo-yellow-200);
   --primary-subtle: var(--vwo-yellow-100);
+  /* Olive focus ring keeps keyboard focus in the CTA family. */
+  --ring: var(--vwo-yellow-300);
+  /* Yellow pairs with maroon in the Wingify brand — keep the deep surface. */
+  --brand-deep: var(--vwo-maroon-900);
 }
 
 [data-theme="yellow"][data-mode="dark"] {
@@ -608,6 +620,7 @@
   --primary-hover: var(--vwo-yellow-100);
   --primary-active: var(--vwo-yellow-200);
   --primary-subtle: var(--vwo-dark-bg-hover);
+  --ring: var(--vwo-yellow-200);
 }
 
 [data-theme="cherry"][data-mode="light"] {
@@ -616,6 +629,17 @@
   --primary-hover: var(--vwo-cherry-500);
   --primary-active: var(--vwo-cherry-600);
   --primary-subtle: var(--vwo-cherry-100);
+  --ring: var(--vwo-cherry-400);
+  --accent: var(--vwo-cherry-100);
+  --selected-bg: var(--vwo-cherry-100);
+  --selected-fg: var(--vwo-cherry-700);
+  --link: var(--vwo-cherry-500);
+  --link-hover: var(--vwo-cherry-600);
+  --brand-deep: var(--vwo-cherry-900);
+  --report-brand: var(--vwo-cherry-900);
+  --report-brand-fg: var(--vwo-cherry-800);
+  --report-brand-tint: var(--vwo-cherry-50);
+  --report-link: var(--vwo-cherry-500);
 }
 
 [data-theme="cherry"][data-mode="dark"] {
@@ -624,6 +648,14 @@
   --primary-hover: var(--vwo-cherry-300);
   --primary-active: var(--vwo-cherry-500);
   --primary-subtle: var(--vwo-cherry-900);
+  --ring: var(--vwo-cherry-300);
+  --accent: var(--vwo-cherry-900);
+  --accent-foreground: var(--vwo-cherry-100);
+  --selected-bg: var(--vwo-cherry-900);
+  --selected-fg: var(--vwo-cherry-200);
+  --link: var(--vwo-cherry-300);
+  --link-hover: var(--vwo-cherry-200);
+  --brand-deep: var(--vwo-cherry-900);
 }
 
 [data-theme="green"][data-mode="light"] {
@@ -633,6 +665,17 @@
   --primary-hover: var(--vwo-green-400);
   --primary-active: var(--vwo-green-500);
   --primary-subtle: var(--vwo-green-100);
+  --ring: var(--vwo-green-400);
+  --accent: var(--vwo-green-100);
+  --selected-bg: var(--vwo-green-100);
+  --selected-fg: var(--vwo-green-700);
+  --link: var(--vwo-green-500);
+  --link-hover: var(--vwo-green-600);
+  --brand-deep: var(--vwo-green-800);
+  --report-brand: var(--vwo-green-800);
+  --report-brand-fg: var(--vwo-green-700);
+  --report-brand-tint: var(--vwo-green-50);
+  --report-link: var(--vwo-green-500);
 }
 
 [data-theme="green"][data-mode="dark"] {
@@ -642,6 +685,14 @@
   --primary-hover: var(--vwo-green-200);
   --primary-active: var(--vwo-green-400);
   --primary-subtle: var(--vwo-green-900);
+  --ring: var(--vwo-green-300);
+  --accent: var(--vwo-green-900);
+  --accent-foreground: var(--vwo-green-100);
+  --selected-bg: var(--vwo-green-900);
+  --selected-fg: var(--vwo-green-200);
+  --link: var(--vwo-green-300);
+  --link-hover: var(--vwo-green-200);
+  --brand-deep: var(--vwo-green-900);
 }
 
 [data-theme="midnight"][data-mode="light"] {
@@ -650,6 +701,12 @@
   --primary-hover: var(--vwo-neutral-900);
   --primary-active: var(--vwo-neutral-800);
   --primary-subtle: var(--vwo-neutral-100);
+  /* Monochrome focus ring to match the ink CTA; links stay ocean. */
+  --ring: var(--vwo-neutral-800);
+  --brand-deep: var(--vwo-midnight-base);
+  --report-brand: var(--vwo-neutral-900);
+  --report-brand-fg: var(--vwo-neutral-800);
+  --report-brand-tint: var(--vwo-neutral-50);
 }
 
 [data-theme="midnight"][data-mode="dark"] {
@@ -658,6 +715,8 @@
   --primary-hover: var(--vwo-dark-action-primary-bg-hover);
   --primary-active: var(--vwo-dark-action-primary-bg-active);
   --primary-subtle: var(--vwo-dark-bg-hover);
+  --ring: var(--vwo-neutral-100);
+  --brand-deep: var(--vwo-neutral-900);
 }
 
 [data-theme="berry"][data-mode="light"] {
@@ -666,6 +725,17 @@
   --primary-hover: var(--vwo-berry-600);
   --primary-active: var(--vwo-berry-700);
   --primary-subtle: var(--vwo-berry-100);
+  --ring: var(--vwo-berry-400);
+  --accent: var(--vwo-berry-100);
+  --selected-bg: var(--vwo-berry-100);
+  --selected-fg: var(--vwo-berry-700);
+  --link: var(--vwo-berry-500);
+  --link-hover: var(--vwo-berry-600);
+  --brand-deep: var(--vwo-berry-900);
+  --report-brand: var(--vwo-berry-800);
+  --report-brand-fg: var(--vwo-berry-700);
+  --report-brand-tint: var(--vwo-berry-50);
+  --report-link: var(--vwo-berry-500);
 }
 
 [data-theme="berry"][data-mode="dark"] {
@@ -674,6 +744,14 @@
   --primary-hover: var(--vwo-berry-200);
   --primary-active: var(--vwo-berry-400);
   --primary-subtle: var(--vwo-berry-900);
+  --ring: var(--vwo-berry-300);
+  --accent: var(--vwo-berry-900);
+  --accent-foreground: var(--vwo-berry-100);
+  --selected-bg: var(--vwo-berry-900);
+  --selected-fg: var(--vwo-berry-200);
+  --link: var(--vwo-berry-300);
+  --link-hover: var(--vwo-berry-200);
+  --brand-deep: var(--vwo-berry-900);
 }
 
 

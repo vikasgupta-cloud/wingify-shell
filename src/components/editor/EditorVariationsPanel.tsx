@@ -129,7 +129,7 @@ export function EditorVariationsPanel({
                       style={{ background: fold.heroSurface }}
                     >
                       <span className="absolute inset-y-0 left-0 w-[42%] bg-muted">
-                        <span className="absolute inset-0 bg-gradient-to-br from-muted-foreground/15 to-transparent" />
+                        <span className="absolute inset-0 bg-muted-foreground/10" />
                       </span>
                       <span className="absolute inset-y-3 right-3 left-[46%] flex flex-col justify-center gap-1.5">
                         <span className="h-1 w-10 rounded-full bg-muted-foreground/35" />

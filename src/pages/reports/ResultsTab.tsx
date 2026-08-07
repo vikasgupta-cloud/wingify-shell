@@ -1037,7 +1037,7 @@ function ConclusionBanner({
   return (
     <div
       className={cn(
-        "flex items-start gap-4 overflow-hidden bg-gradient-to-r from-report-green-badge/70 via-report-green-tint to-report-green-tint px-6 py-3.5",
+        "flex items-start gap-4 overflow-hidden bg-report-green-tint px-6 py-3.5",
         embedded
           ? "border-0"
           : "rounded-xl border border-report-green-border shadow-sm"

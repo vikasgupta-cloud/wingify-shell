@@ -555,7 +555,10 @@ function StylesTab() {
               <span className="size-3.5 rounded-sm border border-foreground bg-muted" />
             </IconToggle>
             <IconToggle label="Gradient">
-              <span className="size-3.5 rounded-sm bg-gradient-to-br from-foreground/80 to-muted" />
+              <span className="flex size-3.5 overflow-hidden rounded-sm">
+                <span className="h-full w-1/2 bg-foreground/80" />
+                <span className="h-full w-1/2 bg-muted" />
+              </span>
             </IconToggle>
             <IconToggle label="Image">
               <span className="size-3.5 rounded-sm border border-dashed border-foreground/40" />
