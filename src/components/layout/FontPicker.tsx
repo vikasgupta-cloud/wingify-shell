@@ -10,46 +10,33 @@ import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
 
 /**
- * Font playground content — assign Ergon / Lyon / DM Sans to typography roles.
- * Hosted by FontController (hidden right-edge reveal), not profile chrome.
+ * Font playground — assign Ergon / Lyon / DM Sans to typography roles.
+ * Hosted by FontController (profile CTA or blank-space gesture).
  */
-export default function FontPicker({
-  className,
-  compact = false,
-}: {
-  className?: string;
-  compact?: boolean;
-}) {
+export default function FontPicker({ className }: { className?: string }) {
   const assignments = useFontStore((s) => s.assignments);
   const setRoleFont = useFontStore((s) => s.setRoleFont);
   const resetFonts = useFontStore((s) => s.resetFonts);
 
   return (
-    <div className={cn(compact ? "px-1 py-2" : "px-3 py-2.5", className)}>
-      <div
-        className={cn(
-          "mb-2 flex items-center justify-between gap-2",
-          compact ? "px-2" : "px-0.5"
-        )}
-      >
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Type className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-          <span className="text-[11px] font-medium uppercase tracking-wide">
-            Fonts
-          </span>
+    <section className={cn("px-6 py-6", className)}>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 text-foreground">
+          <Type className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+          <h3 className="text-base font-semibold tracking-tight">Fonts</h3>
         </div>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="h-6 px-1.5 text-[10px] text-muted-foreground"
+          className="h-9 px-3 text-sm text-muted-foreground"
           onClick={resetFonts}
         >
           Reset
         </Button>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-8">
         {FONT_ROLE_OPTIONS.map((role) => (
           <FontRoleRow
             key={role.id}
@@ -59,11 +46,10 @@ export default function FontPicker({
             preview={role.preview}
             value={assignments[role.id]}
             onChange={(fontId) => setRoleFont(role.id, fontId)}
-            compact={compact}
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -74,7 +60,6 @@ function FontRoleRow({
   preview,
   value,
   onChange,
-  compact,
 }: {
   role: FontRole;
   label: string;
@@ -82,23 +67,18 @@ function FontRoleRow({
   preview: string;
   value: FontId;
   onChange: (fontId: FontId) => void;
-  compact: boolean;
 }) {
   const active = FONTS.find((f) => f.id === value) ?? FONTS[0];
 
   return (
-    <div className={cn(compact ? "px-1" : "px-0")}>
-      <div className="mb-1 flex items-baseline justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium text-foreground">{label}</p>
-          <p className="truncate text-[10px] text-muted-foreground">
-            {description}
-          </p>
-        </div>
+    <div className="space-y-3">
+      <div className="min-w-0 space-y-0.5">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
       </div>
 
       <p
-        className="mb-1.5 truncate rounded-md border border-border bg-muted/40 px-2 py-1.5 text-[12px] leading-snug text-foreground"
+        className="truncate rounded-lg border border-border bg-muted/50 px-4 py-3.5 text-lg leading-snug text-foreground"
         style={{ fontFamily: active.stack }}
         title={preview}
         data-font-role={role}
@@ -109,7 +89,7 @@ function FontRoleRow({
       <div
         role="radiogroup"
         aria-label={`${label} font`}
-        className="grid grid-cols-3 gap-1"
+        className="grid grid-cols-3 gap-2"
       >
         {FONTS.map((font) => {
           const selected = font.id === value;
@@ -122,7 +102,7 @@ function FontRoleRow({
               aria-label={`${label}: ${font.label}`}
               onClick={() => onChange(font.id)}
               className={cn(
-                "rounded-md border px-1 py-1.5 text-center text-[10px] leading-none transition-colors",
+                "rounded-lg border px-2 py-3 text-center text-sm leading-none transition-colors",
                 selected
                   ? "border-foreground bg-accent text-foreground"
                   : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"

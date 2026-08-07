@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { Type } from "lucide-react";
 import {
   CURRENT_USER,
   LOGOUT_PATH,
@@ -6,6 +7,8 @@ import {
   type NavItem,
 } from "../../config/navigation";
 import { cn } from "../../lib/utils";
+import { useDesignControllerStore } from "../../store/designController";
+import { Button } from "@/components/ui/button";
 import ProfileAvatar from "./ProfileAvatar";
 import ThemePicker from "./ThemePicker";
 
@@ -22,6 +25,8 @@ export default function ProfileMenuPanel({
   item: NavItem;
   onRequestClose?: () => void;
 }) {
+  const openController = useDesignControllerStore((s) => s.openController);
+
   if (!item.sections) return null;
 
   const sections = item.sections
@@ -90,6 +95,21 @@ export default function ProfileMenuPanel({
 
       <div className="border-t border-border">
         <ThemePicker />
+        <div className="px-3 pb-2.5">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-8 w-full justify-start gap-2 text-xs font-medium"
+            onClick={() => {
+              onRequestClose?.();
+              openController();
+            }}
+          >
+            <Type className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+            Fonts & CTA color
+          </Button>
+        </div>
       </div>
 
       {logoutSection ? (
