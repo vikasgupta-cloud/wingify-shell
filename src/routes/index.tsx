@@ -15,10 +15,36 @@ import WebExperimentation from "../pages/WebExperimentation";
 import ConfigPage from "../pages/config/ConfigPage";
 import ReportsPage from "../pages/reports/ReportsPage";
 import EditorPage from "../pages/editor/EditorPage";
+import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
+import HeatmapsPage from "../pages/insights/HeatmapsPage";
+import SurveysPage from "../pages/pulse/SurveysPage";
+import FeatureFlagsPage from "../pages/feature-management/FeatureFlagsPage";
+import FlagRolloutPage from "../pages/feature-management/FlagRolloutPage";
+import FlagTestingPage from "../pages/feature-management/FlagTestingPage";
+import FlagMultivariatePage from "../pages/feature-management/FlagMultivariatePage";
+import FlagPersonalizePage from "../pages/feature-management/FlagPersonalizePage";
+import AttributesPage from "../pages/data-360/AttributesPage";
+import EventsPage from "../pages/data-360/EventsPage";
+import SegmentsPage from "../pages/data-360/SegmentsPage";
+import MetricsPage from "../pages/data-360/MetricsPage";
+import DashboardPage from "../pages/home/DashboardPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
+  "/home/dashboard": DashboardPage,
   "/web-experiment": WebExperimentation,
+  "/insights/session-recordings": SessionRecordingsPage,
+  "/insights/heatmaps": HeatmapsPage,
+  "/pulse/surveys": SurveysPage,
+  "/feature-management/feature-flags": FeatureFlagsPage,
+  "/feature-management/flag-rollout": FlagRolloutPage,
+  "/feature-management/flag-testing": FlagTestingPage,
+  "/feature-management/flag-multivariate": FlagMultivariatePage,
+  "/feature-management/flag-personalize": FlagPersonalizePage,
+  "/data-360/attributes": AttributesPage,
+  "/data-360/events": EventsPage,
+  "/data-360/segments": SegmentsPage,
+  "/data-360/metrics": MetricsPage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —

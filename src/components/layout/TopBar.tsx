@@ -72,6 +72,11 @@ export default function TopBar() {
   const showHeadings = aiOptions.length > 0 && restOptions.length > 0;
 
   const handleSelect = (option: CreateOption) => {
+    // Route-backed options (e.g. Create with Copilot) navigate to their screen.
+    if (option.route) {
+      navigate(option.route);
+      return;
+    }
     if (!option.campaignType) return; // stub
     const id = createCampaign(option.campaignType);
     navigate(`/web-experiment/c/${id}`);
@@ -96,42 +101,53 @@ export default function TopBar() {
 
       {/* Actions slot — global for now; swap per-page via an outlet/context later. */}
       <div className="flex shrink-0 items-center gap-2">
-        {showsCreate(pathname) && (
-          <DropdownMenu.Root modal={false}>
-            <DropdownMenu.Trigger asChild>
-              <Button
-                type="button"
-                className="h-auto gap-1.5 px-3 py-1.5 shadow-none [&>svg:last-child]:size-3.5"
-              >
-                <Plus className="h-4 w-4" />
-                Create
-                <ChevronDown className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                align="end"
-                sideOffset={6}
-                className="z-50 w-[380px] rounded-xl border border-border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
-              >
-                {/* Options with a campaignType mint a campaign; Copilot + generic fallback stay stubs. */}
-                <CreateSection
-                  heading={showHeadings ? CREATE_GROUP_LABELS.ai : undefined}
-                  options={aiOptions}
-                  onSelect={handleSelect}
-                />
-                {aiOptions.length > 0 && restOptions.length > 0 && (
-                  <DropdownMenu.Separator className="h-px bg-border" />
-                )}
-                <CreateSection
-                  heading={showHeadings ? CREATE_GROUP_LABELS.default : undefined}
-                  options={restOptions}
-                  onSelect={handleSelect}
-                />
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        )}
+        {showsCreate(pathname) &&
+          (createOptions.length === 1 ? (
+            // Single option (e.g. Attributes): Create fires directly — no dropdown.
+            <Button
+              type="button"
+              className="h-auto gap-1.5 px-3 py-1.5 shadow-none"
+              onClick={() => handleSelect(createOptions[0])}
+            >
+              <Plus className="h-4 w-4" />
+              Create
+            </Button>
+          ) : (
+            <DropdownMenu.Root modal={false}>
+              <DropdownMenu.Trigger asChild>
+                <Button
+                  type="button"
+                  className="h-auto gap-1.5 px-3 py-1.5 shadow-none [&>svg:last-child]:size-3.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="end"
+                  sideOffset={6}
+                  className="z-50 w-[380px] rounded-xl border border-border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+                >
+                  {/* Options with a campaignType mint a campaign; Copilot + generic fallback stay stubs. */}
+                  <CreateSection
+                    heading={showHeadings ? CREATE_GROUP_LABELS.ai : undefined}
+                    options={aiOptions}
+                    onSelect={handleSelect}
+                  />
+                  {aiOptions.length > 0 && restOptions.length > 0 && (
+                    <DropdownMenu.Separator className="h-px bg-border" />
+                  )}
+                  <CreateSection
+                    heading={showHeadings ? CREATE_GROUP_LABELS.default : undefined}
+                    options={restOptions}
+                    onSelect={handleSelect}
+                  />
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          ))}
       </div>
     </header>
   );
