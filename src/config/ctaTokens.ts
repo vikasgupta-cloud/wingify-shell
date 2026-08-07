@@ -58,6 +58,18 @@ const CTA_VARS = [
   "--report-brand-fg",
   "--report-brand-tint",
   "--report-link",
+  /* Chart lead follows the custom CTA so dashboard graphs react too. */
+  "--chart-1",
+  "--chart-1-fg",
+  "--chart-info",
+  "--chart-info-bg",
+  "--chart-seq-1",
+  "--chart-seq-2",
+  "--chart-seq-3",
+  "--chart-seq-4",
+  "--chart-seq-5",
+  "--chart-seq-6",
+  "--chart-seq-7",
 ] as const;
 
 function hexLuminance(hex: string): number {
@@ -139,8 +151,108 @@ export function ctaTokenById(id: string): CtaTokenOption | undefined {
 
 /**
  * Map a picked CTA token to primary + surrounding aesthetic roles
- * (ring, selection wash, links, report brand) from the same family.
+ * (ring, selection wash, links, report brand, chart lead) from the same family.
  */
+function chartLeadVars(
+  family: CtaFamily,
+  colorMode: ColorMode,
+  step: string
+): Pick<
+  Record<(typeof CTA_VARS)[number], string>,
+  | "--chart-1"
+  | "--chart-1-fg"
+  | "--chart-info"
+  | "--chart-info-bg"
+  | "--chart-seq-1"
+  | "--chart-seq-2"
+  | "--chart-seq-3"
+  | "--chart-seq-4"
+  | "--chart-seq-5"
+  | "--chart-seq-6"
+  | "--chart-seq-7"
+> {
+  if (family === "midnight") {
+    if (colorMode === "dark") {
+      return {
+        "--chart-1": "var(--vwo-neutral-100)",
+        "--chart-1-fg": "var(--vwo-midnight-base)",
+        "--chart-info": "var(--vwo-neutral-300)",
+        "--chart-info-bg": "var(--vwo-neutral-800)",
+        "--chart-seq-1": "var(--vwo-neutral-900)",
+        "--chart-seq-2": "var(--vwo-neutral-800)",
+        "--chart-seq-3": "var(--vwo-neutral-700)",
+        "--chart-seq-4": "var(--vwo-neutral-600)",
+        "--chart-seq-5": "var(--vwo-neutral-500)",
+        "--chart-seq-6": "var(--vwo-neutral-400)",
+        "--chart-seq-7": "var(--vwo-neutral-300)",
+      };
+    }
+    return {
+      "--chart-1": "var(--vwo-midnight-base)",
+      "--chart-1-fg": "var(--vwo-neutral-0)",
+      "--chart-info": "var(--vwo-neutral-700)",
+      "--chart-info-bg": "var(--vwo-neutral-50)",
+      "--chart-seq-1": "var(--vwo-neutral-100)",
+      "--chart-seq-2": "var(--vwo-neutral-200)",
+      "--chart-seq-3": "var(--vwo-neutral-300)",
+      "--chart-seq-4": "var(--vwo-neutral-400)",
+      "--chart-seq-5": "var(--vwo-neutral-500)",
+      "--chart-seq-6": "var(--vwo-neutral-600)",
+      "--chart-seq-7": "var(--vwo-neutral-800)",
+    };
+  }
+
+  const i = stepIndex(step);
+  // Pale CTA steps (yellow/50) need a darker stroke for SVG charts.
+  const strokeStep =
+    colorMode === "dark"
+      ? i >= 5
+        ? "300"
+        : step === "base"
+          ? "300"
+          : step
+      : i <= 2
+        ? "500"
+        : step;
+
+  // White ink on mid/deep fills; midnight on pale fills (AA for badge labels).
+  const strokeIdx = stepIndex(strokeStep);
+  const chartFg =
+    strokeIdx >= 0 && strokeIdx <= 3
+      ? "var(--vwo-midnight-base)"
+      : "var(--vwo-neutral-0)";
+
+  if (colorMode === "dark") {
+    return {
+      "--chart-1": familyVar(family, strokeStep),
+      "--chart-1-fg": chartFg,
+      "--chart-info": familyVar(family, "300"),
+      "--chart-info-bg": familyVar(family, "900"),
+      "--chart-seq-1": familyVar(family, "900"),
+      "--chart-seq-2": familyVar(family, "800"),
+      "--chart-seq-3": familyVar(family, "700"),
+      "--chart-seq-4": familyVar(family, "600"),
+      "--chart-seq-5": familyVar(family, "500"),
+      "--chart-seq-6": familyVar(family, "400"),
+      "--chart-seq-7": familyVar(family, "300"),
+    };
+  }
+
+  return {
+    "--chart-1": familyVar(family, strokeStep),
+    "--chart-1-fg": chartFg,
+    "--chart-info": familyVar(family, "600"),
+    "--chart-info-bg": familyVar(family, "50"),
+    "--chart-seq-1": familyVar(family, "100"),
+    "--chart-seq-2": familyVar(family, "200"),
+    "--chart-seq-3": familyVar(family, "300"),
+    "--chart-seq-4": familyVar(family, "400"),
+    "--chart-seq-5": familyVar(family, "500"),
+    "--chart-seq-6": familyVar(family, "600"),
+    "--chart-seq-7": familyVar(family, "800"),
+  };
+}
+
 export function aestheticVarsForCta(
   token: CtaTokenOption,
   colorMode: ColorMode
@@ -150,6 +262,7 @@ export function aestheticVarsForCta(
   const fg = lightFg
     ? "var(--vwo-midnight-base)"
     : "var(--vwo-neutral-0)";
+  const charts = chartLeadVars(family, colorMode, step);
 
   if (family === "midnight") {
     if (colorMode === "dark") {
@@ -172,6 +285,7 @@ export function aestheticVarsForCta(
         "--report-brand-fg": "var(--vwo-neutral-800)",
         "--report-brand-tint": "var(--vwo-neutral-900)",
         "--report-link": "var(--vwo-dark-text-link)",
+        ...charts,
       };
     }
     return {
@@ -193,6 +307,7 @@ export function aestheticVarsForCta(
       "--report-brand-fg": "var(--vwo-neutral-800)",
       "--report-brand-tint": "var(--vwo-neutral-50)",
       "--report-link": "var(--vwo-light-text-link)",
+      ...charts,
     };
   }
 
@@ -225,6 +340,7 @@ export function aestheticVarsForCta(
       "--report-brand-fg": familyVar(family, "300"),
       "--report-brand-tint": familyVar(family, "900"),
       "--report-link": familyVar(family, "300"),
+      ...charts,
     };
   }
 
@@ -247,6 +363,7 @@ export function aestheticVarsForCta(
     "--report-brand-fg": familyVar(family, "700"),
     "--report-brand-tint": familyVar(family, "50"),
     "--report-link": familyVar(family, "500"),
+    ...charts,
   };
 }
 

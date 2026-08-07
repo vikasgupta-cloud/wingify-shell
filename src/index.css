@@ -527,6 +527,28 @@
   --chart-19: var(--vwo-green-200);
   --chart-20: var(--vwo-berry-700);
 
+  /* Foreground on solid chart-N fills — AA (≥4.5:1) for badge labels. */
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2-fg: var(--vwo-neutral-0);
+  --chart-3-fg: var(--vwo-neutral-0);
+  --chart-4-fg: var(--vwo-neutral-0);
+  --chart-5-fg: var(--vwo-midnight-base);
+  --chart-6-fg: var(--vwo-midnight-base);
+  --chart-7-fg: var(--vwo-neutral-0);
+  --chart-8-fg: var(--vwo-midnight-base);
+  --chart-9-fg: var(--vwo-midnight-base);
+  --chart-10-fg: var(--vwo-neutral-0);
+  --chart-11-fg: var(--vwo-neutral-0);
+  --chart-12-fg: var(--vwo-midnight-base);
+  --chart-13-fg: var(--vwo-neutral-0);
+  --chart-14-fg: var(--vwo-neutral-0);
+  --chart-15-fg: var(--vwo-neutral-0);
+  --chart-16-fg: var(--vwo-neutral-0);
+  --chart-17-fg: var(--vwo-neutral-0);
+  --chart-18-fg: var(--vwo-midnight-base);
+  --chart-19-fg: var(--vwo-midnight-base);
+  --chart-20-fg: var(--vwo-neutral-0);
+
   --chart-positive: var(--vwo-green-600);
   --chart-positive-bg: var(--vwo-green-50);
   --chart-negative: var(--vwo-cherry-600);
@@ -719,6 +741,28 @@
   --chart-19: var(--vwo-green-400);
   --chart-20: var(--vwo-berry-400);
 
+  /* On dark surfaces: white on mid/deep fills; midnight on pale fills. */
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2-fg: var(--vwo-neutral-0);
+  --chart-3-fg: var(--vwo-midnight-base);
+  --chart-4-fg: var(--vwo-midnight-base);
+  --chart-5-fg: var(--vwo-midnight-base);
+  --chart-6-fg: var(--vwo-midnight-base);
+  --chart-7-fg: var(--vwo-midnight-base);
+  --chart-8-fg: var(--vwo-midnight-base);
+  --chart-9-fg: var(--vwo-midnight-base);
+  --chart-10-fg: var(--vwo-midnight-base);
+  --chart-11-fg: var(--vwo-midnight-base);
+  --chart-12-fg: var(--vwo-midnight-base);
+  --chart-13-fg: var(--vwo-midnight-base);
+  --chart-14-fg: var(--vwo-midnight-base);
+  --chart-15-fg: var(--vwo-neutral-0);
+  --chart-16-fg: var(--vwo-neutral-0);
+  --chart-17-fg: var(--vwo-midnight-base);
+  --chart-18-fg: var(--vwo-midnight-base);
+  --chart-19-fg: var(--vwo-midnight-base);
+  --chart-20-fg: var(--vwo-midnight-base);
+
   --chart-positive: var(--vwo-green-400);
   --chart-positive-bg: var(--vwo-green-900);
   --chart-negative: var(--vwo-cherry-400);
@@ -762,10 +806,12 @@
 
 /* ── Accent × mode — CTA color plus its harmonized surround.
    Each theme tints the roles that sit next to the CTA — focus ring,
-   selection/hover wash, links, deep brand surface, report brand accents —
+   selection/hover wash, links, deep brand surface, report brand accents,
+   AND the chart lead series (chart-1 + sequential ramp + info) —
    from the SAME VWO family, at steps picked for contrast:
      wash = family/100, selected text = family/700, links = family/500→600,
-     ring ≈ the CTA step, deep surface = family/900.
+     ring ≈ the CTA step, deep surface = family/900,
+     chart-1 = a mid/high step that stays readable as a thin SVG stroke.
    Canvas, borders, body text, and the semantic status families stay
    neutral/semantic in every theme. Yellow and Midnight keep the neutral
    wash + ocean links: yellow/100 is too neon for a hover wash, and a
@@ -782,6 +828,26 @@
   --ring: var(--vwo-yellow-300);
   /* Yellow pairs with maroon in the Wingify brand — keep the deep surface. */
   --brand-deep: var(--vwo-maroon-900);
+  /* Chart lead — yellow/50 CTA is too light for strokes; use /500. */
+  --chart-1: var(--vwo-yellow-500);
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2: var(--vwo-ocean-500);
+  --chart-3: var(--vwo-green-400);
+  --chart-4: var(--vwo-berry-500);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-cherry-500);
+  --chart-7: var(--vwo-maroon-400);
+  --chart-8: var(--vwo-neutral-400);
+  --chart-info: var(--vwo-yellow-600);
+  --chart-info-bg: var(--vwo-yellow-50);
+  --chart-highlight: var(--vwo-yellow-50);
+  --chart-seq-1: var(--vwo-yellow-100);
+  --chart-seq-2: var(--vwo-yellow-200);
+  --chart-seq-3: var(--vwo-yellow-300);
+  --chart-seq-4: var(--vwo-yellow-400);
+  --chart-seq-5: var(--vwo-yellow-500);
+  --chart-seq-6: var(--vwo-yellow-600);
+  --chart-seq-7: var(--vwo-yellow-800);
 }
 
 [data-theme="yellow"][data-mode="dark"] {
@@ -792,6 +858,25 @@
   --primary-subtle: var(--vwo-dark-bg-hover);
   --primary-border: var(--primary-active);
   --ring: var(--vwo-yellow-200);
+  --chart-1: var(--vwo-yellow-300);
+  --chart-1-fg: var(--vwo-midnight-base);
+  --chart-2: var(--vwo-ocean-400);
+  --chart-3: var(--vwo-green-300);
+  --chart-4: var(--vwo-berry-300);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-cherry-400);
+  --chart-7: var(--vwo-maroon-300);
+  --chart-8: var(--vwo-neutral-300);
+  --chart-info: var(--vwo-yellow-300);
+  --chart-info-bg: var(--vwo-yellow-900);
+  --chart-highlight: var(--vwo-yellow-50);
+  --chart-seq-1: var(--vwo-yellow-900);
+  --chart-seq-2: var(--vwo-yellow-800);
+  --chart-seq-3: var(--vwo-yellow-700);
+  --chart-seq-4: var(--vwo-yellow-600);
+  --chart-seq-5: var(--vwo-yellow-500);
+  --chart-seq-6: var(--vwo-yellow-400);
+  --chart-seq-7: var(--vwo-yellow-300);
 }
 
 [data-theme="cherry"][data-mode="light"] {
@@ -812,6 +897,24 @@
   --report-brand-fg: var(--vwo-cherry-800);
   --report-brand-tint: var(--vwo-cherry-50);
   --report-link: var(--vwo-cherry-500);
+  --chart-1: var(--vwo-cherry-500);
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2: var(--vwo-ocean-500);
+  --chart-3: var(--vwo-green-400);
+  --chart-4: var(--vwo-berry-500);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-yellow-300);
+  --chart-7: var(--vwo-maroon-400);
+  --chart-8: var(--vwo-neutral-400);
+  --chart-info: var(--vwo-cherry-600);
+  --chart-info-bg: var(--vwo-cherry-50);
+  --chart-seq-1: var(--vwo-cherry-100);
+  --chart-seq-2: var(--vwo-cherry-200);
+  --chart-seq-3: var(--vwo-cherry-300);
+  --chart-seq-4: var(--vwo-cherry-400);
+  --chart-seq-5: var(--vwo-cherry-500);
+  --chart-seq-6: var(--vwo-cherry-600);
+  --chart-seq-7: var(--vwo-cherry-800);
 }
 
 [data-theme="cherry"][data-mode="dark"] {
@@ -829,6 +932,24 @@
   --link: var(--vwo-cherry-300);
   --link-hover: var(--vwo-cherry-200);
   --brand-deep: var(--vwo-cherry-900);
+  --chart-1: var(--vwo-cherry-400);
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2: var(--vwo-ocean-400);
+  --chart-3: var(--vwo-green-300);
+  --chart-4: var(--vwo-berry-300);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-yellow-100);
+  --chart-7: var(--vwo-maroon-300);
+  --chart-8: var(--vwo-neutral-300);
+  --chart-info: var(--vwo-cherry-400);
+  --chart-info-bg: var(--vwo-cherry-900);
+  --chart-seq-1: var(--vwo-cherry-900);
+  --chart-seq-2: var(--vwo-cherry-800);
+  --chart-seq-3: var(--vwo-cherry-700);
+  --chart-seq-4: var(--vwo-cherry-600);
+  --chart-seq-5: var(--vwo-cherry-500);
+  --chart-seq-6: var(--vwo-cherry-400);
+  --chart-seq-7: var(--vwo-cherry-300);
 }
 
 [data-theme="green"][data-mode="light"] {
@@ -850,6 +971,26 @@
   --report-brand-fg: var(--vwo-green-700);
   --report-brand-tint: var(--vwo-green-50);
   --report-link: var(--vwo-green-600);
+  --chart-1: var(--vwo-green-600);
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2: var(--vwo-ocean-500);
+  --chart-3: var(--vwo-amber-300);
+  --chart-4: var(--vwo-berry-500);
+  --chart-5: var(--vwo-yellow-300);
+  --chart-6: var(--vwo-cherry-500);
+  --chart-7: var(--vwo-maroon-400);
+  --chart-8: var(--vwo-neutral-400);
+  --chart-info: var(--vwo-green-700);
+  --chart-info-bg: var(--vwo-green-50);
+  --chart-positive: var(--vwo-green-600);
+  --chart-positive-bg: var(--vwo-green-50);
+  --chart-seq-1: var(--vwo-green-100);
+  --chart-seq-2: var(--vwo-green-200);
+  --chart-seq-3: var(--vwo-green-300);
+  --chart-seq-4: var(--vwo-green-400);
+  --chart-seq-5: var(--vwo-green-500);
+  --chart-seq-6: var(--vwo-green-600);
+  --chart-seq-7: var(--vwo-green-800);
 }
 
 [data-theme="green"][data-mode="dark"] {
@@ -868,6 +1009,26 @@
   --link: var(--vwo-green-300);
   --link-hover: var(--vwo-green-200);
   --brand-deep: var(--vwo-green-900);
+  --chart-1: var(--vwo-green-400);
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2: var(--vwo-ocean-400);
+  --chart-3: var(--vwo-amber-300);
+  --chart-4: var(--vwo-berry-300);
+  --chart-5: var(--vwo-yellow-100);
+  --chart-6: var(--vwo-cherry-400);
+  --chart-7: var(--vwo-maroon-300);
+  --chart-8: var(--vwo-neutral-300);
+  --chart-info: var(--vwo-green-300);
+  --chart-info-bg: var(--vwo-green-900);
+  --chart-positive: var(--vwo-green-400);
+  --chart-positive-bg: var(--vwo-green-900);
+  --chart-seq-1: var(--vwo-green-900);
+  --chart-seq-2: var(--vwo-green-800);
+  --chart-seq-3: var(--vwo-green-700);
+  --chart-seq-4: var(--vwo-green-600);
+  --chart-seq-5: var(--vwo-green-500);
+  --chart-seq-6: var(--vwo-green-400);
+  --chart-seq-7: var(--vwo-green-300);
 }
 
 [data-theme="midnight"][data-mode="light"] {
@@ -883,6 +1044,24 @@
   --report-brand: var(--vwo-neutral-900);
   --report-brand-fg: var(--vwo-neutral-800);
   --report-brand-tint: var(--vwo-neutral-50);
+  --chart-1: var(--vwo-midnight-base);
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2: var(--vwo-ocean-500);
+  --chart-3: var(--vwo-green-400);
+  --chart-4: var(--vwo-berry-500);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-cherry-500);
+  --chart-7: var(--vwo-maroon-400);
+  --chart-8: var(--vwo-neutral-400);
+  --chart-info: var(--vwo-neutral-700);
+  --chart-info-bg: var(--vwo-neutral-50);
+  --chart-seq-1: var(--vwo-neutral-100);
+  --chart-seq-2: var(--vwo-neutral-200);
+  --chart-seq-3: var(--vwo-neutral-300);
+  --chart-seq-4: var(--vwo-neutral-400);
+  --chart-seq-5: var(--vwo-neutral-500);
+  --chart-seq-6: var(--vwo-neutral-600);
+  --chart-seq-7: var(--vwo-neutral-800);
 }
 
 [data-theme="midnight"][data-mode="dark"] {
@@ -894,6 +1073,24 @@
   --primary-border: var(--primary);
   --ring: var(--vwo-neutral-100);
   --brand-deep: var(--vwo-neutral-900);
+  --chart-1: var(--vwo-neutral-100);
+  --chart-1-fg: var(--vwo-midnight-base);
+  --chart-2: var(--vwo-ocean-400);
+  --chart-3: var(--vwo-green-300);
+  --chart-4: var(--vwo-berry-300);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-cherry-400);
+  --chart-7: var(--vwo-maroon-300);
+  --chart-8: var(--vwo-neutral-300);
+  --chart-info: var(--vwo-neutral-300);
+  --chart-info-bg: var(--vwo-neutral-800);
+  --chart-seq-1: var(--vwo-neutral-900);
+  --chart-seq-2: var(--vwo-neutral-800);
+  --chart-seq-3: var(--vwo-neutral-700);
+  --chart-seq-4: var(--vwo-neutral-600);
+  --chart-seq-5: var(--vwo-neutral-500);
+  --chart-seq-6: var(--vwo-neutral-400);
+  --chart-seq-7: var(--vwo-neutral-300);
 }
 
 [data-theme="berry"][data-mode="light"] {
@@ -914,6 +1111,24 @@
   --report-brand-fg: var(--vwo-berry-700);
   --report-brand-tint: var(--vwo-berry-50);
   --report-link: var(--vwo-berry-500);
+  --chart-1: var(--vwo-berry-500);
+  --chart-1-fg: var(--vwo-neutral-0);
+  --chart-2: var(--vwo-ocean-500);
+  --chart-3: var(--vwo-green-400);
+  --chart-4: var(--vwo-amber-300);
+  --chart-5: var(--vwo-yellow-300);
+  --chart-6: var(--vwo-cherry-500);
+  --chart-7: var(--vwo-maroon-400);
+  --chart-8: var(--vwo-neutral-400);
+  --chart-info: var(--vwo-berry-600);
+  --chart-info-bg: var(--vwo-berry-50);
+  --chart-seq-1: var(--vwo-berry-100);
+  --chart-seq-2: var(--vwo-berry-200);
+  --chart-seq-3: var(--vwo-berry-300);
+  --chart-seq-4: var(--vwo-berry-400);
+  --chart-seq-5: var(--vwo-berry-500);
+  --chart-seq-6: var(--vwo-berry-600);
+  --chart-seq-7: var(--vwo-berry-800);
 }
 
 [data-theme="berry"][data-mode="dark"] {
@@ -931,6 +1146,24 @@
   --link: var(--vwo-berry-300);
   --link-hover: var(--vwo-berry-200);
   --brand-deep: var(--vwo-berry-900);
+  --chart-1: var(--vwo-berry-300);
+  --chart-1-fg: var(--vwo-midnight-base);
+  --chart-2: var(--vwo-ocean-400);
+  --chart-3: var(--vwo-green-300);
+  --chart-4: var(--vwo-amber-300);
+  --chart-5: var(--vwo-yellow-100);
+  --chart-6: var(--vwo-cherry-400);
+  --chart-7: var(--vwo-maroon-300);
+  --chart-8: var(--vwo-neutral-300);
+  --chart-info: var(--vwo-berry-300);
+  --chart-info-bg: var(--vwo-berry-900);
+  --chart-seq-1: var(--vwo-berry-900);
+  --chart-seq-2: var(--vwo-berry-800);
+  --chart-seq-3: var(--vwo-berry-700);
+  --chart-seq-4: var(--vwo-berry-600);
+  --chart-seq-5: var(--vwo-berry-500);
+  --chart-seq-6: var(--vwo-berry-400);
+  --chart-seq-7: var(--vwo-berry-300);
 }
 
 

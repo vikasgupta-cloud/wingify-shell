@@ -61,6 +61,7 @@ import {
   CHART,
   chartSeries,
   chartSeriesAlpha,
+  chartSeriesOn,
 } from "@/config/chartTokens";
 
 const WANDZ_CTA_ICONS = {
@@ -255,7 +256,6 @@ export function WandzHero() {
               </Button>
               <Button
                 type="button"
-                variant="secondary"
                 size="icon"
                 className="size-8"
                 aria-label="Send to Wandz"
@@ -545,12 +545,18 @@ export function FunnelReportsCard() {
                 <p className="mb-1 text-[10px] font-medium text-foreground">
                   {step.percent.toFixed(1)}%
                 </p>
+                {/* Funnel steps are one narrowing journey, not independent
+                    categories: hold the series hue and fade it down the path
+                    (same treatment as the Forms card). */}
                 <div className="relative flex h-24 w-full flex-col justify-end overflow-hidden rounded-sm bg-muted">
                   <div
                     className="w-full"
                     style={{
                       height: `${Math.max(step.percent, 0)}%`,
-                      backgroundColor: chartSeries(i),
+                      backgroundColor: chartSeriesAlpha(
+                        0,
+                        Math.max(1 - i * 0.18, 0.4)
+                      ),
                     }}
                   />
                 </div>
@@ -754,8 +760,11 @@ export function PersonalizationCard() {
             <div key={e.id} className="min-w-0 space-y-1">
               <div className="flex items-center gap-1.5">
                 <span
-                  className="inline-flex size-5 items-center justify-center rounded-full text-[10px] font-medium text-primary-foreground"
-                  style={{ backgroundColor: chartSeries(i) }}
+                  className="inline-flex size-5 items-center justify-center rounded-full text-[10px] font-semibold"
+                  style={{
+                    backgroundColor: chartSeries(i),
+                    color: chartSeriesOn(i),
+                  }}
                 >
                   {e.id}
                 </span>

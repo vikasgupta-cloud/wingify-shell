@@ -241,7 +241,7 @@ export default function SessionRecordingsPage() {
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h1 className="w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
+                  <h1 className="font-title w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
                     Session Recordings
                   </h1>
                 </TooltipTrigger>
