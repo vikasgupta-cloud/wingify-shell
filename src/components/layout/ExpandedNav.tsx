@@ -105,8 +105,10 @@ export default function ExpandedNav({
   }, [expanded]);
 
   const closeMore = () => {
+    window.clearTimeout(moreCloseTimer.current);
     setMoreFlyout(null);
     setMoreNested(null);
+    clearMascotPreview();
   };
   const scheduleMoreClose = () => {
     window.clearTimeout(moreCloseTimer.current);
@@ -118,6 +120,7 @@ export default function ExpandedNav({
     if (expanded) return;
     window.clearTimeout(closeTimer.current);
     closeMore();
+    previewMascotFor(item);
     setFlyout(
       item.sections
         ? { path: item.path, top: target.getBoundingClientRect().top }
@@ -126,10 +129,10 @@ export default function ExpandedNav({
   };
   const scheduleClose = () => {
     window.clearTimeout(closeTimer.current);
-    closeTimer.current = window.setTimeout(
-      () => setFlyout(null),
-      FLYOUT_CLOSE_GRACE_MS
-    );
+    closeTimer.current = window.setTimeout(() => {
+      setFlyout(null);
+      clearMascotPreview();
+    }, FLYOUT_CLOSE_GRACE_MS);
   };
   const cancelClose = () => window.clearTimeout(closeTimer.current);
 
@@ -138,6 +141,7 @@ export default function ExpandedNav({
       if (e.key === "Escape") {
         closeMore();
         setFlyout(null);
+        clearMascotPreview();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -145,8 +149,9 @@ export default function ExpandedNav({
       window.removeEventListener("keydown", onKey);
       window.clearTimeout(moreCloseTimer.current);
       window.clearTimeout(closeTimer.current);
+      clearMascotPreview();
     };
-  }, []);
+  }, [setMascotPreview]);
 
   useClampedFlyoutTop(flyoutRef, flyout);
   useClampedFlyoutTop(moreFlyoutRef, moreFlyout);
@@ -229,18 +234,22 @@ export default function ExpandedNav({
             !expanded &&
             "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
         )}
-        onMouseEnter={
-          !expanded && !tooltipOnly
-            ? (e) => openFlyout(item, e.currentTarget)
-            : undefined
-        }
-        onMouseLeave={!expanded && !tooltipOnly ? scheduleClose : undefined}
-        onFocus={
-          !expanded && !tooltipOnly
-            ? (e) => openFlyout(item, e.currentTarget)
-            : undefined
-        }
-        onBlur={!expanded && !tooltipOnly ? scheduleClose : undefined}
+        onMouseEnter={(e) => {
+          previewMascotFor(item);
+          if (!expanded && !tooltipOnly) openFlyout(item, e.currentTarget);
+        }}
+        onMouseLeave={() => {
+          if (!expanded && !tooltipOnly) scheduleClose();
+          else clearMascotPreview();
+        }}
+        onFocus={(e) => {
+          previewMascotFor(item);
+          if (!expanded && !tooltipOnly) openFlyout(item, e.currentTarget);
+        }}
+        onBlur={() => {
+          if (!expanded && !tooltipOnly) scheduleClose();
+          else clearMascotPreview();
+        }}
       >
         <button
           type="button"
@@ -529,7 +538,10 @@ export default function ExpandedNav({
             ref={flyoutRef}
             className="fixed z-40 animate-scale-in pl-1.5 duration-150"
             style={{ left: RAIL_WIDTH, top: flyout.top }}
-            onMouseEnter={cancelClose}
+            onMouseEnter={() => {
+              cancelClose();
+              if (flyoutItem) previewMascotFor(flyoutItem);
+            }}
             onMouseLeave={scheduleClose}
           >
             {flyoutItem.path === "/profile" ? (
@@ -564,10 +576,14 @@ export default function ExpandedNav({
                 return (
                   <div
                     key={item.path}
-                    onMouseEnter={(e) =>
-                      revealMoreNested(item, e.currentTarget)
-                    }
-                    onFocus={(e) => revealMoreNested(item, e.currentTarget)}
+                    onMouseEnter={(e) => {
+                      previewMascotFor(item);
+                      revealMoreNested(item, e.currentTarget);
+                    }}
+                    onFocus={(e) => {
+                      previewMascotFor(item);
+                      revealMoreNested(item, e.currentTarget);
+                    }}
                     className={cn(
                       "flex items-center gap-1 rounded-sm pr-1.5 transition-colors hover:bg-muted",
                       moreNestedItem?.path === item.path && "bg-muted"
