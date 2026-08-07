@@ -75,15 +75,15 @@ export const THEMES: ThemeOption[] = [
   {
     id: "green",
     label: "Green",
-    description: "Green primary buttons (#07C787)",
+    description: "Green Rich primary buttons (#004842)",
     swatchesLight: [
       scales.neutral["0"],
-      scales.green["300"],
+      scales.green["800"],
       scales.neutral["100"],
     ],
     swatchesDark: [
       semantic.dark["bg.canvas"],
-      scales.green["300"],
+      scales.green["800"],
       semantic.dark["bg.surface"],
     ],
   },
@@ -155,24 +155,46 @@ export function applyTheme(themeId: ThemeId, colorMode: ColorMode) {
 export function readStoredTheme(): {
   themeId: ThemeId;
   colorMode: ColorMode;
+  ctaTokenId: string | null;
 } {
   if (typeof localStorage === "undefined") {
-    return { themeId: DEFAULT_THEME_ID, colorMode: DEFAULT_COLOR_MODE };
+    return {
+      themeId: DEFAULT_THEME_ID,
+      colorMode: DEFAULT_COLOR_MODE,
+      ctaTokenId: null,
+    };
   }
   try {
     const raw = localStorage.getItem("wingify-theme");
     if (!raw) {
-      return { themeId: DEFAULT_THEME_ID, colorMode: DEFAULT_COLOR_MODE };
+      return {
+        themeId: DEFAULT_THEME_ID,
+        colorMode: DEFAULT_COLOR_MODE,
+        ctaTokenId: null,
+      };
     }
     const parsed = JSON.parse(raw) as {
-      state?: { themeId?: unknown; colorMode?: unknown };
+      state?: {
+        themeId?: unknown;
+        colorMode?: unknown;
+        ctaTokenId?: unknown;
+      };
     };
+    const cta =
+      typeof parsed?.state?.ctaTokenId === "string"
+        ? parsed.state.ctaTokenId
+        : null;
     return {
       themeId: resolveThemeId(parsed?.state?.themeId),
       colorMode: resolveColorMode(parsed?.state?.colorMode),
+      ctaTokenId: cta,
     };
   } catch {
-    return { themeId: DEFAULT_THEME_ID, colorMode: DEFAULT_COLOR_MODE };
+    return {
+      themeId: DEFAULT_THEME_ID,
+      colorMode: DEFAULT_COLOR_MODE,
+      ctaTokenId: null,
+    };
   }
 }
 

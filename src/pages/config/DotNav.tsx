@@ -159,7 +159,7 @@ export default function DotNav({ id }: { id: string }) {
                     {isActive && (
                       <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 bg-foreground" />
                     )}
-                    <span className="truncate text-left text-foreground">{s.label}</span>
+                    <span className="truncate text-left font-sub-menu text-foreground">{s.label}</span>
                     {s.mandatory &&
                       (complete(s.id) ? (
                         <CheckCircle2 className="h-4 w-4 shrink-0 text-success-fg" />
@@ -180,7 +180,7 @@ export default function DotNav({ id }: { id: string }) {
                       }
                       className="relative flex w-full items-center rounded-md py-1.5 pl-6 pr-2.5 text-xs hover:bg-accent"
                     >
-                      <span className="truncate text-left text-muted-foreground">
+                      <span className="truncate text-left font-sub-menu text-muted-foreground">
                         {sub.label}
                       </span>
                     </button>

@@ -16,7 +16,7 @@ export default function PageHeader({
           aria-hidden
         />
       )}
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+      <h1 className="font-title text-3xl font-semibold tracking-tight text-foreground">
         {title}
       </h1>
     </div>

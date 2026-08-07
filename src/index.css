@@ -3,6 +3,16 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Typography roles — overwritten by applyFonts() from the font playground. */
+    --font-title: "Ergon", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-number: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-cta: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-main-menu: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-sub-menu: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
   html {
     @apply font-sans antialiased;
   }
@@ -13,7 +23,13 @@
   h4,
   h5,
   h6 {
-    @apply font-heading tracking-tight;
+    @apply font-title tracking-tight;
+  }
+
+  /* Metrics / tabular figures pick up the Number role. */
+  .tabular-nums,
+  .font-number {
+    font-family: var(--font-number), ui-sans-serif, system-ui, sans-serif;
   }
 
   /* Clickable controls use the pointer cursor across the app. */
@@ -659,31 +675,31 @@
 }
 
 [data-theme="green"][data-mode="light"] {
-  /* Primary CTA = green/300 #07C787 */
-  --primary: var(--vwo-green-300);
+  /* Primary CTA = green/800 Green Rich #004842 */
+  --primary: var(--vwo-green-800);
   --primary-foreground: var(--vwo-neutral-0);
-  --primary-hover: var(--vwo-green-400);
-  --primary-active: var(--vwo-green-500);
+  --primary-hover: var(--vwo-green-700);
+  --primary-active: var(--vwo-green-900);
   --primary-subtle: var(--vwo-green-100);
-  --ring: var(--vwo-green-400);
+  --ring: var(--vwo-green-800);
   --accent: var(--vwo-green-100);
   --selected-bg: var(--vwo-green-100);
   --selected-fg: var(--vwo-green-700);
-  --link: var(--vwo-green-500);
-  --link-hover: var(--vwo-green-600);
-  --brand-deep: var(--vwo-green-800);
+  --link: var(--vwo-green-600);
+  --link-hover: var(--vwo-green-700);
+  --brand-deep: var(--vwo-green-900);
   --report-brand: var(--vwo-green-800);
   --report-brand-fg: var(--vwo-green-700);
   --report-brand-tint: var(--vwo-green-50);
-  --report-link: var(--vwo-green-500);
+  --report-link: var(--vwo-green-600);
 }
 
 [data-theme="green"][data-mode="dark"] {
-  /* Primary CTA = green/300 #07C787 */
-  --primary: var(--vwo-green-300);
-  --primary-foreground: var(--vwo-midnight-base);
-  --primary-hover: var(--vwo-green-200);
-  --primary-active: var(--vwo-green-400);
+  /* Primary CTA = green/800 Green Rich #004842 */
+  --primary: var(--vwo-green-800);
+  --primary-foreground: var(--vwo-neutral-0);
+  --primary-hover: var(--vwo-green-700);
+  --primary-active: var(--vwo-green-900);
   --primary-subtle: var(--vwo-green-900);
   --ring: var(--vwo-green-300);
   --accent: var(--vwo-green-900);

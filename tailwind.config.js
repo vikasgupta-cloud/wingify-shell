@@ -4,12 +4,41 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Body / UI — Google DM Sans
-        sans: ['"DM Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
-        // Titles — Ergon
-        heading: ['"Ergon"', "ui-sans-serif", "system-ui", "sans-serif"],
-        // Large display / hero — Lyon Display
-        display: ['"Lyon Display"', "Georgia", "Times New Roman", "serif"],
+        // Role stacks — driven by --font-* CSS vars from the font playground.
+        sans: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+        heading: [
+          "var(--font-title)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        display: [
+          "var(--font-title)",
+          "Georgia",
+          "Times New Roman",
+          "serif",
+        ],
+        title: ["var(--font-title)", "ui-sans-serif", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+        number: [
+          "var(--font-number)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        cta: ["var(--font-cta)", "ui-sans-serif", "system-ui", "sans-serif"],
+        "main-menu": [
+          "var(--font-main-menu)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        "sub-menu": [
+          "var(--font-sub-menu)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       colors: {
         background: "hsl(var(--background))",

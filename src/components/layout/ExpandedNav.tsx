@@ -190,7 +190,7 @@ export default function ExpandedNav({
   };
 
   const labelClass = cn(
-    "min-w-0 flex-1 truncate text-left transition-opacity duration-200",
+    "min-w-0 flex-1 truncate text-left font-main-menu transition-opacity duration-200",
     expanded ? "opacity-100" : "pointer-events-none opacity-0"
   );
   const chromeClass = cn(
@@ -366,7 +366,7 @@ export default function ExpandedNav({
               sideOffset={8}
               className={cn(tooltipContentClass, "flex items-center gap-2")}
             >
-              <span>{item.label}</span>
+              <span className="font-main-menu">{item.label}</span>
               {canUnpin(item.path) && (
                 <button
                   type="button"
@@ -392,7 +392,7 @@ export default function ExpandedNav({
               sideOffset={8}
               className={tooltipContentClass}
             >
-              {item.label}
+              <span className="font-main-menu">{item.label}</span>
             </Tooltip.Content>
           </Tooltip.Portal>
         </Tooltip.Root>
@@ -600,7 +600,7 @@ export default function ExpandedNav({
                       className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left outline-none"
                     >
                       <Icon className="h-4 w-4 shrink-0 text-foreground" />
-                      <span className="flex-1 truncate">{item.label}</span>
+                      <span className="flex-1 truncate font-main-menu">{item.label}</span>
                     </button>
                     <Tooltip.Root>
                       <Tooltip.Trigger asChild>
