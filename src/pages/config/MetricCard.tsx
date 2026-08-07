@@ -65,7 +65,7 @@ function CodeBlock({ code }: { code: string }) {
   const lines = code.split("\n");
   return (
     <div className="mt-3 flex overflow-x-auto rounded-md border border-border bg-muted/50">
-      <div className="select-none border-r border-border px-3 py-2 text-right text-xs tabular-nums text-muted-foreground/60">
+      <div className="select-none border-r border-border px-3 py-2 text-right text-xs tabular-nums text-muted-foreground">
         {lines.map((_, i) => (
           <div key={i}>{i + 1}</div>
         ))}

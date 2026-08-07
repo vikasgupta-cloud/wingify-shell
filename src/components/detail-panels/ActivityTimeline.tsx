@@ -138,7 +138,7 @@ function Composer({
           rows={compact ? 2 : 3}
           className={cn(
             "resize-none border-border bg-background shadow-none",
-            "placeholder:text-muted-foreground/80",
+            "placeholder:text-muted-foreground",
             "focus-visible:ring-1 focus-visible:ring-foreground/20"
           )}
         />

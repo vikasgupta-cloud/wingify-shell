@@ -234,9 +234,10 @@
   --vwo-light-bg-selected: 40 22.4% 86.9%;
   --vwo-light-bg-disabled: 40 33.3% 94.7%;
   --vwo-light-text-primary: 45 17.4% 9%;
-  --vwo-light-text-secondary: 45 6.7% 34.9%;
-  --vwo-light-text-tertiary: 43 6.1% 44.7%;
-  --vwo-light-text-placeholder: 43 6.1% 44.7%;
+  /* Secondary/muted bumped to neutral-700 for WCAG AA on canvas/muted fills. */
+  --vwo-light-text-secondary: 49 7.5% 28.8%;  /* neutral/700 #4F4D44 */
+  --vwo-light-text-tertiary: 45 6.7% 34.9%;   /* neutral/600 #5F5C53 */
+  --vwo-light-text-placeholder: 45 6.7% 34.9%; /* neutral/600 #5F5C53 */
   --vwo-light-text-disabled: 41 7.2% 56.5%;
   --vwo-light-text-inverse: 0 0% 100%;
   --vwo-light-text-link: 225 58.7% 47.5%;
@@ -255,7 +256,7 @@
   --vwo-light-action-secondary-border: 42 9.9% 66.5%;
   --vwo-light-action-secondary-text: 45 17.4% 9%;
   --vwo-light-action-subtle-bg-hover: 40 33.3% 94.7%;
-  --vwo-light-action-subtle-text: 45 6.7% 34.9%;
+  --vwo-light-action-subtle-text: 49 7.5% 28.8%; /* matches text.secondary */
   --vwo-light-action-destructive-bg: 11 100% 35.9%;
   --vwo-light-action-destructive-bg-hover: 10 100% 29.6%;
   --vwo-light-action-destructive-text: 0 0% 100%;
@@ -309,9 +310,10 @@
   --vwo-dark-bg-selected: 42 9.1% 21.6%;
   --vwo-dark-bg-disabled: 42 9.1% 21.6%;
   --vwo-dark-text-primary: 40 33.3% 94.7%;
-  --vwo-dark-text-secondary: 42 9.9% 66.5%;
-  --vwo-dark-text-tertiary: 41 7.2% 56.5%;
-  --vwo-dark-text-placeholder: 41 7.2% 56.5%;
+  /* Secondary brightened to neutral-200 so muted UI text clears AA on raised surfaces. */
+  --vwo-dark-text-secondary: 41 18.2% 82.7%; /* neutral/200 #DBD6CB */
+  --vwo-dark-text-tertiary: 42 9.9% 66.5%;   /* neutral/300 #B2ADA1 */
+  --vwo-dark-text-placeholder: 42 9.9% 66.5%; /* neutral/300 #B2ADA1 */
   --vwo-dark-text-disabled: 45 6.7% 34.9%;
   --vwo-dark-text-inverse: 45 17.4% 9%;
   --vwo-dark-text-link: 212 100% 78.4%;
@@ -330,7 +332,7 @@
   --vwo-dark-action-secondary-border: 45 6.7% 34.9%;
   --vwo-dark-action-secondary-text: 40 33.3% 94.7%;
   --vwo-dark-action-subtle-bg-hover: 42 9.1% 21.6%;
-  --vwo-dark-action-subtle-text: 42 9.9% 66.5%;
+  --vwo-dark-action-subtle-text: 41 18.2% 82.7%; /* matches text.secondary */
   --vwo-dark-action-destructive-bg: 12 98.2% 43.9%;
   --vwo-dark-action-destructive-bg-hover: 11 100% 35.9%;
   --vwo-dark-action-destructive-text: 0 0% 100%;
@@ -394,7 +396,7 @@
   --secondary-hover: var(--vwo-light-bg-active);
 
   --muted: var(--vwo-light-bg-canvas);
-  --muted-foreground: var(--vwo-neutral-600);
+  --muted-foreground: var(--vwo-light-text-secondary);
   --canvas: var(--vwo-light-bg-canvas);
   --surface: var(--vwo-light-bg-canvas);
   --surface-border: var(--vwo-light-border-subtle);
@@ -411,7 +413,7 @@
   --brand-deep: var(--vwo-light-accent-emphasis);
 
   --border: var(--vwo-light-border-subtle);
-  --input: var(--vwo-light-border-default);
+  --input: var(--vwo-light-border-control);
   --ring: var(--vwo-light-border-focus);
   --radius: 0.625rem;
 
@@ -440,8 +442,9 @@
   --status-paused-fg: var(--vwo-cherry-500);
   --status-ended-bg: var(--vwo-light-bg-surface-sunken);
   --status-ended-fg: var(--vwo-light-text-secondary);
-  --vitals-healthy: var(--vwo-green-300);
-  --vitals-unhealthy: var(--vwo-cherry-500);
+  /* Vitals — mode-aware colors that clear WCAG 1.4.11 (3:1) on canvas/surface. */
+  --vitals-healthy: var(--vwo-green-600);
+  --vitals-unhealthy: var(--vwo-cherry-600);
 
   --decision-winner-fg: var(--vwo-green-800);
   --decision-baseline-fg: var(--vwo-cherry-500);
@@ -512,7 +515,7 @@
   --secondary-foreground: var(--vwo-midnight-base);
   --secondary-hover: var(--vwo-light-bg-active);
   --muted: var(--vwo-light-bg-canvas);
-  --muted-foreground: var(--vwo-neutral-600);
+  --muted-foreground: var(--vwo-light-text-secondary);
   --canvas: var(--vwo-light-bg-canvas);
   --surface: var(--vwo-light-bg-canvas);
   --surface-border: var(--vwo-light-border-subtle);
@@ -521,7 +524,7 @@
   --selected-bg: var(--vwo-light-bg-selected);
   --selected-fg: var(--vwo-midnight-base);
   --border: var(--vwo-light-border-subtle);
-  --input: var(--vwo-light-border-default);
+  --input: var(--vwo-light-border-control);
   --ring: var(--vwo-light-border-focus);
   --link: var(--vwo-light-text-link);
   --link-hover: var(--vwo-light-text-link-hover);
@@ -551,6 +554,8 @@
   --status-ready-bg: var(--vwo-light-bg-surface-sunken);
   --status-ended-bg: var(--vwo-light-bg-surface-sunken);
   --report-track: var(--vwo-neutral-100);
+  --vitals-healthy: var(--vwo-green-600);
+  --vitals-unhealthy: var(--vwo-cherry-600);
 }
 
 [data-mode="dark"] {
@@ -605,6 +610,8 @@
   --status-ready-bg: var(--vwo-dark-bg-hover);
   --status-ended-bg: var(--vwo-dark-bg-hover);
   --report-track: var(--vwo-dark-border-default);
+  --vitals-healthy: var(--vwo-green-300);
+  --vitals-unhealthy: var(--vwo-cherry-400);
 }
 
 /* ── Accent × mode — CTA color plus its harmonized surround.

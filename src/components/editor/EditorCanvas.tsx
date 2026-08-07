@@ -584,7 +584,7 @@ export function EditorCanvas({
               className="h-6 w-14 border-0 bg-transparent px-1.5 text-xs shadow-none focus-visible:ring-0"
               aria-label="Width"
             />
-            <span className="text-muted-foreground/70">×</span>
+            <span className="text-muted-foreground">×</span>
             <Input
               value={typeof frameH === "number" ? String(frameH) : ""}
               onChange={(e) => {
@@ -771,7 +771,7 @@ export function EditorCanvas({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-7 rounded-full text-muted-foreground/50"
+                    className="size-7 rounded-full text-muted-foreground"
                     aria-label="Move (coming soon)"
                     disabled
                   >
@@ -781,7 +781,7 @@ export function EditorCanvas({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-7 rounded-full text-muted-foreground/50"
+                    className="size-7 rounded-full text-muted-foreground"
                     aria-label="Link (coming soon)"
                     disabled
                   >
@@ -791,7 +791,7 @@ export function EditorCanvas({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-7 rounded-full text-muted-foreground/50"
+                    className="size-7 rounded-full text-muted-foreground"
                     aria-label="More (coming soon)"
                     disabled
                   >

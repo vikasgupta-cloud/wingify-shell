@@ -520,11 +520,14 @@ export default function GanttChart() {
   };
   const sortIcon =
     sort?.column !== "name" ? (
-      <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-60" />
+      <ChevronsUpDown
+        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
     ) : sort.dir === "asc" ? (
-      <ChevronUp className="h-3 w-3 shrink-0" />
+      <ChevronUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
     ) : (
-      <ChevronDown className="h-3 w-3 shrink-0" />
+      <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
     );
 
   const toggleGroup = (key: string) =>
@@ -572,10 +575,7 @@ export default function GanttChart() {
               <button
                 type="button"
                 onClick={cycleSort}
-                className={cn(
-                  "inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground",
-                  sort?.column === "name" && "text-foreground"
-                )}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-foreground"
               >
                 Campaign name
                 {sortIcon}

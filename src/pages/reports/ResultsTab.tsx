@@ -334,7 +334,7 @@ const resultsMetricColChrome = cn(
 );
 
 const resultsTableHeaderLabelClass =
-  "text-xs font-medium leading-none text-muted-foreground";
+  "text-sm font-medium leading-none text-foreground";
 
 const resultsTableSubheadClass =
   "text-[11px] leading-snug text-muted-foreground tabular-nums";
