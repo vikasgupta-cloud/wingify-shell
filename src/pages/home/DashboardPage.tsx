@@ -4,7 +4,6 @@
 import { useLocation } from "react-router-dom";
 import PageHeader from "@/components/layout/PageHeader";
 import { iconForPath, pageLabel } from "@/lib/nav";
-import { DASHBOARD_USER_NAME } from "@/data/dashboard";
 import {
   ActiveTestsCard,
   FormsCard,
@@ -29,7 +28,6 @@ export default function DashboardPage() {
       <PageHeader
         title={pageLabel(pathname)}
         icon={iconForPath(pathname)}
-        description={`Hi ${DASHBOARD_USER_NAME}. Here's an overview of all your experiments on your journey.`}
       />
 
       <div className="mt-8 space-y-8 px-12">

@@ -1,6 +1,7 @@
 // Static dashboard card presentational components.
 // Layout mirrors product screenshots 1:1; token-only styling for theming later.
 // Nothing functional except Wandz hero → existing chat store.
+// Heatmaps list uses row dividers; session rows show country flags (not initials).
 
 import { useState } from "react";
 import {
@@ -137,6 +138,13 @@ function Pager({ pages, active }: { pages: number; active: number }) {
       </button>
     </div>
   );
+}
+
+/** ISO alpha-2 → regional-indicator flag emoji (dummy UI, no external assets). */
+function countryFlagEmoji(code: string) {
+  return code
+    .toUpperCase()
+    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
 }
 
 function CardShell({
@@ -764,12 +772,12 @@ export function TotalExperiencesCard() {
 export function HeatmapsCard() {
   return (
     <CardShell title="Heatmaps for most clicked pages">
-      <ul>
+      <ul className="divide-y divide-border border-t border-border">
         {HEATMAP_PAGES.map((p) => (
           <li key={p.id}>
             <button
               type="button"
-              className="flex w-full items-center gap-2.5 rounded-md px-2 py-2.5 text-left hover:bg-muted"
+              className="flex w-full items-center gap-2.5 px-2 py-2.5 text-left hover:bg-muted"
             >
               <Flame className="size-3.5 shrink-0 text-muted-foreground" />
               <span className="truncate font-mono text-xs text-foreground">
@@ -802,8 +810,12 @@ export function SessionRecordingsCard() {
             key={s.id}
             className="flex items-center gap-3 py-3 text-sm"
           >
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-foreground">
-              {s.countryCode}
+            <span
+              className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-base leading-none"
+              aria-label={s.countryCode}
+              title={s.countryCode}
+            >
+              {countryFlagEmoji(s.countryCode)}
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-foreground">{s.location}</p>
