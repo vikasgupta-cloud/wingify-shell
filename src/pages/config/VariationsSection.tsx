@@ -785,8 +785,8 @@ function VariationsTable({ campaignId }: { campaignId: string }) {
       <div className="overflow-x-auto">
         {/* Header band — each column's label, with the split-mode and editor selects
             docked directly beneath their own column labels. */}
-        <div className={cn(gridClass, "border-y border-border bg-muted")}>
-          <div className="sticky left-0 z-10 flex min-w-0 items-start overflow-hidden bg-muted pl-6 py-3">
+        <div className={cn(gridClass, "border-y border-border bg-background")}>
+          <div className="sticky left-0 z-10 flex min-w-0 items-start overflow-hidden bg-background pl-6 py-3">
             <span className="truncate text-sm font-medium text-foreground">Variations</span>
           </div>
           <div className="flex min-w-0 flex-col gap-1.5 py-3">
@@ -835,7 +835,7 @@ function VariationsTable({ campaignId }: { campaignId: string }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="sticky right-0 z-10 flex items-start justify-end bg-muted pr-4 py-3">
+          <div className="sticky right-0 z-10 flex items-start justify-end bg-background pr-4 py-3">
             <TooltipProvider delayDuration={150}>
               <DropdownMenu>
                 <Tooltip>
@@ -914,11 +914,11 @@ function VariationsTable({ campaignId }: { campaignId: string }) {
 
       {/* Footer: add-variation split button. */}
       <div className="flex items-center border-t border-border px-6 py-3">
-        <div className="inline-flex">
+        <div className="inline-flex items-stretch">
           <Button
             type="button"
             size="sm"
-            className="rounded-r-none"
+            className="relative rounded-r-none border-r-0 shadow-none focus-visible:z-10"
             onClick={addEditor}
           >
             <PlusCircle />
@@ -928,11 +928,11 @@ function VariationsTable({ campaignId }: { campaignId: string }) {
             <DropdownMenuTrigger asChild>
               <Button
                 type="button"
-                size="icon"
+                size="sm"
                 aria-label="Add variation options"
-                className="h-8 w-8 rounded-l-none border-l border-background/20"
+                className="relative h-8 rounded-l-none border-l border-l-primary-foreground/25 px-1.5 shadow-none focus-visible:z-10"
               >
-                <ChevronDown />
+                <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-72">

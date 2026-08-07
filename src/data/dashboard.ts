@@ -43,8 +43,6 @@ export const METRIC_REPORT_RANGE = ["Last 7 days", "Last 30 days"] as const;
 
 export const METRIC_REPORTS = {
   count: 69,
-  chartLabel: "Unique Visitors",
-  chartPoints: [0, 0, 0, 0, 0, 0, 0],
   dayLabels: ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"],
   dateStart: "Aug 01",
   dateEnd: "Aug 07",
@@ -52,26 +50,56 @@ export const METRIC_REPORTS = {
     {
       id: "MR2312",
       name: "Metric RD Form Success - Campaign Heatmap…",
+      chartLabel: "Unique Visitors",
+      chartPoints: {
+        "Last 7 days": [42, 38, 55, 48, 72, 68, 81],
+        "Last 30 days": [28, 35, 41, 39, 52, 61, 74],
+      },
     },
     {
       id: "MR2311",
       name: "Metric Free Trial Modal Click - Get Started",
+      chartLabel: "Clicks",
+      chartPoints: {
+        "Last 7 days": [18, 22, 19, 31, 27, 35, 29],
+        "Last 30 days": [12, 16, 21, 18, 24, 30, 26],
+      },
     },
     {
       id: "MR2310",
       name: "Metric Request Demo Form Success",
+      chartLabel: "Submissions",
+      chartPoints: {
+        "Last 7 days": [6, 9, 7, 11, 8, 14, 12],
+        "Last 30 days": [4, 5, 8, 6, 9, 11, 10],
+      },
     },
     {
       id: "MR2309",
       name: "Pricing CTA Click Rate",
+      chartLabel: "Click Rate %",
+      chartPoints: {
+        "Last 7 days": [3.2, 2.8, 4.1, 3.6, 5.0, 4.4, 4.8],
+        "Last 30 days": [2.1, 2.5, 3.0, 2.8, 3.4, 3.9, 4.2],
+      },
     },
     {
       id: "MR2308",
       name: "Checkout Complete Unique Visitors",
+      chartLabel: "Unique Visitors",
+      chartPoints: {
+        "Last 7 days": [55, 61, 48, 70, 66, 78, 84],
+        "Last 30 days": [40, 45, 52, 49, 58, 65, 71],
+      },
     },
     {
       id: "MR2307",
       name: "Homepage Hero Engagement",
+      chartLabel: "Engagements",
+      chartPoints: {
+        "Last 7 days": [120, 98, 145, 132, 160, 151, 172],
+        "Last 30 days": [88, 102, 110, 95, 125, 140, 155],
+      },
     },
   ],
   pages: 10,

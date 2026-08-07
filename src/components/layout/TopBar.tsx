@@ -19,7 +19,7 @@ function CreateItem({ option, onSelect }: { option: CreateOption; onSelect: () =
   return (
     <DropdownMenu.Item
       onSelect={onSelect}
-      className="flex cursor-pointer items-start gap-3 rounded-md p-2 outline-none hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
+      className="flex cursor-pointer items-start gap-3 rounded-md p-2 outline-none hover:bg-muted focus:bg-muted data-[highlighted]:bg-muted"
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-foreground">
         <Icon className="h-[18px] w-[18px]" size={18} aria-hidden />
@@ -83,7 +83,7 @@ export default function TopBar() {
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
+    <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background/95 px-4 backdrop-blur-sm">
       <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"

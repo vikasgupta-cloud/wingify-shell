@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const MIN_WIDTH = 240;
-const MAX_WIDTH = 560;
+const MAX_WIDTH = 640;
 const DEFAULT_WIDTH = 300;
 const STEP = 40;
 
@@ -24,12 +24,18 @@ export function EditorLeftOverlay({
   children,
   className,
   side = "left",
+  defaultWidth = DEFAULT_WIDTH,
+  onWidthChange,
 }: {
   children: ReactNode;
   className?: string;
   side?: "left" | "right";
+  defaultWidth?: number;
+  onWidthChange?: (width: number) => void;
 }) {
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
+  const [width, setWidth] = useState(() =>
+    Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(defaultWidth)))
+  );
   const dragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -41,6 +47,15 @@ export function EditorLeftOverlay({
   const clamp = useCallback(
     (w: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(w))),
     []
+  );
+
+  const commitWidth = useCallback(
+    (w: number) => {
+      const next = clamp(w);
+      setWidth(next);
+      onWidthChange?.(next);
+    },
+    [clamp, onWidthChange]
   );
 
   const onHandlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -59,7 +74,7 @@ export function EditorLeftOverlay({
     if (!drag || drag.pointerId !== e.pointerId) return;
     const delta = e.clientX - drag.startX;
     // Left panel grows to the right; right panel grows to the left.
-    setWidth(clamp(drag.originW + (isRight ? -delta : delta)));
+    commitWidth(drag.originW + (isRight ? -delta : delta));
   };
 
   const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -116,10 +131,10 @@ export function EditorLeftOverlay({
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") {
             e.preventDefault();
-            setWidth((w) => clamp(w + (isRight ? STEP : -STEP)));
+            commitWidth(width + (isRight ? STEP : -STEP));
           } else if (e.key === "ArrowRight") {
             e.preventDefault();
-            setWidth((w) => clamp(w + (isRight ? -STEP : STEP)));
+            commitWidth(width + (isRight ? -STEP : STEP));
           }
         }}
         className={cn(

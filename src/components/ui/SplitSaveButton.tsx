@@ -40,7 +40,7 @@ export default function SplitSaveButton({
         type="button"
         size={size}
         onClick={onSaveExisting}
-        className="rounded-r-none border-r border-primary-foreground/20 shadow-none"
+        className="relative rounded-r-none border-r-0 shadow-none focus-visible:z-10"
       >
         {label}
       </Button>
@@ -51,8 +51,9 @@ export default function SplitSaveButton({
             size={size}
             aria-label={`${label} options`}
             className={cn(
-              "rounded-l-none px-2 shadow-none",
-              size === "sm" && "px-1.5"
+              // Same outer border as the left half; only the shared edge is lighter.
+              "relative rounded-l-none border-l border-l-primary-foreground/25 shadow-none focus-visible:z-10",
+              size === "sm" ? "px-1.5" : "px-2"
             )}
           >
             <ChevronDown className="h-3.5 w-3.5" />

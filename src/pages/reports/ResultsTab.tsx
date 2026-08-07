@@ -77,6 +77,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import {
+  CHART,
+  chartSeries,
+  chartSeriesAlpha,
+} from "@/config/chartTokens";
 import learningIcon from "@/assets/icons/learning.png";
 import {
   REPORT_DIMENSION_OPTIONS,
@@ -240,9 +245,8 @@ function buildResultsGrid(columns: ResultsTableColumnId[], grouped = false) {
   } as const;
 }
 
-/** Opaque sticky header fill — matches muted/50 over white without letting scroll content bleed through. */
-const STICKY_HEADER_BG =
-  "bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]";
+/** Opaque sticky header fill — surface white so headers don’t merge with canvas. */
+const STICKY_HEADER_BG = "bg-background";
 
 function stickyGroupCellClass(showEdgeShadow: boolean) {
   return cn(
@@ -334,7 +338,7 @@ const resultsMetricColChrome = cn(
 );
 
 const resultsTableHeaderLabelClass =
-  "text-xs font-medium leading-none text-muted-foreground";
+  "text-sm font-medium leading-none text-foreground";
 
 const resultsTableSubheadClass =
   "text-[11px] leading-snug text-muted-foreground tabular-nums";
@@ -1037,7 +1041,7 @@ function ConclusionBanner({
   return (
     <div
       className={cn(
-        "flex items-start gap-4 overflow-hidden bg-gradient-to-r from-report-green-badge/70 via-report-green-tint to-report-green-tint px-6 py-3.5",
+        "flex items-start gap-4 overflow-hidden bg-report-green-tint px-6 py-3.5",
         embedded
           ? "border-0"
           : "rounded-xl border border-report-green-border shadow-sm"
@@ -2697,11 +2701,11 @@ function TableHeader({
   } as const;
 
   const titleCellClass = cn(
-    "flex items-center gap-1.5 overflow-hidden bg-muted/50 pb-1.5 pt-3",
+    "flex items-center gap-1.5 overflow-hidden bg-background pb-1.5 pt-3",
     resultsMetricColChrome
   );
   const subheadCellClass = cn(
-    "flex items-start overflow-hidden bg-muted/50 pb-3 pt-1",
+    "flex items-start overflow-hidden bg-background pb-3 pt-1",
     resultsMetricColChrome
   );
 
@@ -2712,7 +2716,7 @@ function TableHeader({
 
   return (
     <div
-      className="grid items-stretch border-b border-border bg-muted/50"
+      className="grid items-stretch border-b border-border bg-background"
       style={gridStyle}
     >
       {/* Title row — shared baseline across columns */}
@@ -2861,7 +2865,7 @@ function TableHeader({
             <div
               key={`sub-${id}`}
               className={cn(
-                "flex flex-col items-start gap-0.5 overflow-visible bg-muted/50 pb-1 pt-1",
+                "flex flex-col items-start gap-0.5 overflow-visible bg-background pb-1 pt-1",
                 resultsMetricColChrome
               )}
             >
@@ -4040,15 +4044,15 @@ const CHART_PLOT_W = 100;
 const CHART_MARKER_X = 62;
 
 const CHART_STROKE: Record<Exclude<BadgeTone, "total">, string> = {
-  ctrl: "hsl(var(--muted-foreground))",
-  v1: "hsl(var(--foreground) / 0.45)",
-  v2: "hsl(var(--foreground))",
+  ctrl: chartSeries(0),
+  v1: chartSeries(1),
+  v2: chartSeries(2),
 };
 
 const CHART_RANGE_FILL: Record<Exclude<BadgeTone, "total">, string> = {
-  ctrl: "hsl(var(--muted-foreground) / 0.18)",
-  v1: "hsl(var(--foreground) / 0.1)",
-  v2: "hsl(var(--foreground) / 0.14)",
+  ctrl: chartSeriesAlpha(0, 0.18),
+  v1: chartSeriesAlpha(1, 0.14),
+  v2: chartSeriesAlpha(2, 0.14),
 };
 
 function chartY(value: number, yMin: number, yMax: number): number {
@@ -4283,7 +4287,7 @@ function DateRangeLineChart({
             x2={CHART_MARKER_X}
             y1={0}
             y2={CHART_PLOT_H}
-            stroke="hsl(var(--border))"
+            stroke={CHART.gridStrong}
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"
             strokeDasharray="4 4"
@@ -4386,8 +4390,8 @@ const DENSITY_PLOT_W = 100;
 const DENSITY_PLOT_H = 200;
 
 const DENSITY_STROKE = {
-  ctrl: "hsl(var(--muted-foreground))",
-  v1: "hsl(var(--foreground) / 0.55)",
+  ctrl: chartSeries(0),
+  v1: chartSeries(1),
 } as const;
 
 function UnderstandGraphLink() {
@@ -5677,7 +5681,7 @@ function MetricLabel({ name, isPrimary }: { name: string; isPrimary: boolean }) 
 function CompareTableHeader() {
   return (
     <div
-      className="grid items-stretch border-b border-border bg-muted/50"
+      className="grid items-stretch border-b border-border bg-background"
       style={{ ...COMPARE_GRID, gridTemplateRows: "auto auto" }}
     >
       {/* Title row */}

@@ -356,7 +356,7 @@ export default function QaAssistant({ id }: { id: string }) {
         </div>
 
         <div className="mt-3 overflow-hidden rounded-lg border border-border">
-          <div className="grid grid-cols-4 gap-4 bg-muted px-4 py-2 text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-4 gap-4 bg-background px-4 py-2 text-xs font-medium text-muted-foreground">
             <span>Web page</span>
             <span>Run time</span>
             <span className="flex items-center gap-1">

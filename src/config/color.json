@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "source": "vwo-colour-tokens.figma.json"
+  },
+  "primary": {
+    "yellow": "#EEFF6D",
+    "blue": "#91C5FF",
+    "maroon": "#410D23"
+  },
+  "neutrals": {
+    "white": "#FFFFFF",
+    "grey": "#F6F3ED",
+    "feather": "#E5E0D6",
+    "dusk": "#B2ADA1",
+    "twilight": "#5F5C53",
+    "midnight": "#1E2022"
+  },
+  "families": {
+    "green": {
+      "rich": "#004842",
+      "bright": "#07C787",
+      "tint": "#D8E9E8"
+    },
+    "cherry": {
+      "rich": "#DE2D02",
+      "bright": "#FF6038",
+      "tint": "#F4E4E4"
+    },
+    "berry": {
+      "rich": "#CB37A4",
+      "bright": "#F87FD8",
+      "tint": "#F4E4F3"
+    },
+    "ocean": {
+      "rich": "#0E1D4A",
+      "bright": "#406BED",
+      "tint": "#D3E8FF"
+    }
+  }
+}

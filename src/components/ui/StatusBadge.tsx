@@ -7,7 +7,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import vitalsIcon from "@/assets/icons/vitals.png";
 
 // The only place (with VitalsIcon below) that uses the colored status tokens.
 const STATUS_CLASSES: Record<CampaignStatus, string> = {
@@ -44,7 +43,8 @@ export default function StatusBadge({
 }
 
 /**
- * Heart + pulse vitals glyph. Color via currentColor (text-vitals-* / text-foreground).
+ * Heart + pulse vitals glyph (inline SVG). Color via currentColor
+ * (`text-vitals-healthy` / `text-vitals-unhealthy` / `text-foreground`).
  */
 export function VitalsGlyph({
   className,
@@ -56,25 +56,32 @@ export function VitalsGlyph({
   title?: string;
 }) {
   return (
-    <span
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn("shrink-0", className)}
       role={title ? "img" : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}
-      title={title}
-      className={cn("inline-block shrink-0 bg-current", className)}
-      style={{
-        width: size,
-        height: size,
-        maskImage: `url(${vitalsIcon})`,
-        WebkitMaskImage: `url(${vitalsIcon})`,
-        maskSize: "contain",
-        WebkitMaskSize: "contain",
-        maskRepeat: "no-repeat",
-        WebkitMaskRepeat: "no-repeat",
-        maskPosition: "center",
-        WebkitMaskPosition: "center",
-      }}
-    />
+    >
+      {title ? <title>{title}</title> : null}
+      <path
+        d="M19.5 12.572 12 20 4.5 12.572a5 5 0 1 1 7.5-6.966 5 5 0 1 1 7.5 6.966Z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7.25 12.25h2.1l1.35-2.75 2.1 5.5 1.35-2.75h2.6"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -94,7 +101,9 @@ export function VitalsIcon({ campaign }: { campaign: Campaign }) {
             <VitalsGlyph
               size={16}
               className={cn(
-                vitals === "healthy" ? "text-vitals-healthy" : "text-vitals-unhealthy"
+                vitals === "healthy"
+                  ? "text-vitals-healthy"
+                  : "text-vitals-unhealthy"
               )}
             />
           </span>

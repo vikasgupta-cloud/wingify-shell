@@ -82,7 +82,7 @@ export default function KanbanBoard() {
               dragging && isValid && "ring-2 ring-foreground/20"
             )}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-border bg-muted px-3 py-2">
+            <div className="flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-2">
               {isStatus ? (
                 <StatusBadge status={key as CampaignStatus} />
               ) : (

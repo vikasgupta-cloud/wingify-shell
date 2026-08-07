@@ -11,6 +11,8 @@ const PRESETS = [
   { title: "Winter Sale Banner", category: "Promotion" },
   { title: "Tooltip", category: "Conversion" },
   { title: "Sticky Bar", category: "Engagement" },
+  { title: "Countdown Timer", category: "Urgency" },
+  { title: "Social Proof", category: "Trust" },
 ];
 
 const CUSTOM = [
@@ -26,30 +28,62 @@ const TEMPLATES = [
 function WidgetCard({
   title,
   category,
+  compact,
 }: {
   title: string;
   category: string;
+  compact?: boolean;
 }) {
   return (
     <button
       type="button"
-      className="flex flex-col gap-2 rounded-lg border border-border bg-background p-3 text-left outline-none transition-colors hover:bg-muted"
+      title={title}
+      className={cn(
+        "flex min-w-0 flex-col text-left outline-none transition-colors hover:bg-muted",
+        "rounded-lg border border-border bg-background",
+        compact ? "gap-1.5 p-2" : "gap-2 p-3"
+      )}
     >
-      <span className="flex h-16 items-center justify-center rounded-md bg-muted">
-        <Plus className="size-5 text-muted-foreground" strokeWidth={1.5} />
+      <span
+        className={cn(
+          "flex items-center justify-center rounded-md bg-muted",
+          compact ? "h-12" : "h-20"
+        )}
+      >
+        <Plus
+          className={cn(
+            "text-muted-foreground",
+            compact ? "size-4" : "size-5"
+          )}
+          strokeWidth={1.5}
+        />
       </span>
-      <span className="truncate text-xs font-semibold text-foreground">
+      <span
+        className={cn(
+          "font-semibold text-foreground",
+          compact
+            ? "line-clamp-2 text-[11px] leading-snug"
+            : "truncate text-xs"
+        )}
+      >
         {title}
       </span>
-      <span className="text-[10px] font-medium text-muted-foreground">
+      <span className="truncate text-[10px] font-medium text-muted-foreground">
         {category}
       </span>
     </button>
   );
 }
 
-/** Left Add panel — widgets, elements, saved changes. */
-export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
+/** Add content in the bottom / side sheet — widgets, elements, saved changes. */
+export function EditorAddPanel({
+  onClose,
+  compact = false,
+}: {
+  onClose?: () => void;
+  /** Tighter layout for the shorter left sheet. */
+  compact?: boolean;
+}) {
   const [tab, setTab] = useState<AddTab>("widgets");
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -57,7 +91,7 @@ export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
   const tabs: { id: AddTab; label: string }[] = [
     { id: "widgets", label: "Widgets" },
     { id: "elements", label: "Elements" },
-    { id: "saved", label: "Saved changes" },
+    { id: "saved", label: compact ? "Saved" : "Saved changes" },
   ];
 
   const q = query.trim().toLowerCase();
@@ -69,11 +103,43 @@ export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
   const customs = CUSTOM.filter((w) => match(w.title, w.category));
   const templates = TEMPLATES.filter((w) => match(w.title, w.category));
 
+  const gridClass = compact
+    ? "grid grid-cols-2 gap-2"
+    : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
+
   return (
     <aside className="flex h-full w-full flex-col bg-background">
-      <div className="flex h-9 shrink-0 items-center justify-between border-b border-border px-3">
-        <p className="text-sm font-semibold text-foreground">Add</p>
-        <div className="flex items-center gap-0.5">
+      <div
+        className={cn(
+          "flex h-10 shrink-0 items-center border-b border-border",
+          compact ? "gap-2 px-3" : "gap-3 px-4"
+        )}
+      >
+        <p className="shrink-0 text-sm font-semibold text-foreground">Add</p>
+        <nav
+          className={cn(
+            "flex min-w-0 flex-1 items-center overflow-x-auto",
+            compact ? "gap-0.5" : "gap-1"
+          )}
+        >
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "shrink-0 rounded-md py-1 font-semibold outline-none transition-colors",
+                compact ? "px-2 text-[11px]" : "px-2.5 text-xs",
+                tab === t.id
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+        <div className="flex shrink-0 items-center gap-0.5">
           <Button
             type="button"
             variant="ghost"
@@ -98,38 +164,38 @@ export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
       </div>
 
       {searchOpen && (
-        <div className="border-b border-border px-3 py-2">
+        <div
+          className={cn(
+            "border-b border-border py-2",
+            compact ? "px-3" : "px-4"
+          )}
+        >
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search…"
-            className="h-7 text-xs shadow-none"
+            className="h-8 text-xs shadow-none"
+            autoFocus
           />
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1">
-        <nav className="flex w-[108px] shrink-0 flex-col gap-0.5 border-r border-border p-2">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
+      <div
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto",
+          compact ? "p-3" : "p-4"
+        )}
+      >
+        {tab === "widgets" && (
+          <div className={cn(compact ? "space-y-4" : "space-y-5")}>
+            <div
               className={cn(
-                "rounded-md px-2 py-1.5 text-left text-xs font-semibold outline-none",
-                tab === t.id
-                  ? "bg-accent text-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                "flex gap-2.5",
+                compact
+                  ? "flex-col"
+                  : "flex-wrap items-center justify-between gap-3"
               )}
             >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          {tab === "widgets" && (
-            <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <p className="text-xs font-semibold text-foreground">
                   All Widgets
@@ -138,80 +204,94 @@ export function EditorAddPanel({ onClose }: { onClose?: () => void }) {
                   {presets.length + customs.length + templates.length}
                 </span>
               </div>
-
-              <div className="rounded-lg border border-border bg-muted/40 p-3">
-                <p className="text-xs leading-5 text-foreground">
+              <div
+                className={cn(
+                  "flex rounded-lg border border-border bg-muted/40 px-3 py-2",
+                  compact
+                    ? "flex-col gap-2"
+                    : "max-w-md flex-1 items-center justify-end gap-3"
+                )}
+              >
+                <p
+                  className={cn(
+                    "min-w-0 leading-5 text-foreground",
+                    compact ? "text-[11px]" : "flex-1 text-xs"
+                  )}
+                >
                   Create your own widget with simple building blocks — no coding
                   required.
                 </p>
                 <Button
                   type="button"
                   size="sm"
-                  className="mt-2 h-7 text-xs font-semibold"
+                  className={cn(
+                    "h-7 shrink-0 text-xs font-semibold",
+                    compact && "w-full"
+                  )}
                 >
                   Start building
                 </Button>
               </div>
-
-              {presets.length > 0 && (
-                <section className="space-y-2">
-                  <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
-                    PRESETS
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {presets.map((w) => (
-                      <WidgetCard key={w.title} {...w} />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {customs.length > 0 && (
-                <section className="space-y-2">
-                  <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
-                    CUSTOM WIDGETS
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {customs.map((w) => (
-                      <WidgetCard key={w.title} {...w} />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {templates.length > 0 && (
-                <section className="space-y-2">
-                  <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
-                    TEMPLATES
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {templates.map((w) => (
-                      <WidgetCard key={w.title} {...w} />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {presets.length + customs.length + templates.length === 0 && (
-                <p className="py-6 text-center text-xs text-muted-foreground">
-                  No widgets match “{query}”.
-                </p>
-              )}
             </div>
-          )}
 
-          {tab === "elements" && (
-            <p className="py-8 text-center text-xs text-muted-foreground">
-              HTML elements will appear here.
-            </p>
-          )}
+            {presets.length > 0 && (
+              <section className="space-y-2">
+                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
+                  PRESETS
+                </p>
+                <div className={gridClass}>
+                  {presets.map((w) => (
+                    <WidgetCard key={w.title} compact={compact} {...w} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-          {tab === "saved" && (
-            <p className="py-8 text-center text-xs text-muted-foreground">
-              Saved changes will appear here.
-            </p>
-          )}
-        </div>
+            {customs.length > 0 && (
+              <section className="space-y-2">
+                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
+                  CUSTOM WIDGETS
+                </p>
+                <div className={gridClass}>
+                  {customs.map((w) => (
+                    <WidgetCard key={w.title} compact={compact} {...w} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {templates.length > 0 && (
+              <section className="space-y-2">
+                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground">
+                  TEMPLATES
+                </p>
+                <div className={gridClass}>
+                  {templates.map((w) => (
+                    <WidgetCard key={w.title} compact={compact} {...w} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {presets.length + customs.length + templates.length === 0 && (
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                No widgets match “{query}”.
+              </p>
+            )}
+          </div>
+        )}
+
+        {tab === "elements" && (
+          <p className="py-10 text-center text-xs text-muted-foreground">
+            HTML elements will appear here.
+          </p>
+        )}
+
+        {tab === "saved" && (
+          <p className="py-10 text-center text-xs text-muted-foreground">
+            Saved changes will appear here.
+          </p>
+        )}
       </div>
     </aside>
   );

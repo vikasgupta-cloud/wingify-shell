@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Fixed-size Figma-exported icon. Always set both width and height.
- *  Editor chrome stays greyscale — assets are forced to B/W. */
+/** Fixed-size Figma-exported icon. Always set both width and height. */
 export function EditorIcon({
   src,
   alt = "",
@@ -24,7 +23,7 @@ export function EditorIcon({
       <img
         src={src}
         alt={alt}
-        className="block size-full object-contain grayscale"
+        className="block size-full object-contain"
       />
     </span>
   );

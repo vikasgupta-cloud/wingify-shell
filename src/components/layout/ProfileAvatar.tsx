@@ -31,7 +31,7 @@ export default function ProfileAvatar({
         onDark
           ? "bg-background text-foreground ring-1 ring-inset ring-border"
           : [
-              "bg-[linear-gradient(180deg,hsl(var(--muted))_0%,hsl(var(--surface))_100%)]",
+              "bg-muted",
               "text-foreground",
               "ring-1 ring-inset ring-border",
               "shadow-[inset_0_1px_0_hsl(var(--background)/0.85),0_1px_2px_hsl(var(--foreground)/0.06)]",

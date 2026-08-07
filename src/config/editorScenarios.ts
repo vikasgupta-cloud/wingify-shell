@@ -3,12 +3,8 @@ import type { EditorSidePanelId } from "@/components/editor/EditorUtilityRail";
 
 export type EditorLayoutMode = "default" | "multipage" | "mvt";
 export type EditorDevice = "desktop" | "tablet" | "mobile";
-export type EditorLeftTool =
-  | "layers"
-  | "add"
-  | "metrics"
-  | "translate"
-  | "changes";
+export type EditorPreviewWidthMode = "fit" | "fixed";
+export type EditorLeftTool = "add" | "metrics" | "variations";
 export type EditionTabId = "styles" | "attributes" | "tracking";
 
 export type EditorSelection = {
@@ -104,7 +100,7 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
   },
   {
     id: "mvt",
-    label: "Multivariate",
+    label: "MVT",
     layoutMode: "mvt",
     device: "desktop",
     leftTool: null,
@@ -191,9 +187,9 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
     label: "Layers",
     layoutMode: "default",
     device: "desktop",
-    leftTool: "layers",
+    leftTool: null,
     selection: null,
-    rightOpen: ["copilot"],
+    rightOpen: ["layers"],
     editionTab: "styles",
     showSubtestPopover: false,
     showDimensionsBar: false,
@@ -217,7 +213,7 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
     device: "desktop",
     leftTool: "metrics",
     selection: null,
-    rightOpen: ["copilot"],
+    rightOpen: [],
     editionTab: "styles",
     showSubtestPopover: false,
     showDimensionsBar: false,
@@ -227,9 +223,9 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
     label: "Changes",
     layoutMode: "default",
     device: "desktop",
-    leftTool: "changes",
+    leftTool: null,
     selection: null,
-    rightOpen: ["copilot"],
+    rightOpen: ["changes"],
     editionTab: "styles",
     showSubtestPopover: false,
     showDimensionsBar: false,
@@ -239,3 +235,7 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
 export const DEFAULT_SCENARIO =
   // Default to Edition shell so Wandz can render inside the Edition empty-state.
   EDITOR_SCENARIOS.find((s) => s.id === "edition-empty")!;
+
+export const FLOAT_EDITOR_SCENARIOS = EDITOR_SCENARIOS.filter(
+  (s) => s.id === "multipage" || s.id === "mvt"
+);

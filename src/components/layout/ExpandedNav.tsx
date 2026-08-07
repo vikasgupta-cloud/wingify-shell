@@ -3,12 +3,15 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { ChevronDown, MoreHorizontal, Pin, PinOff } from "lucide-react";
-import { NAV, type NavItem } from "../../config/navigation";
+import { LOGOUT_PATH, NAV, type NavItem } from "../../config/navigation";
 import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { canUnpinPath, useUIStore } from "../../store/ui";
+import { useMascotPreviewStore } from "../../store/mascotPreview";
+import { mascotForPath } from "../../config/mascots";
 import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
+import ColorModeToggle from "./ColorModeToggle";
 import WingifyLogoButton from "./WingifyLogoButton";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -57,7 +60,15 @@ export default function ExpandedNav({
   const pinnedPaths = useUIStore((s) => s.pinnedPaths);
   const pin = useUIStore((s) => s.pin);
   const unpin = useUIStore((s) => s.unpin);
+  const setMascotPreview = useMascotPreviewStore((s) => s.setPreview);
+  const previewMascot = useMascotPreviewStore((s) => s.preview);
+  const scheduleMascotClear = useMascotPreviewStore((s) => s.scheduleClear);
   const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
+
+  const previewMascotFor = (item: NavItem) => {
+    previewMascot(mascotForPath(item.path));
+  };
+  const clearMascotPreview = () => setMascotPreview(null);
 
   const expanded = !forceCollapsed && isDocked;
   const activeItem = findItemByPath(pathname);
@@ -96,8 +107,10 @@ export default function ExpandedNav({
   }, [expanded]);
 
   const closeMore = () => {
+    window.clearTimeout(moreCloseTimer.current);
     setMoreFlyout(null);
     setMoreNested(null);
+    clearMascotPreview();
   };
   const scheduleMoreClose = () => {
     window.clearTimeout(moreCloseTimer.current);
@@ -109,6 +122,7 @@ export default function ExpandedNav({
     if (expanded) return;
     window.clearTimeout(closeTimer.current);
     closeMore();
+    previewMascotFor(item);
     setFlyout(
       item.sections
         ? { path: item.path, top: target.getBoundingClientRect().top }
@@ -117,10 +131,10 @@ export default function ExpandedNav({
   };
   const scheduleClose = () => {
     window.clearTimeout(closeTimer.current);
-    closeTimer.current = window.setTimeout(
-      () => setFlyout(null),
-      FLYOUT_CLOSE_GRACE_MS
-    );
+    closeTimer.current = window.setTimeout(() => {
+      setFlyout(null);
+      clearMascotPreview();
+    }, FLYOUT_CLOSE_GRACE_MS);
   };
   const cancelClose = () => window.clearTimeout(closeTimer.current);
 
@@ -129,6 +143,7 @@ export default function ExpandedNav({
       if (e.key === "Escape") {
         closeMore();
         setFlyout(null);
+        clearMascotPreview();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -136,8 +151,9 @@ export default function ExpandedNav({
       window.removeEventListener("keydown", onKey);
       window.clearTimeout(moreCloseTimer.current);
       window.clearTimeout(closeTimer.current);
+      clearMascotPreview();
     };
-  }, []);
+  }, [setMascotPreview]);
 
   useClampedFlyoutTop(flyoutRef, flyout);
   useClampedFlyoutTop(moreFlyoutRef, moreFlyout);
@@ -174,7 +190,7 @@ export default function ExpandedNav({
   };
 
   const labelClass = cn(
-    "min-w-0 flex-1 truncate text-left transition-opacity duration-200",
+    "min-w-0 flex-1 truncate text-left font-main-menu transition-opacity duration-200",
     expanded ? "opacity-100" : "pointer-events-none opacity-0"
   );
   const chromeClass = cn(
@@ -220,18 +236,22 @@ export default function ExpandedNav({
             !expanded &&
             "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
         )}
-        onMouseEnter={
-          !expanded && !tooltipOnly
-            ? (e) => openFlyout(item, e.currentTarget)
-            : undefined
-        }
-        onMouseLeave={!expanded && !tooltipOnly ? scheduleClose : undefined}
-        onFocus={
-          !expanded && !tooltipOnly
-            ? (e) => openFlyout(item, e.currentTarget)
-            : undefined
-        }
-        onBlur={!expanded && !tooltipOnly ? scheduleClose : undefined}
+        onMouseEnter={(e) => {
+          previewMascotFor(item);
+          if (!expanded && !tooltipOnly) openFlyout(item, e.currentTarget);
+        }}
+        onMouseLeave={() => {
+          if (!expanded && !tooltipOnly) scheduleClose();
+          else scheduleMascotClear();
+        }}
+        onFocus={(e) => {
+          previewMascotFor(item);
+          if (!expanded && !tooltipOnly) openFlyout(item, e.currentTarget);
+        }}
+        onBlur={() => {
+          if (!expanded && !tooltipOnly) scheduleClose();
+          else scheduleMascotClear();
+        }}
       >
         <button
           type="button"
@@ -346,7 +366,7 @@ export default function ExpandedNav({
               sideOffset={8}
               className={cn(tooltipContentClass, "flex items-center gap-2")}
             >
-              <span>{item.label}</span>
+              <span className="font-main-menu">{item.label}</span>
               {canUnpin(item.path) && (
                 <button
                   type="button"
@@ -372,7 +392,7 @@ export default function ExpandedNav({
               sideOffset={8}
               className={tooltipContentClass}
             >
-              {item.label}
+              <span className="font-main-menu">{item.label}</span>
             </Tooltip.Content>
           </Tooltip.Portal>
         </Tooltip.Root>
@@ -385,42 +405,56 @@ export default function ExpandedNav({
 
         {hasSections && open && item.sections && (
           <div className="ml-[22px] mt-1.5 flex flex-col border-l border-panel-border pb-2 pl-3">
-            {item.sections.map((section, i) => (
-              <div key={section.heading ?? i} className="flex flex-col gap-1">
-                {i > 0 && (
-                  <div
-                    className="my-2 h-px bg-panel-border"
-                    aria-hidden="true"
-                  />
-                )}
-                {section.items.map((leaf) => {
-                  const LeafIcon = leaf.icon;
-                  return (
-                    <NavLink
-                      key={leaf.path}
-                      to={leaf.path}
-                      className={({ isActive: leafActive }) =>
-                        cn(
-                          "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                          leafActive &&
-                            "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                        )
-                      }
-                    >
-                      {LeafIcon && (
-                        <LeafIcon
-                          className="h-4 w-4 shrink-0 text-foreground"
-                          strokeWidth={1.75}
-                        />
-                      )}
-                      <span className="min-w-0 flex-1 truncate">
-                        {leaf.label}
-                      </span>
-                    </NavLink>
-                  );
-                })}
-              </div>
-            ))}
+            {item.sections.map((section, i) => {
+              const isLogoutSection = section.items.some(
+                (leaf) => leaf.path === LOGOUT_PATH
+              );
+              return (
+                <div key={section.heading ?? i} className="flex flex-col gap-1">
+                  {i > 0 && (
+                    <div
+                      className="my-2 h-px bg-panel-border"
+                      aria-hidden="true"
+                    />
+                  )}
+                  {item.path === "/profile" && isLogoutSection ? (
+                    <>
+                      <ColorModeToggle className="px-0" />
+                      <div
+                        className="my-2 h-px bg-panel-border"
+                        aria-hidden="true"
+                      />
+                    </>
+                  ) : null}
+                  {section.items.map((leaf) => {
+                    const LeafIcon = leaf.icon;
+                    return (
+                      <NavLink
+                        key={leaf.path}
+                        to={leaf.path}
+                        className={({ isActive: leafActive }) =>
+                          cn(
+                            "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                            leafActive &&
+                              "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                          )
+                        }
+                      >
+                        {LeafIcon && (
+                          <LeafIcon
+                            className="h-4 w-4 shrink-0 text-foreground"
+                            strokeWidth={1.75}
+                          />
+                        )}
+                        <span className="min-w-0 flex-1 truncate">
+                          {leaf.label}
+                        </span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -506,7 +540,10 @@ export default function ExpandedNav({
             ref={flyoutRef}
             className="fixed z-40 animate-scale-in pl-1.5 duration-150"
             style={{ left: RAIL_WIDTH, top: flyout.top }}
-            onMouseEnter={cancelClose}
+            onMouseEnter={() => {
+              cancelClose();
+              if (flyoutItem) previewMascotFor(flyoutItem);
+            }}
             onMouseLeave={scheduleClose}
           >
             {flyoutItem.path === "/profile" ? (
@@ -541,10 +578,14 @@ export default function ExpandedNav({
                 return (
                   <div
                     key={item.path}
-                    onMouseEnter={(e) =>
-                      revealMoreNested(item, e.currentTarget)
-                    }
-                    onFocus={(e) => revealMoreNested(item, e.currentTarget)}
+                    onMouseEnter={(e) => {
+                      previewMascotFor(item);
+                      revealMoreNested(item, e.currentTarget);
+                    }}
+                    onFocus={(e) => {
+                      previewMascotFor(item);
+                      revealMoreNested(item, e.currentTarget);
+                    }}
                     className={cn(
                       "flex items-center gap-1 rounded-sm pr-1.5 transition-colors hover:bg-muted",
                       moreNestedItem?.path === item.path && "bg-muted"
@@ -559,7 +600,7 @@ export default function ExpandedNav({
                       className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left outline-none"
                     >
                       <Icon className="h-4 w-4 shrink-0 text-foreground" />
-                      <span className="flex-1 truncate">{item.label}</span>
+                      <span className="flex-1 truncate font-main-menu">{item.label}</span>
                     </button>
                     <Tooltip.Root>
                       <Tooltip.Trigger asChild>

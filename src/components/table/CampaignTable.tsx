@@ -109,8 +109,8 @@ const STICKY_CHECKBOX_BODY =
   "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
 const STICKY_NAME_BODY =
   "sticky left-[44px] z-10 bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
-const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-muted";
-const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-muted";
+const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-background";
+const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-background";
 // The pinned name column's right edge. It CANNOT be a box-shadow on the <td>/<th>:
 // the table is `border-collapse`, which suppresses cell box-shadows entirely (no
 // z-index rescues them). Instead we overlay a 1px-wide absolutely-positioned element
@@ -302,7 +302,7 @@ const PAGER_BUTTON =
 // The compact 14px select box — shadcn Checkbox restyled to the original neutral look
 // (light border, foreground fill, 10px check/minus) rather than the default variant.
 const SELECT_BOX =
-  "h-3.5 w-3.5 rounded-[3px] border-input bg-background shadow-none data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background [&_svg]:size-2.5";
+  "h-4 w-4 rounded-[3px] border-input bg-background shadow-none data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background [&_svg]:size-2.5";
 
 function SelectCheckbox({
   checked,
@@ -487,14 +487,20 @@ export default function CampaignTable() {
 
   const sortIcon = (col: ColumnDef) => {
     if (sort?.column !== col.id)
-      return <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-60" />;
+      return (
+        <ChevronsUpDown
+          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+      );
     // Single chevron that rotates between asc/desc so the flip animates rather than swaps.
     return (
       <ChevronDown
         className={cn(
-          "h-3 w-3 shrink-0 transition-transform duration-150",
+          "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
           sort.dir === "asc" && "rotate-180"
         )}
+        aria-hidden
       />
     );
   };
@@ -608,7 +614,7 @@ export default function CampaignTable() {
                 </td>
               </tr>
             ) : (
-              <tr className="border-b border-border bg-muted">
+              <tr className="border-b border-border bg-background">
                 <th className={cn("px-3 py-2.5", STICKY_CHECKBOX_HEAD)}>
                   <SelectCheckbox
                     checked={headerState}
@@ -619,8 +625,9 @@ export default function CampaignTable() {
                 {columns.map((col) => (
                   <th
                     key={col.id}
+                    scope="col"
                     className={cn(
-                      "relative whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
+                      "relative whitespace-nowrap px-3 py-2.5 text-left text-sm font-medium text-muted-foreground",
                       col.id === "name" && STICKY_NAME_HEAD,
                       col.align === "right" && "text-right",
                       col.align === "center" && "text-center"
@@ -634,7 +641,7 @@ export default function CampaignTable() {
                         type="button"
                         onClick={() => setSort(col.id)}
                         className={cn(
-                          "inline-flex items-center gap-1 transition-colors hover:text-foreground",
+                          "inline-flex items-center gap-1.5 transition-colors hover:text-foreground",
                           sort?.column === col.id && "text-foreground"
                         )}
                       >

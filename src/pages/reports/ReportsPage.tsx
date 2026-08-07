@@ -208,7 +208,7 @@ function BannerProgressRow({ items }: { items: ProgressStat[] }) {
               aria-label={`${it.label} progress`}
             >
               <div
-                className="h-full rounded-full bg-foreground/70 transition-[width] duration-500"
+                className="h-full rounded-full bg-chart-positive transition-[width] duration-500"
                 style={{ width: `${Math.min(100, Math.max(3, it.pct))}%` }}
               />
             </div>
@@ -440,7 +440,7 @@ function RevenueImpactCard({ overview }: { overview: OverviewData }) {
       <RevenueRow
         label="Projected impact"
         pct={Math.min(100, Math.max(12, overview.revenue.projectedImpact / 40))}
-        barClass="bg-foreground/80"
+        barClass="bg-chart-1"
         value={
           <>
             <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
@@ -462,7 +462,7 @@ function RevenueImpactCard({ overview }: { overview: OverviewData }) {
           100,
           Math.max(12, Math.abs(overview.revenue.transactionRateLift) * 20)
         )}
-        barClass="bg-muted-foreground"
+        barClass="bg-chart-2"
         value={
           <>
             <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
@@ -476,7 +476,7 @@ function RevenueImpactCard({ overview }: { overview: OverviewData }) {
       <RevenueRow
         label="Average order value"
         pct={Math.min(100, Math.max(12, overview.revenue.aovLift * 20))}
-        barClass="bg-foreground/50"
+        barClass="bg-chart-3"
         value={
           <>
             <span className="text-2xl font-semibold leading-8 tabular-nums text-success-fg">
