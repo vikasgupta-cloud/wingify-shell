@@ -137,7 +137,6 @@ export const NAV: NavItem[] = [
   { label: "Personalize", path: "/personalize", icon: Target, group: 2, pinnable: true },
   { label: "Feature Management", path: "/feature-management", icon: Flag, group: 2, pinnable: true, sections: [
     { heading: "Create", items: [
-      { label: "Holdouts", path: "/feature-management/holdouts" },
       { label: "Feature Flags", path: "/feature-management/feature-flags" },
     ]},
     { heading: "Reports", items: [

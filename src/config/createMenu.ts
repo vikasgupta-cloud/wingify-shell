@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { CampaignType } from "../data/campaigns";
 import { TYPE_ICONS } from "../components/icons/campaignTypeIcons";
 
@@ -19,12 +19,13 @@ export type CreateOption = {
   group?: CreateGroup;
   /** When set, selecting the option mints a campaign of this type; otherwise it's a stub. */
   campaignType?: CampaignType;
+  /** When set, selecting the option navigates here instead of minting a campaign. */
+  route?: string;
 };
 
 // Campaign-type icons come from TYPE_ICONS (Figma test-type glyphs for A/B, Split, MVT).
 export const CREATE_MENU: Record<string, CreateOption[]> = {
   "/web-experiment": [
-    { id: "copilot", label: "Create with Copilot", description: "Let AI transform your idea into a campaign using VWO Copilot", icon: Sparkles, group: "ai" },
     { id: "ab-single", label: "AB - Single Page", description: "Compare different versions of the same page on your website", icon: TYPE_ICONS["A/B"], campaignType: "A/B" },
     { id: "ab-multi", label: "AB - Multi Page", description: "Test all the page of a conversion funnel on your site", icon: TYPE_ICONS.Multipage, campaignType: "Multipage" },
     { id: "split-url", label: "Split URL", description: "Compare different URLs against each other", icon: TYPE_ICONS["Split URL"], campaignType: "Split URL" },

@@ -1,3 +1,5 @@
+// Summary: Edition empty state keeps the original Wandz chat zero state.
+// With a selection, the element editor stays in this panel; Wandz opens as a float on the canvas.
 import { useEffect, useState } from "react";
 import {
   AlignCenter,
@@ -6,6 +8,7 @@ import {
   AlignRight,
   Bold,
   ChevronDown,
+  ChevronRight,
   Columns2,
   Copy,
   Eye,
@@ -15,12 +18,14 @@ import {
   Link2Off,
   List,
   ListOrdered,
+  Mic,
   Minus,
-  Pencil,
+  MoreVertical,
   Plus,
   RotateCcw,
   Rows2,
   Strikethrough,
+  Sparkles,
   Underline,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +47,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { EditorIcon } from "./EditorIcon";
 import { EditorFloatablePanel } from "./EditorFloatablePanel";
+import aiSparkle from "@/assets/editor/ai-sparkle.svg";
+import send from "@/assets/editor/send.svg";
+import paletteSm from "@/assets/editor/palette-sm.svg";
+import move from "@/assets/editor/move.svg";
 import type {
   EditorPanelChrome,
   EditorPanelGroupDragHandlers,
@@ -555,10 +565,7 @@ function StylesTab() {
               <span className="size-3.5 rounded-sm border border-foreground bg-muted" />
             </IconToggle>
             <IconToggle label="Gradient">
-              <span className="flex size-3.5 overflow-hidden rounded-sm">
-                <span className="h-full w-1/2 bg-foreground/80" />
-                <span className="h-full w-1/2 bg-muted" />
-              </span>
+              <span className="size-3.5 rounded-sm bg-gradient-to-br from-foreground/80 to-muted" />
             </IconToggle>
             <IconToggle label="Image">
               <span className="size-3.5 rounded-sm border border-dashed border-foreground/40" />
@@ -803,115 +810,135 @@ function TrackingTab() {
   );
 }
 
-function EmptySelectionArt() {
-  return (
-    <svg
-      viewBox="0 0 168 128"
-      className="h-[104px] w-[136px] text-muted-foreground"
-      fill="none"
-      aria-hidden
-    >
-      <rect
-        x="10"
-        y="8"
-        width="132"
-        height="100"
-        rx="10"
-        className="fill-muted stroke-border"
-        strokeWidth="1.25"
-      />
-      <rect
-        x="10"
-        y="8"
-        width="132"
-        height="22"
-        rx="10"
-        className="fill-muted"
-      />
-      <rect
-        x="10"
-        y="18"
-        width="132"
-        height="12"
-        className="fill-muted"
-      />
-      <circle cx="24" cy="19" r="3" className="fill-border" />
-      <circle cx="34" cy="19" r="3" className="fill-border" />
-      <circle cx="44" cy="19" r="3" className="fill-border" />
-      <rect
-        x="22"
-        y="40"
-        width="52"
-        height="8"
-        rx="2"
-        className="fill-border"
-      />
-      <rect
-        x="22"
-        y="54"
-        width="72"
-        height="5"
-        rx="1.5"
-        className="fill-border/80"
-      />
-      <rect
-        x="22"
-        y="64"
-        width="60"
-        height="5"
-        rx="1.5"
-        className="fill-border/80"
-      />
-      <rect
-        x="22"
-        y="80"
-        width="40"
-        height="16"
-        rx="3"
-        className="fill-border"
-      />
-      <rect
-        x="78"
-        y="36"
-        width="48"
-        height="40"
-        rx="4"
-        className="stroke-foreground/55"
-        strokeWidth="1.5"
-        strokeDasharray="3.5 2.5"
-      />
-      <path
-        d="M118 86 L126 104 L122 104 L126 114 L120 114 L116 104 L112 104 Z"
-        className="fill-foreground"
-      />
-      <path
-        d="M132 92 L136 88 L140 92 L136 96 Z M136 82 V88 M136 96 V100 M128 92 H132 M140 92 H144"
-        className="stroke-foreground"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+const WANDZ_ZERO_SUGGESTIONS: { icon: string; label: string }[] = [
+  { icon: paletteSm, label: "Make the headline text larger" },
+  { icon: move, label: "Move the image to the left" },
+  { icon: paletteSm, label: "Change the button color to green" },
+];
 
+/** Original Wandz chat zero state — shown when no element is selected. */
 function EditionEmptyState() {
+  const [draft, setDraft] = useState("");
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-10 text-center">
-      <EmptySelectionArt />
-      <div className="space-y-2">
-        <p className="text-[15px] font-semibold leading-snug text-foreground">
-          Select an element on page
-        </p>
-        <p className="max-w-[240px] text-xs leading-5 text-muted-foreground">
-          Select any element to access its properties, adjust settings, and make
-          changes as needed.
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="flex items-center justify-between px-4 pt-3">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-foreground outline-none"
+        >
+          New chat
+          <ChevronDown
+            className="size-4 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+        </button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-6 rounded-md"
+          aria-label="Chat options"
+        >
+          <MoreVertical className="size-3.5" strokeWidth={1.75} />
+        </Button>
+      </div>
+
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-4 pb-28 pt-16">
+        <div className="mb-5 flex size-[50px] items-center justify-center rounded-full bg-muted">
+          <EditorIcon src={aiSparkle} size={24} />
+        </div>
+        <div className="mb-12 flex w-full flex-col items-center gap-2 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            Hi! How can I help you today?
+          </p>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Quickly modify your variation using natural language - just type or
+            speak your commands.
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col gap-3 px-3">
+          <p className="text-xs text-muted-foreground">
+            Try asking something like:
+          </p>
+          {WANDZ_ZERO_SUGGESTIONS.map((s) => (
+            <Button
+              key={s.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-[26px] justify-start gap-2 rounded-md px-2 text-xs font-medium shadow-none"
+              onClick={() => setDraft(s.label)}
+            >
+              <EditorIcon
+                src={s.icon}
+                size={14}
+                className="text-muted-foreground"
+              />
+              {s.label}
+            </Button>
+          ))}
+          <button
+            type="button"
+            className="inline-flex h-[26px] items-center gap-1.5 px-1 text-xs font-semibold text-foreground outline-none hover:underline"
+          >
+            <EditorIcon src={aiSparkle} size={13} />
+            See how VWO AI can help you
+            <ChevronRight className="size-3.5" strokeWidth={2} />
+          </button>
+        </div>
+      </div>
+
+      <div className="absolute inset-x-4 bottom-3">
+        <div className="relative flex h-24 items-end justify-between overflow-hidden rounded-lg border border-border bg-background p-3 shadow-none transition-colors focus-within:border-input">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Ask anything....."
+            className="absolute inset-x-3 bottom-10 top-3 resize-none bg-transparent text-[13px] leading-5 text-foreground outline-none placeholder:text-muted-foreground"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="relative z-10 size-7 rounded-md"
+            aria-label="Attach"
+          >
+            <Plus className="size-[18px]" strokeWidth={1.75} />
+          </Button>
+          <div className="relative z-10 flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-7 rounded-md"
+              aria-label="Voice input"
+            >
+              <Mic className="size-4" strokeWidth={1.75} />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              className="size-7 rounded-md shadow-none"
+              aria-label="Send"
+            >
+              <EditorIcon src={send} size={15} />
+            </Button>
+          </div>
+        </div>
+        <p className="mt-1.5 whitespace-nowrap text-center text-[10.5px] leading-4 text-muted-foreground">
+          AI can make mistakes. Please verify the information.
         </p>
       </div>
     </div>
   );
 }
 
-/** Edition inspector — Styles / Attributes / Tracking for the selected element. */
+/** Edition inspector — Styles / Attributes / Tracking for the selected element.
+ *  With no selection, the original Wandz chat zero state fills the panel.
+ *  With selection, Wandz opens as a floating card near the element (not here).
+ */
 export function EditorEditionPanel({
   onClose,
   chrome,
@@ -922,7 +949,6 @@ export function EditorEditionPanel({
   groupDrag,
   selection = null,
   initialTab = "styles",
-  onTabChange,
 }: {
   onClose?: () => void;
   chrome: EditorPanelChrome;
@@ -933,7 +959,6 @@ export function EditorEditionPanel({
   groupDrag?: EditorPanelGroupDragHandlers;
   selection?: EditorSelection | null;
   initialTab?: EditionTab;
-  onTabChange?: (tab: EditionTab) => void;
 }) {
   const [tab, setTab] = useState<EditionTab>(initialTab);
   const [toast, setToast] = useState<string | null>(null);
@@ -958,8 +983,16 @@ export function EditorEditionPanel({
 
   return (
     <EditorFloatablePanel
-      title="Edition"
-      icon={<Pencil className="size-3.5 shrink-0" strokeWidth={1.75} />}
+      title={
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <span className="truncate">Edition</span>
+          {/* Display-only for now — header click handled in a later pass. */}
+          <Sparkles
+            className="size-3.5 shrink-0 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+        </span>
+      }
       onClose={onClose}
       bodyClassName="min-h-0 overflow-hidden"
       chrome={chrome}
@@ -1020,10 +1053,7 @@ export function EditorEditionPanel({
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => {
-                    setTab(t.id);
-                    onTabChange?.(t.id);
-                  }}
+                  onClick={() => setTab(t.id)}
                   className={cn(
                     "h-7 flex-1 rounded-[5px] text-xs font-semibold outline-none transition-colors",
                     tab === t.id
