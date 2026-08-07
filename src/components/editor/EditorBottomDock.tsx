@@ -69,6 +69,8 @@ const TOOLS: {
 
 const SHOW_DELAY_MS = 400;
 const HIDE_DELAY_MS = 200;
+/** Dock tooltips auto-dismiss even while still hovering. */
+const TIP_AUTO_HIDE_MS = 5000;
 const PREVIEW_IFRAME_SELECTOR = 'iframe[title="Website preview"]';
 const DRAG_THRESHOLD_PX = 6;
 /** Approx grip center inside the icon dock (size-9 button). */
@@ -140,6 +142,100 @@ function DockTip({
         </kbd>
       ) : null}
     </span>
+  );
+}
+
+/**
+ * Opens on hover, then fades out after TIP_AUTO_HIDE_MS even if still hovering.
+ * Moving the pointer again (or leaving and re-entering) shows it once more.
+ */
+function DockAutoTip({
+  label,
+  shortcut,
+  side,
+  children,
+}: {
+  label: string;
+  shortcut?: string;
+  side: "top" | "right" | "bottom" | "left";
+  children: ReactElement;
+}) {
+  const [open, setOpen] = useState(false);
+  const lockedOutRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+
+  const clearTimer = () => {
+    if (timerRef.current != null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const startHideTimer = () => {
+    clearTimer();
+    timerRef.current = window.setTimeout(() => {
+      lockedOutRef.current = true;
+      setOpen(false);
+      timerRef.current = null;
+    }, TIP_AUTO_HIDE_MS);
+  };
+
+  useEffect(() => () => clearTimer(), []);
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLElement>) => {
+    const prev = lastPointRef.current;
+    lastPointRef.current = { x: e.clientX, y: e.clientY };
+    // Ignore the first move after enter (no delta yet).
+    if (!prev) return;
+    if (prev.x === e.clientX && prev.y === e.clientY) return;
+
+    // After auto-dismiss, any real move unlocks and shows the tip again.
+    if (lockedOutRef.current) {
+      lockedOutRef.current = false;
+      setOpen(true);
+      startHideTimer();
+    }
+  };
+
+  const onPointerLeave = () => {
+    lastPointRef.current = null;
+    lockedOutRef.current = false;
+    clearTimer();
+    setOpen(false);
+  };
+
+  return (
+    <Tooltip
+      open={open}
+      disableHoverableContent
+      onOpenChange={(next) => {
+        if (next) {
+          if (lockedOutRef.current) return;
+          setOpen(true);
+          startHideTimer();
+          return;
+        }
+        // Don't clear lockout here — auto-hide sets it; leave resets it.
+        if (!lockedOutRef.current) {
+          setOpen(false);
+          clearTimer();
+        }
+      }}
+    >
+      <TooltipTrigger asChild>
+        <span
+          className="inline-flex"
+          onPointerMove={onPointerMove}
+          onPointerLeave={onPointerLeave}
+        >
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side={side} sideOffset={8}>
+        <DockTip label={label} shortcut={shortcut} />
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -594,19 +690,15 @@ export function EditorBottomDock({
         size={iconPx}
         className={cn(
           "[&_img]:brightness-0 [&_img]:transition-opacity",
-          disabled
-            ? "opacity-45"
-            : active
-              ? "opacity-100"
-              : "opacity-[0.55] group-hover:opacity-100"
+          // Disabled fade lives on the button — keep icon at full weight so both
+          // Lucide + asset tools match.
+          disabled || active
+            ? "opacity-100"
+            : "opacity-[0.55] group-hover:opacity-100"
         )}
       />
     );
-    const lucideIconClass = (disabled = false) =>
-      cn(
-        "size-3.5 shrink-0 transition-opacity",
-        disabled && "opacity-45"
-      );
+    const lucideIconClass = () => "size-3.5 shrink-0 transition-opacity";
 
     const withTip = (
       label: string,
@@ -615,12 +707,9 @@ export function EditorBottomDock({
     ) => {
       if (!interactive || showLabels) return node;
       return (
-        <Tooltip>
-          <TooltipTrigger asChild>{node}</TooltipTrigger>
-          <TooltipContent side={tipSide} sideOffset={8}>
-            <DockTip label={label} shortcut={shortcut} />
-          </TooltipContent>
-        </Tooltip>
+        <DockAutoTip label={label} shortcut={shortcut} side={tipSide}>
+          {node}
+        </DockAutoTip>
       );
     };
 
@@ -634,14 +723,9 @@ export function EditorBottomDock({
       if (!interactive || showLabels) return node;
       if (!disabled) return withTip(label, node, shortcut);
       return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">{node}</span>
-          </TooltipTrigger>
-          <TooltipContent side={tipSide} sideOffset={8}>
-            <DockTip label={label} shortcut={shortcut} />
-          </TooltipContent>
-        </Tooltip>
+        <DockAutoTip label={label} shortcut={shortcut} side={tipSide}>
+          <span className="inline-flex">{node}</span>
+        </DockAutoTip>
       );
     };
 
@@ -650,7 +734,7 @@ export function EditorBottomDock({
       cn(
         itemClass(active && !disabled),
         disabled &&
-          "cursor-not-allowed text-muted-foreground/45 hover:bg-transparent hover:text-muted-foreground/45"
+          "cursor-not-allowed text-foreground opacity-45 hover:bg-transparent hover:opacity-45"
       );
 
     const ItemLabel = ({ children }: { children: string }) =>
@@ -738,10 +822,7 @@ export function EditorBottomDock({
             tabIndex={toolsDisabled ? -1 : tabOff}
             className={toolItemClass(leftTool === "add", toolsDisabled)}
           >
-            <Plus
-              className={lucideIconClass(toolsDisabled)}
-              strokeWidth={1.75}
-            />
+            <Plus className={lucideIconClass()} strokeWidth={1.75} />
             <ItemLabel>Add</ItemLabel>
           </button>,
           toolsDisabled ? undefined : "A"

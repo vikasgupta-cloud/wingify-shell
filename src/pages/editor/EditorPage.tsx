@@ -630,7 +630,6 @@ export default function EditorPage() {
         onNavigateBack={goBack}
         onNavigateForward={goForward}
         onNavigateRefresh={refreshPreview}
-        onSwitchToDesign={() => setEditorMode("design")}
       />
       <EditorVersionBanner />
       <div className="relative flex min-h-0 flex-1">
