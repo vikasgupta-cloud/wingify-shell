@@ -18,7 +18,7 @@ import {
   FileText,
   Contact,
   Building2,
-  Circle,
+  // Circle, // reserved for dummyNav placeholder sidebars
   AppWindow,
   CirclePlus,
   Image,
@@ -88,7 +88,8 @@ function slugify(label: string): string {
     .replace(/^-|-$/g, "");
 }
 
-/** Placeholder sidebar until real nav is provided per mode. */
+/** Placeholder sidebar until real nav is provided per mode.
+ *  @undo Kept for Profile mode stubs — re-enable when pasting real section trees.
 function dummyNav(
   base: string,
   sections: { title: string; children?: string[] }[]
@@ -115,6 +116,7 @@ function dummyNav(
     };
   });
 }
+*/
 
 
 export const NAV: NavItem[] = [

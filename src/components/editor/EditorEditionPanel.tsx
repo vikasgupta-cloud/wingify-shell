@@ -949,6 +949,7 @@ export function EditorEditionPanel({
   groupDrag,
   selection = null,
   initialTab = "styles",
+  onTabChange,
 }: {
   onClose?: () => void;
   chrome: EditorPanelChrome;
@@ -959,9 +960,16 @@ export function EditorEditionPanel({
   groupDrag?: EditorPanelGroupDragHandlers;
   selection?: EditorSelection | null;
   initialTab?: EditionTab;
+  /** Persist active Styles / Attributes / Tracking tab to the editor store. */
+  onTabChange?: (tab: EditionTab) => void;
 }) {
   const [tab, setTab] = useState<EditionTab>(initialTab);
   const [toast, setToast] = useState<string | null>(null);
+
+  const selectTab = (next: EditionTab) => {
+    setTab(next);
+    onTabChange?.(next);
+  };
 
   useEffect(() => {
     setTab(initialTab);
@@ -1053,7 +1061,7 @@ export function EditorEditionPanel({
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setTab(t.id)}
+                  onClick={() => selectTab(t.id)}
                   className={cn(
                     "h-7 flex-1 rounded-[5px] text-xs font-semibold outline-none transition-colors",
                     tab === t.id
