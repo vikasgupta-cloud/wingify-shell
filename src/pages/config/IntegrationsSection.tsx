@@ -98,20 +98,20 @@ function StarterIntegrationChip({ integration }: { integration: Integration }) {
       onClick={() => connect(integration.id)}
       aria-label={`Connect ${integration.name}`}
       title={integration.description}
-      className="group inline-flex items-center gap-2 rounded-full border border-border bg-background py-1.5 pl-1.5 pr-3 transition-colors hover:border-input hover:bg-muted"
+      className="group flex w-full min-w-0 items-center gap-2 rounded-full border border-border bg-background py-1.5 pl-1.5 pr-3 text-left transition-colors hover:border-input hover:bg-muted"
     >
       <MonogramTile
         name={integration.name}
-        className="h-6 w-6 rounded-full text-[9px]"
+        className="h-6 w-6 shrink-0 rounded-full text-[9px]"
       />
-      <span className="text-sm font-medium text-foreground">
+      <span className="min-w-0 truncate text-sm font-medium text-foreground">
         {integration.name}
       </span>
-      <span className="hidden text-xs text-muted-foreground sm:inline">
+      <span className="hidden min-w-0 truncate text-xs text-muted-foreground sm:inline">
         {integration.category}
       </span>
       <Plus
-        className="size-3.5 text-muted-foreground transition-colors group-hover:text-foreground"
+        className="ml-auto size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
         strokeWidth={1.75}
         aria-hidden
       />
@@ -119,31 +119,16 @@ function StarterIntegrationChip({ integration }: { integration: Integration }) {
   );
 }
 
-function EmptyIntegrationsPanel({ onBrowse }: { onBrowse: () => void }) {
+function EmptyIntegrationsPanel() {
   const starters = RECOMMENDED_INTEGRATION_IDS.map((id) =>
     INTEGRATIONS.find((i) => i.id === id)
   ).filter((i): i is Integration => Boolean(i));
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          onClick={onBrowse}
-        >
-          <Plus className="size-3.5" strokeWidth={1.75} />
-          Browse integrations
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {starters.map((i) => (
-          <StarterIntegrationChip key={i.id} integration={i} />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {starters.map((i) => (
+        <StarterIntegrationChip key={i.id} integration={i} />
+      ))}
     </div>
   );
 }
@@ -159,32 +144,30 @@ export default function IntegrationsSection({ id }: { id: string }) {
 
   return (
     <section>
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <SectionTitle sectionId="integrations" className="text-lg" />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setSheetOpen(true)}
+        >
+          <Plus className="size-3.5" strokeWidth={1.75} />
+          Browse integrations
+        </Button>
       </div>
 
       {connected.length === 0 ? (
-        <EmptyIntegrationsPanel onBrowse={() => setSheetOpen(true)} />
+        <EmptyIntegrationsPanel />
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">
-                {connected.length}
-              </span>{" "}
-              connected {connected.length === 1 ? "app" : "apps"}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setSheetOpen(true)}
-            >
-              <Plus className="size-3.5" strokeWidth={1.75} />
-              Browse integrations
-            </Button>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {connected.length}
+            </span>{" "}
+            connected {connected.length === 1 ? "app" : "apps"}
+          </p>
 
           <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-background">
             {connected.map((i) => (
