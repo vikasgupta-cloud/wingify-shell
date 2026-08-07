@@ -2,8 +2,10 @@
  * Chart tokens — data-viz palette for graphs.
  *
  * Colors resolve through the `--chart-*` CSS variables in `src/index.css`
- * (VWO primitives only), so every value is automatically correct for the
- * active color mode. Prefer the Tailwind classes (`text-chart-positive`,
+ * (VWO primitives only). Categorical lead colors (`chart-1`…`chart-8`) and
+ * the sequential ramp follow the active design-controller theme / CTA so
+ * dashboard graphs update with Appearance — mode-tuned steps stay correct
+ * for light and dark. Prefer the Tailwind classes (`text-chart-positive`,
  * `bg-chart-1`, …) in markup; use these exports where a chart needs color
  * values in JS (series arrays, SVG fills, scales).
  *
@@ -68,6 +70,12 @@ export function chartSeries(index: number): string {
     ((index % CHART_CATEGORICAL.length) + CHART_CATEGORICAL.length) %
     CHART_CATEGORICAL.length;
   return CHART_CATEGORICAL[i];
+}
+
+/** AA-safe label color on a solid `chartSeries(index)` fill. */
+export function chartSeriesOn(index: number): string {
+  const i = ((index % 20) + 20) % 20;
+  return chartVar(`${i + 1}-fg`);
 }
 
 /** Categorical series with alpha — for area fills / heatmap cells. */

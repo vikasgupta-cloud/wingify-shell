@@ -83,21 +83,34 @@ function ModeToggle({
   onChange: (m: "simple" | "advanced") => void;
 }) {
   return (
-    <div className="inline-flex rounded-md border border-border p-0.5">
+    // Segmented control, not an action: the selected segment is a raised
+    // neutral chip on a muted track, so the primary accent stays reserved
+    // for this page's one real CTA ("View Heatmap").
+    <div className="inline-flex rounded-md bg-muted p-0.5">
       <Button
         type="button"
-        variant={mode === "simple" ? "default" : "ghost"}
+        variant="ghost"
         size="sm"
-        className="h-7"
+        aria-pressed={mode === "simple"}
+        className={cn(
+          "h-7 text-muted-foreground hover:text-foreground",
+          mode === "simple" &&
+            "bg-background text-foreground shadow-sm hover:bg-background"
+        )}
         onClick={() => onChange("simple")}
       >
         Simple
       </Button>
       <Button
         type="button"
-        variant={mode === "advanced" ? "default" : "ghost"}
+        variant="ghost"
         size="sm"
-        className="h-7"
+        aria-pressed={mode === "advanced"}
+        className={cn(
+          "h-7 text-muted-foreground hover:text-foreground",
+          mode === "advanced" &&
+            "bg-background text-foreground shadow-sm hover:bg-background"
+        )}
         onClick={() => onChange("advanced")}
       >
         Advanced
@@ -288,7 +301,7 @@ export default function HeatmapsPage() {
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h1 className="w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
+                  <h1 className="font-title w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
                     Heatmaps
                   </h1>
                 </TooltipTrigger>
