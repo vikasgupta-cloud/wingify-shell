@@ -2,11 +2,15 @@ import { Palette } from "lucide-react";
 import { THEMES, type ThemeId } from "../../config/themes";
 import { useThemeStore } from "../../store/theme";
 import { cn } from "../../lib/utils";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /**
- * Theme switcher for the profile menu — picks a `data-theme` and updates
- * semantic CSS tokens so chrome, canvas, and surfaces change live.
+ * Compact theme thumbnails for the profile menu — dense grid so many themes fit.
  */
 export default function ThemePicker({
   className,
@@ -19,66 +23,80 @@ export default function ThemePicker({
   const setTheme = useThemeStore((s) => s.setTheme);
 
   return (
-    <div className={cn(compact ? "px-1 py-2" : "px-3 py-3", className)}>
+    <div className={cn(compact ? "px-1 py-2" : "px-3 py-2.5", className)}>
       <div
         className={cn(
-          "flex items-center gap-2 text-muted-foreground",
-          compact ? "mb-1.5 px-2" : "mb-2.5 px-1"
+          "mb-2 flex items-center gap-2 text-muted-foreground",
+          compact ? "px-2" : "px-0.5"
         )}
       >
-        <Palette className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+        <Palette className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
         <span className="text-[11px] font-medium uppercase tracking-wide">
           Theme
         </span>
       </div>
 
-      <RadioGroup
-        value={themeId}
-        onValueChange={(value) => setTheme(value as ThemeId)}
-        className="gap-1"
-        aria-label="App theme"
-      >
-        {THEMES.map((theme) => {
-          const selected = theme.id === themeId;
-          return (
-            <label
-              key={theme.id}
-              htmlFor={`theme-${theme.id}`}
-              className={cn(
-                "flex cursor-pointer items-start gap-2.5 rounded-md px-2 py-2 transition-colors hover:bg-muted",
-                selected && "bg-accent"
-              )}
-            >
-              <RadioGroupItem
-                id={`theme-${theme.id}`}
-                value={theme.id}
-                className="mt-0.5 border-foreground text-foreground shadow-none [&_svg]:fill-foreground"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-foreground">
-                    {theme.label}
-                  </span>
-                  <span className="flex items-center gap-0.5" aria-hidden>
-                    {theme.swatches.map((hsl, i) => (
+      <TooltipProvider delayDuration={200}>
+        <div
+          role="radiogroup"
+          aria-label="App theme"
+          className="grid grid-cols-4 gap-1.5"
+        >
+          {THEMES.map((theme) => {
+            const selected = theme.id === themeId;
+            const [surface, accent, ink] = theme.swatches;
+            return (
+              <Tooltip key={theme.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-label={theme.label}
+                    onClick={() => setTheme(theme.id as ThemeId)}
+                    className={cn(
+                      "group flex flex-col items-stretch gap-1 rounded-md p-1 outline-none transition-colors",
+                      "hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring",
+                      selected && "bg-accent"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "relative block aspect-[5/4] w-full overflow-hidden rounded border transition-[box-shadow,border-color]",
+                        selected
+                          ? "border-foreground shadow-sm"
+                          : "border-border group-hover:border-foreground/40"
+                      )}
+                      style={{ backgroundColor: `hsl(${surface})` }}
+                      aria-hidden
+                    >
                       <span
-                        key={i}
-                        className="size-2.5 rounded-full border border-border"
-                        style={{ backgroundColor: `hsl(${hsl})` }}
+                        className="absolute inset-x-1 top-1 h-1 rounded-sm"
+                        style={{ backgroundColor: `hsl(${ink})`, opacity: 0.2 }}
                       />
-                    ))}
-                  </span>
-                </span>
-                {!compact ? (
-                  <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">
-                    {theme.description}
-                  </span>
-                ) : null}
-              </span>
-            </label>
-          );
-        })}
-      </RadioGroup>
+                      <span
+                        className="absolute bottom-1 left-1 size-2 rounded-sm"
+                        style={{ backgroundColor: `hsl(${accent})` }}
+                      />
+                      <span
+                        className="absolute bottom-1 right-1 h-1.5 w-3 rounded-sm"
+                        style={{ backgroundColor: `hsl(${ink})` }}
+                      />
+                    </span>
+                    <span className="truncate px-0.5 text-center text-[10px] font-medium leading-none text-foreground">
+                      {theme.label}
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[180px]">
+                  <p className="font-medium">{theme.label}</p>
+                  <p className="text-muted-foreground">{theme.description}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
     </div>
   );
 }

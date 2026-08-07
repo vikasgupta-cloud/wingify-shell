@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   FLOW_MASCOT_IDS,
@@ -11,8 +11,9 @@ import {
 import { useMascotPreviewStore } from "../../store/mascotPreview";
 import { cn } from "../../lib/utils";
 
-const CYCLE_MS = 650;
-const CROSSFADE_MS = 280;
+/** Must stay longer than CROSSFADE_MS so swaps never overlap. */
+const CYCLE_MS = 900;
+const CROSSFADE_MS = 320;
 
 /** Preload all poses so hover swaps don't flash empty. */
 let mascotsPreloaded = false;
@@ -26,64 +27,95 @@ function preloadMascots() {
 }
 
 /**
- * Crossfading mascot mark — outgoing fades/scales out while incoming settles in.
+ * Opacity-only crossfade. Queues the latest target if a fade is already running
+ * so rapid product hovers don't thrash mid-transition.
  */
 function MascotMark({ id, alt }: { id: MascotId; alt: string }) {
-  const [current, setCurrent] = useState(id);
-  const [outgoing, setOutgoing] = useState<MascotId | null>(null);
-  const [outgoingOut, setOutgoingOut] = useState(false);
-  const [incomingIn, setIncomingIn] = useState(true);
+  const [front, setFront] = useState(id);
+  const [back, setBack] = useState<MascotId | null>(null);
+  const [frontVisible, setFrontVisible] = useState(true);
+  const busyRef = useRef(false);
+  const pendingRef = useRef<MascotId | null>(null);
+  const frontRef = useRef(id);
+  const timersRef = useRef<number[]>([]);
 
   useEffect(() => {
-    if (id === current) return;
-    setOutgoing(current);
-    setOutgoingOut(false);
-    setCurrent(id);
-    setIncomingIn(false);
-    const raf = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setOutgoingOut(true);
-        setIncomingIn(true);
+    frontRef.current = front;
+  }, [front]);
+
+  useEffect(() => {
+    return () => {
+      for (const t of timersRef.current) window.clearTimeout(t);
+      timersRef.current = [];
+    };
+  }, []);
+
+  useEffect(() => {
+    if (id === frontRef.current && !busyRef.current) return;
+
+    const run = (next: MascotId) => {
+      if (next === frontRef.current) {
+        busyRef.current = false;
+        const queued = pendingRef.current;
+        pendingRef.current = null;
+        if (queued && queued !== frontRef.current) run(queued);
+        return;
+      }
+
+      busyRef.current = true;
+      setBack(frontRef.current);
+      setFront(next);
+      frontRef.current = next;
+      setFrontVisible(false);
+
+      const fadeIn = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setFrontVisible(true));
       });
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [id, current]);
 
-  useEffect(() => {
-    if (!outgoing) return;
-    const t = window.setTimeout(() => {
-      setOutgoing(null);
-      setOutgoingOut(false);
-    }, CROSSFADE_MS);
-    return () => window.clearTimeout(t);
-  }, [outgoing]);
+      const done = window.setTimeout(() => {
+        cancelAnimationFrame(fadeIn);
+        setBack(null);
+        busyRef.current = false;
+        const queued = pendingRef.current;
+        pendingRef.current = null;
+        if (queued && queued !== frontRef.current) run(queued);
+      }, CROSSFADE_MS);
+
+      timersRef.current = timersRef.current.filter((t) => {
+        window.clearTimeout(t);
+        return false;
+      });
+      timersRef.current.push(done);
+    };
+
+    if (busyRef.current) {
+      pendingRef.current = id;
+      return;
+    }
+    run(id);
+  }, [id]);
 
   const imgClass =
-    "pointer-events-none absolute left-1/2 top-1/2 h-7 w-auto max-w-8 -translate-x-1/2 -translate-y-1/2 object-contain ease-out motion-reduce:transition-none motion-reduce:transform-none";
+    "pointer-events-none absolute inset-0 m-auto h-7 w-auto max-w-8 object-contain transition-opacity ease-out motion-reduce:transition-none";
 
   return (
     <span className="relative block h-7 w-8">
-      {outgoing ? (
+      {back ? (
         <img
-          src={MASCOT_ASSETS[outgoing]}
+          src={MASCOT_ASSETS[back]}
           alt=""
           aria-hidden
           className={cn(
             imgClass,
-            "transition-[opacity,transform]",
-            outgoingOut ? "scale-90 opacity-0" : "scale-100 opacity-100"
+            frontVisible ? "opacity-0" : "opacity-100"
           )}
           style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
         />
       ) : null}
       <img
-        src={MASCOT_ASSETS[current]}
+        src={MASCOT_ASSETS[front]}
         alt={alt}
-        className={cn(
-          imgClass,
-          "transition-[opacity,transform]",
-          incomingIn ? "scale-100 opacity-100" : "scale-90 opacity-0"
-        )}
+        className={cn(imgClass, frontVisible ? "opacity-100" : "opacity-0")}
         style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
       />
     </span>
@@ -94,7 +126,7 @@ function MascotMark({ id, alt }: { id: MascotId; alt: string }) {
  * Home button carrying the flow-aware Wingify mascot.
  * - Active route sets the pose
  * - Product-row hover previews that product's pose
- * - Logo hover auto-cycles through all poses
+ * - Logo hover auto-cycles through flow poses
  */
 export default function WingifyLogoButton({
   className,
@@ -107,6 +139,7 @@ export default function WingifyLogoButton({
   const routeId = mascotForPath(pathname);
   const [logoHover, setLogoHover] = useState(false);
   const [cycleId, setCycleId] = useState<MascotId | null>(null);
+  const cycleIndexRef = useRef(0);
 
   useEffect(() => {
     preloadMascots();
@@ -120,14 +153,19 @@ export default function WingifyLogoButton({
     const base = previewId ?? routeId;
     let index = FLOW_MASCOT_IDS.findIndex((id) => id === base);
     if (index < 0) index = -1;
-    index = (index + 1) % FLOW_MASCOT_IDS.length;
-    setCycleId(FLOW_MASCOT_IDS[index]);
+    cycleIndexRef.current = (index + 1) % FLOW_MASCOT_IDS.length;
+    setCycleId(FLOW_MASCOT_IDS[cycleIndexRef.current]);
+
     const timer = window.setInterval(() => {
-      index = (index + 1) % FLOW_MASCOT_IDS.length;
-      setCycleId(FLOW_MASCOT_IDS[index]);
+      cycleIndexRef.current =
+        (cycleIndexRef.current + 1) % FLOW_MASCOT_IDS.length;
+      setCycleId(FLOW_MASCOT_IDS[cycleIndexRef.current]);
     }, CYCLE_MS);
+
     return () => window.clearInterval(timer);
-  }, [logoHover, previewId, routeId]);
+    // Only restart the cycle when hover begins — not when route/preview changes mid-hover.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
+  }, [logoHover]);
 
   const mascotId = cycleId ?? previewId ?? routeId;
   const pose = MASCOT_LABELS[mascotId];
@@ -142,7 +180,7 @@ export default function WingifyLogoButton({
       onFocus={() => setLogoHover(true)}
       onBlur={() => setLogoHover(false)}
       className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg transition-opacity hover:opacity-90",
+        "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg",
         className
       )}
     >

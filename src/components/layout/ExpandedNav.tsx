@@ -61,10 +61,12 @@ export default function ExpandedNav({
   const pin = useUIStore((s) => s.pin);
   const unpin = useUIStore((s) => s.unpin);
   const setMascotPreview = useMascotPreviewStore((s) => s.setPreview);
+  const previewMascot = useMascotPreviewStore((s) => s.preview);
+  const scheduleMascotClear = useMascotPreviewStore((s) => s.scheduleClear);
   const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
 
   const previewMascotFor = (item: NavItem) => {
-    setMascotPreview(mascotForPath(item.path));
+    previewMascot(mascotForPath(item.path));
   };
   const clearMascotPreview = () => setMascotPreview(null);
 
@@ -240,7 +242,7 @@ export default function ExpandedNav({
         }}
         onMouseLeave={() => {
           if (!expanded && !tooltipOnly) scheduleClose();
-          else clearMascotPreview();
+          else scheduleMascotClear();
         }}
         onFocus={(e) => {
           previewMascotFor(item);
@@ -248,7 +250,7 @@ export default function ExpandedNav({
         }}
         onBlur={() => {
           if (!expanded && !tooltipOnly) scheduleClose();
-          else clearMascotPreview();
+          else scheduleMascotClear();
         }}
       >
         <button
