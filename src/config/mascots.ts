@@ -1,3 +1,4 @@
+import defaultUrl from "../assets/wingify-logo.png";
 import listenUrl from "../assets/mascots/listen.png";
 import chooseUrl from "../assets/mascots/choose.png";
 import lookUrl from "../assets/mascots/look.png";
@@ -6,9 +7,9 @@ import questionUrl from "../assets/mascots/question.png";
 
 /**
  * Brand mascot poses — swap the rail mark by product flow
- * (see mascot variations: Listen / Choose / Look / Act / Question).
+ * (Listen / Choose / Look / Act / Question). Unassigned products use `default`.
  */
-export const MASCOT_IDS = [
+export const FLOW_MASCOT_IDS = [
   "listen",
   "choose",
   "look",
@@ -16,11 +17,17 @@ export const MASCOT_IDS = [
   "question",
 ] as const;
 
+export type FlowMascotId = (typeof FLOW_MASCOT_IDS)[number];
+
+export const MASCOT_IDS = ["default", ...FLOW_MASCOT_IDS] as const;
+
 export type MascotId = (typeof MASCOT_IDS)[number];
 
-export const DEFAULT_MASCOT_ID: MascotId = "act";
+/** Mark for Home and any product without an assigned pose. */
+export const DEFAULT_MASCOT_ID: MascotId = "default";
 
 export const MASCOT_ASSETS: Record<MascotId, string> = {
+  default: defaultUrl,
   listen: listenUrl,
   choose: chooseUrl,
   look: lookUrl,
@@ -29,6 +36,7 @@ export const MASCOT_ASSETS: Record<MascotId, string> = {
 };
 
 export const MASCOT_LABELS: Record<MascotId, string> = {
+  default: "Wingify",
   listen: "Listen",
   choose: "Choose",
   look: "Look",
@@ -36,8 +44,11 @@ export const MASCOT_LABELS: Record<MascotId, string> = {
   question: "Question",
 };
 
-/** Longest-prefix wins. Unlisted paths fall back to Act (default brand mark). */
-const MASCOT_ROUTE_PREFIXES: { prefix: string; mascot: MascotId }[] = [
+/**
+ * Only products listed here get a flow pose.
+ * Longest-prefix wins; everything else → DEFAULT_MASCOT_ID.
+ */
+const MASCOT_ROUTE_PREFIXES: { prefix: string; mascot: FlowMascotId }[] = [
   { prefix: "/pulse", mascot: "listen" },
   { prefix: "/personalize", mascot: "choose" },
   { prefix: "/commerce", mascot: "choose" },
@@ -47,11 +58,10 @@ const MASCOT_ROUTE_PREFIXES: { prefix: string; mascot: MascotId }[] = [
   { prefix: "/feature-management", mascot: "act" },
   { prefix: "/wandz", mascot: "question" },
   { prefix: "/helpdesk", mascot: "question" },
-  { prefix: "/editor", mascot: "act" },
 ];
 
 export function mascotForPath(pathname: string): MascotId {
-  let best: { prefix: string; mascot: MascotId } | null = null;
+  let best: { prefix: string; mascot: FlowMascotId } | null = null;
   for (const entry of MASCOT_ROUTE_PREFIXES) {
     const hit =
       pathname === entry.prefix || pathname.startsWith(entry.prefix + "/");

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  FLOW_MASCOT_IDS,
   MASCOT_ASSETS,
   MASCOT_IDS,
   MASCOT_LABELS,
@@ -117,13 +118,13 @@ export default function WingifyLogoButton({
       return;
     }
     const base = previewId ?? routeId;
-    let index = MASCOT_IDS.indexOf(base);
-    if (index < 0) index = 0;
-    index = (index + 1) % MASCOT_IDS.length;
-    setCycleId(MASCOT_IDS[index]);
+    let index = FLOW_MASCOT_IDS.findIndex((id) => id === base);
+    if (index < 0) index = -1;
+    index = (index + 1) % FLOW_MASCOT_IDS.length;
+    setCycleId(FLOW_MASCOT_IDS[index]);
     const timer = window.setInterval(() => {
-      index = (index + 1) % MASCOT_IDS.length;
-      setCycleId(MASCOT_IDS[index]);
+      index = (index + 1) % FLOW_MASCOT_IDS.length;
+      setCycleId(FLOW_MASCOT_IDS[index]);
     }, CYCLE_MS);
     return () => window.clearInterval(timer);
   }, [logoHover, previewId, routeId]);
