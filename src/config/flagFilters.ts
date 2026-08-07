@@ -28,13 +28,15 @@ export function getFlagFilterFields(rows: FeatureFlag[]): FlagFilterFieldDef[] {
   );
   const environments = [
     ...new Set(
-      rows.map((r) => r.environment).filter((e): e is string => e !== null)
+      rows
+        .map((r) => r.environment)
+        .filter((e): e is NonNullable<FeatureFlag["environment"]> => e != null)
     ),
   ].sort((a, b) => a.localeCompare(b));
   return [
     { field: "creationDate", label: "Creation Date", options: [...CREATION_DATE_OPTIONS] },
     { field: "createdBy", label: "Campaign Creator", options: creators },
-    { field: "environment", label: "Environment", options: environments },
+    { field: "environment", label: "Environment", options: [...environments] },
   ];
 }
 
