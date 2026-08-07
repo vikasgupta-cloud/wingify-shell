@@ -158,3 +158,90 @@
   font-style: italic;
   font-display: swap;
 }
+
+/* ── Digits-only faces (unicode-range) ─────────────────────────────────
+   First in every UI font stack via --font-number-digits. Letters fall
+   through to Title/Body/CTA; 0-9 (and , .) use the Number role face.
+   Safe for React — no DOM rewriting. */
+@font-face {
+  font-family: "Wingify Digits Ergon";
+  src: url("./ergon/Ergon-Regular-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+@font-face {
+  font-family: "Wingify Digits Ergon";
+  src: url("./ergon/Ergon-Medium-Trial.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+@font-face {
+  font-family: "Wingify Digits Ergon";
+  src: url("./ergon/Ergon-Bold-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+
+@font-face {
+  font-family: "Wingify Digits Lyon";
+  src: url("./lyon-display/LyonDisplay-Regular-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+@font-face {
+  font-family: "Wingify Digits Lyon";
+  src: url("./lyon-display/LyonDisplay-Medium-Trial.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+@font-face {
+  font-family: "Wingify Digits Lyon";
+  src: url("./lyon-display/LyonDisplay-Bold-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+
+@font-face {
+  font-family: "Wingify Digits DM Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAopxhTg.ttf) format("truetype");
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+@font-face {
+  font-family: "Wingify Digits DM Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAkJxhTg.ttf) format("truetype");
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+@font-face {
+  font-family: "Wingify Digits DM Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAfJthTg.ttf) format("truetype");
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}
+@font-face {
+  font-family: "Wingify Digits DM Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwARZthTg.ttf) format("truetype");
+  unicode-range: U+0030-0039, U+002C, U+002E;
+}

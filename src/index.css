@@ -11,6 +11,8 @@
     --font-cta: "DM Sans", ui-sans-serif, system-ui, sans-serif;
     --font-main-menu: "DM Sans", ui-sans-serif, system-ui, sans-serif;
     --font-sub-menu: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    /* Digits-only face (unicode-range) — first in every role stack. */
+    --font-number-digits: "Wingify Digits DM Sans";
   }
 
   html {
@@ -26,10 +28,27 @@
     @apply font-title tracking-tight;
   }
 
-  /* Metrics / tabular figures pick up the Number role. */
-  .tabular-nums,
+  /*
+   * Number role: digits use --font-number-digits via unicode-range stacks.
+   * .tabular-nums only aligns figure widths; .font-number opts in whole element.
+   */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
   .font-number {
-    font-family: var(--font-number), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-number-digits), var(--font-number), ui-sans-serif,
+      system-ui, sans-serif;
+  }
+
+  /* Design controller + code: no digit override (previews/snippets stay pure). */
+  [data-design-controller],
+  [data-skip-number-font],
+  code,
+  pre,
+  kbd,
+  samp,
+  .font-mono {
+    --font-number-digits: __skip_number_digits__;
   }
 
   /* Clickable controls use the pointer cursor across the app. */
@@ -402,6 +421,9 @@
   --canvas: var(--vwo-light-bg-canvas);
   --surface: var(--vwo-light-bg-canvas);
   --surface-border: var(--vwo-light-border-subtle);
+  /* Listing headers (tables / kanban / gantt) — design controller can override. */
+  --listing-header-bg: var(--background);
+  --listing-header-fg: var(--foreground);
 
   --accent: var(--vwo-light-bg-selected);
   --accent-foreground: var(--vwo-midnight-base);
@@ -610,6 +632,9 @@
   --canvas: var(--vwo-light-bg-canvas);
   --surface: var(--vwo-light-bg-canvas);
   --surface-border: var(--vwo-light-border-subtle);
+  /* Listing headers (tables / kanban / gantt) — design controller can override. */
+  --listing-header-bg: var(--background);
+  --listing-header-fg: var(--foreground);
   --accent: var(--vwo-light-bg-selected);
   --accent-foreground: var(--vwo-midnight-base);
   --selected-bg: var(--vwo-light-bg-selected);
@@ -665,6 +690,8 @@
   --canvas: var(--vwo-dark-bg-canvas);
   --surface: var(--vwo-dark-bg-surface);
   --surface-border: var(--vwo-dark-border-subtle);
+  --listing-header-bg: var(--background);
+  --listing-header-fg: var(--foreground);
   --accent: var(--vwo-dark-bg-selected);
   --accent-foreground: var(--vwo-dark-text-primary);
   --selected-bg: var(--vwo-dark-bg-selected);
@@ -931,4 +958,25 @@ body {
   html[data-font-cta="dm-sans"] [data-font-role="cta"] {
     font-weight: 500;
   }
+}
+
+/*
+ * Design controller — listing headers app-wide (present + future tables).
+ * Any <thead> row that contains <th> uses --listing-header-bg/fg.
+ * Selection toolbars that put controls in <td> are skipped.
+ * Outside @layer + !important so per-page bg-muted / text-muted-foreground cannot win.
+ * Non-table headers (kanban / gantt) should use bg-listing-header + text-listing-header-foreground.
+ */
+table > thead > tr:has(> th) {
+  background-color: hsl(var(--listing-header-bg)) !important;
+  color: hsl(var(--listing-header-fg)) !important;
+}
+table > thead > tr:has(> th) > th {
+  background-color: hsl(var(--listing-header-bg)) !important;
+  color: hsl(var(--listing-header-fg)) !important;
+}
+table > thead > tr:has(> th) > th button,
+table > thead > tr:has(> th) > th [class*="text-muted"],
+table > thead > tr:has(> th) > th [class*="text-foreground"] {
+  color: hsl(var(--listing-header-fg)) !important;
 }

@@ -10,11 +10,13 @@ export default function App() {
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
+  const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
+  const headerTokenId = useThemeStore((s) => s.headerTokenId);
   const fontAssignments = useFontStore((s) => s.assignments);
 
   useEffect(() => {
-    applyBrand(themeId, colorMode, ctaTokenId);
-  }, [themeId, colorMode, ctaTokenId]);
+    applyBrand(themeId, colorMode, ctaTokenId, backgroundTokenId, headerTokenId);
+  }, [themeId, colorMode, ctaTokenId, backgroundTokenId, headerTokenId]);
 
   useEffect(() => {
     applyFonts(fontAssignments);

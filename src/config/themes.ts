@@ -156,12 +156,16 @@ export function readStoredTheme(): {
   themeId: ThemeId;
   colorMode: ColorMode;
   ctaTokenId: string | null;
+  backgroundTokenId: string | null;
+  headerTokenId: string | null;
 } {
   if (typeof localStorage === "undefined") {
     return {
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
       ctaTokenId: null,
+      backgroundTokenId: null,
+      headerTokenId: null,
     };
   }
   try {
@@ -171,6 +175,8 @@ export function readStoredTheme(): {
         themeId: DEFAULT_THEME_ID,
         colorMode: DEFAULT_COLOR_MODE,
         ctaTokenId: null,
+        backgroundTokenId: null,
+        headerTokenId: null,
       };
     }
     const parsed = JSON.parse(raw) as {
@@ -178,22 +184,36 @@ export function readStoredTheme(): {
         themeId?: unknown;
         colorMode?: unknown;
         ctaTokenId?: unknown;
+        backgroundTokenId?: unknown;
+        headerTokenId?: unknown;
       };
     };
     const cta =
       typeof parsed?.state?.ctaTokenId === "string"
         ? parsed.state.ctaTokenId
         : null;
+    const background =
+      typeof parsed?.state?.backgroundTokenId === "string"
+        ? parsed.state.backgroundTokenId
+        : null;
+    const header =
+      typeof parsed?.state?.headerTokenId === "string"
+        ? parsed.state.headerTokenId
+        : null;
     return {
       themeId: resolveThemeId(parsed?.state?.themeId),
       colorMode: resolveColorMode(parsed?.state?.colorMode),
       ctaTokenId: cta,
+      backgroundTokenId: background,
+      headerTokenId: header,
     };
   } catch {
     return {
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
       ctaTokenId: null,
+      backgroundTokenId: null,
+      headerTokenId: null,
     };
   }
 }

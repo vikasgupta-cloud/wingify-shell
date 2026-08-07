@@ -111,6 +111,8 @@ export type DesignTokenExport = {
   exportedAt: string;
   themeId: ThemeId;
   ctaTokenId: string | null;
+  backgroundTokenId: string | null;
+  headerTokenId: string | null;
   fonts: Record<string, { id: FontId; stack: string }>;
   scales: (typeof tokens)["scales"];
   semantic: (typeof tokens)["semantic"];
@@ -128,13 +130,22 @@ export function buildDesignTokenExport(options: {
   themeId: ThemeId;
   colorMode: ColorMode;
   ctaTokenId: string | null;
+  backgroundTokenId?: string | null;
+  headerTokenId?: string | null;
   fontAssignments: Record<FontRole, FontId>;
 }): DesignTokenExport {
-  const { themeId, colorMode, ctaTokenId, fontAssignments } = options;
+  const {
+    themeId,
+    colorMode,
+    ctaTokenId,
+    backgroundTokenId = null,
+    headerTokenId = null,
+    fontAssignments,
+  } = options;
   const root = document.documentElement;
 
   const snapMode = (mode: ColorMode) => {
-    applyBrand(themeId, mode, ctaTokenId);
+    applyBrand(themeId, mode, ctaTokenId, backgroundTokenId, headerTokenId);
     // Force style recalc before reading computed colors.
     void root.offsetHeight;
     return snapshotRoles();
@@ -144,12 +155,14 @@ export function buildDesignTokenExport(options: {
   const dark = snapMode("dark");
 
   // Restore the user's active mode.
-  applyBrand(themeId, colorMode, ctaTokenId);
+  applyBrand(themeId, colorMode, ctaTokenId, backgroundTokenId, headerTokenId);
 
   return {
     exportedAt: new Date().toISOString(),
     themeId,
     ctaTokenId,
+    backgroundTokenId,
+    headerTokenId,
     fonts: snapshotFonts(fontAssignments),
     scales: tokens.scales,
     semantic: tokens.semantic,
@@ -172,6 +185,8 @@ export function downloadDesignTokensJson(options: {
   themeId: ThemeId;
   colorMode: ColorMode;
   ctaTokenId: string | null;
+  backgroundTokenId?: string | null;
+  headerTokenId?: string | null;
   fontAssignments: Record<FontRole, FontId>;
 }) {
   const payload = buildDesignTokenExport(options);
@@ -188,6 +203,8 @@ export function downloadDesignTokensCss(options: {
   themeId: ThemeId;
   colorMode: ColorMode;
   ctaTokenId: string | null;
+  backgroundTokenId?: string | null;
+  headerTokenId?: string | null;
   fontAssignments: Record<FontRole, FontId>;
 }) {
   const payload = buildDesignTokenExport(options);

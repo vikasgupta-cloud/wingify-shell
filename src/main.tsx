@@ -4,12 +4,19 @@ import "./assets/fonts/brand-fonts.css";
 import "./index.css";
 import { applyFonts, readStoredFonts } from "./config/fonts";
 import { resolveCtaTokenId } from "./config/ctaTokens";
+import { resolveBackgroundTokenId } from "./config/backgroundTokens";
 import { readStoredTheme } from "./config/themes";
 import { applyBrand } from "./config/applyBrand";
 import App from "./App.tsx";
 
 const stored = readStoredTheme();
-applyBrand(stored.themeId, stored.colorMode, resolveCtaTokenId(stored.ctaTokenId));
+applyBrand(
+  stored.themeId,
+  stored.colorMode,
+  resolveCtaTokenId(stored.ctaTokenId),
+  resolveBackgroundTokenId(stored.backgroundTokenId),
+  resolveBackgroundTokenId(stored.headerTokenId ?? null)
+);
 applyFonts(readStoredFonts());
 
 createRoot(document.getElementById("root")!).render(

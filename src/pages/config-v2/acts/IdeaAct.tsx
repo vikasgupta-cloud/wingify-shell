@@ -227,7 +227,7 @@ export default function IdeaAct({ campaignId }: { campaignId: string }) {
         <div className="overflow-hidden rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
+              <tr className="border-b border-border bg-listing-header text-left text-xs text-listing-header-foreground">
                 <th className="px-3 py-2 font-medium">Variation</th>
                 <th className="px-3 py-2 font-medium">Type</th>
                 <th className="w-24 px-3 py-2 text-right font-medium">Split</th>

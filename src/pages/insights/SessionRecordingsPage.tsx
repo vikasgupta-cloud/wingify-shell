@@ -363,7 +363,7 @@ export default function SessionRecordingsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[920px] border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-muted/40 text-left text-xs font-medium text-muted-foreground">
+                    <tr className="border-b border-border bg-listing-header text-left text-xs font-medium text-listing-header-foreground">
                       <th className="w-11 px-3 py-3">
                         <Checkbox
                           checked={headerChecked}

@@ -312,7 +312,7 @@ function MetricSheetBody({ metric }: { metric: Data360Metric }) {
             <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
+                  <tr className="border-b border-border bg-listing-header text-left text-xs font-medium text-listing-header-foreground">
                     <th className="px-3 py-2.5">Campaign Name</th>
                     <th className="px-3 py-2.5">Status</th>
                     <th className="px-3 py-2.5">Created On</th>
@@ -365,7 +365,7 @@ function MetricSheetBody({ metric }: { metric: Data360Metric }) {
           <div className="overflow-hidden rounded-lg border border-border">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
+                <tr className="border-b border-border bg-listing-header text-left text-xs font-medium text-listing-header-foreground">
                   <th className="px-3 py-2.5">Funnel Name</th>
                   <th className="px-3 py-2.5">Status</th>
                   <th className="px-3 py-2.5">Created On</th>

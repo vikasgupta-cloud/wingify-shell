@@ -131,6 +131,14 @@ export default function CtaColorPicker({ className }: { className?: string }) {
           );
         })}
       </div>
+      {family === "midnight" && tokens.length <= 1 ? (
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          Midnight currently ships as a single brand value (
+          <code className="text-foreground">base · #1E2022</code>
+          ). A full 50–900 scale isn’t in the token file yet — share the
+          complete Midnight palette and we can wire every step here.
+        </p>
+      ) : null}
     </section>
   );
 }

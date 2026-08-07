@@ -230,7 +230,7 @@ export default function FlagReportTable({ kind }: { kind: FlagReportKind }) {
               <col />
             </colgroup>
             <thead>
-              <tr className="border-b border-border bg-muted">
+              <tr className="border-b border-border bg-listing-header text-listing-header-foreground">
                 <th className="px-3 py-2.5">
                   <Checkbox
                     checked={headerState}
@@ -243,7 +243,7 @@ export default function FlagReportTable({ kind }: { kind: FlagReportKind }) {
                   <th
                     key={col.id}
                     className={cn(
-                      "whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
+                      "whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-listing-header-foreground",
                       col.align === "right" && "text-right",
                       col.align === "center" && "text-center",
                       col.sortable && "cursor-pointer select-none"

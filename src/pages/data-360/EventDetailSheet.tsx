@@ -301,7 +301,7 @@ export default function EventDetailSheet({
                   <div className="overflow-hidden rounded-lg border border-border">
                     <table className="w-full border-collapse text-sm">
                       <thead>
-                        <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
+                        <tr className="border-b border-border bg-listing-header text-left text-xs font-medium text-listing-header-foreground">
                           <th className="px-3 py-2.5">
                             {isComputed ? "Property Name" : "Property"}
                           </th>
@@ -404,7 +404,7 @@ export default function EventDetailSheet({
                       <div className="overflow-hidden rounded-lg border border-border">
                         <table className="w-full border-collapse text-sm">
                           <thead>
-                            <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
+                            <tr className="border-b border-border bg-listing-header text-left text-xs font-medium text-listing-header-foreground">
                               <th className="px-3 py-2.5">API Name</th>
                               <th className="px-3 py-2.5">Data Type</th>
                             </tr>

@@ -521,13 +521,13 @@ export default function GanttChart() {
   const sortIcon =
     sort?.column !== "name" ? (
       <ChevronsUpDown
-        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+        className="h-3.5 w-3.5 shrink-0 text-listing-header-foreground/70"
         aria-hidden
       />
     ) : sort.dir === "asc" ? (
-      <ChevronUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      <ChevronUp className="h-3.5 w-3.5 shrink-0 text-listing-header-foreground" aria-hidden />
     ) : (
-      <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-listing-header-foreground" aria-hidden />
     );
 
   const toggleGroup = (key: string) =>
@@ -564,10 +564,10 @@ export default function GanttChart() {
       <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-border bg-background">
         <div style={{ width: innerWidth }}>
           {/* Header */}
-          <div className="sticky top-0 z-40 flex border-b border-border bg-background">
+          <div className="sticky top-0 z-40 flex border-b border-border bg-listing-header text-listing-header-foreground">
             <div
               className={cn(
-                "sticky left-0 z-10 flex shrink-0 items-center border-r border-border bg-background px-3 py-2.5 transition-shadow duration-150",
+                "sticky left-0 z-10 flex shrink-0 items-center border-r border-border bg-listing-header px-3 py-2.5 transition-shadow duration-150",
                 isScrolled && SCROLL_SHADOW
               )}
               style={{ width: FROZEN_WIDTH }}
@@ -575,7 +575,7 @@ export default function GanttChart() {
               <button
                 type="button"
                 onClick={cycleSort}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-foreground"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-listing-header-foreground transition-colors hover:text-listing-header-foreground"
               >
                 Campaign name
                 {sortIcon}
@@ -591,8 +591,8 @@ export default function GanttChart() {
                   )}
                   style={{ width: cell.width }}
                 >
-                  <span className="text-[11px] text-muted-foreground">{cell.top || " "}</span>
-                  <span className="text-xs tabular-nums text-foreground">{cell.bottom}</span>
+                  <span className="text-[11px] text-listing-header-foreground/70">{cell.top || " "}</span>
+                  <span className="text-xs tabular-nums text-listing-header-foreground">{cell.bottom}</span>
                 </div>
               ))}
             </div>

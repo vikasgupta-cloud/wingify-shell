@@ -82,7 +82,7 @@ export default function PersonalizeKanbanBoard() {
               dragging && isValid && "ring-2 ring-foreground/20"
             )}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-2">
+            <div className="flex items-center justify-between gap-2 border-b border-border bg-listing-header px-3 py-2 text-listing-header-foreground">
               {isStatus ? (
                 <StatusBadge status={key as CampaignStatus} />
               ) : (
@@ -90,7 +90,7 @@ export default function PersonalizeKanbanBoard() {
                   {key}
                 </span>
               )}
-              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+              <span className="shrink-0 rounded-full bg-listing-header-foreground/10 px-2 py-0.5 text-xs tabular-nums text-listing-header-foreground">
                 {colRows.length}
               </span>
             </div>

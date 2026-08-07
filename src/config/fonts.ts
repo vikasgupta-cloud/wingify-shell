@@ -65,7 +65,7 @@ export const FONT_ROLE_OPTIONS: FontRoleOption[] = [
   {
     id: "number",
     label: "Number",
-    description: "Metrics, splits, counts",
+    description: "Every digit app-wide (metrics, dates, counts)",
     preview: "12,480 · 48.2%",
   },
   {
@@ -144,6 +144,13 @@ export function fontStack(id: FontId): string {
   return FONT_BY_ID[id].stack;
 }
 
+/** Digits-only face names (unicode-range) — first in every role stack. */
+const DIGIT_FACE: Record<FontId, string> = {
+  ergon: '"Wingify Digits Ergon"',
+  lyon: '"Wingify Digits Lyon"',
+  "dm-sans": '"Wingify Digits DM Sans"',
+};
+
 /** Write role → family CSS vars on <html>. */
 export function applyFonts(assignments: Record<FontRole, FontId>) {
   if (typeof document === "undefined") return;
@@ -151,6 +158,11 @@ export function applyFonts(assignments: Record<FontRole, FontId>) {
   for (const role of FONT_ROLES) {
     root.style.setProperty(ROLE_CSS_VAR[role], fontStack(assignments[role]));
   }
+  // Digits app-wide use the Number role face; letters keep their role stack.
+  root.style.setProperty(
+    "--font-number-digits",
+    DIGIT_FACE[assignments.number]
+  );
   // Drive weight bumps (e.g. DM Sans CTA reads one step heavier).
   root.setAttribute("data-font-cta", assignments.cta);
 }

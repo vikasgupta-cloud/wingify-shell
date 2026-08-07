@@ -4,36 +4,65 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Role stacks — driven by --font-* CSS vars from the font playground.
-        sans: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+        // Role stacks — Number digits face first (unicode-range), then role font.
+        sans: [
+          "var(--font-number-digits)",
+          "var(--font-body)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
         heading: [
+          "var(--font-number-digits)",
           "var(--font-title)",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
         display: [
+          "var(--font-number-digits)",
           "var(--font-title)",
           "Georgia",
           "Times New Roman",
           "serif",
         ],
-        title: ["var(--font-title)", "ui-sans-serif", "system-ui", "sans-serif"],
-        body: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+        title: [
+          "var(--font-number-digits)",
+          "var(--font-title)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        body: [
+          "var(--font-number-digits)",
+          "var(--font-body)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
         number: [
+          "var(--font-number-digits)",
           "var(--font-number)",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
-        cta: ["var(--font-cta)", "ui-sans-serif", "system-ui", "sans-serif"],
+        cta: [
+          "var(--font-number-digits)",
+          "var(--font-cta)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
         "main-menu": [
+          "var(--font-number-digits)",
           "var(--font-main-menu)",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
         "sub-menu": [
+          "var(--font-number-digits)",
           "var(--font-sub-menu)",
           "ui-sans-serif",
           "system-ui",
@@ -94,6 +123,10 @@ export default {
           foreground: "hsl(var(--muted-foreground))",
         },
         canvas: "hsl(var(--canvas))",
+        "listing-header": {
+          DEFAULT: "hsl(var(--listing-header-bg))",
+          foreground: "hsl(var(--listing-header-fg))",
+        },
         surface: {
           DEFAULT: "hsl(var(--surface))",
           border: "hsl(var(--surface-border))",

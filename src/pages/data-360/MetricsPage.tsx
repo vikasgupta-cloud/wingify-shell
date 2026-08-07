@@ -299,7 +299,7 @@ export default function MetricsPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px] border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
+                <tr className="border-b border-border bg-listing-header text-left text-xs font-medium text-listing-header-foreground">
                   <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Type</th>
                   <th className="px-4 py-3">Measures</th>

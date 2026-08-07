@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import ThemePicker from "./ThemePicker";
 import FontPicker from "./FontPicker";
 import CtaColorPicker from "./CtaColorPicker";
+import BackgroundColorPicker from "./BackgroundColorPicker";
+import HeaderColorPicker from "./HeaderColorPicker";
 
 /** Blank-space clicks required to open (hidden gesture). */
 const OPEN_CLICKS = 5;
@@ -63,6 +65,8 @@ export default function FontController() {
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
+  const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
+  const headerTokenId = useThemeStore((s) => s.headerTokenId);
   const fontAssignments = useFontStore((s) => s.assignments);
   const [rendered, setRendered] = useState(false);
   const [shown, setShown] = useState(false);
@@ -75,6 +79,8 @@ export default function FontController() {
     themeId,
     colorMode,
     ctaTokenId,
+    backgroundTokenId,
+    headerTokenId,
     fontAssignments,
   };
 
@@ -242,6 +248,12 @@ export default function FontController() {
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className="border-b border-border px-3 py-2">
                   <ThemePicker />
+                </div>
+                <div className="border-b border-border">
+                  <BackgroundColorPicker />
+                </div>
+                <div className="border-b border-border">
+                  <HeaderColorPicker />
                 </div>
                 <FontPicker />
                 <div className="border-t border-border">
