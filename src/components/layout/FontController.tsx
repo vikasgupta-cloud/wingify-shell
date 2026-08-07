@@ -59,12 +59,11 @@ function isBlankSpaceClick(target: EventTarget | null): boolean {
 export default function FontController() {
   const open = useDesignControllerStore((s) => s.open);
   const setOpen = useDesignControllerStore((s) => s.setOpen);
+  const resetDesign = useDesignControllerStore((s) => s.resetDesign);
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
-  const resetAppearance = useThemeStore((s) => s.resetAppearance);
   const fontAssignments = useFontStore((s) => s.assignments);
-  const resetFonts = useFontStore((s) => s.resetFonts);
   const [rendered, setRendered] = useState(false);
   const [shown, setShown] = useState(false);
   const [tabHover, setTabHover] = useState(false);
@@ -90,10 +89,7 @@ export default function FontController() {
     lastClickAt.current = 0;
   };
 
-  const resetAll = () => {
-    resetAppearance();
-    resetFonts();
-  };
+  const resetAll = resetDesign;
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {

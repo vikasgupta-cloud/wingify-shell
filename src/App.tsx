@@ -1,9 +1,8 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes";
-import { applyCtaToken } from "./config/ctaTokens";
 import { applyFonts } from "./config/fonts";
-import { applyTheme } from "./config/themes";
+import { applyBrand } from "./config/applyBrand";
 import { useFontStore } from "./store/fonts";
 import { useThemeStore } from "./store/theme";
 
@@ -14,8 +13,7 @@ export default function App() {
   const fontAssignments = useFontStore((s) => s.assignments);
 
   useEffect(() => {
-    applyTheme(themeId, colorMode);
-    applyCtaToken(ctaTokenId, colorMode);
+    applyBrand(themeId, colorMode, ctaTokenId);
   }, [themeId, colorMode, ctaTokenId]);
 
   useEffect(() => {

@@ -1,11 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { resolveCtaTokenId } from "../config/ctaTokens";
+import { applyBrand } from "../config/applyBrand";
 import {
-  applyCtaToken,
-  resolveCtaTokenId,
-} from "../config/ctaTokens";
-import {
-  applyTheme,
   DEFAULT_COLOR_MODE,
   DEFAULT_THEME_ID,
   resolveColorMode,
@@ -31,8 +28,7 @@ function syncDom(
   colorMode: ColorMode,
   ctaTokenId: string | null
 ) {
-  applyTheme(themeId, colorMode);
-  applyCtaToken(ctaTokenId, colorMode);
+  applyBrand(themeId, colorMode, ctaTokenId);
 }
 
 export const useThemeStore = create<ThemeState>()(

@@ -1,6 +1,6 @@
 import tokens from "./tokens.json";
-import { applyCtaToken } from "./ctaTokens";
-import { applyTheme, type ColorMode, type ThemeId } from "./themes";
+import { applyBrand } from "./applyBrand";
+import type { ColorMode, ThemeId } from "./themes";
 import type { FontId, FontRole } from "./fonts";
 import { FONTS } from "./fonts";
 
@@ -134,8 +134,7 @@ export function buildDesignTokenExport(options: {
   const root = document.documentElement;
 
   const snapMode = (mode: ColorMode) => {
-    applyTheme(themeId, mode);
-    applyCtaToken(ctaTokenId, mode);
+    applyBrand(themeId, mode, ctaTokenId);
     // Force style recalc before reading computed colors.
     void root.offsetHeight;
     return snapshotRoles();
@@ -145,8 +144,7 @@ export function buildDesignTokenExport(options: {
   const dark = snapMode("dark");
 
   // Restore the user's active mode.
-  applyTheme(themeId, colorMode);
-  applyCtaToken(ctaTokenId, colorMode);
+  applyBrand(themeId, colorMode, ctaTokenId);
 
   return {
     exportedAt: new Date().toISOString(),

@@ -1,5 +1,6 @@
 import tokens from "./tokens.json";
 import type { ColorMode } from "./themes";
+import { categoricalChartVars } from "./brandEngine";
 
 /** Scale families available as CTA pickers (VWO colour tokens). */
 export const CTA_FAMILIES = [
@@ -39,38 +40,10 @@ const SCALE_STEPS = [
   "900",
 ] as const;
 
-const CTA_VARS = [
-  "--primary",
-  "--primary-foreground",
-  "--primary-hover",
-  "--primary-active",
-  "--primary-subtle",
-  "--primary-border",
-  "--ring",
-  "--accent",
-  "--accent-foreground",
-  "--selected-bg",
-  "--selected-fg",
-  "--link",
-  "--link-hover",
-  "--brand-deep",
-  "--report-brand",
-  "--report-brand-fg",
-  "--report-brand-tint",
-  "--report-link",
-  /* Chart lead follows the custom CTA so dashboard graphs react too. */
-  "--chart-1",
-  "--chart-1-fg",
-  "--chart-info",
-  "--chart-info-bg",
-  "--chart-seq-1",
-  "--chart-seq-2",
-  "--chart-seq-3",
-  "--chart-seq-4",
-  "--chart-seq-5",
-  "--chart-seq-6",
-  "--chart-seq-7",
-] as const;
+// NOTE: the applied CTA variable set is the SINGLE SOURCE OF TRUTH derived from
+// aestheticVarsForCta() output (see CTA_VARS below), so adding a var to the
+// engine automatically makes applyCtaToken set AND clear it — no separate list
+// to keep in sync.
 
 function hexLuminance(hex: string): number {
   const h = hex.replace("#", "");
@@ -157,20 +130,7 @@ function chartLeadVars(
   family: CtaFamily,
   colorMode: ColorMode,
   step: string
-): Pick<
-  Record<(typeof CTA_VARS)[number], string>,
-  | "--chart-1"
-  | "--chart-1-fg"
-  | "--chart-info"
-  | "--chart-info-bg"
-  | "--chart-seq-1"
-  | "--chart-seq-2"
-  | "--chart-seq-3"
-  | "--chart-seq-4"
-  | "--chart-seq-5"
-  | "--chart-seq-6"
-  | "--chart-seq-7"
-> {
+): Record<string, string> {
   if (family === "midnight") {
     if (colorMode === "dark") {
       return {
@@ -256,13 +216,18 @@ function chartLeadVars(
 export function aestheticVarsForCta(
   token: CtaTokenOption,
   colorMode: ColorMode
-): Record<(typeof CTA_VARS)[number], string> {
+): Record<string, string> {
   const { family, step, hex } = token;
   const lightFg = hexLuminance(hex) > 0.55;
   const fg = lightFg
     ? "var(--vwo-midnight-base)"
     : "var(--vwo-neutral-0)";
-  const charts = chartLeadVars(family, colorMode, step);
+  // Lead + sequential + info from the accent, plus the full categorical series
+  // 2…8 rotated from the accent so the whole palette re-skins (not just series 1).
+  const charts = {
+    ...chartLeadVars(family, colorMode, step),
+    ...categoricalChartVars(family, colorMode),
+  };
 
   if (family === "midnight") {
     if (colorMode === "dark") {
@@ -366,6 +331,16 @@ export function aestheticVarsForCta(
     ...charts,
   };
 }
+
+/**
+ * Single source of truth for the CTA variable set: the exact keys
+ * aestheticVarsForCta() produces. Every branch returns the same key set, so a
+ * reference computation gives the canonical list used to both apply and clear —
+ * adding a var to the engine can never drift from what gets cleared.
+ */
+export const CTA_VARS: readonly string[] = Object.keys(
+  aestheticVarsForCta(CTA_TOKEN_OPTIONS[0]!, "light")
+);
 
 /** Apply or clear custom CTA overrides on <html>. */
 export function applyCtaToken(
