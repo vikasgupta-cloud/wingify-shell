@@ -30,6 +30,12 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import StatusBadge from "@/components/ui/StatusBadge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   ACTIVE_REPORT,
@@ -232,16 +238,18 @@ export default function SessionRecordingsPage() {
             <Video className="size-4 text-foreground" aria-hidden />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Session Recordings
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Record and playback visitor sessions on your website.{" "}
-              <button type="button" className="underline underline-offset-2">
-                Learn more
-              </button>
-              .
-            </p>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h1 className="w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
+                    Session Recordings
+                  </h1>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start">
+                  Record and playback visitor sessions on your website.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

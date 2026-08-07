@@ -38,7 +38,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useWandzStore } from "@/store/wandz";
 import {
   ACTIVE_TESTS,
-  DASHBOARD_USER_NAME,
   FORMS_REPORT,
   FUNNEL_REPORTS,
   HEATMAP_PAGES,
@@ -918,11 +917,13 @@ export function SurveysCard() {
   );
 }
 
-export function DashboardGreeting() {
-  return (
-    <p className="text-sm text-muted-foreground">
-      Hi {DASHBOARD_USER_NAME}. Here&apos;s an overview of all your experiments on
-      your journey.
-    </p>
-  );
-}
+// @undo — greeting moved to PageHeader description tooltip on DashboardPage
+// export function DashboardGreeting() {
+//   return (
+//     <p className="text-sm text-muted-foreground">
+//       Hi {DASHBOARD_USER_NAME}. Here&apos;s an overview of all your experiments on
+//       your journey.
+//     </p>
+//   );
+// }
+

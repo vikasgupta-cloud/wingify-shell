@@ -205,15 +205,11 @@ export default function MetricsPage() {
 
   return (
     <>
-      <PageHeader title={pageLabel(pathname)} icon={iconForPath(pathname)} />
-      <p className="px-12 text-sm text-muted-foreground">
-        Define and track north star, optimization, revenue KPIs that mark your
-        growth.{" "}
-        <button type="button" className="underline underline-offset-2">
-          Learn more
-        </button>
-        .
-      </p>
+      <PageHeader
+        title={pageLabel(pathname)}
+        icon={iconForPath(pathname)}
+        description="Define and track north star, optimization, revenue KPIs that mark your growth."
+      />
 
       <div className="px-12 pb-12 pt-8">
         <div className="mb-4 flex flex-wrap items-center gap-3">

@@ -3,6 +3,12 @@
 import { Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import FlagReportViewBar from "@/components/flag-reports/FlagReportViewBar";
 import FlagReportFilterBar from "@/components/flag-reports/FlagReportFilterBar";
 import FlagReportColumnConfig from "@/components/flag-reports/FlagReportColumnConfig";
@@ -39,9 +45,18 @@ export default function FlagReportPage({ kind }: { kind: FlagReportKind }) {
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                {config.title}
-              </h1>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <h1 className="w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
+                      {config.title}
+                    </h1>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start">
+                    {config.subtitle}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button
                 type="button"
                 variant="ghost"
@@ -52,7 +67,6 @@ export default function FlagReportPage({ kind }: { kind: FlagReportKind }) {
                 Summarize
               </Button>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">{config.subtitle}</p>
           </div>
         </div>
       </div>

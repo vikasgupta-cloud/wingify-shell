@@ -202,15 +202,11 @@ export default function AttributesPage() {
 
   return (
     <>
-      <PageHeader title={pageLabel(pathname)} icon={iconForPath(pathname)} />
-      <p className="px-12 text-sm text-muted-foreground">
-        Define visitor&apos;s characteristics as per your need to visualize their
-        unique identity.{" "}
-        <button type="button" className="underline underline-offset-2">
-          Learn more
-        </button>
-        .
-      </p>
+      <PageHeader
+        title={pageLabel(pathname)}
+        icon={iconForPath(pathname)}
+        description="Define visitor's characteristics as per your need to visualize their unique identity."
+      />
 
       <div className="px-12 pb-12 pt-8">
         <div className="mb-4 flex flex-wrap items-center gap-3">

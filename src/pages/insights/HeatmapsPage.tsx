@@ -30,6 +30,12 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import StatusBadge from "@/components/ui/StatusBadge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   HEATMAP_ALL_DATA,
@@ -279,9 +285,18 @@ export default function HeatmapsPage() {
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Heatmaps
-            </h1>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h1 className="w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
+                    Heatmaps
+                  </h1>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start">
+                  Generate a visual report of click behavior on a webpage.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <button
               type="button"
               className="text-muted-foreground hover:text-foreground"
@@ -290,13 +305,6 @@ export default function HeatmapsPage() {
               <CircleHelp className="size-4" aria-hidden />
             </button>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Generate a visual report of click behavior on a webpage.{" "}
-            <button type="button" className="underline underline-offset-2">
-              Learn more
-            </button>
-            .
-          </p>
         </div>
       </div>
 

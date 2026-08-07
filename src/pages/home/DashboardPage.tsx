@@ -4,9 +4,9 @@
 import { useLocation } from "react-router-dom";
 import PageHeader from "@/components/layout/PageHeader";
 import { iconForPath, pageLabel } from "@/lib/nav";
+import { DASHBOARD_USER_NAME } from "@/data/dashboard";
 import {
   ActiveTestsCard,
-  DashboardGreeting,
   FormsCard,
   FunnelReportsCard,
   HeatmapsCard,
@@ -26,16 +26,17 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-16">
-      <PageHeader title={pageLabel(pathname)} icon={iconForPath(pathname)} />
-      <div className="px-12 pt-2">
-        <DashboardGreeting />
-      </div>
+      <PageHeader
+        title={pageLabel(pathname)}
+        icon={iconForPath(pathname)}
+        description={`Hi ${DASHBOARD_USER_NAME}. Here's an overview of all your experiments on your journey.`}
+      />
 
       <div className="mt-8 space-y-8 px-12">
         <WandzHero />
 
-        {/* Row: Metric reports | Funnel reports */}
-        <div className="grid gap-6 xl:grid-cols-2">
+        {/* Metric + Funnel stacked full width */}
+        <div className="flex flex-col gap-6">
           <MetricReportsCard />
           <FunnelReportsCard />
         </div>
@@ -43,17 +44,17 @@ export default function DashboardPage() {
         {/* Full-width hypothesis pipeline */}
         <HypothesisCard />
 
-        {/* Left stack (Active + Personalization) | Untested hypotheses */}
-        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-          <div className="flex flex-col gap-6">
+        {/* Left stack (~2/3) | Untested hypotheses (~1/3) */}
+        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <div className="flex min-w-0 flex-col gap-6">
             <ActiveTestsCard />
             <PersonalizationCard />
           </div>
           <UntestedHypothesesCard />
         </div>
 
-        {/* Rolled out (wider) | Total experiences */}
-        <div className="grid gap-6 md:grid-cols-[1.7fr_1fr]">
+        {/* Rolled out (~2/3) | Total experiences (~1/3, matches Untested) */}
+        <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
           <RolledOutCard />
           <TotalExperiencesCard />
         </div>
