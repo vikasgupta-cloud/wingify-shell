@@ -7,12 +7,13 @@ import {
 } from "../../config/navigation";
 import { cn } from "../../lib/utils";
 import ProfileAvatar from "./ProfileAvatar";
+import ThemePicker from "./ThemePicker";
 
 const PANEL_WIDTH = 280;
 
 /**
- * Avatar flyout: user card header, grouped destinations, Logout. Rows come from
- * the Profile item's sections so the rail and the expanded nav stay in sync.
+ * Avatar flyout: user card header, grouped destinations, theme switcher, Logout.
+ * Rows come from the Profile item's sections so the rail and expanded nav stay in sync.
  */
 export default function ProfileMenuPanel({
   item,
@@ -29,6 +30,13 @@ export default function ProfileMenuPanel({
       items: section.items.filter((leaf) => leaf.path !== PROFILE_DETAILS_PATH),
     }))
     .filter((section) => section.items.length > 0);
+
+  const mainSections = sections.filter(
+    (section) => !section.items.some((leaf) => leaf.path === LOGOUT_PATH)
+  );
+  const logoutSection = sections.find((section) =>
+    section.items.some((leaf) => leaf.path === LOGOUT_PATH)
+  );
 
   return (
     <nav
@@ -51,11 +59,10 @@ export default function ProfileMenuPanel({
         </span>
       </NavLink>
 
-      {sections.map((section, i) => (
+      {mainSections.map((section, i) => (
         <div key={section.heading ?? i} className="border-t border-border">
           {section.items.map((leaf) => {
             const Icon = leaf.icon;
-            const isLogout = leaf.path === LOGOUT_PATH;
             return (
               <NavLink
                 key={leaf.path}
@@ -64,7 +71,7 @@ export default function ProfileMenuPanel({
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-muted",
-                    isActive && !isLogout && "bg-accent font-medium"
+                    isActive && "bg-accent font-medium"
                   )
                 }
               >
@@ -80,6 +87,34 @@ export default function ProfileMenuPanel({
           })}
         </div>
       ))}
+
+      <div className="border-t border-border">
+        <ThemePicker />
+      </div>
+
+      {logoutSection ? (
+        <div className="border-t border-border">
+          {logoutSection.items.map((leaf) => {
+            const Icon = leaf.icon;
+            return (
+              <NavLink
+                key={leaf.path}
+                to={leaf.path}
+                onClick={() => onRequestClose?.()}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+              >
+                {Icon && (
+                  <Icon
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    strokeWidth={1.75}
+                  />
+                )}
+                <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
+      ) : null}
     </nav>
   );
 }

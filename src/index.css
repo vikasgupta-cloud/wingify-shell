@@ -263,6 +263,107 @@
   --report-threshold: var(--scale-green-300);
 }
 
+/* ── Theme variants (profile menu) — remap neutrals + chrome semantics ─ */
+
+[data-theme="neutral"] {
+  --brand-grey: 210 12% 95.5%;
+  --brand-feather: 210 10% 88%;
+  --brand-dusk: 210 8% 62%;
+  --brand-twilight: 210 7% 34%;
+  --brand-midnight: 210 8% 12%;
+  --scale-neutral-100: 210 10% 92%;
+  --scale-neutral-300: 210 8% 76%;
+  --background: var(--brand-white);
+  --foreground: var(--brand-midnight);
+  --muted: var(--brand-grey);
+  --muted-foreground: var(--brand-twilight);
+  --canvas: var(--brand-grey);
+  --surface: var(--brand-grey);
+  --surface-border: var(--brand-feather);
+  --accent: var(--scale-neutral-100);
+  --accent-foreground: var(--brand-midnight);
+  --border: var(--brand-feather);
+  --input: var(--brand-feather);
+  --rail: var(--brand-white);
+  --rail-foreground: var(--brand-midnight);
+  --panel: var(--brand-white);
+  --panel-foreground: var(--brand-midnight);
+  --panel-border: var(--brand-feather);
+  --secondary: var(--brand-grey);
+  --secondary-foreground: var(--brand-midnight);
+  --secondary-hover: var(--scale-neutral-100);
+}
+
+[data-theme="cool"] {
+  --brand-grey: 212 38% 96%;
+  --brand-feather: 212 28% 89%;
+  --brand-dusk: 212 16% 58%;
+  --brand-twilight: 220 14% 32%;
+  --scale-neutral-100: 212 32% 93%;
+  --scale-neutral-300: 212 18% 76%;
+  --background: var(--brand-white);
+  --foreground: var(--brand-ocean-rich);
+  --muted: var(--scale-sky-50);
+  --muted-foreground: var(--brand-twilight);
+  --canvas: var(--scale-ocean-50);
+  --surface: var(--scale-sky-50);
+  --surface-border: var(--brand-feather);
+  --accent: var(--scale-sky-100);
+  --accent-foreground: var(--brand-ocean-rich);
+  --border: var(--brand-feather);
+  --input: var(--brand-feather);
+  --selected-bg: var(--brand-ocean-tint);
+  --selected-fg: var(--scale-ocean-800);
+  --ring: var(--brand-sky);
+  --rail: var(--brand-white);
+  --rail-foreground: var(--brand-ocean-rich);
+  --rail-active: var(--brand-ocean-rich);
+  --rail-active-foreground: var(--brand-white);
+  --panel: var(--brand-white);
+  --panel-foreground: var(--brand-ocean-rich);
+  --panel-border: var(--brand-feather);
+  --secondary: var(--scale-sky-50);
+  --secondary-foreground: var(--brand-ocean-rich);
+  --secondary-hover: var(--scale-sky-100);
+}
+
+[data-theme="contrast"] {
+  --background: var(--brand-midnight);
+  --foreground: var(--brand-white);
+  --card: 210 6% 16%;
+  --card-foreground: var(--brand-white);
+  --popover: 210 6% 16%;
+  --popover-foreground: var(--brand-white);
+  --muted: 210 6% 18%;
+  --muted-foreground: var(--brand-dusk);
+  --canvas: 210 7% 10%;
+  --surface: 210 6% 16%;
+  --surface-border: 210 6% 26%;
+  --accent: 210 6% 22%;
+  --accent-foreground: var(--brand-white);
+  --secondary: 210 6% 20%;
+  --secondary-foreground: var(--brand-white);
+  --secondary-hover: 210 6% 24%;
+  --border: 210 6% 28%;
+  --input: 210 6% 28%;
+  --ring: var(--brand-sky);
+  --rail: var(--brand-midnight);
+  --rail-foreground: var(--brand-white);
+  --rail-active: var(--brand-white);
+  --rail-active-foreground: var(--brand-midnight);
+  --panel: 210 6% 14%;
+  --panel-foreground: var(--brand-white);
+  --panel-border: 210 6% 26%;
+  --selected-bg: 225 40% 22%;
+  --selected-fg: var(--brand-sky);
+  --primary-foreground: var(--brand-midnight);
+  --destructive-foreground: var(--brand-white);
+  --status-qa-bg: 210 6% 22%;
+  --status-ready-bg: 210 6% 22%;
+  --status-ended-bg: 210 6% 22%;
+  --report-track: 210 6% 26%;
+}
+
 * {
   border-color: hsl(var(--border));
 }

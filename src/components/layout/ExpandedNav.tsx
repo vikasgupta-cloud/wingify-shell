@@ -3,12 +3,15 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { ChevronDown, MoreHorizontal, Pin, PinOff } from "lucide-react";
-import { NAV, type NavItem } from "../../config/navigation";
+import { LOGOUT_PATH, NAV, type NavItem } from "../../config/navigation";
 import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { canUnpinPath, useUIStore } from "../../store/ui";
+import { useMascotPreviewStore } from "../../store/mascotPreview";
+import { mascotForPath } from "../../config/mascots";
 import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
+import ThemePicker from "./ThemePicker";
 import WingifyLogoButton from "./WingifyLogoButton";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -57,7 +60,13 @@ export default function ExpandedNav({
   const pinnedPaths = useUIStore((s) => s.pinnedPaths);
   const pin = useUIStore((s) => s.pin);
   const unpin = useUIStore((s) => s.unpin);
+  const setMascotPreview = useMascotPreviewStore((s) => s.setPreview);
   const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
+
+  const previewMascotFor = (item: NavItem) => {
+    setMascotPreview(mascotForPath(item.path));
+  };
+  const clearMascotPreview = () => setMascotPreview(null);
 
   const expanded = !forceCollapsed && isDocked;
   const activeItem = findItemByPath(pathname);
@@ -385,42 +394,56 @@ export default function ExpandedNav({
 
         {hasSections && open && item.sections && (
           <div className="ml-[22px] mt-1.5 flex flex-col border-l border-panel-border pb-2 pl-3">
-            {item.sections.map((section, i) => (
-              <div key={section.heading ?? i} className="flex flex-col gap-1">
-                {i > 0 && (
-                  <div
-                    className="my-2 h-px bg-panel-border"
-                    aria-hidden="true"
-                  />
-                )}
-                {section.items.map((leaf) => {
-                  const LeafIcon = leaf.icon;
-                  return (
-                    <NavLink
-                      key={leaf.path}
-                      to={leaf.path}
-                      className={({ isActive: leafActive }) =>
-                        cn(
-                          "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                          leafActive &&
-                            "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                        )
-                      }
-                    >
-                      {LeafIcon && (
-                        <LeafIcon
-                          className="h-4 w-4 shrink-0 text-foreground"
-                          strokeWidth={1.75}
-                        />
-                      )}
-                      <span className="min-w-0 flex-1 truncate">
-                        {leaf.label}
-                      </span>
-                    </NavLink>
-                  );
-                })}
-              </div>
-            ))}
+            {item.sections.map((section, i) => {
+              const isLogoutSection = section.items.some(
+                (leaf) => leaf.path === LOGOUT_PATH
+              );
+              return (
+                <div key={section.heading ?? i} className="flex flex-col gap-1">
+                  {i > 0 && (
+                    <div
+                      className="my-2 h-px bg-panel-border"
+                      aria-hidden="true"
+                    />
+                  )}
+                  {item.path === "/profile" && isLogoutSection ? (
+                    <>
+                      <ThemePicker compact className="px-0" />
+                      <div
+                        className="my-2 h-px bg-panel-border"
+                        aria-hidden="true"
+                      />
+                    </>
+                  ) : null}
+                  {section.items.map((leaf) => {
+                    const LeafIcon = leaf.icon;
+                    return (
+                      <NavLink
+                        key={leaf.path}
+                        to={leaf.path}
+                        className={({ isActive: leafActive }) =>
+                          cn(
+                            "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                            leafActive &&
+                              "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                          )
+                        }
+                      >
+                        {LeafIcon && (
+                          <LeafIcon
+                            className="h-4 w-4 shrink-0 text-foreground"
+                            strokeWidth={1.75}
+                          />
+                        )}
+                        <span className="min-w-0 flex-1 truncate">
+                          {leaf.label}
+                        </span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
