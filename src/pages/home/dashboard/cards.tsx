@@ -190,7 +190,7 @@ export function WandzHero() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3">
       <div className="flex flex-col items-center text-center">
         <div className="flex items-center gap-2.5">
           <Sparkles className="size-6 text-foreground" aria-hidden />
