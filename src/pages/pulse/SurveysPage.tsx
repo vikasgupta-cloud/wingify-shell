@@ -28,10 +28,11 @@ export default function SurveysPage() {
 
   return (
     <>
-      <PageHeader title={pageLabel(pathname)} icon={iconForPath(pathname)} />
-      <p className="px-12 text-sm text-muted-foreground">
-        Get feedback from visitors with surveys using custom triggers.
-      </p>
+      <PageHeader
+        title={pageLabel(pathname)}
+        icon={iconForPath(pathname)}
+        description="Get feedback from visitors with surveys using custom triggers."
+      />
 
       <div className="px-12 pb-12 pt-8">
         <SurveyViewBar />

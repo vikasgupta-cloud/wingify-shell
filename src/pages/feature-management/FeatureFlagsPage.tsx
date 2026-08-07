@@ -28,10 +28,11 @@ export default function FeatureFlagsPage() {
 
   return (
     <>
-      <PageHeader title={pageLabel(pathname)} icon={iconForPath(pathname)} />
-      <p className="px-12 text-sm text-muted-foreground">
-        Create a Feature Flag.
-      </p>
+      <PageHeader
+        title={pageLabel(pathname)}
+        icon={iconForPath(pathname)}
+        description="Create a Feature Flag."
+      />
 
       <div className="px-12 pb-12 pt-8">
         <FlagViewBar />
