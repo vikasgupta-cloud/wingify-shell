@@ -17,18 +17,28 @@ import type {
   EditorPreviewWidthMode,
 } from "@/config/editorScenarios";
 
-export type EditorDockEdge = "bottom" | "left";
+export type EditorDockEdge = "top" | "right" | "bottom" | "left";
 export type EditorDockMode = "edge" | "free";
+/** Along the docked edge: start = top/left, end = bottom/right. */
+export type EditorDockAlign = "start" | "center" | "end";
+/** Icon-only pill vs icon + text label dock. */
+export type EditorDockDensity = "icons" | "labels";
 
 export type EditorDockPlacement = {
   mode: EditorDockMode;
   edge: EditorDockEdge;
+  align: EditorDockAlign;
   /** Top-left when `mode === "free"`. */
   pos: { x: number; y: number };
 };
 
 export function defaultDockPlacement(): EditorDockPlacement {
-  return { mode: "edge", edge: "bottom", pos: { x: 24, y: 24 } };
+  return {
+    mode: "edge",
+    edge: "bottom",
+    align: "center",
+    pos: { x: 24, y: 24 },
+  };
 }
 
 export type EditorPanelState = {
@@ -39,8 +49,10 @@ export type EditorPanelState = {
 export type EditorPanelsMap = Record<EditorSidePanelId, EditorPanelState>;
 
 const LEFT_TOOLS: EditorLeftTool[] = ["add", "metrics", "variations"];
-const DOCK_EDGES: EditorDockEdge[] = ["bottom", "left"];
+const DOCK_EDGES: EditorDockEdge[] = ["top", "right", "bottom", "left"];
 const DOCK_MODES: EditorDockMode[] = ["edge", "free"];
+const DOCK_ALIGNS: EditorDockAlign[] = ["start", "center", "end"];
+const DOCK_DENSITIES: EditorDockDensity[] = ["icons", "labels"];
 const CHROME_MODES: EditorPanelChrome["mode"][] = [
   "docked",
   "floating",
@@ -138,8 +150,11 @@ function parseDockPlacement(raw: unknown): EditorDockPlacement {
   const edge = DOCK_EDGES.includes(rec.edge as EditorDockEdge)
     ? (rec.edge as EditorDockEdge)
     : fallback.edge;
+  const align = DOCK_ALIGNS.includes(rec.align as EditorDockAlign)
+    ? (rec.align as EditorDockAlign)
+    : fallback.align;
   const pos = parsePos(rec.pos);
-  return { mode, edge, pos };
+  return { mode, edge, align, pos };
 }
 
 type EditorPanelsStore = {
@@ -155,6 +170,7 @@ type EditorPanelsStore = {
   bottomSheetHeight: number;
   sideSheetWidth: number;
   dockPlacement: EditorDockPlacement;
+  dockDensity: EditorDockDensity;
   setPanels: (
     update: EditorPanelsMap | ((prev: EditorPanelsMap) => EditorPanelsMap)
   ) => void;
@@ -174,6 +190,7 @@ type EditorPanelsStore = {
   setBottomSheetHeight: (height: number) => void;
   setSideSheetWidth: (width: number) => void;
   setDockPlacement: (placement: EditorDockPlacement) => void;
+  setDockDensity: (density: EditorDockDensity) => void;
   hydrateFromScenario: (input: {
     leftTool: EditorLeftTool | null;
     editionTab: EditionTabId;
@@ -196,6 +213,7 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
       bottomSheetHeight: 420,
       sideSheetWidth: 400,
       dockPlacement: defaultDockPlacement(),
+      dockDensity: "icons",
       setPanels: (update) =>
         set((state) => ({
           panels: typeof update === "function" ? update(state.panels) : update,
@@ -218,6 +236,7 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
       setBottomSheetHeight: (bottomSheetHeight) => set({ bottomSheetHeight }),
       setSideSheetWidth: (sideSheetWidth) => set({ sideSheetWidth }),
       setDockPlacement: (dockPlacement) => set({ dockPlacement }),
+      setDockDensity: (dockDensity) => set({ dockDensity }),
       hydrateFromScenario: ({ leftTool, editionTab, rightOpen }) => {
         const panels = defaultEditorPanels();
         for (const id of EDITOR_SIDE_PANEL_ORDER) {
@@ -263,6 +282,7 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
         bottomSheetHeight: state.bottomSheetHeight,
         sideSheetWidth: state.sideSheetWidth,
         dockPlacement: state.dockPlacement,
+        dockDensity: state.dockDensity,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<EditorPanelsStore> & {
@@ -330,6 +350,11 @@ export const useEditorPanelsStore = create<EditorPanelsStore>()(
           bottomSheetHeight,
           sideSheetWidth,
           dockPlacement,
+          dockDensity: DOCK_DENSITIES.includes(
+            saved.dockDensity as EditorDockDensity
+          )
+            ? (saved.dockDensity as EditorDockDensity)
+            : current.dockDensity,
         };
       },
     }

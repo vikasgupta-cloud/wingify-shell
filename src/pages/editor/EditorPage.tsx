@@ -127,7 +127,7 @@ export default function EditorPage() {
   const [scenarioId, setScenarioId] = useState<EditorScenarioId>(
     DEFAULT_SCENARIO.id
   );
-  const [layoutMode, setLayoutMode] = useState<EditorLayoutMode>(
+  const [, setLayoutMode] = useState<EditorLayoutMode>(
     DEFAULT_SCENARIO.layoutMode
   );
   const [device, setDevice] = useState<EditorDevice>(DEFAULT_SCENARIO.device);
@@ -162,15 +162,15 @@ export default function EditorPage() {
 
   const panels = useEditorPanelsStore((s) => s.panels);
   const setPanels = useEditorPanelsStore((s) => s.setPanels);
-  const overlayWidths = useEditorPanelsStore((s) => s.overlayWidths);
-  const setOverlayWidth = useEditorPanelsStore((s) => s.setOverlayWidth);
   const bottomSheetHeight = useEditorPanelsStore((s) => s.bottomSheetHeight);
   const sideSheetWidth = useEditorPanelsStore((s) => s.sideSheetWidth);
   const dockPlacement = useEditorPanelsStore((s) => s.dockPlacement);
   const dockEdge =
-    dockPlacement.mode === "edge" && dockPlacement.edge === "left"
-      ? "left"
-      : "bottom";
+    dockPlacement.mode === "edge" ? dockPlacement.edge : "bottom";
+  const dockAlign =
+    dockPlacement.mode === "edge" ? dockPlacement.align : "center";
+  const dockDensity = useEditorPanelsStore((s) => s.dockDensity);
+  const sheetCompact = dockEdge === "left" || dockEdge === "right";
   const setBottomSheetHeight = useEditorPanelsStore(
     (s) => s.setBottomSheetHeight
   );
@@ -630,7 +630,6 @@ export default function EditorPage() {
         onNavigateBack={goBack}
         onNavigateForward={goForward}
         onNavigateRefresh={refreshPreview}
-        onSwitchToDesign={() => setEditorMode("design")}
       />
       <EditorVersionBanner />
       <div className="relative flex min-h-0 flex-1">
@@ -674,6 +673,53 @@ export default function EditorPage() {
                 {dockedIds.map((id) => renderPanel(id, false))}
               </div>
             )}
+            <EditorScenarioFloat
+              scenarioId={scenarioId}
+              onScenarioChange={applyScenario}
+            />
+            <EditorBottomSheet
+              open={bottomSheetOpen}
+              onClose={closeLeftTool}
+              defaultHeight={bottomSheetHeight}
+              onHeightChange={setBottomSheetHeight}
+              defaultWidth={sideSheetWidth}
+              onWidthChange={setSideSheetWidth}
+              dockEdge={dockEdge}
+              dockAlign={dockAlign}
+              dockDensity={dockDensity}
+            >
+              {leftTool === "metrics" ? (
+                <EditorMetricsPanel
+                  onClose={closeLeftTool}
+                  compact={sheetCompact}
+                />
+              ) : leftTool === "variations" ? (
+                <EditorVariationsPanel
+                  variations={variations}
+                  activeVariationId={activeVariationId}
+                  onSelect={(id) => {
+                    setActiveVariationId(id);
+                    setCodeScope(id);
+                    closeLeftTool();
+                  }}
+                  onVariationsChange={setVariations}
+                  versionFoldKey={versionFoldKey}
+                  onClose={closeLeftTool}
+                  compact={sheetCompact}
+                />
+              ) : (
+                <EditorAddPanel
+                  onClose={closeLeftTool}
+                  compact={sheetCompact}
+                />
+              )}
+            </EditorBottomSheet>
+            <EditorBottomDock
+              mode={editorMode}
+              onModeChange={handleModeChange}
+              leftTool={leftTool}
+              onToggleLeftTool={toggleLeftTool}
+            />
           </div>
         </div>
         <div className="relative flex shrink-0 bg-background shadow-none">
@@ -725,51 +771,6 @@ export default function EditorPage() {
           </EditorFloatingPanelGroup>
         )}
       </div>
-      <EditorScenarioFloat
-        scenarioId={scenarioId}
-        onScenarioChange={applyScenario}
-      />
-      <EditorBottomSheet
-        open={bottomSheetOpen}
-        onClose={closeLeftTool}
-        defaultHeight={bottomSheetHeight}
-        onHeightChange={setBottomSheetHeight}
-        defaultWidth={sideSheetWidth}
-        onWidthChange={setSideSheetWidth}
-        dockEdge={dockEdge}
-      >
-        {leftTool === "metrics" ? (
-          <EditorMetricsPanel
-            onClose={closeLeftTool}
-            compact={dockEdge === "left"}
-          />
-        ) : leftTool === "variations" ? (
-          <EditorVariationsPanel
-            variations={variations}
-            activeVariationId={activeVariationId}
-            onSelect={(id) => {
-              setActiveVariationId(id);
-              setCodeScope(id);
-              closeLeftTool();
-            }}
-            onVariationsChange={setVariations}
-            versionFoldKey={versionFoldKey}
-            onClose={closeLeftTool}
-            compact={dockEdge === "left"}
-          />
-        ) : (
-          <EditorAddPanel
-            onClose={closeLeftTool}
-            compact={dockEdge === "left"}
-          />
-        )}
-      </EditorBottomSheet>
-      <EditorBottomDock
-        mode={editorMode}
-        onModeChange={handleModeChange}
-        leftTool={leftTool}
-        onToggleLeftTool={toggleLeftTool}
-      />
     </div>
   );
 }

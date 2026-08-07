@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Info,
-  RefreshCw,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 /**
  * Browser chrome for Navigate mode — browse the preview without selecting.
- * `embedded` renders inline in the top bar (no own row chrome).
+ * Design-only editing is gated by the dock (disabled tools + Design mode),
+ * so this bar stays URL navigation only.
  */
 export function EditorNavigateBar({
   url,
@@ -22,7 +18,6 @@ export function EditorNavigateBar({
   onBack,
   onForward,
   onRefresh,
-  onSwitchToDesign,
   embedded = false,
   className,
 }: {
@@ -34,7 +29,6 @@ export function EditorNavigateBar({
   onBack?: () => void;
   onForward?: () => void;
   onRefresh?: () => void;
-  onSwitchToDesign?: () => void;
   embedded?: boolean;
   className?: string;
 }) {
@@ -54,7 +48,9 @@ export function EditorNavigateBar({
     <div
       className={cn(
         "flex min-w-0 items-center gap-2",
-        embedded ? "h-7 flex-1" : "h-10 shrink-0 gap-3 border-b border-border bg-background px-3",
+        embedded
+          ? "h-7 flex-1"
+          : "h-10 shrink-0 gap-3 border-b border-border bg-background px-3",
         className
       )}
       data-navigate-chrome
@@ -117,19 +113,6 @@ export function EditorNavigateBar({
           Go
         </Button>
       </form>
-
-      <button
-        type="button"
-        onClick={onSwitchToDesign}
-        className={cn(
-          "hidden shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground lg:inline-flex"
-        )}
-      >
-        <Info className="size-3.5 shrink-0" strokeWidth={1.75} />
-        <span className="max-w-[200px] truncate leading-snug xl:max-w-none">
-          Go to Design mode to make a change
-        </span>
-      </button>
     </div>
   );
 }

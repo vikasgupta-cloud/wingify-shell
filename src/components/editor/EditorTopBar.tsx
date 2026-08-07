@@ -79,7 +79,6 @@ export function EditorTopBar({
   onNavigateBack,
   onNavigateForward,
   onNavigateRefresh,
-  onSwitchToDesign,
 }: {
   campaignName?: string;
   status?: CampaignStatus;
@@ -105,7 +104,6 @@ export function EditorTopBar({
   onNavigateBack?: () => void;
   onNavigateForward?: () => void;
   onNavigateRefresh?: () => void;
-  onSwitchToDesign?: () => void;
 }) {
   const versions = useEditorSavesStore((s) => s.versions);
   const activeVersionId = useEditorSavesStore((s) => s.activeVersionId);
@@ -113,7 +111,7 @@ export function EditorTopBar({
   const viewingOlder = isViewingOlderVersion(versions, activeVersionId);
   const navigate = useNavigate();
   const isNavigateMode = mode === "navigate";
-  const showDeviceChrome = showPreviewChrome && !isNavigateMode;
+  const showDeviceChrome = showPreviewChrome;
 
   const [composeOpen, setComposeOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -179,7 +177,6 @@ export function EditorTopBar({
             onBack={onNavigateBack}
             onForward={onNavigateForward}
             onRefresh={onNavigateRefresh}
-            onSwitchToDesign={onSwitchToDesign}
           />
           <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
         </>
