@@ -1,77 +1,72 @@
 /**
- * Wingify brand colors — strict sources:
- * - `color.json` → main / primary palette (named Wingify colors)
- * - `tokens.json` → scale extras only (hover, mid steps, soft tints)
- *
+ * Wingify brand colors — from `vwo-colour-tokens.figma.json` primitives.
  * Semantic CSS mapping lives in `src/index.css`.
  */
 
-/** Main & primary palette — hex from `color.json` only. */
+/** Main & primary palette — brand values from VWO primitives. */
 export const BRAND_COLORS = {
-  /** Wingify Primary Yellow */
+  /** yellow/50 — Primary Yellow */
   yellow: "#EEFF6D",
-  /** Wingify Primary Blue */
+  /** ocean/300 — Primary Blue / Sky */
   blue: "#91C5FF",
-  /** Wingify Primary Maroon */
+  /** maroon/900 — Primary Maroon */
   maroon: "#410D23",
-  /** Wingify White */
+  /** neutral/0 */
   white: "#FFFFFF",
-  /** Wingify Grey */
+  /** neutral/50 — Grey */
   grey: "#F6F3ED",
-  /** Wingify Feather */
+  /** neutral/100 — Feather */
   feather: "#E5E0D6",
-  /** Wingify Dusk */
+  /** neutral/300 — Dusk */
   dusk: "#B2ADA1",
-  /** Wingify Twilight */
+  /** neutral/600 — Twilight */
   twilight: "#5F5C53",
-  /** Wingify Midnight */
+  /** midnight/base */
   midnight: "#1E2022",
-  /** Wingify Green Rich / Bright / Tint */
+  /** green/800 · green/300 · green/100 */
   greenRich: "#004842",
   greenBright: "#07C787",
   greenTint: "#D8E9E8",
-  /** Wingify Cherry Rich / Bright / Tint */
+  /** cherry/500 · cherry/400 · cherry/100 */
   cherryRich: "#DE2D02",
   cherryBright: "#FF6038",
   cherryTint: "#F4E4E4",
-  /** Wingify Berry Rich / Bright / Tint */
+  /** berry/500 · berry/300 · berry/100 */
   berryRich: "#CB37A4",
   berryBright: "#F87FD8",
   berryTint: "#F4E4F3",
-  /** Wingfy Ocean Rich / Wingify Ocean Bright / Tint */
+  /** ocean/900 · ocean/500 · ocean/100 */
   oceanRich: "#0E1D4A",
   oceanBright: "#406BED",
   oceanTint: "#D3E8FF",
 } as const;
 
-/**
- * Extra steps from `tokens.json` scales — only when color.json has no match.
- * Matches tokens.semantic.light primary.hover / active, soft tints, etc.
- */
+/** Extra scale steps used by legacy mappings. */
 export const TOKEN_EXTRAS = {
-  ocean50: "#F2F7FE",
+  ocean50: "#F6FAFE",
   ocean700: "#3256C0",
-  ocean800: "#243F92",
-  neutral100: "#EFEBE3",
-  neutral300: "#C9C4B8",
-  green50: "#ECFAF9",
-  green300: "#7CD9C1",
-  green500: "#03AC7F",
-  green600: "#008F71",
-  green700: "#05715F",
-  yellow100: "#E7F867",
-  yellow400: "#ABB927",
-  yellow700: "#5F6701",
-  maroon50: "#FEF4F6",
-  berry50: "#FEF3FD",
-  cherry50: "#FFF4F4",
-  cherry700: "#B02101",
-  sky50: "#F1F8FF",
-  sky100: "#DEEDFE",
-  sky700: "#396391",
+  ocean800: "#2846A0",
+  neutral100: "#E5E0D6",
+  neutral300: "#DBD6CB",
+  green50: "#F7FAF9",
+  /** green/300 — #07C787 */
+  green300: "#07C787",
+  green500: "#00A87D",
+  green600: "#00856B",
+  green700: "#00574D",
+  yellow100: "#E4F462",
+  yellow400: "#8F9B04",
+  yellow700: "#4B5100",
+  maroon50: "#FFF8FA",
+  berry50: "#FCF8FB",
+  cherry50: "#FCF9F8",
+  cherry700: "#971A00",
+  sky50: "#F6FAFE",
+  sky100: "#D3E8FF",
+  sky700: "#2846A0",
 } as const;
 
-/** @deprecated Prefer `BRAND_COLORS.blue` — Primary Blue from color.json */
+/** @deprecated Prefer `BRAND_COLORS.blue` */
 export const sky = BRAND_COLORS.blue;
 
 export type BrandColorName = keyof typeof BRAND_COLORS;

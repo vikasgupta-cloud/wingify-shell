@@ -2,10 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./assets/fonts/brand-fonts.css";
 import "./index.css";
-import { applyTheme, readStoredThemeId } from "./config/themes";
+import { applyTheme, readStoredTheme } from "./config/themes";
 import App from "./App.tsx";
 
-applyTheme(readStoredThemeId());
+const stored = readStoredTheme();
+applyTheme(stored.themeId, stored.colorMode);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

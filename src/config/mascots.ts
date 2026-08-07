@@ -4,6 +4,13 @@ import chooseUrl from "../assets/mascots/choose.png";
 import lookUrl from "../assets/mascots/look.png";
 import actUrl from "../assets/mascots/act.png";
 import questionUrl from "../assets/mascots/question.png";
+import defaultDarkUrl from "../assets/mascots/dark/default.png";
+import listenDarkUrl from "../assets/mascots/dark/listen.png";
+import chooseDarkUrl from "../assets/mascots/dark/choose.png";
+import lookDarkUrl from "../assets/mascots/dark/look.png";
+import actDarkUrl from "../assets/mascots/dark/act.png";
+import questionDarkUrl from "../assets/mascots/dark/question.png";
+import type { ColorMode } from "./themes";
 
 /**
  * Brand mascot poses — swap the rail mark by product flow
@@ -26,6 +33,7 @@ export type MascotId = (typeof MASCOT_IDS)[number];
 /** Mark for Home and any product without an assigned pose. */
 export const DEFAULT_MASCOT_ID: MascotId = "default";
 
+/** Light mode: dark body, yellow eye. */
 export const MASCOT_ASSETS: Record<MascotId, string> = {
   default: defaultUrl,
   listen: listenUrl,
@@ -34,6 +42,20 @@ export const MASCOT_ASSETS: Record<MascotId, string> = {
   act: actUrl,
   question: questionUrl,
 };
+
+/** Dark mode: white body, yellow eye unchanged. */
+export const MASCOT_ASSETS_DARK: Record<MascotId, string> = {
+  default: defaultDarkUrl,
+  listen: listenDarkUrl,
+  choose: chooseDarkUrl,
+  look: lookDarkUrl,
+  act: actDarkUrl,
+  question: questionDarkUrl,
+};
+
+export function mascotAsset(id: MascotId, colorMode: ColorMode): string {
+  return colorMode === "dark" ? MASCOT_ASSETS_DARK[id] : MASCOT_ASSETS[id];
+}
 
 export const MASCOT_LABELS: Record<MascotId, string> = {
   default: "Wingify",

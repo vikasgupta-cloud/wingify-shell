@@ -1,0 +1,3666 @@
+{
+  "collections": [
+    {
+      "name": "VWO Primitives",
+      "modes": {
+        "1:0": "Value"
+      },
+      "variables": [
+        {
+          "name": "neutral/0 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 White. Do not modify. #FFFFFF \u00b7 1.00:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-0"
+          }
+        },
+        {
+          "name": "neutral/50 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Grey. Do not modify. #F6F3ED \u00b7 1.11:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-50"
+          }
+        },
+        {
+          "name": "neutral/100 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.898039,
+              "g": 0.878431,
+              "b": 0.839216,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Feather. Do not modify. #E5E0D6 \u00b7 1.32:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-100"
+          }
+        },
+        {
+          "name": "neutral/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.858824,
+              "g": 0.839216,
+              "b": 0.796078,
+              "a": 1
+            }
+          },
+          "description": "Derived. #DBD6CB \u00b7 1.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-200"
+          }
+        },
+        {
+          "name": "neutral/300 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.698039,
+              "g": 0.678431,
+              "b": 0.631373,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Dusk. Do not modify. #B2ADA1 \u00b7 2.24:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-300"
+          }
+        },
+        {
+          "name": "neutral/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.596078,
+              "g": 0.576471,
+              "b": 0.533333,
+              "a": 1
+            }
+          },
+          "description": "Derived. #989388 \u00b7 3.06:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-400"
+          }
+        },
+        {
+          "name": "neutral/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.47451,
+              "g": 0.458824,
+              "b": 0.419608,
+              "a": 1
+            }
+          },
+          "description": "Derived. #79756B \u00b7 4.60:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-500"
+          }
+        },
+        {
+          "name": "neutral/600 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.372549,
+              "g": 0.360784,
+              "b": 0.32549,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Twilight. Do not modify. #5F5C53 \u00b7 6.68:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-600"
+          }
+        },
+        {
+          "name": "neutral/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.309804,
+              "g": 0.301961,
+              "b": 0.266667,
+              "a": 1
+            }
+          },
+          "description": "Derived. #4F4D44 \u00b7 8.48:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-700"
+          }
+        },
+        {
+          "name": "neutral/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Derived. #3C3932 \u00b7 11.52:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-800"
+          }
+        },
+        {
+          "name": "neutral/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.168627,
+              "g": 0.160784,
+              "b": 0.137255,
+              "a": 1
+            }
+          },
+          "description": "Derived. #2B2923 \u00b7 14.54:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-900"
+          }
+        },
+        {
+          "name": "neutral/950",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            }
+          },
+          "description": "Derived. #1B1913 \u00b7 17.57:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-neutral-950"
+          }
+        },
+        {
+          "name": "cherry/50",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.988235,
+              "g": 0.976471,
+              "b": 0.972549,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FCF9F8 \u00b7 1.05:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-50"
+          }
+        },
+        {
+          "name": "cherry/100 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.956863,
+              "g": 0.894118,
+              "b": 0.894118,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Cherry Tint. Do not modify. #F4E4E4 \u00b7 1.23:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-100"
+          }
+        },
+        {
+          "name": "cherry/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.984314,
+              "g": 0.796078,
+              "b": 0.788235,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FBCBC9 \u00b7 1.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-200"
+          }
+        },
+        {
+          "name": "cherry/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 1.0,
+              "g": 0.619608,
+              "b": 0.572549,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FF9E92 \u00b7 1.99:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-300"
+          }
+        },
+        {
+          "name": "cherry/400 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 1.0,
+              "g": 0.376471,
+              "b": 0.219608,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Cherry Bright. Do not modify. #FF6038 \u00b7 3.01:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-400"
+          }
+        },
+        {
+          "name": "cherry/500 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.870588,
+              "g": 0.176471,
+              "b": 0.007843,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Cherry Rich. Do not modify. #DE2D02 \u00b7 4.69:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-500"
+          }
+        },
+        {
+          "name": "cherry/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.717647,
+              "g": 0.133333,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #B72200 \u00b7 6.48:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-600"
+          }
+        },
+        {
+          "name": "cherry/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.592157,
+              "g": 0.101961,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #971A00 \u00b7 8.52:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-700"
+          }
+        },
+        {
+          "name": "cherry/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.45098,
+              "g": 0.070588,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #731200 \u00b7 11.57:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-800"
+          }
+        },
+        {
+          "name": "cherry/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.341176,
+              "g": 0.043137,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #570B00 \u00b7 14.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-cherry-900"
+          }
+        },
+        {
+          "name": "amber/50",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.996078,
+              "g": 0.976471,
+              "b": 0.94902,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FEF9F2 \u00b7 1.05:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-50"
+          }
+        },
+        {
+          "name": "amber/100",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.980392,
+              "g": 0.905882,
+              "b": 0.823529,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FAE7D2 \u00b7 1.21:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-100"
+          }
+        },
+        {
+          "name": "amber/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.960784,
+              "g": 0.815686,
+              "b": 0.647059,
+              "a": 1
+            }
+          },
+          "description": "Derived. #F5D0A5 \u00b7 1.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-200"
+          }
+        },
+        {
+          "name": "amber/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.913725,
+              "g": 0.67451,
+              "b": 0.352941,
+              "a": 1
+            }
+          },
+          "description": "Derived. #E9AC5A \u00b7 2.00:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-300"
+          }
+        },
+        {
+          "name": "amber/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.737255,
+              "g": 0.541176,
+              "b": 0.27451,
+              "a": 1
+            }
+          },
+          "description": "Derived. #BC8A46 \u00b7 3.06:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-400"
+          }
+        },
+        {
+          "name": "amber/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.592157,
+              "g": 0.427451,
+              "b": 0.215686,
+              "a": 1
+            }
+          },
+          "description": "Derived. #976D37 \u00b7 4.61:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-500"
+          }
+        },
+        {
+          "name": "amber/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.478431,
+              "g": 0.345098,
+              "b": 0.164706,
+              "a": 1
+            }
+          },
+          "description": "Derived. #7A582A \u00b7 6.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-600"
+          }
+        },
+        {
+          "name": "amber/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.392157,
+              "g": 0.278431,
+              "b": 0.129412,
+              "a": 1
+            }
+          },
+          "description": "Derived. #644721 \u00b7 8.52:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-700"
+          }
+        },
+        {
+          "name": "amber/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.298039,
+              "g": 0.207843,
+              "b": 0.090196,
+              "a": 1
+            }
+          },
+          "description": "Derived. #4C3517 \u00b7 11.48:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-800"
+          }
+        },
+        {
+          "name": "amber/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.219608,
+              "g": 0.14902,
+              "b": 0.054902,
+              "a": 1
+            }
+          },
+          "description": "Derived. #38260E \u00b7 14.47:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-amber-900"
+          }
+        },
+        {
+          "name": "yellow/50 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.933333,
+              "g": 1.0,
+              "b": 0.427451,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Primary Yellow. Do not modify. #EEFF6D \u00b7 1.10:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-50"
+          }
+        },
+        {
+          "name": "yellow/100",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.894118,
+              "g": 0.956863,
+              "b": 0.384314,
+              "a": 1
+            }
+          },
+          "description": "Derived. #E4F462 \u00b7 1.21:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-100"
+          }
+        },
+        {
+          "name": "yellow/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.819608,
+              "g": 0.878431,
+              "b": 0.294118,
+              "a": 1
+            }
+          },
+          "description": "Derived. #D1E04B \u00b7 1.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-200"
+          }
+        },
+        {
+          "name": "yellow/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.698039,
+              "g": 0.752941,
+              "b": 0.105882,
+              "a": 1
+            }
+          },
+          "description": "Derived. #B2C01B \u00b7 2.01:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-300"
+          }
+        },
+        {
+          "name": "yellow/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.560784,
+              "g": 0.607843,
+              "b": 0.015686,
+              "a": 1
+            }
+          },
+          "description": "Derived. #8F9B04 \u00b7 3.06:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-400"
+          }
+        },
+        {
+          "name": "yellow/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.447059,
+              "g": 0.486275,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #727C00 \u00b7 4.57:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-500"
+          }
+        },
+        {
+          "name": "yellow/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.356863,
+              "g": 0.392157,
+              "b": 0.003922,
+              "a": 1
+            }
+          },
+          "description": "Derived. #5B6401 \u00b7 6.43:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-600"
+          }
+        },
+        {
+          "name": "yellow/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.294118,
+              "g": 0.317647,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #4B5100 \u00b7 8.48:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-700"
+          }
+        },
+        {
+          "name": "yellow/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.215686,
+              "g": 0.235294,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #373C00 \u00b7 11.61:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-800"
+          }
+        },
+        {
+          "name": "yellow/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.152941,
+              "g": 0.172549,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #272C00 \u00b7 14.52:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-yellow-900"
+          }
+        },
+        {
+          "name": "green/50",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.968627,
+              "g": 0.980392,
+              "b": 0.976471,
+              "a": 1
+            }
+          },
+          "description": "Derived. #F7FAF9 \u00b7 1.05:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-50"
+          }
+        },
+        {
+          "name": "green/100 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.847059,
+              "g": 0.913725,
+              "b": 0.909804,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Green Tint. Do not modify. #D8E9E8 \u00b7 1.25:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-100"
+          }
+        },
+        {
+          "name": "green/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.670588,
+              "g": 0.882353,
+              "b": 0.847059,
+              "a": 1
+            }
+          },
+          "description": "Derived. #ABE1D8 \u00b7 1.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-200"
+          }
+        },
+        {
+          "name": "green/300 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.027451,
+              "g": 0.780392,
+              "b": 0.529412,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Green Bright. Do not modify. #07C787 \u00b7 2.20:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-300"
+          }
+        },
+        {
+          "name": "green/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.0,
+              "g": 0.658824,
+              "b": 0.490196,
+              "a": 1
+            }
+          },
+          "description": "Derived. #00A87D \u00b7 3.04:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-400"
+          }
+        },
+        {
+          "name": "green/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.0,
+              "g": 0.521569,
+              "b": 0.419608,
+              "a": 1
+            }
+          },
+          "description": "Derived. #00856B \u00b7 4.60:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-500"
+          }
+        },
+        {
+          "name": "green/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.0,
+              "g": 0.419608,
+              "b": 0.356863,
+              "a": 1
+            }
+          },
+          "description": "Derived. #006B5B \u00b7 6.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-600"
+          }
+        },
+        {
+          "name": "green/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.0,
+              "g": 0.341176,
+              "b": 0.301961,
+              "a": 1
+            }
+          },
+          "description": "Derived. #00574D \u00b7 8.50:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-700"
+          }
+        },
+        {
+          "name": "green/800 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.0,
+              "g": 0.282353,
+              "b": 0.258824,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Green Rich. Do not modify. #004842 \u00b7 10.47:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-800"
+          }
+        },
+        {
+          "name": "green/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.0,
+              "g": 0.188235,
+              "b": 0.168627,
+              "a": 1
+            }
+          },
+          "description": "Derived. #00302B \u00b7 14.41:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-green-900"
+          }
+        },
+        {
+          "name": "ocean/50",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.964706,
+              "g": 0.980392,
+              "b": 0.996078,
+              "a": 1
+            }
+          },
+          "description": "Derived. #F6FAFE \u00b7 1.05:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-50"
+          }
+        },
+        {
+          "name": "ocean/100 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.827451,
+              "g": 0.909804,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Ocean Tint. Do not modify. #D3E8FF \u00b7 1.25:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-100"
+          }
+        },
+        {
+          "name": "ocean/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.721569,
+              "g": 0.85098,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Derived. #B8D9FF \u00b7 1.46:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-200"
+          }
+        },
+        {
+          "name": "ocean/300 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.568627,
+              "g": 0.772549,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Primary Blue. Do not modify. #91C5FF \u00b7 1.80:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-300"
+          }
+        },
+        {
+          "name": "ocean/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.345098,
+              "g": 0.576471,
+              "b": 0.964706,
+              "a": 1
+            }
+          },
+          "description": "Derived. #5893F6 \u00b7 3.04:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-400"
+          }
+        },
+        {
+          "name": "ocean/500 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.25098,
+              "g": 0.419608,
+              "b": 0.929412,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Ocean Bright. Do not modify. #406BED \u00b7 4.62:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-500"
+          }
+        },
+        {
+          "name": "ocean/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.196078,
+              "g": 0.337255,
+              "b": 0.752941,
+              "a": 1
+            }
+          },
+          "description": "Derived. #3256C0 \u00b7 6.51:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-600"
+          }
+        },
+        {
+          "name": "ocean/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.156863,
+              "g": 0.27451,
+              "b": 0.627451,
+              "a": 1
+            }
+          },
+          "description": "Derived. #2846A0 \u00b7 8.49:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-700"
+          }
+        },
+        {
+          "name": "ocean/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.113725,
+              "g": 0.203922,
+              "b": 0.478431,
+              "a": 1
+            }
+          },
+          "description": "Derived. #1D347A \u00b7 11.51:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-800"
+          }
+        },
+        {
+          "name": "ocean/900 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.054902,
+              "g": 0.113725,
+              "b": 0.290196,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Ocean Rich. Do not modify. #0E1D4A \u00b7 16.24:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-ocean-900"
+          }
+        },
+        {
+          "name": "berry/50",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.988235,
+              "g": 0.972549,
+              "b": 0.984314,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FCF8FB \u00b7 1.05:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-50"
+          }
+        },
+        {
+          "name": "berry/100 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.956863,
+              "g": 0.894118,
+              "b": 0.952941,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Berry Tint. Do not modify. #F4E4F3 \u00b7 1.22:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-100"
+          }
+        },
+        {
+          "name": "berry/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.960784,
+              "g": 0.784314,
+              "b": 0.937255,
+              "a": 1
+            }
+          },
+          "description": "Derived. #F5C8EF \u00b7 1.46:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-200"
+          }
+        },
+        {
+          "name": "berry/300 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.972549,
+              "g": 0.498039,
+              "b": 0.847059,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Berry Bright. Do not modify. #F87FD8 \u00b7 2.33:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-300"
+          }
+        },
+        {
+          "name": "berry/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.898039,
+              "g": 0.384314,
+              "b": 0.760784,
+              "a": 1
+            }
+          },
+          "description": "Derived. #E562C2 \u00b7 3.06:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-400"
+          }
+        },
+        {
+          "name": "berry/500 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.796078,
+              "g": 0.215686,
+              "b": 0.643137,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Berry Rich. Do not modify. #CB37A4 \u00b7 4.54:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-500"
+          }
+        },
+        {
+          "name": "berry/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.666667,
+              "g": 0.109804,
+              "b": 0.533333,
+              "a": 1
+            }
+          },
+          "description": "Derived. #AA1C88 \u00b7 6.50:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-600"
+          }
+        },
+        {
+          "name": "berry/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.572549,
+              "g": 0.0,
+              "b": 0.45098,
+              "a": 1
+            }
+          },
+          "description": "Derived. #920073 \u00b7 8.50:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-700"
+          }
+        },
+        {
+          "name": "berry/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.435294,
+              "g": 0.0,
+              "b": 0.341176,
+              "a": 1
+            }
+          },
+          "description": "Derived. #6F0057 \u00b7 11.58:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-800"
+          }
+        },
+        {
+          "name": "berry/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.329412,
+              "g": 0.0,
+              "b": 0.254902,
+              "a": 1
+            }
+          },
+          "description": "Derived. #540041 \u00b7 14.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-berry-900"
+          }
+        },
+        {
+          "name": "maroon/50",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 1.0,
+              "g": 0.972549,
+              "b": 0.980392,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FFF8FA \u00b7 1.05:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-50"
+          }
+        },
+        {
+          "name": "maroon/100",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.988235,
+              "g": 0.894118,
+              "b": 0.921569,
+              "a": 1
+            }
+          },
+          "description": "Derived. #FCE4EB \u00b7 1.20:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-100"
+          }
+        },
+        {
+          "name": "maroon/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.968627,
+              "g": 0.796078,
+              "b": 0.847059,
+              "a": 1
+            }
+          },
+          "description": "Derived. #F7CBD8 \u00b7 1.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-200"
+          }
+        },
+        {
+          "name": "maroon/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.94902,
+              "g": 0.623529,
+              "b": 0.729412,
+              "a": 1
+            }
+          },
+          "description": "Derived. #F29FBA \u00b7 2.01:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-300"
+          }
+        },
+        {
+          "name": "maroon/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.92549,
+              "g": 0.396078,
+              "b": 0.596078,
+              "a": 1
+            }
+          },
+          "description": "Derived. #EC6598 \u00b7 3.05:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-400"
+          }
+        },
+        {
+          "name": "maroon/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.8,
+              "g": 0.243137,
+              "b": 0.478431,
+              "a": 1
+            }
+          },
+          "description": "Derived. #CC3E7A \u00b7 4.63:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-500"
+          }
+        },
+        {
+          "name": "maroon/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.65098,
+              "g": 0.188235,
+              "b": 0.384314,
+              "a": 1
+            }
+          },
+          "description": "Derived. #A63062 \u00b7 6.52:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-600"
+          }
+        },
+        {
+          "name": "maroon/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.537255,
+              "g": 0.14902,
+              "b": 0.313725,
+              "a": 1
+            }
+          },
+          "description": "Derived. #892650 \u00b7 8.55:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-700"
+          }
+        },
+        {
+          "name": "maroon/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.415686,
+              "g": 0.105882,
+              "b": 0.235294,
+              "a": 1
+            }
+          },
+          "description": "Derived. #6A1B3C \u00b7 11.45:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-800"
+          }
+        },
+        {
+          "name": "maroon/900 *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.254902,
+              "g": 0.05098,
+              "b": 0.137255,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Primary Maroon. Do not modify. #410D23 \u00b7 16.07:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-maroon-900"
+          }
+        },
+        {
+          "name": "midnight/base *",
+          "type": "COLOR",
+          "valuesByMode": {
+            "1:0": {
+              "r": 0.117647,
+              "g": 0.12549,
+              "b": 0.133333,
+              "a": 1
+            }
+          },
+          "description": "* WINGIFY BRAND VALUE \u2014 Midnight. Do not modify. #1E2022 \u00b7 16.34:1 on white",
+          "scopes": [
+            "ALL_SCOPES"
+          ],
+          "hiddenFromPublishing": true,
+          "codeSyntax": {
+            "WEB": "--vwo-midnight-base"
+          }
+        }
+      ]
+    },
+    {
+      "name": "VWO Semantic",
+      "modes": {
+        "2:0": "Light",
+        "2:1": "Dark"
+      },
+      "variables": [
+        {
+          "name": "bg/canvas",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            }
+          },
+          "description": "Page background. Light #F6F3ED (neutral.50 *Grey) \u00b7 Dark #1B1913 (neutral.950)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-canvas"
+          }
+        },
+        {
+          "name": "bg/surface",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.168627,
+              "g": 0.160784,
+              "b": 0.137255,
+              "a": 1
+            }
+          },
+          "description": "Cards, tables, panels. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #2B2923 (neutral.900)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-surface"
+          }
+        },
+        {
+          "name": "bg/surface-raised",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Modals, popovers, dropdowns. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-surface-raised"
+          }
+        },
+        {
+          "name": "bg/surface-sunken",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.898039,
+              "g": 0.878431,
+              "b": 0.839216,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            }
+          },
+          "description": "Wells, insets, code blocks. Light #E5E0D6 (neutral.100 *Feather) \u00b7 Dark #1B1913 (neutral.950)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-surface-sunken"
+          }
+        },
+        {
+          "name": "bg/hover",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Row and item hover. Light #F6F3ED (neutral.50 *Grey) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-hover"
+          }
+        },
+        {
+          "name": "bg/active",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.898039,
+              "g": 0.878431,
+              "b": 0.839216,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.309804,
+              "g": 0.301961,
+              "b": 0.266667,
+              "a": 1
+            }
+          },
+          "description": "Pressed state. Light #E5E0D6 (neutral.100 *Feather) \u00b7 Dark #4F4D44 (neutral.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-active"
+          }
+        },
+        {
+          "name": "bg/selected",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.898039,
+              "g": 0.878431,
+              "b": 0.839216,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Selected row \u2014 pair with accent/indicator. Light #E5E0D6 (neutral.100 *Feather) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-selected"
+          }
+        },
+        {
+          "name": "bg/disabled",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Disabled control fill. Light #F6F3ED (neutral.50 *Grey) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-bg-disabled"
+          }
+        },
+        {
+          "name": "text/primary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            }
+          },
+          "description": "Body and headings. Light #1B1913 (neutral.950) \u00b7 Dark #F6F3ED (neutral.50 *Grey)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-primary"
+          }
+        },
+        {
+          "name": "text/secondary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.372549,
+              "g": 0.360784,
+              "b": 0.32549,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.698039,
+              "g": 0.678431,
+              "b": 0.631373,
+              "a": 1
+            }
+          },
+          "description": "Supporting copy, labels. Light #5F5C53 (neutral.600 *Twilight) \u00b7 Dark #B2ADA1 (neutral.300 *Dusk)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-secondary"
+          }
+        },
+        {
+          "name": "text/tertiary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.47451,
+              "g": 0.458824,
+              "b": 0.419608,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.596078,
+              "g": 0.576471,
+              "b": 0.533333,
+              "a": 1
+            }
+          },
+          "description": "Timestamps, meta. Light #79756B (neutral.500) \u00b7 Dark #989388 (neutral.400)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-tertiary"
+          }
+        },
+        {
+          "name": "text/placeholder",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.47451,
+              "g": 0.458824,
+              "b": 0.419608,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.596078,
+              "g": 0.576471,
+              "b": 0.533333,
+              "a": 1
+            }
+          },
+          "description": "Empty input text. Light #79756B (neutral.500) \u00b7 Dark #989388 (neutral.400)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-placeholder"
+          }
+        },
+        {
+          "name": "text/disabled",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.596078,
+              "g": 0.576471,
+              "b": 0.533333,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.372549,
+              "g": 0.360784,
+              "b": 0.32549,
+              "a": 1
+            }
+          },
+          "description": "Disabled label. Light #989388 (neutral.400) \u00b7 Dark #5F5C53 (neutral.600 *Twilight)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-disabled"
+          }
+        },
+        {
+          "name": "text/inverse",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            }
+          },
+          "description": "Text on solid dark fills. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #1B1913 (neutral.950)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-inverse"
+          }
+        },
+        {
+          "name": "text/link",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.196078,
+              "g": 0.337255,
+              "b": 0.752941,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.568627,
+              "g": 0.772549,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Inline links. Light #3256C0 (ocean.600) \u00b7 Dark #91C5FF (ocean.300 *Primary Blue)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-link"
+          }
+        },
+        {
+          "name": "text/link-hover",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.156863,
+              "g": 0.27451,
+              "b": 0.627451,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.721569,
+              "g": 0.85098,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Link hover. Light #2846A0 (ocean.700) \u00b7 Dark #B8D9FF (ocean.200)",
+          "scopes": [
+            "TEXT_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-text-link-hover"
+          }
+        },
+        {
+          "name": "border/subtle",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.898039,
+              "g": 0.878431,
+              "b": 0.839216,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Table rules, dividers. Light #E5E0D6 (neutral.100 *Feather) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "STROKE_COLOR"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-border-subtle"
+          }
+        },
+        {
+          "name": "border/default",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.858824,
+              "g": 0.839216,
+              "b": 0.796078,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.309804,
+              "g": 0.301961,
+              "b": 0.266667,
+              "a": 1
+            }
+          },
+          "description": "Card and panel edges. Light #DBD6CB (neutral.200) \u00b7 Dark #4F4D44 (neutral.700)",
+          "scopes": [
+            "STROKE_COLOR"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-border-default"
+          }
+        },
+        {
+          "name": "border/control",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.596078,
+              "g": 0.576471,
+              "b": 0.533333,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.47451,
+              "g": 0.458824,
+              "b": 0.419608,
+              "a": 1
+            }
+          },
+          "description": "Inputs, checkboxes \u2014 needs 3:1. Light #989388 (neutral.400) \u00b7 Dark #79756B (neutral.500)",
+          "scopes": [
+            "STROKE_COLOR"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-border-control"
+          }
+        },
+        {
+          "name": "border/strong",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.47451,
+              "g": 0.458824,
+              "b": 0.419608,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.596078,
+              "g": 0.576471,
+              "b": 0.533333,
+              "a": 1
+            }
+          },
+          "description": "Control hover, emphasis. Light #79756B (neutral.500) \u00b7 Dark #989388 (neutral.400)",
+          "scopes": [
+            "STROKE_COLOR"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-border-strong"
+          }
+        },
+        {
+          "name": "border/focus",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.25098,
+              "g": 0.419608,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.568627,
+              "g": 0.772549,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Keyboard focus ring. Light #406BED (ocean.500 *Ocean Bright) \u00b7 Dark #91C5FF (ocean.300 *Primary Blue)",
+          "scopes": [
+            "STROKE_COLOR"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-border-focus"
+          }
+        },
+        {
+          "name": "action/primary/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.898039,
+              "g": 0.878431,
+              "b": 0.839216,
+              "a": 1
+            }
+          },
+          "description": "Primary button fill. Light #1B1913 (neutral.950) \u00b7 Dark #E5E0D6 (neutral.100 *Feather)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-primary-bg"
+          }
+        },
+        {
+          "name": "action/primary/bg-hover",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.168627,
+              "g": 0.160784,
+              "b": 0.137255,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            }
+          },
+          "description": "Primary hover. Light #2B2923 (neutral.900) \u00b7 Dark #F6F3ED (neutral.50 *Grey)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-primary-bg-hover"
+          }
+        },
+        {
+          "name": "action/primary/bg-active",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.858824,
+              "g": 0.839216,
+              "b": 0.796078,
+              "a": 1
+            }
+          },
+          "description": "Primary pressed. Light #3C3932 (neutral.800) \u00b7 Dark #DBD6CB (neutral.200)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-primary-bg-active"
+          }
+        },
+        {
+          "name": "action/primary/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            }
+          },
+          "description": "Primary button label. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #1B1913 (neutral.950)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-primary-text"
+          }
+        },
+        {
+          "name": "action/secondary/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Secondary button fill. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-secondary-bg"
+          }
+        },
+        {
+          "name": "action/secondary/bg-hover",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.309804,
+              "g": 0.301961,
+              "b": 0.266667,
+              "a": 1
+            }
+          },
+          "description": "Secondary hover. Light #F6F3ED (neutral.50 *Grey) \u00b7 Dark #4F4D44 (neutral.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-secondary-bg-hover"
+          }
+        },
+        {
+          "name": "action/secondary/border",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.698039,
+              "g": 0.678431,
+              "b": 0.631373,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.372549,
+              "g": 0.360784,
+              "b": 0.32549,
+              "a": 1
+            }
+          },
+          "description": "Secondary outline. Light #B2ADA1 (neutral.300 *Dusk) \u00b7 Dark #5F5C53 (neutral.600 *Twilight)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-secondary-border"
+          }
+        },
+        {
+          "name": "action/secondary/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.105882,
+              "g": 0.098039,
+              "b": 0.07451,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            }
+          },
+          "description": "Secondary label. Light #1B1913 (neutral.950) \u00b7 Dark #F6F3ED (neutral.50 *Grey)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-secondary-text"
+          }
+        },
+        {
+          "name": "action/subtle/bg-hover",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Ghost button hover. Light #F6F3ED (neutral.50 *Grey) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-subtle-bg-hover"
+          }
+        },
+        {
+          "name": "action/subtle/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.372549,
+              "g": 0.360784,
+              "b": 0.32549,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.698039,
+              "g": 0.678431,
+              "b": 0.631373,
+              "a": 1
+            }
+          },
+          "description": "Ghost button label. Light #5F5C53 (neutral.600 *Twilight) \u00b7 Dark #B2ADA1 (neutral.300 *Dusk)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-subtle-text"
+          }
+        },
+        {
+          "name": "action/destructive/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.717647,
+              "g": 0.133333,
+              "b": 0.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.870588,
+              "g": 0.176471,
+              "b": 0.007843,
+              "a": 1
+            }
+          },
+          "description": "Delete button fill. Light #B72200 (cherry.600) \u00b7 Dark #DE2D02 (cherry.500 *Cherry Rich)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-destructive-bg"
+          }
+        },
+        {
+          "name": "action/destructive/bg-hover",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.592157,
+              "g": 0.101961,
+              "b": 0.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.717647,
+              "g": 0.133333,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Delete hover. Light #971A00 (cherry.700) \u00b7 Dark #B72200 (cherry.600)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-destructive-bg-hover"
+          }
+        },
+        {
+          "name": "action/destructive/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Delete button label. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #FFFFFF (neutral.0 *White)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-destructive-text"
+          }
+        },
+        {
+          "name": "action/disabled/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.898039,
+              "g": 0.878431,
+              "b": 0.839216,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Disabled button fill. Light #E5E0D6 (neutral.100 *Feather) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-disabled-bg"
+          }
+        },
+        {
+          "name": "action/disabled/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.596078,
+              "g": 0.576471,
+              "b": 0.533333,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.372549,
+              "g": 0.360784,
+              "b": 0.32549,
+              "a": 1
+            }
+          },
+          "description": "Disabled button label. Light #989388 (neutral.400) \u00b7 Dark #5F5C53 (neutral.600 *Twilight)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-action-disabled-text"
+          }
+        },
+        {
+          "name": "status/error/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.988235,
+              "g": 0.976471,
+              "b": 0.972549,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.341176,
+              "g": 0.043137,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Error alert background. Light #FCF9F8 (cherry.50) \u00b7 Dark #570B00 (cherry.900)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-error-bg"
+          }
+        },
+        {
+          "name": "status/error/border",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.984314,
+              "g": 0.796078,
+              "b": 0.788235,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.592157,
+              "g": 0.101961,
+              "b": 0.0,
+              "a": 1
+            }
+          },
+          "description": "Error alert edge. Light #FBCBC9 (cherry.200) \u00b7 Dark #971A00 (cherry.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-error-border"
+          }
+        },
+        {
+          "name": "status/error/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.592157,
+              "g": 0.101961,
+              "b": 0.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 0.619608,
+              "b": 0.572549,
+              "a": 1
+            }
+          },
+          "description": "Error message text. Light #971A00 (cherry.700) \u00b7 Dark #FF9E92 (cherry.300)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-error-text"
+          }
+        },
+        {
+          "name": "status/error/icon",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.717647,
+              "g": 0.133333,
+              "b": 0.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 0.376471,
+              "b": 0.219608,
+              "a": 1
+            }
+          },
+          "description": "Error icon. Light #B72200 (cherry.600) \u00b7 Dark #FF6038 (cherry.400 *Cherry Bright)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-error-icon"
+          }
+        },
+        {
+          "name": "status/error/solid",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.717647,
+              "g": 0.133333,
+              "b": 0.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.870588,
+              "g": 0.176471,
+              "b": 0.007843,
+              "a": 1
+            }
+          },
+          "description": "Error badge \u2014 dark, white text. Light #B72200 (cherry.600) \u00b7 Dark #DE2D02 (cherry.500 *Cherry Rich)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-error-solid"
+          }
+        },
+        {
+          "name": "status/error/solid-text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Text on error solid. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #FFFFFF (neutral.0 *White)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-error-solid-text"
+          }
+        },
+        {
+          "name": "status/warning/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.996078,
+              "g": 0.976471,
+              "b": 0.94902,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.219608,
+              "g": 0.14902,
+              "b": 0.054902,
+              "a": 1
+            }
+          },
+          "description": "Warning background. Light #FEF9F2 (amber.50) \u00b7 Dark #38260E (amber.900)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-warning-bg"
+          }
+        },
+        {
+          "name": "status/warning/border",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.960784,
+              "g": 0.815686,
+              "b": 0.647059,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.392157,
+              "g": 0.278431,
+              "b": 0.129412,
+              "a": 1
+            }
+          },
+          "description": "Warning edge. Light #F5D0A5 (amber.200) \u00b7 Dark #644721 (amber.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-warning-border"
+          }
+        },
+        {
+          "name": "status/warning/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.392157,
+              "g": 0.278431,
+              "b": 0.129412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.913725,
+              "g": 0.67451,
+              "b": 0.352941,
+              "a": 1
+            }
+          },
+          "description": "Warning text. Light #644721 (amber.700) \u00b7 Dark #E9AC5A (amber.300)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-warning-text"
+          }
+        },
+        {
+          "name": "status/warning/icon",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.478431,
+              "g": 0.345098,
+              "b": 0.164706,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.737255,
+              "g": 0.541176,
+              "b": 0.27451,
+              "a": 1
+            }
+          },
+          "description": "Warning icon. Light #7A582A (amber.600) \u00b7 Dark #BC8A46 (amber.400)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-warning-icon"
+          }
+        },
+        {
+          "name": "status/warning/solid",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.913725,
+              "g": 0.67451,
+              "b": 0.352941,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.737255,
+              "g": 0.541176,
+              "b": 0.27451,
+              "a": 1
+            }
+          },
+          "description": "Warning badge \u2014 LIGHT for CVD separation. Light #E9AC5A (amber.300) \u00b7 Dark #BC8A46 (amber.400)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-warning-solid"
+          }
+        },
+        {
+          "name": "status/warning/solid-text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.219608,
+              "g": 0.14902,
+              "b": 0.054902,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.219608,
+              "g": 0.14902,
+              "b": 0.054902,
+              "a": 1
+            }
+          },
+          "description": "Text on warning solid \u2014 dark. Light #38260E (amber.900) \u00b7 Dark #38260E (amber.900)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-warning-solid-text"
+          }
+        },
+        {
+          "name": "status/success/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.968627,
+              "g": 0.980392,
+              "b": 0.976471,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.0,
+              "g": 0.188235,
+              "b": 0.168627,
+              "a": 1
+            }
+          },
+          "description": "Success background. Light #F7FAF9 (green.50) \u00b7 Dark #00302B (green.900)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-success-bg"
+          }
+        },
+        {
+          "name": "status/success/border",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.670588,
+              "g": 0.882353,
+              "b": 0.847059,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.0,
+              "g": 0.341176,
+              "b": 0.301961,
+              "a": 1
+            }
+          },
+          "description": "Success edge. Light #ABE1D8 (green.200) \u00b7 Dark #00574D (green.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-success-border"
+          }
+        },
+        {
+          "name": "status/success/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.0,
+              "g": 0.341176,
+              "b": 0.301961,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.027451,
+              "g": 0.780392,
+              "b": 0.529412,
+              "a": 1
+            }
+          },
+          "description": "Success text. Light #00574D (green.700) \u00b7 Dark #07C787 (green.300 *Green Bright)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-success-text"
+          }
+        },
+        {
+          "name": "status/success/icon",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.0,
+              "g": 0.419608,
+              "b": 0.356863,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.0,
+              "g": 0.658824,
+              "b": 0.490196,
+              "a": 1
+            }
+          },
+          "description": "Success icon. Light #006B5B (green.600) \u00b7 Dark #00A87D (green.400)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-success-icon"
+          }
+        },
+        {
+          "name": "status/success/solid",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.0,
+              "g": 0.341176,
+              "b": 0.301961,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.0,
+              "g": 0.419608,
+              "b": 0.356863,
+              "a": 1
+            }
+          },
+          "description": "Success badge \u2014 dark, white text. Light #00574D (green.700) \u00b7 Dark #006B5B (green.600)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-success-solid"
+          }
+        },
+        {
+          "name": "status/success/solid-text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Text on success solid. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #FFFFFF (neutral.0 *White)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-success-solid-text"
+          }
+        },
+        {
+          "name": "status/info/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.964706,
+              "g": 0.980392,
+              "b": 0.996078,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.054902,
+              "g": 0.113725,
+              "b": 0.290196,
+              "a": 1
+            }
+          },
+          "description": "Info background. Light #F6FAFE (ocean.50) \u00b7 Dark #0E1D4A (ocean.900 *Ocean Rich)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-info-bg"
+          }
+        },
+        {
+          "name": "status/info/border",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.721569,
+              "g": 0.85098,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.156863,
+              "g": 0.27451,
+              "b": 0.627451,
+              "a": 1
+            }
+          },
+          "description": "Info edge. Light #B8D9FF (ocean.200) \u00b7 Dark #2846A0 (ocean.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-info-border"
+          }
+        },
+        {
+          "name": "status/info/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.156863,
+              "g": 0.27451,
+              "b": 0.627451,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.568627,
+              "g": 0.772549,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Info text. Light #2846A0 (ocean.700) \u00b7 Dark #91C5FF (ocean.300 *Primary Blue)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-info-text"
+          }
+        },
+        {
+          "name": "status/info/icon",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.196078,
+              "g": 0.337255,
+              "b": 0.752941,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.345098,
+              "g": 0.576471,
+              "b": 0.964706,
+              "a": 1
+            }
+          },
+          "description": "Info icon. Light #3256C0 (ocean.600) \u00b7 Dark #5893F6 (ocean.400)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-info-icon"
+          }
+        },
+        {
+          "name": "status/info/solid",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.25098,
+              "g": 0.419608,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.25098,
+              "g": 0.419608,
+              "b": 0.929412,
+              "a": 1
+            }
+          },
+          "description": "Info badge fill. Light #406BED (ocean.500 *Ocean Bright) \u00b7 Dark #406BED (ocean.500 *Ocean Bright)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-info-solid"
+          }
+        },
+        {
+          "name": "status/info/solid-text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Text on info solid. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #FFFFFF (neutral.0 *White)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-info-solid-text"
+          }
+        },
+        {
+          "name": "status/neutral/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.964706,
+              "g": 0.952941,
+              "b": 0.929412,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.235294,
+              "g": 0.223529,
+              "b": 0.196078,
+              "a": 1
+            }
+          },
+          "description": "Draft, paused, archived. Light #F6F3ED (neutral.50 *Grey) \u00b7 Dark #3C3932 (neutral.800)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-neutral-bg"
+          }
+        },
+        {
+          "name": "status/neutral/border",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.858824,
+              "g": 0.839216,
+              "b": 0.796078,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.309804,
+              "g": 0.301961,
+              "b": 0.266667,
+              "a": 1
+            }
+          },
+          "description": "Neutral badge edge. Light #DBD6CB (neutral.200) \u00b7 Dark #4F4D44 (neutral.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-neutral-border"
+          }
+        },
+        {
+          "name": "status/neutral/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.309804,
+              "g": 0.301961,
+              "b": 0.266667,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.698039,
+              "g": 0.678431,
+              "b": 0.631373,
+              "a": 1
+            }
+          },
+          "description": "Neutral badge text. Light #4F4D44 (neutral.700) \u00b7 Dark #B2ADA1 (neutral.300 *Dusk)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-neutral-text"
+          }
+        },
+        {
+          "name": "status/neutral/solid",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.372549,
+              "g": 0.360784,
+              "b": 0.32549,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.47451,
+              "g": 0.458824,
+              "b": 0.419608,
+              "a": 1
+            }
+          },
+          "description": "Neutral badge fill. Light #5F5C53 (neutral.600 *Twilight) \u00b7 Dark #79756B (neutral.500)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-neutral-solid"
+          }
+        },
+        {
+          "name": "status/neutral/solid-text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Text on neutral solid. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #FFFFFF (neutral.0 *White)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-neutral-solid-text"
+          }
+        },
+        {
+          "name": "status/ai/bg",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.988235,
+              "g": 0.972549,
+              "b": 0.984314,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.329412,
+              "g": 0.0,
+              "b": 0.254902,
+              "a": 1
+            }
+          },
+          "description": "AI and beta features. Light #FCF8FB (berry.50) \u00b7 Dark #540041 (berry.900)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-ai-bg"
+          }
+        },
+        {
+          "name": "status/ai/border",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.960784,
+              "g": 0.784314,
+              "b": 0.937255,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.572549,
+              "g": 0.0,
+              "b": 0.45098,
+              "a": 1
+            }
+          },
+          "description": "AI feature edge. Light #F5C8EF (berry.200) \u00b7 Dark #920073 (berry.700)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-ai-border"
+          }
+        },
+        {
+          "name": "status/ai/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.572549,
+              "g": 0.0,
+              "b": 0.45098,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.972549,
+              "g": 0.498039,
+              "b": 0.847059,
+              "a": 1
+            }
+          },
+          "description": "AI feature text. Light #920073 (berry.700) \u00b7 Dark #F87FD8 (berry.300 *Berry Bright)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-ai-text"
+          }
+        },
+        {
+          "name": "status/ai/solid",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.666667,
+              "g": 0.109804,
+              "b": 0.533333,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.796078,
+              "g": 0.215686,
+              "b": 0.643137,
+              "a": 1
+            }
+          },
+          "description": "AI badge fill. Light #AA1C88 (berry.600) \u00b7 Dark #CB37A4 (berry.500 *Berry Rich)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-ai-solid"
+          }
+        },
+        {
+          "name": "status/ai/solid-text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            },
+            "2:1": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1
+            }
+          },
+          "description": "Text on AI solid. Light #FFFFFF (neutral.0 *White) \u00b7 Dark #FFFFFF (neutral.0 *White)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-status-ai-solid-text"
+          }
+        },
+        {
+          "name": "accent/indicator",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.933333,
+              "g": 1.0,
+              "b": 0.427451,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.933333,
+              "g": 1.0,
+              "b": 0.427451,
+              "a": 1
+            }
+          },
+          "description": "SIGNATURE: active nav, selected row, current step. NEVER the sole signal. Light #EEFF6D (yellow.50 *Primary Yellow) \u00b7 Dark #EEFF6D (yellow.50 *Primary Yellow)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-accent-indicator"
+          }
+        },
+        {
+          "name": "accent/emphasis",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.254902,
+              "g": 0.05098,
+              "b": 0.137255,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.94902,
+              "g": 0.623529,
+              "b": 0.729412,
+              "a": 1
+            }
+          },
+          "description": "Brand emphasis \u2014 Primary Maroon. Light #410D23 (maroon.900 *Primary Maroon) \u00b7 Dark #F29FBA (maroon.300)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-accent-emphasis"
+          }
+        },
+        {
+          "name": "overlay/scrim",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.117647,
+              "g": 0.12549,
+              "b": 0.133333,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.117647,
+              "g": 0.12549,
+              "b": 0.133333,
+              "a": 1
+            }
+          },
+          "description": "Modal scrim \u2014 apply at 55% alpha. Light #1E2022 (midnight.base *Midnight) \u00b7 Dark #1E2022 (midnight.base *Midnight)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-overlay-scrim"
+          }
+        },
+        {
+          "name": "overlay/inverse-surface",
+          "type": "COLOR",
+          "valuesByMode": {
+            "2:0": {
+              "r": 0.117647,
+              "g": 0.12549,
+              "b": 0.133333,
+              "a": 1
+            },
+            "2:1": {
+              "r": 0.168627,
+              "g": 0.160784,
+              "b": 0.137255,
+              "a": 1
+            }
+          },
+          "description": "Tooltips, code editor. Light #1E2022 (midnight.base *Midnight) \u00b7 Dark #2B2923 (neutral.900)",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {
+            "WEB": "--vwo-overlay-inverse-surface"
+          }
+        }
+      ]
+    }
+  ]
+}

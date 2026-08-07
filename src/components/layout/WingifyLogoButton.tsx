@@ -3,26 +3,32 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   FLOW_MASCOT_IDS,
   MASCOT_ASSETS,
+  MASCOT_ASSETS_DARK,
   MASCOT_IDS,
   MASCOT_LABELS,
+  mascotAsset,
   mascotForPath,
   type MascotId,
 } from "../../config/mascots";
 import { useMascotPreviewStore } from "../../store/mascotPreview";
+import { useThemeStore } from "../../store/theme";
 import { cn } from "../../lib/utils";
+import type { ColorMode } from "../../config/themes";
 
 /** Must stay longer than CROSSFADE_MS so swaps never overlap. */
 const CYCLE_MS = 900;
 const CROSSFADE_MS = 320;
 
-/** Preload all poses so hover swaps don't flash empty. */
+/** Preload all poses (light + dark) so hover/mode swaps don't flash empty. */
 let mascotsPreloaded = false;
 function preloadMascots() {
   if (mascotsPreloaded || typeof window === "undefined") return;
   mascotsPreloaded = true;
   for (const id of MASCOT_IDS) {
-    const img = new Image();
-    img.src = MASCOT_ASSETS[id];
+    const light = new Image();
+    light.src = MASCOT_ASSETS[id];
+    const dark = new Image();
+    dark.src = MASCOT_ASSETS_DARK[id];
   }
 }
 
@@ -30,7 +36,15 @@ function preloadMascots() {
  * Opacity-only crossfade. Queues the latest target if a fade is already running
  * so rapid product hovers don't thrash mid-transition.
  */
-function MascotMark({ id, alt }: { id: MascotId; alt: string }) {
+function MascotMark({
+  id,
+  alt,
+  colorMode,
+}: {
+  id: MascotId;
+  alt: string;
+  colorMode: ColorMode;
+}) {
   const [front, setFront] = useState(id);
   const [back, setBack] = useState<MascotId | null>(null);
   const [frontVisible, setFrontVisible] = useState(true);
@@ -102,7 +116,7 @@ function MascotMark({ id, alt }: { id: MascotId; alt: string }) {
     <span className="relative block h-7 w-8">
       {back ? (
         <img
-          src={MASCOT_ASSETS[back]}
+          src={mascotAsset(back, colorMode)}
           alt=""
           aria-hidden
           className={cn(
@@ -113,7 +127,7 @@ function MascotMark({ id, alt }: { id: MascotId; alt: string }) {
         />
       ) : null}
       <img
-        src={MASCOT_ASSETS[front]}
+        src={mascotAsset(front, colorMode)}
         alt={alt}
         className={cn(imgClass, frontVisible ? "opacity-100" : "opacity-0")}
         style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
@@ -135,6 +149,7 @@ export default function WingifyLogoButton({
 }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const colorMode = useThemeStore((s) => s.colorMode);
   const previewId = useMascotPreviewStore((s) => s.previewId);
   const routeId = mascotForPath(pathname);
   const [logoHover, setLogoHover] = useState(false);
@@ -184,7 +199,11 @@ export default function WingifyLogoButton({
         className
       )}
     >
-      <MascotMark id={mascotId} alt={`Wingify — ${pose}`} />
+      <MascotMark
+        id={mascotId}
+        alt={`Wingify — ${pose}`}
+        colorMode={colorMode}
+      />
     </button>
   );
 }

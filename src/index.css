@@ -75,294 +75,607 @@
 
 :root {
   /*
-   * Palette — color.json only (main / primary).
-   * Extras — tokens.json scales (hover, mid steps, soft tints).
-   * Semantic roles follow tokens.json semantic.light where applicable.
+   * Source: src/config/vwo-colour-tokens.figma.json
+   * All colour values below are VWO primitives or semantic tokens — no hand-mixed hues.
    */
 
-  /* ── color.json: Primary ──────────────────────────────────────────── */
-  --brand-yellow: 67 100% 71.4%;        /* Primary Yellow #EEFF6D */
-  --brand-sky: 212 100% 78.4%;          /* Primary Blue #91C5FF */
-  --brand-maroon: 335 66.7% 15.3%;      /* Primary Maroon #410D23 */
+  /* ── VWO primitives (vwo-colour-tokens.figma.json) ─────────────── */
+  --vwo-neutral-0: 0 0% 100%;  /* neutral/0 * #FFFFFF */
+  --vwo-neutral-50: 40 33.3% 94.7%;  /* neutral/50 * #F6F3ED */
+  --vwo-neutral-100: 40 22.4% 86.9%;  /* neutral/100 * #E5E0D6 */
+  --vwo-neutral-200: 41 18.2% 82.7%;  /* neutral/200 #DBD6CB */
+  --vwo-neutral-300: 42 9.9% 66.5%;  /* neutral/300 * #B2ADA1 */
+  --vwo-neutral-400: 41 7.2% 56.5%;  /* neutral/400 #989388 */
+  --vwo-neutral-500: 43 6.1% 44.7%;  /* neutral/500 #79756B */
+  --vwo-neutral-600: 45 6.7% 34.9%;  /* neutral/600 * #5F5C53 */
+  --vwo-neutral-700: 49 7.5% 28.8%;  /* neutral/700 #4F4D44 */
+  --vwo-neutral-800: 42 9.1% 21.6%;  /* neutral/800 #3C3932 */
+  --vwo-neutral-900: 45 10.3% 15.3%;  /* neutral/900 #2B2923 */
+  --vwo-neutral-950: 45 17.4% 9%;  /* neutral/950 #1B1913 */
+  --vwo-cherry-50: 15 40% 98%;  /* cherry/50 #FCF9F8 */
+  --vwo-cherry-100: 0 42.1% 92.5%;  /* cherry/100 * #F4E4E4 */
+  --vwo-cherry-200: 2 86.2% 88.6%;  /* cherry/200 #FBCBC9 */
+  --vwo-cherry-300: 7 100% 78.6%;  /* cherry/300 #FF9E92 */
+  --vwo-cherry-400: 12 100% 61%;  /* cherry/400 * #FF6038 */
+  --vwo-cherry-500: 12 98.2% 43.9%;  /* cherry/500 * #DE2D02 */
+  --vwo-cherry-600: 11 100% 35.9%;  /* cherry/600 #B72200 */
+  --vwo-cherry-700: 10 100% 29.6%;  /* cherry/700 #971A00 */
+  --vwo-cherry-800: 9 100% 22.5%;  /* cherry/800 #731200 */
+  --vwo-cherry-900: 8 100% 17.1%;  /* cherry/900 #570B00 */
+  --vwo-amber-50: 35 85.7% 97.3%;  /* amber/50 #FEF9F2 */
+  --vwo-amber-100: 31 80% 90.2%;  /* amber/100 #FAE7D2 */
+  --vwo-amber-200: 32 80% 80.4%;  /* amber/200 #F5D0A5 */
+  --vwo-amber-300: 34 76.5% 63.3%;  /* amber/300 #E9AC5A */
+  --vwo-amber-400: 35 46.8% 50.6%;  /* amber/400 #BC8A46 */
+  --vwo-amber-500: 34 46.6% 40.4%;  /* amber/500 #976D37 */
+  --vwo-amber-600: 35 48.8% 32.2%;  /* amber/600 #7A582A */
+  --vwo-amber-700: 34 50.4% 26.1%;  /* amber/700 #644721 */
+  --vwo-amber-800: 34 53.5% 19.4%;  /* amber/800 #4C3517 */
+  --vwo-amber-900: 34 60% 13.7%;  /* amber/900 #38260E */
+  --vwo-yellow-50: 67 100% 71.4%;  /* yellow/50 * #EEFF6D */
+  --vwo-yellow-100: 67 86.9% 67.1%;  /* yellow/100 #E4F462 */
+  --vwo-yellow-200: 66 70.6% 58.6%;  /* yellow/200 #D1E04B */
+  --vwo-yellow-300: 65 75.3% 42.9%;  /* yellow/300 #B2C01B */
+  --vwo-yellow-400: 65 95% 31.2%;  /* yellow/400 #8F9B04 */
+  --vwo-yellow-500: 65 100% 24.3%;  /* yellow/500 #727C00 */
+  --vwo-yellow-600: 65 98% 19.8%;  /* yellow/600 #5B6401 */
+  --vwo-yellow-700: 64 100% 15.9%;  /* yellow/700 #4B5100 */
+  --vwo-yellow-800: 65 100% 11.8%;  /* yellow/800 #373C00 */
+  --vwo-yellow-900: 67 100% 8.6%;  /* yellow/900 #272C00 */
+  --vwo-green-50: 160 23.1% 97.5%;  /* green/50 #F7FAF9 */
+  --vwo-green-100: 176 27.9% 88%;  /* green/100 * #D8E9E8 */
+  --vwo-green-200: 170 47.4% 77.6%;  /* green/200 #ABE1D8 */
+  --vwo-green-300: 160 93.2% 40.4%;  /* green/300 * #07C787 */
+  --vwo-green-400: 165 100% 32.9%;  /* green/400 #00A87D */
+  --vwo-green-500: 168 100% 26.1%;  /* green/500 #00856B */
+  --vwo-green-600: 171 100% 21%;  /* green/600 #006B5B */
+  --vwo-green-700: 173 100% 17.1%;  /* green/700 #00574D */
+  --vwo-green-800: 175 100% 14.1%;  /* green/800 * #004842 */
+  --vwo-green-900: 174 100% 9.4%;  /* green/900 #00302B */
+  --vwo-ocean-50: 210 80% 98%;  /* ocean/50 #F6FAFE */
+  --vwo-ocean-100: 211 100% 91.4%;  /* ocean/100 * #D3E8FF */
+  --vwo-ocean-200: 212 100% 86.1%;  /* ocean/200 #B8D9FF */
+  --vwo-ocean-300: 212 100% 78.4%;  /* ocean/300 * #91C5FF */
+  --vwo-ocean-400: 218 89.8% 65.5%;  /* ocean/400 #5893F6 */
+  --vwo-ocean-500: 225 82.8% 59%;  /* ocean/500 * #406BED */
+  --vwo-ocean-600: 225 58.7% 47.5%;  /* ocean/600 #3256C0 */
+  --vwo-ocean-700: 225 60% 39.2%;  /* ocean/700 #2846A0 */
+  --vwo-ocean-800: 225 61.6% 29.6%;  /* ocean/800 #1D347A */
+  --vwo-ocean-900: 225 68.2% 17.3%;  /* ocean/900 * #0E1D4A */
+  --vwo-berry-50: 315 40% 98%;  /* berry/50 #FCF8FB */
+  --vwo-berry-100: 304 42.1% 92.5%;  /* berry/100 * #F4E4F3 */
+  --vwo-berry-200: 308 69.2% 87.3%;  /* berry/200 #F5C8EF */
+  --vwo-berry-300: 316 89.6% 73.5%;  /* berry/300 * #F87FD8 */
+  --vwo-berry-400: 316 71.6% 64.1%;  /* berry/400 #E562C2 */
+  --vwo-berry-500: 316 58.7% 50.6%;  /* berry/500 * #CB37A4 */
+  --vwo-berry-600: 314 71.7% 38.8%;  /* berry/600 #AA1C88 */
+  --vwo-berry-700: 313 100% 28.6%;  /* berry/700 #920073 */
+  --vwo-berry-800: 313 100% 21.8%;  /* berry/800 #6F0057 */
+  --vwo-berry-900: 314 100% 16.5%;  /* berry/900 #540041 */
+  --vwo-maroon-50: 343 100% 98.6%;  /* maroon/50 #FFF8FA */
+  --vwo-maroon-100: 342 80% 94.1%;  /* maroon/100 #FCE4EB */
+  --vwo-maroon-200: 342 73.3% 88.2%;  /* maroon/200 #F7CBD8 */
+  --vwo-maroon-300: 340 76.1% 78.6%;  /* maroon/300 #F29FBA */
+  --vwo-maroon-400: 337 78% 66.1%;  /* maroon/400 #EC6598 */
+  --vwo-maroon-500: 335 58.2% 52.2%;  /* maroon/500 #CC3E7A */
+  --vwo-maroon-600: 335 55.1% 42%;  /* maroon/600 #A63062 */
+  --vwo-maroon-700: 335 56.6% 34.3%;  /* maroon/700 #892650 */
+  --vwo-maroon-800: 335 59.4% 26.1%;  /* maroon/800 #6A1B3C */
+  --vwo-maroon-900: 335 66.7% 15.3%;  /* maroon/900 * #410D23 */
+  --vwo-midnight-base: 210 6.2% 12.5%;  /* midnight/base * #1E2022 */
 
-  /* ── color.json: Neutrals ─────────────────────────────────────────── */
-  --brand-white: 0 0% 100%;             /* White #FFFFFF */
-  --brand-grey: 40 33.3% 94.7%;         /* Grey #F6F3ED */
-  --brand-feather: 40 22.4% 86.9%;      /* Feather #E5E0D6 */
-  --brand-dusk: 42 9.9% 66.5%;          /* Dusk #B2ADA1 */
-  --brand-twilight: 45 6.7% 34.9%;      /* Twilight #5F5C53 */
-  --brand-midnight: 210 6.3% 12.5%;     /* Midnight #1E2022 */
+  /* ── Legacy brand/scale aliases → VWO primitives ─────────────── */
+  --brand-yellow: var(--vwo-yellow-50);
+  --brand-sky: var(--vwo-ocean-300);
+  --brand-maroon: var(--vwo-maroon-900);
+  --brand-white: var(--vwo-neutral-0);
+  --brand-grey: var(--vwo-neutral-50);
+  --brand-feather: var(--vwo-neutral-100);
+  --brand-dusk: var(--vwo-neutral-300);
+  --brand-twilight: var(--vwo-neutral-600);
+  --brand-midnight: var(--vwo-midnight-base);
+  --brand-green-rich: var(--vwo-green-800);
+  --brand-green-bright: var(--vwo-green-300);
+  --brand-green-tint: var(--vwo-green-100);
+  --brand-cherry-rich: var(--vwo-cherry-500);
+  --brand-cherry-bright: var(--vwo-cherry-400);
+  --brand-cherry-tint: var(--vwo-cherry-100);
+  --brand-berry-rich: var(--vwo-berry-500);
+  --brand-berry-bright: var(--vwo-berry-300);
+  --brand-berry-tint: var(--vwo-berry-100);
+  --brand-ocean-rich: var(--vwo-ocean-900);
+  --brand-ocean-bright: var(--vwo-ocean-500);
+  --brand-ocean-tint: var(--vwo-ocean-100);
+  --scale-ocean-50: var(--vwo-ocean-50);
+  --scale-ocean-700: var(--vwo-ocean-600);
+  --scale-ocean-800: var(--vwo-ocean-700);
+  --scale-neutral-100: var(--vwo-neutral-100);
+  --scale-neutral-300: var(--vwo-neutral-200);
+  --scale-green-50: var(--vwo-green-50);
+  --scale-green-300: var(--vwo-green-300); /* #07C787 */
+  --scale-green-600: var(--vwo-green-500);
+  --scale-yellow-100: var(--vwo-yellow-100);
+  --scale-yellow-300: var(--vwo-yellow-200);
+  --scale-maroon-50: var(--vwo-maroon-50);
+  --scale-berry-50: var(--vwo-berry-50);
+  --scale-cherry-50: var(--vwo-cherry-50);
+  --scale-cherry-700: var(--vwo-cherry-700);
+  --scale-sky-50: var(--vwo-ocean-50);
+  --scale-sky-100: var(--vwo-ocean-100);
+  --scale-sky-700: var(--vwo-ocean-700);
+  --scale-yellow-400: var(--vwo-yellow-400);
+  --scale-yellow-700: var(--vwo-yellow-700);
+  --scale-green-500: var(--vwo-green-400);
+  --scale-green-700: var(--vwo-green-700);
 
-  /* ── color.json: Families (Rich / Bright / Tint) ──────────────────── */
-  --brand-green-rich: 175 100% 14.1%;   /* #004842 */
-  --brand-green-bright: 160 93.2% 40.4%; /* #07C787 */
-  --brand-green-tint: 176 27.9% 88%;    /* #D8E9E8 */
-  --brand-cherry-rich: 12 98.2% 43.9%;  /* #DE2D02 */
-  --brand-cherry-bright: 12 100% 61%;   /* #FF6038 */
-  --brand-cherry-tint: 0 42.1% 92.5%;   /* #F4E4E4 */
-  --brand-berry-rich: 316 58.7% 50.6%;  /* #CB37A4 */
-  --brand-berry-bright: 316 89.6% 73.5%; /* #F87FD8 */
-  --brand-berry-tint: 304 42.1% 92.5%;  /* #F4E4F3 */
-  --brand-ocean-rich: 225 68.2% 17.3%;  /* #0E1D4A */
-  --brand-ocean-bright: 225 82.8% 59%;  /* #406BED — also tokens ocean.600 */
-  --brand-ocean-tint: 211 100% 91.4%;   /* #D3E8FF — also tokens ocean.100 */
+  /* ── VWO Semantic Light / Dark (from figma tokens) ─────────── */
+  --vwo-light-bg-canvas: 40 33.3% 94.7%;
+  --vwo-light-bg-surface: 0 0% 100%;
+  --vwo-light-bg-surface-raised: 0 0% 100%;
+  --vwo-light-bg-surface-sunken: 40 22.4% 86.9%;
+  --vwo-light-bg-hover: 40 33.3% 94.7%;
+  --vwo-light-bg-active: 40 22.4% 86.9%;
+  --vwo-light-bg-selected: 40 22.4% 86.9%;
+  --vwo-light-bg-disabled: 40 33.3% 94.7%;
+  --vwo-light-text-primary: 45 17.4% 9%;
+  --vwo-light-text-secondary: 45 6.7% 34.9%;
+  --vwo-light-text-tertiary: 43 6.1% 44.7%;
+  --vwo-light-text-placeholder: 43 6.1% 44.7%;
+  --vwo-light-text-disabled: 41 7.2% 56.5%;
+  --vwo-light-text-inverse: 0 0% 100%;
+  --vwo-light-text-link: 225 58.7% 47.5%;
+  --vwo-light-text-link-hover: 225 60% 39.2%;
+  --vwo-light-border-subtle: 40 22.4% 86.9%;
+  --vwo-light-border-default: 41 18.2% 82.7%;
+  --vwo-light-border-control: 41 7.2% 56.5%;
+  --vwo-light-border-strong: 43 6.1% 44.7%;
+  --vwo-light-border-focus: 225 82.8% 59%;
+  --vwo-light-action-primary-bg: 45 17.4% 9%;
+  --vwo-light-action-primary-bg-hover: 45 10.3% 15.3%;
+  --vwo-light-action-primary-bg-active: 42 9.1% 21.6%;
+  --vwo-light-action-primary-text: 0 0% 100%;
+  --vwo-light-action-secondary-bg: 0 0% 100%;
+  --vwo-light-action-secondary-bg-hover: 40 33.3% 94.7%;
+  --vwo-light-action-secondary-border: 42 9.9% 66.5%;
+  --vwo-light-action-secondary-text: 45 17.4% 9%;
+  --vwo-light-action-subtle-bg-hover: 40 33.3% 94.7%;
+  --vwo-light-action-subtle-text: 45 6.7% 34.9%;
+  --vwo-light-action-destructive-bg: 11 100% 35.9%;
+  --vwo-light-action-destructive-bg-hover: 10 100% 29.6%;
+  --vwo-light-action-destructive-text: 0 0% 100%;
+  --vwo-light-action-disabled-bg: 40 22.4% 86.9%;
+  --vwo-light-action-disabled-text: 41 7.2% 56.5%;
+  --vwo-light-status-error-bg: 15 40% 98%;
+  --vwo-light-status-error-border: 2 86.2% 88.6%;
+  --vwo-light-status-error-text: 10 100% 29.6%;
+  --vwo-light-status-error-icon: 11 100% 35.9%;
+  --vwo-light-status-error-solid: 11 100% 35.9%;
+  --vwo-light-status-error-solid-text: 0 0% 100%;
+  --vwo-light-status-warning-bg: 35 85.7% 97.3%;
+  --vwo-light-status-warning-border: 32 80% 80.4%;
+  --vwo-light-status-warning-text: 34 50.4% 26.1%;
+  --vwo-light-status-warning-icon: 35 48.8% 32.2%;
+  --vwo-light-status-warning-solid: 34 76.5% 63.3%;
+  --vwo-light-status-warning-solid-text: 34 60% 13.7%;
+  --vwo-light-status-success-bg: 160 23.1% 97.5%;
+  --vwo-light-status-success-border: 170 47.4% 77.6%;
+  --vwo-light-status-success-text: 173 100% 17.1%;
+  --vwo-light-status-success-icon: 171 100% 21%;
+  --vwo-light-status-success-solid: 173 100% 17.1%;
+  --vwo-light-status-success-solid-text: 0 0% 100%;
+  --vwo-light-status-info-bg: 210 80% 98%;
+  --vwo-light-status-info-border: 212 100% 86.1%;
+  --vwo-light-status-info-text: 225 60% 39.2%;
+  --vwo-light-status-info-icon: 225 58.7% 47.5%;
+  --vwo-light-status-info-solid: 225 82.8% 59%;
+  --vwo-light-status-info-solid-text: 0 0% 100%;
+  --vwo-light-status-neutral-bg: 40 33.3% 94.7%;
+  --vwo-light-status-neutral-border: 41 18.2% 82.7%;
+  --vwo-light-status-neutral-text: 49 7.5% 28.8%;
+  --vwo-light-status-neutral-solid: 45 6.7% 34.9%;
+  --vwo-light-status-neutral-solid-text: 0 0% 100%;
+  --vwo-light-status-ai-bg: 315 40% 98%;
+  --vwo-light-status-ai-border: 308 69.2% 87.3%;
+  --vwo-light-status-ai-text: 313 100% 28.6%;
+  --vwo-light-status-ai-solid: 314 71.7% 38.8%;
+  --vwo-light-status-ai-solid-text: 0 0% 100%;
+  --vwo-light-accent-indicator: 67 100% 71.4%;
+  --vwo-light-accent-emphasis: 335 66.7% 15.3%;
+  --vwo-light-overlay-scrim: 210 6.2% 12.5%;
+  --vwo-light-overlay-inverse-surface: 210 6.2% 12.5%;
 
-  /* ── tokens.json extras (only steps not in color.json) ────────────── */
-  --scale-ocean-50: 215 85.7% 97.3%;    /* ocean.50 */
-  --scale-ocean-700: 225 58.7% 47.5%;   /* ocean.700 — primary.hover */
-  --scale-ocean-800: 225 60.4% 35.7%;   /* ocean.800 — primary.active */
-  --scale-neutral-100: 40 27.3% 91.4%;  /* neutral.100 */
-  --scale-neutral-300: 42 13.6% 75.5%;  /* neutral.300 */
-  --scale-green-50: 176 58.3% 95.3%;    /* green.50 */
-  --scale-green-300: 165 55% 66.9%;     /* green.300 */
-  --scale-green-600: 167 100% 28%;      /* green.600 */
-  --scale-yellow-100: 67 91.2% 68.8%;   /* yellow.100 */
-  --scale-yellow-300: 66 60.3% 53.5%;   /* yellow.300 */
-  --scale-maroon-50: 348 83.3% 97.6%;   /* maroon.50 */
-  --scale-berry-50: 305 84.6% 97.5%;    /* berry.50 */
-  --scale-cherry-50: 0 100% 97.8%;      /* cherry.50 */
-  --scale-cherry-700: 11 98.9% 34.7%;   /* cherry.700 — error.onSubtle */
-  --scale-sky-50: 210 100% 97.3%;       /* sky.50 */
-  --scale-sky-100: 212 94.1% 93.3%;     /* sky.100 — info.subtleBg */
-  --scale-sky-700: 211 43.6% 39.6%;     /* sky.700 — info.text */
-  --scale-yellow-400: 66 65.2% 43.9%;   /* yellow.400 — warning.solid */
-  --scale-yellow-700: 65 98.1% 20.4%;   /* yellow.700 — warning.text */
-  --scale-green-500: 164 96.6% 34.3%;   /* green.500 — success.solid */
-  --scale-green-700: 170 91.5% 23.1%;   /* green.700 — success.text */
+  --vwo-dark-bg-canvas: 45 17.4% 9%;
+  --vwo-dark-bg-surface: 45 10.3% 15.3%;
+  --vwo-dark-bg-surface-raised: 42 9.1% 21.6%;
+  --vwo-dark-bg-surface-sunken: 45 17.4% 9%;
+  --vwo-dark-bg-hover: 42 9.1% 21.6%;
+  --vwo-dark-bg-active: 49 7.5% 28.8%;
+  --vwo-dark-bg-selected: 42 9.1% 21.6%;
+  --vwo-dark-bg-disabled: 42 9.1% 21.6%;
+  --vwo-dark-text-primary: 40 33.3% 94.7%;
+  --vwo-dark-text-secondary: 42 9.9% 66.5%;
+  --vwo-dark-text-tertiary: 41 7.2% 56.5%;
+  --vwo-dark-text-placeholder: 41 7.2% 56.5%;
+  --vwo-dark-text-disabled: 45 6.7% 34.9%;
+  --vwo-dark-text-inverse: 45 17.4% 9%;
+  --vwo-dark-text-link: 212 100% 78.4%;
+  --vwo-dark-text-link-hover: 212 100% 86.1%;
+  --vwo-dark-border-subtle: 42 9.1% 21.6%;
+  --vwo-dark-border-default: 49 7.5% 28.8%;
+  --vwo-dark-border-control: 43 6.1% 44.7%;
+  --vwo-dark-border-strong: 41 7.2% 56.5%;
+  --vwo-dark-border-focus: 212 100% 78.4%;
+  --vwo-dark-action-primary-bg: 40 22.4% 86.9%;
+  --vwo-dark-action-primary-bg-hover: 40 33.3% 94.7%;
+  --vwo-dark-action-primary-bg-active: 41 18.2% 82.7%;
+  --vwo-dark-action-primary-text: 45 17.4% 9%;
+  --vwo-dark-action-secondary-bg: 42 9.1% 21.6%;
+  --vwo-dark-action-secondary-bg-hover: 49 7.5% 28.8%;
+  --vwo-dark-action-secondary-border: 45 6.7% 34.9%;
+  --vwo-dark-action-secondary-text: 40 33.3% 94.7%;
+  --vwo-dark-action-subtle-bg-hover: 42 9.1% 21.6%;
+  --vwo-dark-action-subtle-text: 42 9.9% 66.5%;
+  --vwo-dark-action-destructive-bg: 12 98.2% 43.9%;
+  --vwo-dark-action-destructive-bg-hover: 11 100% 35.9%;
+  --vwo-dark-action-destructive-text: 0 0% 100%;
+  --vwo-dark-action-disabled-bg: 42 9.1% 21.6%;
+  --vwo-dark-action-disabled-text: 45 6.7% 34.9%;
+  --vwo-dark-status-error-bg: 8 100% 17.1%;
+  --vwo-dark-status-error-border: 10 100% 29.6%;
+  --vwo-dark-status-error-text: 7 100% 78.6%;
+  --vwo-dark-status-error-icon: 12 100% 61%;
+  --vwo-dark-status-error-solid: 12 98.2% 43.9%;
+  --vwo-dark-status-error-solid-text: 0 0% 100%;
+  --vwo-dark-status-warning-bg: 34 60% 13.7%;
+  --vwo-dark-status-warning-border: 34 50.4% 26.1%;
+  --vwo-dark-status-warning-text: 34 76.5% 63.3%;
+  --vwo-dark-status-warning-icon: 35 46.8% 50.6%;
+  --vwo-dark-status-warning-solid: 35 46.8% 50.6%;
+  --vwo-dark-status-warning-solid-text: 34 60% 13.7%;
+  --vwo-dark-status-success-bg: 174 100% 9.4%;
+  --vwo-dark-status-success-border: 173 100% 17.1%;
+  --vwo-dark-status-success-text: 160 93.2% 40.4%;
+  --vwo-dark-status-success-icon: 165 100% 32.9%;
+  --vwo-dark-status-success-solid: 171 100% 21%;
+  --vwo-dark-status-success-solid-text: 0 0% 100%;
+  --vwo-dark-status-info-bg: 225 68.2% 17.3%;
+  --vwo-dark-status-info-border: 225 60% 39.2%;
+  --vwo-dark-status-info-text: 212 100% 78.4%;
+  --vwo-dark-status-info-icon: 218 89.8% 65.5%;
+  --vwo-dark-status-info-solid: 225 82.8% 59%;
+  --vwo-dark-status-info-solid-text: 0 0% 100%;
+  --vwo-dark-status-neutral-bg: 42 9.1% 21.6%;
+  --vwo-dark-status-neutral-border: 49 7.5% 28.8%;
+  --vwo-dark-status-neutral-text: 42 9.9% 66.5%;
+  --vwo-dark-status-neutral-solid: 43 6.1% 44.7%;
+  --vwo-dark-status-neutral-solid-text: 0 0% 100%;
+  --vwo-dark-status-ai-bg: 314 100% 16.5%;
+  --vwo-dark-status-ai-border: 313 100% 28.6%;
+  --vwo-dark-status-ai-text: 316 89.6% 73.5%;
+  --vwo-dark-status-ai-solid: 316 58.7% 50.6%;
+  --vwo-dark-status-ai-solid-text: 0 0% 100%;
+  --vwo-dark-accent-indicator: 67 100% 71.4%;
+  --vwo-dark-accent-emphasis: 340 76.1% 78.6%;
+  --vwo-dark-overlay-scrim: 210 6.2% 12.5%;
+  --vwo-dark-overlay-inverse-surface: 45 10.3% 15.3%;
 
-  /* ── App semantic ─────────────────────────────────────────────────── */
-  /* White chrome; warm grey canvas for depth */
-  --background: var(--brand-white);
-  --foreground: var(--brand-midnight);
-  --card: var(--brand-white);
-  --card-foreground: var(--brand-midnight);
-  --popover: var(--brand-white);
-  --popover-foreground: var(--brand-midnight);
+  /* ── App roles ← VWO Semantic Light + yellow accent (default) ──────── */
+  --background: var(--vwo-light-bg-surface);
+  --foreground: var(--vwo-midnight-base);
+  --card: var(--vwo-light-bg-surface-raised);
+  --card-foreground: var(--vwo-midnight-base);
+  --popover: var(--vwo-light-bg-surface-raised);
+  --popover-foreground: var(--vwo-midnight-base);
 
-  /* Primary Yellow — CTAs only; midnight ink for contrast */
-  --primary: var(--brand-yellow);
-  --primary-foreground: var(--brand-midnight);
-  --primary-hover: var(--scale-yellow-100);
-  --primary-active: var(--scale-yellow-300);
-  --primary-subtle: var(--scale-yellow-100);
+  --primary: var(--vwo-yellow-50);
+  --primary-foreground: var(--vwo-midnight-base);
+  --primary-hover: var(--vwo-yellow-100);
+  --primary-active: var(--vwo-yellow-200);
+  --primary-subtle: var(--vwo-yellow-100);
 
-  /* Soft fills — never neon */
-  --secondary: var(--brand-grey);
-  --secondary-foreground: var(--brand-midnight);
-  --secondary-hover: var(--scale-neutral-100);
+  --secondary: var(--vwo-light-bg-hover);
+  --secondary-foreground: var(--vwo-midnight-base);
+  --secondary-hover: var(--vwo-light-bg-active);
 
-  --muted: var(--brand-grey);
-  --muted-foreground: var(--brand-twilight);
-  --canvas: var(--brand-grey);
-  --surface: var(--brand-grey);
-  --surface-border: var(--brand-feather);
+  --muted: var(--vwo-light-bg-canvas);
+  --muted-foreground: var(--vwo-neutral-600);
+  --canvas: var(--vwo-light-bg-canvas);
+  --surface: var(--vwo-light-bg-canvas);
+  --surface-border: var(--vwo-light-border-subtle);
 
-  /* Accent = selection wash, one step firmer than the muted hover so
-     "selected" reads distinctly from "hovered" (neutral.100). */
-  --accent: var(--scale-neutral-100);
-  --accent-foreground: var(--brand-midnight);
+  --accent: var(--vwo-light-bg-selected);
+  --accent-foreground: var(--vwo-midnight-base);
 
-  /* Selected rows / active tabs — tokens.json primary.subtleBg (ocean.100) */
-  --selected-bg: var(--brand-ocean-tint);
-  --selected-fg: var(--scale-ocean-800);
+  --selected-bg: var(--vwo-light-bg-selected);
+  --selected-fg: var(--vwo-midnight-base);
 
-  /* Links — tokens.json primary.default / hover (ocean.600 / 700) */
-  --link: var(--brand-ocean-bright);
-  --link-hover: var(--scale-ocean-700);
+  --link: var(--vwo-light-text-link);
+  --link-hover: var(--vwo-light-text-link-hover);
 
-  /* brand.deepSurface = Primary Maroon */
-  --brand-deep: var(--brand-maroon);
+  --brand-deep: var(--vwo-light-accent-emphasis);
 
-  --border: var(--brand-feather);
-  --input: var(--brand-feather);
-  /* Keyboard focus in Ocean Bright — tokens.json primary.default */
-  --ring: var(--brand-ocean-bright);
+  --border: var(--vwo-light-border-subtle);
+  --input: var(--vwo-light-border-default);
+  --ring: var(--vwo-light-border-focus);
   --radius: 0.625rem;
 
-  --destructive: var(--brand-cherry-rich);
-  --destructive-foreground: var(--brand-white);
+  --destructive: var(--vwo-light-action-destructive-bg);
+  --destructive-foreground: var(--vwo-light-action-destructive-text);
 
-  --rail: var(--brand-white);
-  --rail-foreground: var(--brand-midnight);
-  --rail-active: var(--brand-midnight);
-  --rail-active-foreground: var(--brand-white);
-  --panel: var(--brand-white);
-  --panel-foreground: var(--brand-midnight);
-  --panel-border: var(--brand-feather);
+  --rail: var(--vwo-light-bg-surface);
+  --rail-foreground: var(--vwo-midnight-base);
+  --rail-active: var(--vwo-midnight-base);
+  --rail-active-foreground: var(--vwo-neutral-0);
+  --panel: var(--vwo-light-bg-surface);
+  --panel-foreground: var(--vwo-midnight-base);
+  --panel-border: var(--vwo-light-border-subtle);
 
-  /* Status — color.json rich/tint; soft yellow from tokens yellow.100 */
-  --status-draft-bg: var(--brand-ocean-tint);
-  --status-draft-fg: var(--brand-ocean-rich);
-  --status-qa-bg: var(--brand-grey);
-  --status-qa-fg: var(--brand-maroon);
-  --status-ready-bg: var(--brand-feather);
-  --status-ready-fg: var(--brand-twilight);
-  --status-running-bg: var(--brand-green-tint);
-  --status-running-fg: var(--brand-green-rich);
-  --status-analysis-bg: var(--brand-berry-tint);
-  --status-analysis-fg: var(--brand-berry-rich);
-  --status-paused-bg: var(--brand-cherry-tint);
-  --status-paused-fg: var(--brand-cherry-rich);
-  --status-ended-bg: var(--brand-feather);
-  --status-ended-fg: var(--brand-twilight);
-  --vitals-healthy: var(--brand-green-bright);
-  --vitals-unhealthy: var(--brand-cherry-rich);
+  --status-draft-bg: var(--vwo-light-status-info-bg);
+  --status-draft-fg: var(--vwo-ocean-900);
+  --status-qa-bg: var(--vwo-light-status-neutral-bg);
+  --status-qa-fg: var(--vwo-maroon-900);
+  --status-ready-bg: var(--vwo-light-bg-surface-sunken);
+  --status-ready-fg: var(--vwo-light-text-secondary);
+  --status-running-bg: var(--vwo-light-status-success-bg);
+  --status-running-fg: var(--vwo-green-800);
+  --status-analysis-bg: var(--vwo-light-status-ai-bg);
+  --status-analysis-fg: var(--vwo-berry-500);
+  --status-paused-bg: var(--vwo-light-status-error-bg);
+  --status-paused-fg: var(--vwo-cherry-500);
+  --status-ended-bg: var(--vwo-light-bg-surface-sunken);
+  --status-ended-fg: var(--vwo-light-text-secondary);
+  --vitals-healthy: var(--vwo-green-300);
+  --vitals-unhealthy: var(--vwo-cherry-500);
 
-  --decision-winner-fg: var(--brand-green-rich);
-  --decision-baseline-fg: var(--brand-cherry-rich);
+  --decision-winner-fg: var(--vwo-green-800);
+  --decision-baseline-fg: var(--vwo-cherry-500);
 
-  /* Semantic families — tokens.json semantic.light (text / solid / subtleBg) */
-  --success-fg: var(--scale-green-700);
-  --success-solid: var(--scale-green-500);
-  --success-bg: var(--brand-green-tint);
-  --danger-fg: var(--brand-cherry-rich);
-  --danger-bg: var(--brand-cherry-tint);
-  --danger-on-subtle: var(--scale-cherry-700);
-  --warning-fg: var(--scale-yellow-700);
-  --warning-solid: var(--scale-yellow-400);
-  --warning-bg: var(--scale-yellow-100);
-  --info-fg: var(--scale-sky-700);
-  --info-bg: var(--scale-sky-100);
-  --highlight-fg: var(--brand-berry-rich);
-  --highlight-bg: var(--brand-berry-tint);
+  --success-fg: var(--vwo-light-status-success-text);
+  --success-solid: var(--vwo-light-status-success-solid);
+  --success-bg: var(--vwo-light-status-success-bg);
+  --danger-fg: var(--vwo-light-status-error-text);
+  --danger-bg: var(--vwo-light-status-error-bg);
+  --danger-on-subtle: var(--vwo-cherry-700);
+  --warning-fg: var(--vwo-light-status-warning-text);
+  --warning-solid: var(--vwo-light-status-warning-solid);
+  --warning-bg: var(--vwo-light-status-warning-bg);
+  --info-fg: var(--vwo-light-status-info-text);
+  --info-bg: var(--vwo-light-status-info-bg);
+  --highlight-fg: var(--vwo-light-status-ai-text);
+  --highlight-bg: var(--vwo-light-status-ai-bg);
 
-  /* Report — color.json families; mid/soft from tokens.json */
-  --report-green-deep: var(--brand-green-rich);
-  --report-green: var(--brand-green-bright);
-  --report-green-mid: var(--scale-green-600);
-  --report-green-bar: var(--brand-green-bright);
-  --report-green-badge: var(--brand-green-tint);
-  --report-green-tint: var(--scale-green-50);
-  --report-green-border: var(--scale-green-300);
-  --report-red: var(--brand-cherry-rich);
-  --report-amber: var(--brand-cherry-bright);
-  --report-track: var(--brand-feather);
-  --report-link: var(--brand-ocean-bright);
-  --report-blue-bg: var(--brand-ocean-tint);
-  --report-blue-border: var(--brand-sky);
-  --report-blue-fg: var(--brand-ocean-rich);
-  --report-purple-bg: var(--brand-berry-tint);
-  --report-purple-border: var(--brand-berry-bright);
-  --report-purple-fg: var(--brand-berry-rich);
+  --report-green-deep: var(--vwo-green-800);
+  --report-green: var(--vwo-green-300);
+  --report-green-mid: var(--vwo-green-500);
+  --report-green-bar: var(--vwo-green-300);
+  --report-green-badge: var(--vwo-green-100);
+  --report-green-tint: var(--vwo-green-50);
+  --report-green-border: var(--vwo-green-200);
+  --report-red: var(--vwo-cherry-500);
+  --report-amber: var(--vwo-cherry-400);
+  --report-track: var(--vwo-neutral-100);
+  --report-link: var(--vwo-ocean-500);
+  --report-blue-bg: var(--vwo-ocean-100);
+  --report-blue-border: var(--vwo-ocean-300);
+  --report-blue-fg: var(--vwo-ocean-900);
+  --report-purple-bg: var(--vwo-berry-100);
+  --report-purple-border: var(--vwo-berry-300);
+  --report-purple-fg: var(--vwo-berry-500);
 
-  --report-conclusion-bg: var(--brand-green-tint);
-  --report-brand: var(--brand-maroon);
-  --report-brand-fg: var(--brand-maroon);
-  --report-brand-tint: var(--scale-maroon-50);
-  --report-ctrl-bg: var(--brand-berry-tint);
-  --report-ctrl-border: var(--brand-berry-bright);
-  --report-ctrl-fg: var(--brand-berry-rich);
-  --report-v1-bg: var(--brand-cherry-tint);
-  --report-v1-border: var(--brand-cherry-bright);
-  --report-v1-fg: var(--brand-cherry-rich);
-  --report-v2-bg: var(--brand-green-tint);
-  --report-v2-border: var(--brand-green-bright);
-  --report-v2-fg: var(--brand-green-rich);
-  --report-prob-fill: var(--brand-green-bright);
-  --report-info-bg: var(--brand-ocean-tint);
-  --report-threshold: var(--scale-green-300);
+  --report-conclusion-bg: var(--vwo-green-100);
+  --report-brand: var(--vwo-maroon-900);
+  --report-brand-fg: var(--vwo-maroon-900);
+  --report-brand-tint: var(--vwo-maroon-50);
+  --report-ctrl-bg: var(--vwo-berry-100);
+  --report-ctrl-border: var(--vwo-berry-300);
+  --report-ctrl-fg: var(--vwo-berry-500);
+  --report-v1-bg: var(--vwo-cherry-100);
+  --report-v1-border: var(--vwo-cherry-400);
+  --report-v1-fg: var(--vwo-cherry-500);
+  --report-v2-bg: var(--vwo-green-100);
+  --report-v2-border: var(--vwo-green-300);
+  --report-v2-fg: var(--vwo-green-800);
+  --report-prob-fill: var(--vwo-green-300);
+  --report-info-bg: var(--vwo-ocean-100);
+  --report-threshold: var(--vwo-green-200);
 }
 
-/* ── Theme variants (profile menu) — remap neutrals + chrome semantics ─ */
 
-[data-theme="neutral"] {
-  --brand-grey: 210 12% 95.5%;
-  --brand-feather: 210 10% 88%;
-  --brand-dusk: 210 8% 62%;
-  --brand-twilight: 210 7% 34%;
-  --brand-midnight: 210 8% 12%;
-  --scale-neutral-100: 210 10% 92%;
-  --scale-neutral-300: 210 8% 76%;
-  --background: var(--brand-white);
-  --foreground: var(--brand-midnight);
-  --muted: var(--brand-grey);
-  --muted-foreground: var(--brand-twilight);
-  --canvas: var(--brand-grey);
-  --surface: var(--brand-grey);
-  --surface-border: var(--brand-feather);
-  --accent: var(--scale-neutral-100);
-  --accent-foreground: var(--brand-midnight);
-  --border: var(--brand-feather);
-  --input: var(--brand-feather);
-  --rail: var(--brand-white);
-  --rail-foreground: var(--brand-midnight);
-  --panel: var(--brand-white);
-  --panel-foreground: var(--brand-midnight);
-  --panel-border: var(--brand-feather);
-  --secondary: var(--brand-grey);
-  --secondary-foreground: var(--brand-midnight);
-  --secondary-hover: var(--scale-neutral-100);
+
+/* ── Color mode (VWO Semantic Light / Dark) ─────────────────────────── */
+
+[data-mode="light"] {
+  color-scheme: light;
+  --background: var(--vwo-light-bg-surface);
+  --foreground: var(--vwo-midnight-base);
+  --card: var(--vwo-light-bg-surface-raised);
+  --card-foreground: var(--vwo-midnight-base);
+  --popover: var(--vwo-light-bg-surface-raised);
+  --popover-foreground: var(--vwo-midnight-base);
+  --secondary: var(--vwo-light-bg-hover);
+  --secondary-foreground: var(--vwo-midnight-base);
+  --secondary-hover: var(--vwo-light-bg-active);
+  --muted: var(--vwo-light-bg-canvas);
+  --muted-foreground: var(--vwo-neutral-600);
+  --canvas: var(--vwo-light-bg-canvas);
+  --surface: var(--vwo-light-bg-canvas);
+  --surface-border: var(--vwo-light-border-subtle);
+  --accent: var(--vwo-light-bg-selected);
+  --accent-foreground: var(--vwo-midnight-base);
+  --selected-bg: var(--vwo-light-bg-selected);
+  --selected-fg: var(--vwo-midnight-base);
+  --border: var(--vwo-light-border-subtle);
+  --input: var(--vwo-light-border-default);
+  --ring: var(--vwo-light-border-focus);
+  --link: var(--vwo-light-text-link);
+  --link-hover: var(--vwo-light-text-link-hover);
+  --destructive: var(--vwo-light-action-destructive-bg);
+  --destructive-foreground: var(--vwo-light-action-destructive-text);
+  --rail: var(--vwo-light-bg-surface);
+  --rail-foreground: var(--vwo-midnight-base);
+  --rail-active: var(--vwo-midnight-base);
+  --rail-active-foreground: var(--vwo-neutral-0);
+  --panel: var(--vwo-light-bg-surface);
+  --panel-foreground: var(--vwo-midnight-base);
+  --panel-border: var(--vwo-light-border-subtle);
+  --success-fg: var(--vwo-light-status-success-text);
+  --success-solid: var(--vwo-light-status-success-solid);
+  --success-bg: var(--vwo-light-status-success-bg);
+  --danger-fg: var(--vwo-light-status-error-text);
+  --danger-bg: var(--vwo-light-status-error-bg);
+  --danger-on-subtle: var(--vwo-cherry-700);
+  --warning-fg: var(--vwo-light-status-warning-text);
+  --warning-solid: var(--vwo-light-status-warning-solid);
+  --warning-bg: var(--vwo-light-status-warning-bg);
+  --info-fg: var(--vwo-light-status-info-text);
+  --info-bg: var(--vwo-light-status-info-bg);
+  --highlight-fg: var(--vwo-light-status-ai-text);
+  --highlight-bg: var(--vwo-light-status-ai-bg);
+  --status-qa-bg: var(--vwo-light-status-neutral-bg);
+  --status-ready-bg: var(--vwo-light-bg-surface-sunken);
+  --status-ended-bg: var(--vwo-light-bg-surface-sunken);
+  --report-track: var(--vwo-neutral-100);
 }
 
-[data-theme="cool"] {
-  --brand-grey: 212 38% 96%;
-  --brand-feather: 212 28% 89%;
-  --brand-dusk: 212 16% 58%;
-  --brand-twilight: 220 14% 32%;
-  --scale-neutral-100: 212 32% 93%;
-  --scale-neutral-300: 212 18% 76%;
-  --background: var(--brand-white);
-  --foreground: var(--brand-ocean-rich);
-  --muted: var(--scale-sky-50);
-  --muted-foreground: var(--brand-twilight);
-  --canvas: var(--scale-ocean-50);
-  --surface: var(--scale-sky-50);
-  --surface-border: var(--brand-feather);
-  --accent: var(--scale-sky-100);
-  --accent-foreground: var(--brand-ocean-rich);
-  --border: var(--brand-feather);
-  --input: var(--brand-feather);
-  --selected-bg: var(--brand-ocean-tint);
-  --selected-fg: var(--scale-ocean-800);
-  --ring: var(--brand-sky);
-  --rail: var(--brand-white);
-  --rail-foreground: var(--brand-ocean-rich);
-  --rail-active: var(--brand-ocean-rich);
-  --rail-active-foreground: var(--brand-white);
-  --panel: var(--brand-white);
-  --panel-foreground: var(--brand-ocean-rich);
-  --panel-border: var(--brand-feather);
-  --secondary: var(--scale-sky-50);
-  --secondary-foreground: var(--brand-ocean-rich);
-  --secondary-hover: var(--scale-sky-100);
+[data-mode="dark"] {
+  color-scheme: dark;
+  --background: var(--vwo-dark-bg-surface);
+  --foreground: var(--vwo-dark-text-primary);
+  --card: var(--vwo-dark-bg-surface-raised);
+  --card-foreground: var(--vwo-dark-text-primary);
+  --popover: var(--vwo-dark-bg-surface-raised);
+  --popover-foreground: var(--vwo-dark-text-primary);
+  --secondary: var(--vwo-dark-action-secondary-bg);
+  --secondary-foreground: var(--vwo-dark-action-secondary-text);
+  --secondary-hover: var(--vwo-dark-action-secondary-bg-hover);
+  --muted: var(--vwo-dark-bg-canvas);
+  --muted-foreground: var(--vwo-dark-text-secondary);
+  --canvas: var(--vwo-dark-bg-canvas);
+  --surface: var(--vwo-dark-bg-surface);
+  --surface-border: var(--vwo-dark-border-subtle);
+  --accent: var(--vwo-dark-bg-selected);
+  --accent-foreground: var(--vwo-dark-text-primary);
+  --selected-bg: var(--vwo-dark-bg-selected);
+  --selected-fg: var(--vwo-dark-text-primary);
+  --border: var(--vwo-dark-border-default);
+  --input: var(--vwo-dark-border-control);
+  --ring: var(--vwo-dark-border-focus);
+  --link: var(--vwo-dark-text-link);
+  --link-hover: var(--vwo-dark-text-link-hover);
+  --destructive: var(--vwo-dark-action-destructive-bg);
+  --destructive-foreground: var(--vwo-dark-action-destructive-text);
+  --rail: var(--vwo-dark-bg-canvas);
+  --rail-foreground: var(--vwo-dark-text-primary);
+  /* Selection chip stays midnight + white in every accent × mode. */
+  --rail-active: var(--vwo-midnight-base);
+  --rail-active-foreground: var(--vwo-neutral-0);
+  --panel: var(--vwo-dark-bg-surface);
+  --panel-foreground: var(--vwo-dark-text-primary);
+  --panel-border: var(--vwo-dark-border-subtle);
+  --success-fg: var(--vwo-dark-status-success-text);
+  --success-solid: var(--vwo-dark-status-success-solid);
+  --success-bg: var(--vwo-dark-status-success-bg);
+  --danger-fg: var(--vwo-dark-status-error-text);
+  --danger-bg: var(--vwo-dark-status-error-bg);
+  --danger-on-subtle: var(--vwo-cherry-300);
+  --warning-fg: var(--vwo-dark-status-warning-text);
+  --warning-solid: var(--vwo-dark-status-warning-solid);
+  --warning-bg: var(--vwo-dark-status-warning-bg);
+  --info-fg: var(--vwo-dark-status-info-text);
+  --info-bg: var(--vwo-dark-status-info-bg);
+  --highlight-fg: var(--vwo-dark-status-ai-text);
+  --highlight-bg: var(--vwo-dark-status-ai-bg);
+  --status-qa-bg: var(--vwo-dark-status-neutral-bg);
+  --status-ready-bg: var(--vwo-dark-bg-hover);
+  --status-ended-bg: var(--vwo-dark-bg-hover);
+  --report-track: var(--vwo-dark-border-default);
 }
 
-[data-theme="contrast"] {
-  --background: var(--brand-midnight);
-  --foreground: var(--brand-white);
-  --card: 210 6% 16%;
-  --card-foreground: var(--brand-white);
-  --popover: 210 6% 16%;
-  --popover-foreground: var(--brand-white);
-  --muted: 210 6% 18%;
-  --muted-foreground: var(--brand-dusk);
-  --canvas: 210 7% 10%;
-  --surface: 210 6% 16%;
-  --surface-border: 210 6% 26%;
-  --accent: 210 6% 22%;
-  --accent-foreground: var(--brand-white);
-  --secondary: 210 6% 20%;
-  --secondary-foreground: var(--brand-white);
-  --secondary-hover: 210 6% 24%;
-  --border: 210 6% 28%;
-  --input: 210 6% 28%;
-  --ring: var(--brand-sky);
-  --rail: var(--brand-midnight);
-  --rail-foreground: var(--brand-white);
-  --rail-active: var(--brand-white);
-  --rail-active-foreground: var(--brand-midnight);
-  --panel: 210 6% 14%;
-  --panel-foreground: var(--brand-white);
-  --panel-border: 210 6% 26%;
-  --selected-bg: 225 40% 22%;
-  --selected-fg: var(--brand-sky);
-  --primary-foreground: var(--brand-midnight);
-  --destructive-foreground: var(--brand-white);
-  --status-qa-bg: 210 6% 22%;
-  --status-ready-bg: 210 6% 22%;
-  --status-ended-bg: 210 6% 22%;
-  --report-track: 210 6% 26%;
+/* ── Accent × mode — primary button color only.
+   Do not tint canvas, borders, or text from the accent family. */
+
+[data-theme="yellow"][data-mode="light"] {
+  --primary: var(--vwo-yellow-50);
+  --primary-foreground: var(--vwo-midnight-base);
+  --primary-hover: var(--vwo-yellow-100);
+  --primary-active: var(--vwo-yellow-200);
+  --primary-subtle: var(--vwo-yellow-100);
 }
+
+[data-theme="yellow"][data-mode="dark"] {
+  --primary: var(--vwo-yellow-50);
+  --primary-foreground: var(--vwo-midnight-base);
+  --primary-hover: var(--vwo-yellow-100);
+  --primary-active: var(--vwo-yellow-200);
+  --primary-subtle: var(--vwo-dark-bg-hover);
+}
+
+[data-theme="cherry"][data-mode="light"] {
+  --primary: var(--vwo-cherry-400);
+  --primary-foreground: var(--vwo-neutral-0);
+  --primary-hover: var(--vwo-cherry-500);
+  --primary-active: var(--vwo-cherry-600);
+  --primary-subtle: var(--vwo-cherry-100);
+}
+
+[data-theme="cherry"][data-mode="dark"] {
+  --primary: var(--vwo-cherry-400);
+  --primary-foreground: var(--vwo-neutral-0);
+  --primary-hover: var(--vwo-cherry-300);
+  --primary-active: var(--vwo-cherry-500);
+  --primary-subtle: var(--vwo-cherry-900);
+}
+
+[data-theme="green"][data-mode="light"] {
+  /* Primary CTA = green/300 #07C787 */
+  --primary: var(--vwo-green-300);
+  --primary-foreground: var(--vwo-neutral-0);
+  --primary-hover: var(--vwo-green-400);
+  --primary-active: var(--vwo-green-500);
+  --primary-subtle: var(--vwo-green-100);
+}
+
+[data-theme="green"][data-mode="dark"] {
+  /* Primary CTA = green/300 #07C787 */
+  --primary: var(--vwo-green-300);
+  --primary-foreground: var(--vwo-midnight-base);
+  --primary-hover: var(--vwo-green-200);
+  --primary-active: var(--vwo-green-400);
+  --primary-subtle: var(--vwo-green-900);
+}
+
+[data-theme="midnight"][data-mode="light"] {
+  --primary: var(--vwo-midnight-base);
+  --primary-foreground: var(--vwo-neutral-0);
+  --primary-hover: var(--vwo-neutral-900);
+  --primary-active: var(--vwo-neutral-800);
+  --primary-subtle: var(--vwo-neutral-100);
+}
+
+[data-theme="midnight"][data-mode="dark"] {
+  --primary: var(--vwo-dark-action-primary-bg);
+  --primary-foreground: var(--vwo-dark-action-primary-text);
+  --primary-hover: var(--vwo-dark-action-primary-bg-hover);
+  --primary-active: var(--vwo-dark-action-primary-bg-active);
+  --primary-subtle: var(--vwo-dark-bg-hover);
+}
+
+[data-theme="berry"][data-mode="light"] {
+  --primary: var(--vwo-berry-500);
+  --primary-foreground: var(--vwo-neutral-0);
+  --primary-hover: var(--vwo-berry-600);
+  --primary-active: var(--vwo-berry-700);
+  --primary-subtle: var(--vwo-berry-100);
+}
+
+[data-theme="berry"][data-mode="dark"] {
+  --primary: var(--vwo-berry-300);
+  --primary-foreground: var(--vwo-midnight-base);
+  --primary-hover: var(--vwo-berry-200);
+  --primary-active: var(--vwo-berry-400);
+  --primary-subtle: var(--vwo-berry-900);
+}
+
 
 * {
   border-color: hsl(var(--border));
@@ -393,8 +706,8 @@ body {
 
 /* Text selection in Primary Yellow — tokens.json brand.accent. */
 ::selection {
-  background: hsl(var(--brand-yellow));
-  color: hsl(var(--brand-midnight));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 /* Brand experiment: keep editor chrome in color (icons stay as-authored). */

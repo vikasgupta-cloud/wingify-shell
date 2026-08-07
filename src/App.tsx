@@ -6,10 +6,11 @@ import { useThemeStore } from "./store/theme";
 
 export default function App() {
   const themeId = useThemeStore((s) => s.themeId);
+  const colorMode = useThemeStore((s) => s.colorMode);
 
   useEffect(() => {
-    applyTheme(themeId);
-  }, [themeId]);
+    applyTheme(themeId, colorMode);
+  }, [themeId, colorMode]);
 
   return <RouterProvider router={router} />;
 }
