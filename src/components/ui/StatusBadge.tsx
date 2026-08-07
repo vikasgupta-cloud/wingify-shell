@@ -85,14 +85,20 @@ export function VitalsGlyph({
   );
 }
 
-export function VitalsIcon({ campaign }: { campaign: Campaign }) {
+export function VitalsIcon({
+  campaign,
+}: {
+  campaign: { vitals: "healthy" | "unhealthy" | null; id?: string };
+}) {
   const vitals = campaign.vitals;
   // null vitals (pre-launch) render as today — a muted dash, no tooltip.
   if (vitals === null) return <span className="text-sm text-muted-foreground">–</span>;
+  const breachDetail =
+    campaign.id && "scenario" in campaign
+      ? breachedVitalFor(campaign as Campaign)
+      : "metric guardrail";
   const label =
-    vitals === "healthy"
-      ? "Vitals healthy"
-      : `Vitals breach: ${breachedVitalFor(campaign)}`;
+    vitals === "healthy" ? "Vitals healthy" : `Vitals breach: ${breachDetail}`;
   return (
     <TooltipProvider>
       <Tooltip>

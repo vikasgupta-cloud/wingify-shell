@@ -96,17 +96,23 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
 }
 
 /**
- * Shown on every route that isn't built yet: explains why the page is empty and
- * routes to Web Experimentation, the surface that is fully built.
+ * Shown on unfinished routes. Defaults send people to Web Experimentation;
+ * callers (e.g. Personalize detail) can override copy and home link.
  */
 export default function ComingSoonState({
   title,
   icon: Icon,
   className,
+  description = "This section is still in progress. Explore Web Experimentation in the meantime.",
+  homeTo = "/web-experiment",
+  homeLabel = "Explore Web Experimentation",
 }: {
   title: string;
   icon?: LucideIcon;
   className?: string;
+  description?: string;
+  homeTo?: string;
+  homeLabel?: string;
 }) {
   return (
     <div
@@ -130,15 +136,14 @@ export default function ComingSoonState({
           {title}
         </h2>
 
-        <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">
-          This section is still in progress. Explore Web Experimentation in the
-          meantime.
+        <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+          {description}
         </p>
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
           <Button asChild>
-            <Link to="/web-experiment">
-              Explore Web Experimentation
+            <Link to={homeTo}>
+              {homeLabel}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </Button>

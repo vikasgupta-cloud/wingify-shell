@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Clock, Info } from "lucide-react";
-import type { Campaign, CampaignStatus } from "../../data/campaigns";
+import type { CampaignStatus } from "../../data/campaigns";
 import { BLOCKED_NOTICE, STATUS_WORKFLOW } from "../../config/statusWorkflow";
 import { useRowsStore } from "../../store/rows";
 import { cn } from "../../lib/utils";
@@ -28,11 +28,15 @@ const STATUS_TRIGGER: Record<CampaignStatus, string> = {
 export default function StatusMenu({
   campaign,
   triggerVariant = "badge",
+  onSetStatus,
 }: {
-  campaign: Campaign;
+  campaign: { id: string; status: CampaignStatus };
   triggerVariant?: "badge" | "button";
+  /** Override store write — Personalize listing passes its own rows store. */
+  onSetStatus?: (id: string, status: CampaignStatus) => void;
 }) {
-  const setStatus = useRowsStore((s) => s.setStatus);
+  const rowsSetStatus = useRowsStore((s) => s.setStatus);
+  const setStatus = onSetStatus ?? rowsSetStatus;
   const transitions = STATUS_WORKFLOW[campaign.status];
   const notice = BLOCKED_NOTICE[campaign.status];
 

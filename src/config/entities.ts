@@ -23,11 +23,9 @@ const CURATED: Record<string, Entity[]> = {
   ],
 };
 
-// Which detail sections read from the REAL campaign store (rows.visibleCampaigns)
-// rather than the dummy getEntities() lists. Only Web Experiment is migrated;
-// TODO: other sections switch to real data as they're built.
+// Which detail sections read from a REAL product store rather than dummy getEntities().
 export function isRealDataPath(basePath: string) {
-  return basePath === "/web-experiment";
+  return basePath === "/web-experiment" || basePath === "/personalize";
 }
 
 /** Filter chips for the entity popover of a given page path. */

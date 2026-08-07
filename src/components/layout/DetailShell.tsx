@@ -60,10 +60,18 @@ import {
 } from "../../store/detailPanels";
 import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
 import {
+  usePersonalizeRowsStore,
+  useVisiblePersonalizations,
+} from "../../store/personalizeRows";
+import {
   campaignLandingPath,
   CAMPAIGN_STATUSES,
-  type Campaign,
+  type CampaignStatus,
 } from "../../data/campaigns";
+import {
+  personalizeLandingPath,
+  PERSONALIZATION_STATUSES,
+} from "../../data/personalizations";
 import ExpandedNav from "./ExpandedNav";
 import WingifyLogoButton from "./WingifyLogoButton";
 
@@ -284,11 +292,9 @@ function SaveButton({ entityId }: { entityId?: string }) {
   );
 }
 
-// Filter the real campaign list by the active filter + search text, mapping each
-// down to the entity-switcher's {id, name} shape. "All" is everything, "Recent" is
-// a sort (10 most recently updated); any other value is a CampaignStatus to match.
+// Filter real product rows for the entity switcher.
 function filterCampaigns(
-  campaigns: Campaign[],
+  campaigns: { id: string; name: string; status: string; lastUpdated: string }[],
   filter: string,
   search: string
 ): { id: string; name: string }[] {
@@ -307,10 +313,18 @@ function filterCampaigns(
 
 // The kebab in the level-2 action cluster. Flush Data and Archive are disabled
 // on a Draft; Delete Permanently confirms, removes the row, and returns to the list.
-function KebabMenu({ campaign }: { campaign: Campaign }) {
+function KebabMenu({
+  campaign,
+  listPath,
+  onArchive,
+  onRemove,
+}: {
+  campaign: { id: string; status: CampaignStatus; name: string };
+  listPath: string;
+  onArchive: (ids: string[]) => void;
+  onRemove: (ids: string[]) => void;
+}) {
   const navigate = useNavigate();
-  const archive = useRowsStore((s) => s.archive);
-  const remove = useRowsStore((s) => s.remove);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const isDraft = campaign.status === "Draft";
 
@@ -341,7 +355,7 @@ function KebabMenu({ campaign }: { campaign: Campaign }) {
             <Eraser />
             Flush Data
           </DropdownMenuItem>
-          <DropdownMenuItem disabled={isDraft} onSelect={() => archive([campaign.id])}>
+          <DropdownMenuItem disabled={isDraft} onSelect={() => onArchive([campaign.id])}>
             <Archive />
             Archive
           </DropdownMenuItem>
@@ -364,9 +378,9 @@ function KebabMenu({ campaign }: { campaign: Campaign }) {
             </Button>
             <Button
               onClick={() => {
-                remove([campaign.id]);
+                onRemove([campaign.id]);
                 setDeleteOpen(false);
-                navigate("/web-experiment");
+                navigate(listPath);
               }}
             >
               Delete
@@ -414,34 +428,36 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   // Breadcrumb trail: main-nav label, plus the sub-nav label when basePath is a leaf.
   const { item, leaf, siblings } = resolveBreadcrumb(basePath);
 
-  // /web-experiment resolves its entity switcher from the REAL campaign store so
-  // the breadcrumb always agrees with the config page header. Every other
-  // basePath keeps the dummy getEntities()/getFilters() lists unchanged.
-  // TODO: migrate other sections to real data as they're built.
+  // Real-data paths: Web Exp campaigns or Personalize rows. Others use dummy lists.
   const realData = isRealDataPath(basePath);
-  const campaigns = useVisibleCampaigns();
+  const isPersonalize = basePath === "/personalize";
+  const webCampaigns = useVisibleCampaigns();
+  const personalizations = useVisiblePersonalizations();
+  const webArchive = useRowsStore((s) => s.archive);
+  const webRemove = useRowsStore((s) => s.remove);
+  const persArchive = usePersonalizeRowsStore((s) => s.archive);
+  const persRemove = usePersonalizeRowsStore((s) => s.remove);
+  const persSetStatus = usePersonalizeRowsStore((s) => s.setStatus);
   const [activeFilter, setActiveFilter] = useState("All");
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [entitySearch, setEntitySearch] = useState("");
 
+  const productRows = isPersonalize ? personalizations : webCampaigns;
+  const statusList = isPersonalize ? PERSONALIZATION_STATUSES : CAMPAIGN_STATUSES;
+
   const dummyEntities = getEntities(basePath);
-  // Real-data paths expose every status; dummy sections keep their small chip set.
   const filters = realData
-    ? ["All", "Recent", ...CAMPAIGN_STATUSES]
+    ? ["All", "Recent", ...statusList]
     : getFilters(basePath);
 
-  // The real campaign backing this detail surface (real-data paths only) — drives
-  // the breadcrumb name, the StatusMenu, and the kebab actions.
   const campaign = realData
-    ? campaigns.find((c) => c.id === entityId) ?? campaigns[0]
+    ? productRows.find((c) => c.id === entityId) ?? productRows[0]
     : undefined;
 
-  // Entities listed in the switcher popover.
   const entities = realData
-    ? filterCampaigns(campaigns, activeFilter, entitySearch)
+    ? filterCampaigns(productRows, activeFilter, entitySearch)
     : dummyEntities;
 
-  // The selected row shown in the breadcrumb trigger.
   const selected = realData
     ? campaign && { id: campaign.id, name: campaign.name }
     : dummyEntities.find((e) => e.id === entityId) ?? dummyEntities[0];
@@ -651,14 +667,16 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         onClick={() => {
                           // Real campaigns land on Reports or Configuration by status;
                           // dummy sections keep their plain detail path.
-                          const target = realData
-                            ? campaignLandingPath({
-                                id: entity.id,
-                                status:
-                                  campaigns.find((c) => c.id === entity.id)?.status ??
-                                  "Draft",
-                              })
-                            : `${basePath}/c/${entity.id}`;
+                          const target = isPersonalize
+                            ? personalizeLandingPath({ id: entity.id })
+                            : realData
+                              ? campaignLandingPath({
+                                  id: entity.id,
+                                  status:
+                                    (productRows.find((c) => c.id === entity.id)
+                                      ?.status as CampaignStatus) ?? "Draft",
+                                })
+                              : `${basePath}/c/${entity.id}`;
                           navigate(target);
                           setEntityOpen(false);
                         }}
@@ -689,16 +707,31 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           <SurfaceTabs
             basePath={basePath}
             entityId={entityId}
-            showViewToggle={Boolean(campaign) && !pathname.endsWith("/reports")}
+            showViewToggle={
+              !isPersonalize && Boolean(campaign) && !pathname.endsWith("/reports")
+            }
           />
         </div>
 
         {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
             the list pages only. Status + kebab need a real campaign. */}
         <div className="flex flex-1 items-center justify-end gap-2">
-          <SaveButton entityId={entityId} />
-          {campaign && <StatusMenu campaign={campaign} triggerVariant="button" />}
-          {campaign && <KebabMenu campaign={campaign} />}
+          {!isPersonalize && <SaveButton entityId={entityId} />}
+          {campaign && (
+            <StatusMenu
+              campaign={campaign}
+              triggerVariant="button"
+              onSetStatus={isPersonalize ? persSetStatus : undefined}
+            />
+          )}
+          {campaign && (
+            <KebabMenu
+              campaign={campaign}
+              listPath={basePath}
+              onArchive={isPersonalize ? persArchive : webArchive}
+              onRemove={isPersonalize ? persRemove : webRemove}
+            />
+          )}
         </div>
       </header>
 

@@ -31,11 +31,14 @@ import EventsPage from "../pages/data-360/EventsPage";
 import SegmentsPage from "../pages/data-360/SegmentsPage";
 import MetricsPage from "../pages/data-360/MetricsPage";
 import DashboardPage from "../pages/home/DashboardPage";
+import PersonalizePage from "../pages/personalize/PersonalizePage";
+import PersonalizeComingSoonPage from "../pages/personalize/PersonalizeComingSoonPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
   "/home/dashboard": DashboardPage,
   "/web-experiment": WebExperimentation,
+  "/personalize": PersonalizePage,
   "/insights/session-recordings": SessionRecordingsPage,
   "/insights/heatmaps": HeatmapsPage,
   "/pulse/surveys": SurveysPage,
@@ -57,9 +60,13 @@ const pageRoutes: RouteObject[] = [];
 const detailRoutes: RouteObject[] = [];
 
 const addDetailRoute = (leafPath: string) => {
-  // Only /web-experiment gets the ConfigPage body; every other detail route
-  // keeps DetailShell's empty body.
-  const body = leafPath === "/web-experiment" ? <ConfigPage /> : undefined;
+  // Web Exp → ConfigPage; Personalize → Coming soon shell; others → empty body.
+  const body =
+    leafPath === "/web-experiment" ? (
+      <ConfigPage />
+    ) : leafPath === "/personalize" ? (
+      <PersonalizeComingSoonPage />
+    ) : undefined;
   detailRoutes.push({
     path: `${leafPath}/c/:entityId`,
     element: <DetailShell basePath={leafPath}>{body}</DetailShell>,
@@ -109,6 +116,16 @@ detailRoutes.push({
   element: (
     <DetailShell basePath="/web-experiment">
       <ReportsPage />
+    </DetailShell>
+  ),
+});
+
+// Personalize reports tab — Coming soon until reports are built for this product.
+detailRoutes.push({
+  path: "/personalize/c/:entityId/reports",
+  element: (
+    <DetailShell basePath="/personalize">
+      <PersonalizeComingSoonPage />
     </DetailShell>
   ),
 });
