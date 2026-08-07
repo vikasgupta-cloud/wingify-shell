@@ -319,13 +319,14 @@ export function MetricReportsCard() {
     "Last 7 days"
   );
   const [active, setActive] = useState(0);
+  const item = METRIC_REPORTS.items[active] ?? METRIC_REPORTS.items[0];
   const w = 360;
   const h = 160;
   const padX = 12;
   const padTop = 16;
   const padBottom = 28;
   const plotH = h - padTop - padBottom;
-  const points = METRIC_REPORTS.chartPoints;
+  const points = item.chartPoints[range];
   const max = Math.max(...points, 1);
   const coords = points.map((v, i) => {
     const x =
@@ -343,6 +344,13 @@ export function MetricReportsCard() {
     `L ${coords[coords.length - 1]?.x ?? w - padX} ${h - padBottom}`,
     "Z",
   ].join(" ");
+  const seriesColor = chartSeries(active);
+  const seriesFill = chartSeriesAlpha(active, 0.12);
+  const latest = points[points.length - 1] ?? 0;
+  const latestLabel =
+    typeof latest === "number" && !Number.isInteger(latest)
+      ? latest.toFixed(1)
+      : String(latest);
 
   return (
     <CardShell
@@ -351,73 +359,85 @@ export function MetricReportsCard() {
       action={<RangeToggle options={METRIC_REPORT_RANGE} value={range} onChange={(v) => setRange(v as typeof range)} />}
     >
       <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
-        <div className="min-w-0">
-          <div className="mb-1 flex justify-end">
-            <div className="text-right">
-              <p className="text-xs font-medium text-foreground">
-                {points[points.length - 1] ?? 0}
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                {METRIC_REPORTS.chartLabel}
-              </p>
+        {/* Absolute fill on lg so the list alone sets row height; chart cannot outgrow it */}
+        <div className="relative min-h-[14rem] lg:min-h-0">
+          <div className="flex h-full min-h-[14rem] flex-col lg:absolute lg:inset-0 lg:min-h-0">
+            <div className="mb-1 flex shrink-0 justify-end">
+              <div className="text-right">
+                <p className="text-xs font-medium text-foreground">
+                  {latestLabel}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {item.chartLabel}
+                </p>
+              </div>
             </div>
-          </div>
-          <svg
-            viewBox={`0 0 ${w} ${h}`}
-            className="h-40 w-full"
-            role="img"
-            aria-label="Unique visitors chart"
-          >
-            {[0, 1, 2, 3, 4].map((i) => {
-              const gy = padTop + i * (plotH / 4);
-              return (
-                <line
-                  key={i}
-                  x1={padX}
-                  x2={w - padX}
-                  y1={gy}
-                  y2={gy}
-                  stroke={CHART.grid}
-                  strokeWidth="1"
-                />
-              );
-            })}
-            <path d={areaPath} fill={chartSeriesAlpha(0, 0.18)} />
-            <polyline
-              fill="none"
-              stroke={chartSeries(0)}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              points={linePoints}
-            />
-            <line
-              x1={padX}
-              x2={w - padX}
-              y1={h - padBottom}
-              y2={h - padBottom}
-              stroke={CHART.axisLine}
-              strokeWidth="1.5"
-            />
-          </svg>
-          <div className="mt-1 flex justify-between px-1 text-[10px] text-muted-foreground">
-            {METRIC_REPORTS.dayLabels.map((d) => (
-              <span key={d}>{d}</span>
-            ))}
-          </div>
-          <div className="mt-0.5 flex justify-between px-1 text-[10px] text-muted-foreground">
-            <span>{METRIC_REPORTS.dateStart}</span>
-            <span>{METRIC_REPORTS.dateEnd}</span>
+            <svg
+              key={`${item.id}-${range}`}
+              viewBox={`0 0 ${w} ${h}`}
+              preserveAspectRatio="none"
+              className="min-h-0 w-full flex-1"
+              role="img"
+              aria-label={`${item.chartLabel} chart for ${item.name}`}
+            >
+              {[0, 1, 2, 3, 4].map((i) => {
+                const gy = padTop + i * (plotH / 4);
+                return (
+                  <line
+                    key={i}
+                    x1={padX}
+                    x2={w - padX}
+                    y1={gy}
+                    y2={gy}
+                    stroke={CHART.grid}
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              })}
+              <path d={areaPath} fill={seriesFill} />
+              <polyline
+                fill="none"
+                stroke={seriesColor}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+                points={linePoints}
+              />
+              <line
+                x1={padX}
+                x2={w - padX}
+                y1={h - padBottom}
+                y2={h - padBottom}
+                stroke={CHART.axisLine}
+                strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+            <div className="mt-1 flex shrink-0 justify-between px-1 text-[10px] text-muted-foreground">
+              {METRIC_REPORTS.dayLabels.map((d, i) => (
+                <span key={d}>
+                  {i === 0
+                    ? `${d} ${METRIC_REPORTS.dateStart}`
+                    : i === METRIC_REPORTS.dayLabels.length - 1
+                      ? `${d} ${METRIC_REPORTS.dateEnd}`
+                      : d}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border">
-          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
-            {METRIC_REPORTS.items.map((item, i) => (
-              <li key={item.id}>
+        <div className="flex flex-col overflow-hidden rounded-lg border border-border">
+          <ul className="divide-y divide-border">
+            {METRIC_REPORTS.items.map((row, i) => (
+              <li key={row.id}>
                 <button
                   type="button"
                   onClick={() => setActive(i)}
+                  title={`View report of ${row.name}`}
+                  aria-pressed={i === active}
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/50",
                     i === active && "bg-muted"
@@ -425,12 +445,12 @@ export function MetricReportsCard() {
                 >
                   <Badge
                     variant="secondary"
-                    className="shrink-0 rounded-sm px-1.5 font-mono text-[10px]"
+                    className="pointer-events-none shrink-0 rounded-sm px-1.5 font-mono text-[10px]"
                   >
-                    {item.id}
+                    {row.id}
                   </Badge>
                   <span className="min-w-0 flex-1 truncate text-xs text-foreground">
-                    {item.name}
+                    {row.name}
                   </span>
                   <span className="shrink-0 text-[11px] text-muted-foreground underline-offset-2 hover:underline">
                     View Report
@@ -440,7 +460,35 @@ export function MetricReportsCard() {
             ))}
           </ul>
           <div className="border-t border-border py-2">
-            <Pager pages={METRIC_REPORTS.pages} active={METRIC_REPORTS.activePage} />
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: METRIC_REPORTS.pages }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "size-1.5 rounded-full",
+                      i === METRIC_REPORTS.activePage
+                        ? "bg-foreground"
+                        : "bg-border"
+                    )}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Next"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
