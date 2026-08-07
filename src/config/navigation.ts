@@ -333,11 +333,14 @@ export const PROFILE_MODES: ProfileMode[] = [
     id: "integrations",
     label: "Integrations",
     path: "/integrations",
-    nav: dummyNav("/integrations", [
-      { title: "Connected", children: ["Active", "Needs attention"] },
-      { title: "Browse", children: ["Analytics", "CRM", "Advertising"] },
-      { title: "Developer" },
-    ]),
+    nav: [
+      {
+        label: "All integrations",
+        path: "/integrations/all",
+        icon: Blocks,
+        hideCreate: true,
+      },
+    ],
   },
   {
     id: "pages",

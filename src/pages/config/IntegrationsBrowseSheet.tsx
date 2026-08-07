@@ -52,38 +52,41 @@ function ActiveBadge() {
 function ConnectedCard({ integration }: { integration: Integration }) {
   const disconnect = useConfigStore((s) => s.disconnectIntegration);
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-background p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <MonogramTile name={integration.name} className="h-9 w-9" />
-          <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-foreground">
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+      <div className="flex min-w-0 flex-1 gap-3">
+        <MonogramTile name={integration.name} className="h-9 w-9" />
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-sm font-medium text-foreground">
               {integration.name}
-            </div>
-            <div className="text-xs text-muted-foreground">{integration.category}</div>
+            </span>
+            <ActiveBadge />
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <ActiveBadge />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Manage
-                <ChevronDown className="ml-1 h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {/* TODO: settings panel not yet implemented. */}
-              <DropdownMenuItem disabled>Settings</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => disconnect(integration.id)}>
-                Disconnect
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <p className="text-xs text-muted-foreground">{integration.category}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {integration.description}
+          </p>
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">{integration.description}</p>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center gap-1 self-start text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
+          >
+            Manage
+            <ChevronDown className="size-3.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {/* TODO: settings panel not yet implemented. */}
+          <DropdownMenuItem disabled>Settings</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => disconnect(integration.id)}>
+            Disconnect
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -239,7 +242,7 @@ export default function IntegrationsBrowseSheet({
               <h3 className="mb-3 text-sm font-medium text-foreground">
                 Connected Apps {connected.length}
               </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col gap-3">
                 {connected.map((i) => (
                   <ConnectedCard key={i.id} integration={i} />
                 ))}
@@ -252,7 +255,7 @@ export default function IntegrationsBrowseSheet({
               Available Apps {available.length}
             </h3>
             {available.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {available.map((i) => (
                   <AvailableCard key={i.id} integration={i} />
                 ))}

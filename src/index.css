@@ -390,6 +390,8 @@
   --primary-hover: var(--vwo-yellow-100);
   --primary-active: var(--vwo-yellow-200);
   --primary-subtle: var(--vwo-yellow-100);
+  /* Yellow CTA needs a darker edge; other themes match fill (no visible border). */
+  --primary-border: var(--primary-active);
 
   --secondary: var(--vwo-light-bg-hover);
   --secondary-foreground: var(--vwo-midnight-base);
@@ -437,9 +439,11 @@
   --status-running-bg: var(--vwo-light-status-success-bg);
   --status-running-fg: var(--vwo-green-800);
   --status-analysis-bg: var(--vwo-light-status-ai-bg);
-  --status-analysis-fg: var(--vwo-berry-500);
+  /* berry/600 — berry/500 is 4.4:1 on the ai bg, just under AA. */
+  --status-analysis-fg: var(--vwo-berry-600);
   --status-paused-bg: var(--vwo-light-status-error-bg);
-  --status-paused-fg: var(--vwo-cherry-500);
+  /* cherry/600 — cherry/500 sits right at the AA threshold on the error bg. */
+  --status-paused-fg: var(--vwo-cherry-600);
   --status-ended-bg: var(--vwo-light-bg-surface-sunken);
   --status-ended-fg: var(--vwo-light-text-secondary);
   /* Vitals — mode-aware colors that clear WCAG 1.4.11 (3:1) on canvas/surface. */
@@ -497,6 +501,71 @@
   --report-prob-fill: var(--vwo-green-300);
   --report-info-bg: var(--vwo-ocean-100);
   --report-threshold: var(--vwo-green-200);
+
+  /* ── Chart tokens — data-viz palette over VWO primitives ────────────
+     Categorical rotates all 8 families (steps picked per mode for contrast);
+     series 8+ are reserve colors for dense charts — avoid for thin lines.
+     Light values here; [data-mode="dark"] overrides the full set. */
+  --chart-1: var(--vwo-cherry-500);
+  --chart-2: var(--vwo-ocean-500);
+  --chart-3: var(--vwo-green-400);
+  --chart-4: var(--vwo-berry-500);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-yellow-300);
+  --chart-7: var(--vwo-maroon-400);
+  --chart-8: var(--vwo-neutral-400);
+  --chart-9: var(--vwo-cherry-300);
+  --chart-10: var(--vwo-ocean-700);
+  --chart-11: var(--vwo-green-700);
+  --chart-12: var(--vwo-berry-300);
+  --chart-13: var(--vwo-amber-500);
+  --chart-14: var(--vwo-yellow-500);
+  --chart-15: var(--vwo-maroon-600);
+  --chart-16: var(--vwo-neutral-600);
+  --chart-17: var(--vwo-cherry-700);
+  --chart-18: var(--vwo-ocean-300);
+  --chart-19: var(--vwo-green-200);
+  --chart-20: var(--vwo-berry-700);
+
+  --chart-positive: var(--vwo-green-600);
+  --chart-positive-bg: var(--vwo-green-50);
+  --chart-negative: var(--vwo-cherry-600);
+  --chart-negative-bg: var(--vwo-cherry-50);
+  --chart-warning: var(--vwo-amber-600);
+  --chart-warning-bg: var(--vwo-amber-50);
+  --chart-info: var(--vwo-ocean-600);
+  --chart-info-bg: var(--vwo-ocean-50);
+  --chart-baseline: var(--vwo-neutral-500);
+  --chart-baseline-bg: var(--vwo-neutral-50);
+  --chart-highlight: var(--vwo-yellow-50);
+  --chart-threshold: var(--vwo-neutral-600);
+  --chart-annotation: var(--vwo-neutral-700);
+
+  --chart-grid: var(--vwo-neutral-100);
+  --chart-grid-strong: var(--vwo-neutral-200);
+  --chart-axis-line: var(--vwo-neutral-200);
+  --chart-axis-tick: var(--vwo-neutral-300);
+  --chart-label: var(--vwo-neutral-600);
+  --chart-label-strong: var(--vwo-neutral-950);
+  --chart-tooltip-bg: var(--vwo-midnight-base);
+  --chart-tooltip-text: var(--vwo-neutral-0);
+  --chart-tooltip-text-secondary: var(--vwo-neutral-300);
+
+  --chart-seq-1: var(--vwo-cherry-100);
+  --chart-seq-2: var(--vwo-cherry-200);
+  --chart-seq-3: var(--vwo-cherry-300);
+  --chart-seq-4: var(--vwo-cherry-400);
+  --chart-seq-5: var(--vwo-cherry-500);
+  --chart-seq-6: var(--vwo-cherry-600);
+  --chart-seq-7: var(--vwo-cherry-800);
+
+  --chart-div-1: var(--vwo-ocean-500);
+  --chart-div-2: var(--vwo-ocean-300);
+  --chart-div-3: var(--vwo-ocean-100);
+  --chart-div-4: var(--vwo-neutral-50);
+  --chart-div-5: var(--vwo-cherry-200);
+  --chart-div-6: var(--vwo-cherry-400);
+  --chart-div-7: var(--vwo-cherry-500);
 }
 
 
@@ -606,12 +675,89 @@
   --info-bg: var(--vwo-dark-status-info-bg);
   --highlight-fg: var(--vwo-dark-status-ai-text);
   --highlight-bg: var(--vwo-dark-status-ai-bg);
+  /* Status badges — dark-mode semantic sets (dark tint + bright family text).
+     Without these the light foregrounds land dark-on-dark and disappear. */
+  --status-draft-bg: var(--vwo-dark-status-info-bg);
+  --status-draft-fg: var(--vwo-dark-status-info-text);
+  --status-running-bg: var(--vwo-dark-status-success-bg);
+  --status-running-fg: var(--vwo-dark-status-success-text);
+  --status-analysis-bg: var(--vwo-dark-status-ai-bg);
+  --status-analysis-fg: var(--vwo-dark-status-ai-text);
+  --status-paused-bg: var(--vwo-dark-status-error-bg);
+  --status-paused-fg: var(--vwo-dark-status-error-text);
   --status-qa-bg: var(--vwo-dark-status-neutral-bg);
+  --status-qa-fg: var(--vwo-maroon-300);
   --status-ready-bg: var(--vwo-dark-bg-hover);
+  --status-ready-fg: var(--vwo-dark-text-secondary);
   --status-ended-bg: var(--vwo-dark-bg-hover);
+  --status-ended-fg: var(--vwo-dark-text-secondary);
+  --decision-winner-fg: var(--vwo-green-300);
+  --decision-baseline-fg: var(--vwo-cherry-400);
   --report-track: var(--vwo-dark-border-default);
   --vitals-healthy: var(--vwo-green-300);
   --vitals-unhealthy: var(--vwo-cherry-400);
+
+  /* Chart tokens — brighter family steps for dark surfaces. */
+  --chart-1: var(--vwo-cherry-400);
+  --chart-2: var(--vwo-ocean-400);
+  --chart-3: var(--vwo-green-300);
+  --chart-4: var(--vwo-berry-300);
+  --chart-5: var(--vwo-amber-300);
+  --chart-6: var(--vwo-yellow-100);
+  --chart-7: var(--vwo-maroon-300);
+  --chart-8: var(--vwo-neutral-300);
+  --chart-9: var(--vwo-cherry-200);
+  --chart-10: var(--vwo-ocean-200);
+  --chart-11: var(--vwo-green-200);
+  --chart-12: var(--vwo-berry-200);
+  --chart-13: var(--vwo-amber-200);
+  --chart-14: var(--vwo-yellow-300);
+  --chart-15: var(--vwo-maroon-400);
+  --chart-16: var(--vwo-neutral-500);
+  --chart-17: var(--vwo-cherry-300);
+  --chart-18: var(--vwo-ocean-300);
+  --chart-19: var(--vwo-green-400);
+  --chart-20: var(--vwo-berry-400);
+
+  --chart-positive: var(--vwo-green-400);
+  --chart-positive-bg: var(--vwo-green-900);
+  --chart-negative: var(--vwo-cherry-400);
+  --chart-negative-bg: var(--vwo-cherry-900);
+  --chart-warning: var(--vwo-amber-400);
+  --chart-warning-bg: var(--vwo-amber-900);
+  --chart-info: var(--vwo-ocean-400);
+  --chart-info-bg: var(--vwo-ocean-900);
+  --chart-baseline: var(--vwo-neutral-400);
+  --chart-baseline-bg: var(--vwo-neutral-800);
+  --chart-highlight: var(--vwo-yellow-50);
+  --chart-threshold: var(--vwo-neutral-400);
+  --chart-annotation: var(--vwo-neutral-200);
+
+  --chart-grid: var(--vwo-neutral-800);
+  --chart-grid-strong: var(--vwo-neutral-700);
+  --chart-axis-line: var(--vwo-neutral-700);
+  --chart-axis-tick: var(--vwo-neutral-500);
+  --chart-label: var(--vwo-neutral-300);
+  --chart-label-strong: var(--vwo-neutral-50);
+  --chart-tooltip-bg: var(--vwo-neutral-800);
+  --chart-tooltip-text: var(--vwo-neutral-50);
+  --chart-tooltip-text-secondary: var(--vwo-neutral-300);
+
+  --chart-seq-1: var(--vwo-cherry-900);
+  --chart-seq-2: var(--vwo-cherry-800);
+  --chart-seq-3: var(--vwo-cherry-700);
+  --chart-seq-4: var(--vwo-cherry-600);
+  --chart-seq-5: var(--vwo-cherry-500);
+  --chart-seq-6: var(--vwo-cherry-400);
+  --chart-seq-7: var(--vwo-cherry-300);
+
+  --chart-div-1: var(--vwo-ocean-400);
+  --chart-div-2: var(--vwo-ocean-300);
+  --chart-div-3: var(--vwo-ocean-900);
+  --chart-div-4: var(--vwo-neutral-900);
+  --chart-div-5: var(--vwo-cherry-900);
+  --chart-div-6: var(--vwo-cherry-500);
+  --chart-div-7: var(--vwo-cherry-400);
 }
 
 /* ── Accent × mode — CTA color plus its harmonized surround.
@@ -631,6 +777,7 @@
   --primary-hover: var(--vwo-yellow-100);
   --primary-active: var(--vwo-yellow-200);
   --primary-subtle: var(--vwo-yellow-100);
+  --primary-border: var(--primary-active);
   /* Olive focus ring keeps keyboard focus in the CTA family. */
   --ring: var(--vwo-yellow-300);
   /* Yellow pairs with maroon in the Wingify brand — keep the deep surface. */
@@ -643,6 +790,7 @@
   --primary-hover: var(--vwo-yellow-100);
   --primary-active: var(--vwo-yellow-200);
   --primary-subtle: var(--vwo-dark-bg-hover);
+  --primary-border: var(--primary-active);
   --ring: var(--vwo-yellow-200);
 }
 
@@ -652,6 +800,7 @@
   --primary-hover: var(--vwo-cherry-500);
   --primary-active: var(--vwo-cherry-600);
   --primary-subtle: var(--vwo-cherry-100);
+  --primary-border: var(--primary);
   --ring: var(--vwo-cherry-400);
   --accent: var(--vwo-cherry-100);
   --selected-bg: var(--vwo-cherry-100);
@@ -671,6 +820,7 @@
   --primary-hover: var(--vwo-cherry-300);
   --primary-active: var(--vwo-cherry-500);
   --primary-subtle: var(--vwo-cherry-900);
+  --primary-border: var(--primary);
   --ring: var(--vwo-cherry-300);
   --accent: var(--vwo-cherry-900);
   --accent-foreground: var(--vwo-cherry-100);
@@ -688,6 +838,7 @@
   --primary-hover: var(--vwo-green-700);
   --primary-active: var(--vwo-green-900);
   --primary-subtle: var(--vwo-green-100);
+  --primary-border: var(--primary);
   --ring: var(--vwo-green-800);
   --accent: var(--vwo-green-100);
   --selected-bg: var(--vwo-green-100);
@@ -708,6 +859,7 @@
   --primary-hover: var(--vwo-green-700);
   --primary-active: var(--vwo-green-900);
   --primary-subtle: var(--vwo-green-900);
+  --primary-border: var(--primary);
   --ring: var(--vwo-green-300);
   --accent: var(--vwo-green-900);
   --accent-foreground: var(--vwo-green-100);
@@ -724,6 +876,7 @@
   --primary-hover: var(--vwo-neutral-900);
   --primary-active: var(--vwo-neutral-800);
   --primary-subtle: var(--vwo-neutral-100);
+  --primary-border: var(--primary);
   /* Monochrome focus ring to match the ink CTA; links stay ocean. */
   --ring: var(--vwo-neutral-800);
   --brand-deep: var(--vwo-midnight-base);
@@ -738,6 +891,7 @@
   --primary-hover: var(--vwo-dark-action-primary-bg-hover);
   --primary-active: var(--vwo-dark-action-primary-bg-active);
   --primary-subtle: var(--vwo-dark-bg-hover);
+  --primary-border: var(--primary);
   --ring: var(--vwo-neutral-100);
   --brand-deep: var(--vwo-neutral-900);
 }
@@ -748,6 +902,7 @@
   --primary-hover: var(--vwo-berry-600);
   --primary-active: var(--vwo-berry-700);
   --primary-subtle: var(--vwo-berry-100);
+  --primary-border: var(--primary);
   --ring: var(--vwo-berry-400);
   --accent: var(--vwo-berry-100);
   --selected-bg: var(--vwo-berry-100);
@@ -767,6 +922,7 @@
   --primary-hover: var(--vwo-berry-200);
   --primary-active: var(--vwo-berry-400);
   --primary-subtle: var(--vwo-berry-900);
+  --primary-border: var(--primary);
   --ring: var(--vwo-berry-300);
   --accent: var(--vwo-berry-900);
   --accent-foreground: var(--vwo-berry-100);
@@ -817,10 +973,55 @@ body {
   box-shadow: none !important;
 }
 
+/* Wingify mascot — subtle quirky idle while the logo is hovered/focused.
+   Motion stays on the current pose (no asset swap). */
+@keyframes mascot-idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  22% {
+    transform: translateY(-1.5px) rotate(-3deg) scale(1.03);
+  }
+  48% {
+    transform: translateY(0.5px) rotate(2deg) scale(1.01);
+  }
+  72% {
+    transform: translateY(-1px) rotate(-1.5deg) scale(1.04);
+  }
+}
+
+@keyframes mascot-eye-twinkle {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  40% {
+    filter: brightness(1.08);
+  }
+  55% {
+    filter: brightness(0.96);
+  }
+}
+
+.mascot-lively .mascot-lively-mark {
+  animation:
+    mascot-idle 1.15s ease-in-out infinite,
+    mascot-eye-twinkle 1.15s ease-in-out infinite;
+  transform-origin: 55% 60%;
+  will-change: transform, filter;
+}
+
 /* Respect the OS "Reduce motion" setting: collapse every transition and
    animation to effectively-instant. Elements settle in their resting (final)
    state, so nothing is left stuck mid-fade or hidden. */
 @media (prefers-reduced-motion: reduce) {
+  .mascot-lively .mascot-lively-mark {
+    animation: none !important;
+    filter: none !important;
+    will-change: auto;
+  }
+
   *,
   *::before,
   *::after {

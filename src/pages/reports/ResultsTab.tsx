@@ -240,9 +240,8 @@ function buildResultsGrid(columns: ResultsTableColumnId[], grouped = false) {
   } as const;
 }
 
-/** Opaque sticky header fill — matches muted/50 over white without letting scroll content bleed through. */
-const STICKY_HEADER_BG =
-  "bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]";
+/** Opaque sticky header fill — surface white so headers don’t merge with canvas. */
+const STICKY_HEADER_BG = "bg-background";
 
 function stickyGroupCellClass(showEdgeShadow: boolean) {
   return cn(
@@ -2697,11 +2696,11 @@ function TableHeader({
   } as const;
 
   const titleCellClass = cn(
-    "flex items-center gap-1.5 overflow-hidden bg-muted/50 pb-1.5 pt-3",
+    "flex items-center gap-1.5 overflow-hidden bg-background pb-1.5 pt-3",
     resultsMetricColChrome
   );
   const subheadCellClass = cn(
-    "flex items-start overflow-hidden bg-muted/50 pb-3 pt-1",
+    "flex items-start overflow-hidden bg-background pb-3 pt-1",
     resultsMetricColChrome
   );
 
@@ -2712,7 +2711,7 @@ function TableHeader({
 
   return (
     <div
-      className="grid items-stretch border-b border-border bg-muted/50"
+      className="grid items-stretch border-b border-border bg-background"
       style={gridStyle}
     >
       {/* Title row — shared baseline across columns */}
@@ -2861,7 +2860,7 @@ function TableHeader({
             <div
               key={`sub-${id}`}
               className={cn(
-                "flex flex-col items-start gap-0.5 overflow-visible bg-muted/50 pb-1 pt-1",
+                "flex flex-col items-start gap-0.5 overflow-visible bg-background pb-1 pt-1",
                 resultsMetricColChrome
               )}
             >
@@ -5677,7 +5676,7 @@ function MetricLabel({ name, isPrimary }: { name: string; isPrimary: boolean }) 
 function CompareTableHeader() {
   return (
     <div
-      className="grid items-stretch border-b border-border bg-muted/50"
+      className="grid items-stretch border-b border-border bg-background"
       style={{ ...COMPARE_GRID, gridTemplateRows: "auto auto" }}
     >
       {/* Title row */}

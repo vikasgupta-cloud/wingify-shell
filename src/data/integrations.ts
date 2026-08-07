@@ -3,12 +3,24 @@ export interface Integration {
   name: string;
   category: string;
   description: string;
+  /** When connected, shown as "N connections" instead of the category chip. */
+  connectionCount?: number;
+  /** Optional connection-type labels used by the filter bar. */
+  connectionTypes?: string[];
 }
 
 // The integration catalog. Grayscale-only surface — no brand logos are used;
 // the UI renders a neutral monogram tile from each app's initials instead.
-// Nothing is connected by default (see the config store's connectedIntegrations).
 export const INTEGRATIONS: Integration[] = [
+  // Targeting / ABM
+  {
+    id: "6sense",
+    name: "6sense",
+    category: "Targeting",
+    description:
+      "Prioritize high-intent accounts and sync ABM audiences into your experiments.",
+    connectionTypes: ["ABM - Intent", "ABM - Impression"],
+  },
   // Analytics
   {
     id: "ga4",
@@ -74,8 +86,9 @@ export const INTEGRATIONS: Integration[] = [
   {
     id: "zoominfo",
     name: "ZoomInfo",
-    category: "Customer Data Platform (CDP)",
+    category: "Targeting",
     description: "Enrich visitor profiles with firmographic data.",
+    connectionTypes: ["ABM - Intent"],
   },
   // Data Warehouse
   {
@@ -96,6 +109,7 @@ export const INTEGRATIONS: Integration[] = [
     name: "Salesforce",
     category: "CRM",
     description: "Tie experiment exposure to leads and opportunities.",
+    connectionCount: 2,
   },
   {
     id: "hubspot",
@@ -109,6 +123,7 @@ export const INTEGRATIONS: Integration[] = [
     name: "Marketo",
     category: "Customer Engagement",
     description: "Trigger nurture campaigns from experiment segments.",
+    connectionCount: 2,
   },
   {
     id: "braze",
@@ -165,19 +180,44 @@ export const INTEGRATIONS: Integration[] = [
   },
 ];
 
+/** Apps shown as connected on first load (session store seeds from this). */
+export const DEFAULT_CONNECTED_INTEGRATION_IDS = [
+  "6sense",
+  "marketo",
+  "salesforce",
+  "zoominfo",
+] as const;
+
+/** Suggested starters when the campaign has no integrations yet. */
+export const RECOMMENDED_INTEGRATION_IDS = [
+  "ga4",
+  "segment",
+  "salesforce",
+  "mixpanel",
+  "hubspot",
+  "6sense",
+] as const;
+
 const BY_ID = new Map(INTEGRATIONS.map((i) => [i.id, i]));
 
 export function integrationById(id: string): Integration | undefined {
   return BY_ID.get(id);
 }
 
-// The distinct categories present in the catalog, in first-seen order.
 export const INTEGRATION_CATEGORIES: string[] = INTEGRATIONS.reduce<string[]>(
   (acc, i) => (acc.includes(i.category) ? acc : [...acc, i.category]),
   []
 );
 
-// A short monogram (1–2 letters) derived from the app name for the neutral tile.
+export const INTEGRATION_CONNECTION_TYPES: string[] = INTEGRATIONS.reduce<
+  string[]
+>((acc, i) => {
+  for (const t of i.connectionTypes ?? []) {
+    if (!acc.includes(t)) acc.push(t);
+  }
+  return acc;
+}, []);
+
 export function monogram(name: string): string {
   const words = name.replace(/[()]/g, "").trim().split(/\s+/);
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();

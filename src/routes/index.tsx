@@ -10,11 +10,14 @@ import { firstChildPath, isProfileModePath } from "../lib/nav";
 import AppLayout from "../components/layout/AppLayout";
 import DetailShell from "../components/layout/DetailShell";
 import DrillInShell from "../components/layout/DrillInShell";
+import RootChrome from "../components/layout/RootChrome";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import WebExperimentation from "../pages/WebExperimentation";
 import ConfigPage from "../pages/config/ConfigPage";
 import ReportsPage from "../pages/reports/ReportsPage";
 import EditorPage from "../pages/editor/EditorPage";
+import IntegrationsPage from "../pages/integrations/IntegrationsPage";
+import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -93,26 +96,37 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
       { index: true, element: <Navigate to={firstModePath(mode)} replace /> },
       ...leaves.map((leaf) => ({
         path: leaf.path.slice(mode.path.length + 1),
-        element: <PlaceholderPage />,
+        element:
+          mode.id === "integrations" ? (
+            <IntegrationsPage />
+          ) : (
+            <PlaceholderPage />
+          ),
       })),
     ],
   };
 });
 
 export const router = createBrowserRouter([
-  // Full-tab editor — outside AppLayout / DetailShell so it opens blank.
   {
-    path: "/web-experiment/c/:entityId/editor/:variationId",
-    element: <EditorPage />,
-  },
-  ...detailRoutes,
-  ...profileModeRoutes,
-  {
-    element: <AppLayout />,
+    element: <RootChrome />,
     children: [
-      { path: "/", element: <Navigate to="/home/dashboard" replace /> },
-      ...pageRoutes,
-      { path: "*", element: <PlaceholderPage /> },
+      // Full-tab editor — outside AppLayout / DetailShell so it opens blank.
+      {
+        path: "/web-experiment/c/:entityId/editor/:variationId",
+        element: <EditorPage />,
+      },
+      ...detailRoutes,
+      ...profileModeRoutes,
+      {
+        element: <AppLayout />,
+        children: [
+          { path: "/", element: <Navigate to="/home/dashboard" replace /> },
+          { path: "/design/charts", element: <AnalyticsChartsPage /> },
+          ...pageRoutes,
+          { path: "*", element: <PlaceholderPage /> },
+        ],
+      },
     ],
   },
 ]);

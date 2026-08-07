@@ -173,7 +173,7 @@ export function WebpagePreview({
       {/* Browser chrome */}
       <div
         className={cn(
-          "flex shrink-0 items-center gap-2 border-b border-border bg-muted/60",
+          "flex shrink-0 items-center gap-2 border-b border-border bg-background",
           compact ? "h-6 px-2" : "h-8 px-2.5"
         )}
       >

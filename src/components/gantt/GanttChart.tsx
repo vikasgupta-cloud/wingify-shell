@@ -328,12 +328,12 @@ function GanttGroupHeader({
   isScrolled: boolean;
 }) {
   return (
-    <div className="flex border-b border-border bg-muted" style={{ width }}>
+    <div className="flex border-b border-border bg-background" style={{ width }}>
       <button
         type="button"
         onClick={onToggle}
         className={cn(
-          "sticky left-0 z-30 flex items-center gap-2 bg-muted px-3 py-2 text-sm transition-shadow duration-150",
+          "sticky left-0 z-30 flex items-center gap-2 bg-background px-3 py-2 text-sm transition-shadow duration-150",
           isScrolled && SCROLL_SHADOW
         )}
         style={{ width: FROZEN_WIDTH }}
@@ -564,10 +564,10 @@ export default function GanttChart() {
       <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-border bg-background">
         <div style={{ width: innerWidth }}>
           {/* Header */}
-          <div className="sticky top-0 z-40 flex border-b border-border bg-muted">
+          <div className="sticky top-0 z-40 flex border-b border-border bg-background">
             <div
               className={cn(
-                "sticky left-0 z-10 flex shrink-0 items-center border-r border-border bg-muted px-3 py-2.5 transition-shadow duration-150",
+                "sticky left-0 z-10 flex shrink-0 items-center border-r border-border bg-background px-3 py-2.5 transition-shadow duration-150",
                 isScrolled && SCROLL_SHADOW
               )}
               style={{ width: FROZEN_WIDTH }}

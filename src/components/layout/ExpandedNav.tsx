@@ -11,7 +11,7 @@ import { mascotForPath } from "../../config/mascots";
 import { cn } from "../../lib/utils";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
-import ThemePicker from "./ThemePicker";
+import ColorModeToggle from "./ColorModeToggle";
 import WingifyLogoButton from "./WingifyLogoButton";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -419,7 +419,7 @@ export default function ExpandedNav({
                   )}
                   {item.path === "/profile" && isLogoutSection ? (
                     <>
-                      <ThemePicker compact className="px-0" />
+                      <ColorModeToggle className="px-0" />
                       <div
                         className="my-2 h-px bg-panel-border"
                         aria-hidden="true"

@@ -45,6 +45,7 @@ const CTA_VARS = [
   "--primary-hover",
   "--primary-active",
   "--primary-subtle",
+  "--primary-border",
   "--ring",
   "--accent",
   "--accent-foreground",
@@ -158,6 +159,7 @@ export function aestheticVarsForCta(
         "--primary-hover": "var(--vwo-dark-action-primary-bg-hover)",
         "--primary-active": "var(--vwo-dark-action-primary-bg-active)",
         "--primary-subtle": "var(--vwo-dark-bg-hover)",
+        "--primary-border": "var(--vwo-dark-action-primary-bg)",
         "--ring": "var(--vwo-neutral-100)",
         "--accent": "var(--vwo-dark-bg-selected)",
         "--accent-foreground": "var(--vwo-dark-text-primary)",
@@ -178,6 +180,7 @@ export function aestheticVarsForCta(
       "--primary-hover": "var(--vwo-neutral-900)",
       "--primary-active": "var(--vwo-neutral-800)",
       "--primary-subtle": "var(--vwo-neutral-100)",
+      "--primary-border": "var(--vwo-midnight-base)",
       "--ring": "var(--vwo-neutral-800)",
       "--accent": "var(--vwo-light-bg-selected)",
       "--accent-foreground": "var(--vwo-midnight-base)",
@@ -198,6 +201,9 @@ export function aestheticVarsForCta(
   const i = stepIndex(step);
   const hoverStep = i <= 3 ? neighborStep(step, 1) : neighborStep(step, -1);
   const activeStep = i <= 3 ? neighborStep(step, 2) : neighborStep(step, -2);
+  // Only yellow CTAs keep a darker outline; others match the fill.
+  const primaryBorder =
+    family === "yellow" ? familyVar(family, activeStep) : primary;
 
   if (colorMode === "dark") {
     return {
@@ -206,6 +212,7 @@ export function aestheticVarsForCta(
       "--primary-hover": familyVar(family, hoverStep),
       "--primary-active": familyVar(family, activeStep),
       "--primary-subtle": familyVar(family, "900"),
+      "--primary-border": primaryBorder,
       "--ring": familyVar(family, i >= 5 ? "300" : step),
       "--accent": familyVar(family, "900"),
       "--accent-foreground": familyVar(family, "100"),
@@ -227,6 +234,7 @@ export function aestheticVarsForCta(
     "--primary-hover": familyVar(family, hoverStep),
     "--primary-active": familyVar(family, activeStep),
     "--primary-subtle": familyVar(family, "100"),
+    "--primary-border": primaryBorder,
     "--ring": primary,
     "--accent": familyVar(family, "100"),
     "--accent-foreground": familyVar(family, "800"),

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  FLOW_MASCOT_IDS,
   MASCOT_ASSETS,
   MASCOT_ASSETS_DARK,
   MASCOT_IDS,
@@ -15,11 +14,9 @@ import { useThemeStore } from "../../store/theme";
 import { cn } from "../../lib/utils";
 import type { ColorMode } from "../../config/themes";
 
-/** Must stay longer than CROSSFADE_MS so swaps never overlap. */
-const CYCLE_MS = 900;
 const CROSSFADE_MS = 320;
 
-/** Preload all poses (light + dark) so hover/mode swaps don't flash empty. */
+/** Preload all poses (light + dark) so product previews don't flash empty. */
 let mascotsPreloaded = false;
 function preloadMascots() {
   if (mascotsPreloaded || typeof window === "undefined") return;
@@ -33,17 +30,20 @@ function preloadMascots() {
 }
 
 /**
- * Opacity-only crossfade. Queues the latest target if a fade is already running
- * so rapid product hovers don't thrash mid-transition.
+ * Opacity-only crossfade between product poses. Queues the latest target if a
+ * fade is already running so rapid product-row hovers don't thrash mid-transition.
  */
 function MascotMark({
   id,
   alt,
   colorMode,
+  lively,
 }: {
   id: MascotId;
   alt: string;
   colorMode: ColorMode;
+  /** Subtle idle motion on the current mark — never swaps the asset. */
+  lively: boolean;
 }) {
   const [front, setFront] = useState(id);
   const [back, setBack] = useState<MascotId | null>(null);
@@ -113,7 +113,12 @@ function MascotMark({
     "pointer-events-none absolute inset-0 m-auto h-7 w-auto max-w-8 object-contain transition-opacity ease-out motion-reduce:transition-none";
 
   return (
-    <span className="relative block h-7 w-8">
+    <span
+      className={cn(
+        "relative block h-7 w-8 origin-center",
+        lively && "mascot-lively"
+      )}
+    >
       {back ? (
         <img
           src={mascotAsset(back, colorMode)}
@@ -121,6 +126,7 @@ function MascotMark({
           aria-hidden
           className={cn(
             imgClass,
+            "mascot-lively-mark",
             frontVisible ? "opacity-0" : "opacity-100"
           )}
           style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
@@ -129,7 +135,11 @@ function MascotMark({
       <img
         src={mascotAsset(front, colorMode)}
         alt={alt}
-        className={cn(imgClass, frontVisible ? "opacity-100" : "opacity-0")}
+        className={cn(
+          imgClass,
+          "mascot-lively-mark",
+          frontVisible ? "opacity-100" : "opacity-0"
+        )}
         style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
       />
     </span>
@@ -140,7 +150,7 @@ function MascotMark({
  * Home button carrying the flow-aware Wingify mascot.
  * - Active route sets the pose
  * - Product-row hover previews that product's pose
- * - Logo hover auto-cycles through flow poses
+ * - Logo hover keeps the same mark and plays a subtle quirky idle motion
  */
 export default function WingifyLogoButton({
   className,
@@ -153,36 +163,12 @@ export default function WingifyLogoButton({
   const previewId = useMascotPreviewStore((s) => s.previewId);
   const routeId = mascotForPath(pathname);
   const [logoHover, setLogoHover] = useState(false);
-  const [cycleId, setCycleId] = useState<MascotId | null>(null);
-  const cycleIndexRef = useRef(0);
 
   useEffect(() => {
     preloadMascots();
   }, []);
 
-  useEffect(() => {
-    if (!logoHover) {
-      setCycleId(null);
-      return;
-    }
-    const base = previewId ?? routeId;
-    let index = FLOW_MASCOT_IDS.findIndex((id) => id === base);
-    if (index < 0) index = -1;
-    cycleIndexRef.current = (index + 1) % FLOW_MASCOT_IDS.length;
-    setCycleId(FLOW_MASCOT_IDS[cycleIndexRef.current]);
-
-    const timer = window.setInterval(() => {
-      cycleIndexRef.current =
-        (cycleIndexRef.current + 1) % FLOW_MASCOT_IDS.length;
-      setCycleId(FLOW_MASCOT_IDS[cycleIndexRef.current]);
-    }, CYCLE_MS);
-
-    return () => window.clearInterval(timer);
-    // Only restart the cycle when hover begins — not when route/preview changes mid-hover.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
-  }, [logoHover]);
-
-  const mascotId = cycleId ?? previewId ?? routeId;
+  const mascotId = previewId ?? routeId;
   const pose = MASCOT_LABELS[mascotId];
 
   return (
@@ -195,7 +181,7 @@ export default function WingifyLogoButton({
       onFocus={() => setLogoHover(true)}
       onBlur={() => setLogoHover(false)}
       className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg",
+        "flex h-8 w-8 shrink-0 items-center justify-center overflow-visible rounded-lg",
         className
       )}
     >
@@ -203,6 +189,7 @@ export default function WingifyLogoButton({
         id={mascotId}
         alt={`Wingify — ${pose}`}
         colorMode={colorMode}
+        lively={logoHover}
       />
     </button>
   );

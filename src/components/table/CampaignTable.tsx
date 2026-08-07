@@ -109,8 +109,8 @@ const STICKY_CHECKBOX_BODY =
   "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
 const STICKY_NAME_BODY =
   "sticky left-[44px] z-10 bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
-const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-muted";
-const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-muted";
+const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-background";
+const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-background";
 // The pinned name column's right edge. It CANNOT be a box-shadow on the <td>/<th>:
 // the table is `border-collapse`, which suppresses cell box-shadows entirely (no
 // z-index rescues them). Instead we overlay a 1px-wide absolutely-positioned element
@@ -302,7 +302,7 @@ const PAGER_BUTTON =
 // The compact 14px select box — shadcn Checkbox restyled to the original neutral look
 // (light border, foreground fill, 10px check/minus) rather than the default variant.
 const SELECT_BOX =
-  "h-4 w-4 rounded-[3px] border-muted-foreground bg-background shadow-none data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background [&_svg]:size-2.5";
+  "h-4 w-4 rounded-[3px] border-input bg-background shadow-none data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background [&_svg]:size-2.5";
 
 function SelectCheckbox({
   checked,
@@ -614,7 +614,7 @@ export default function CampaignTable() {
                 </td>
               </tr>
             ) : (
-              <tr className="border-b border-border bg-muted">
+              <tr className="border-b border-border bg-background">
                 <th className={cn("px-3 py-2.5", STICKY_CHECKBOX_HEAD)}>
                   <SelectCheckbox
                     checked={headerState}
@@ -627,7 +627,7 @@ export default function CampaignTable() {
                     key={col.id}
                     scope="col"
                     className={cn(
-                      "relative whitespace-nowrap px-3 py-2.5 text-left text-sm font-medium text-foreground",
+                      "relative whitespace-nowrap px-3 py-2.5 text-left text-sm font-medium text-muted-foreground",
                       col.id === "name" && STICKY_NAME_HEAD,
                       col.align === "right" && "text-right",
                       col.align === "center" && "text-center"
@@ -640,7 +640,10 @@ export default function CampaignTable() {
                       <button
                         type="button"
                         onClick={() => setSort(col.id)}
-                        className="inline-flex items-center gap-1.5 text-foreground transition-colors hover:text-foreground"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 transition-colors hover:text-foreground",
+                          sort?.column === col.id && "text-foreground"
+                        )}
                       >
                         {col.label}
                         {sortIcon(col)}

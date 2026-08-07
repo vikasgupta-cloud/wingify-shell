@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes";
-import FontController from "./components/layout/FontController";
 import { applyCtaToken } from "./config/ctaTokens";
 import { applyFonts } from "./config/fonts";
 import { applyTheme } from "./config/themes";
@@ -23,10 +22,5 @@ export default function App() {
     applyFonts(fontAssignments);
   }, [fontAssignments]);
 
-  return (
-    <>
-      <RouterProvider router={router} />
-      <FontController />
-    </>
-  );
+  return <RouterProvider router={router} />;
 }
