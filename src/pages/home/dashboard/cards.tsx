@@ -73,7 +73,7 @@ const WANDZ_CTA_ICONS = {
 
 function CountBadge({ count }: { count: number | string }) {
   return (
-    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 text-xs font-medium text-secondary-foreground">
+    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 text-xs font-medium tabular-nums text-secondary-foreground">
       {count}
     </span>
   );
@@ -364,7 +364,7 @@ export function MetricReportsCard() {
           <div className="flex h-full min-h-[14rem] flex-col lg:absolute lg:inset-0 lg:min-h-0">
             <div className="mb-1 flex shrink-0 justify-end">
               <div className="text-right">
-                <p className="text-xs font-medium text-foreground">
+                <p className="text-xs font-medium tabular-nums text-foreground">
                   {latestLabel}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
@@ -445,7 +445,7 @@ export function MetricReportsCard() {
                 >
                   <Badge
                     variant="secondary"
-                    className="pointer-events-none shrink-0 rounded-sm px-1.5 font-mono text-[10px]"
+                    className="pointer-events-none shrink-0 rounded-sm px-1.5 text-[10px] tabular-nums"
                   >
                     {row.id}
                   </Badge>
@@ -521,7 +521,7 @@ export function FunnelReportsCard() {
         <div className="space-y-4">
           <div>
             <p className="text-xs text-muted-foreground">Conversion Rate</p>
-            <p className="mt-0.5 text-xl font-semibold text-foreground">
+            <p className="mt-0.5 text-xl font-semibold tabular-nums text-foreground">
               {funnel.conversionRate}
             </p>
           </div>
@@ -529,7 +529,7 @@ export function FunnelReportsCard() {
             <p className="text-xs text-muted-foreground">
               {funnel.maxDropoffLabel}
             </p>
-            <p className="mt-0.5 flex items-center gap-1.5 text-xl font-semibold text-foreground">
+            <p className="mt-0.5 flex items-center gap-1.5 text-xl font-semibold tabular-nums text-foreground">
               {funnel.maxDropoffRate}
               <span className="inline-flex size-5 items-center justify-center rounded-full bg-secondary text-muted-foreground">
                 <ArrowDown className="size-3" />
@@ -542,7 +542,7 @@ export function FunnelReportsCard() {
           {funnel.steps.map((step, i) => (
             <div key={`${step.label}-${i}`} className="flex flex-1 items-end gap-1">
               <div className="flex w-full flex-col items-center">
-                <p className="mb-1 text-[10px] font-medium text-foreground">
+                <p className="mb-1 text-[10px] font-medium tabular-nums text-foreground">
                   {step.percent.toFixed(1)}%
                 </p>
                 {/* Funnel steps are one narrowing journey, not independent
@@ -585,7 +585,7 @@ export function HypothesisCard() {
           <div key={stage.id} className="flex min-w-0 flex-1 items-center gap-2">
             <div className="w-full rounded-md bg-muted px-4 py-3">
               <p className="text-xs text-muted-foreground">{stage.label}</p>
-              <p className="mt-1 text-xl font-semibold text-foreground">
+              <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
                 {stage.count}
               </p>
             </div>
@@ -600,7 +600,9 @@ export function HypothesisCard() {
             type="button"
             className="whitespace-nowrap text-sm font-medium text-foreground underline-offset-2 hover:underline"
           >
-            + {HYPOTHESIS_MORE_STAGES} more stages
+            +{" "}
+            <span className="tabular-nums">{HYPOTHESIS_MORE_STAGES}</span> more
+            stages
           </button>
         </div>
       </div>
@@ -619,7 +621,7 @@ export function UntestedHypothesesCard() {
         {UNTESTED_HYPOTHESES.stats.map((s) => (
           <div key={s.id} className="rounded-md bg-muted px-3 py-3">
             <p className="text-[11px] text-muted-foreground">{s.label}</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
               {s.count}
             </p>
           </div>
@@ -632,7 +634,7 @@ export function UntestedHypothesesCard() {
             <div className="flex items-start gap-2">
               <Badge
                 variant="secondary"
-                className="shrink-0 rounded-sm px-1.5 font-mono text-[10px]"
+                className="shrink-0 rounded-sm px-1.5 text-[10px] tabular-nums"
               >
                 {h.id}
               </Badge>
@@ -647,7 +649,9 @@ export function UntestedHypothesesCard() {
               <Badge variant="secondary" className="font-normal">
                 {h.stage}
               </Badge>
-              <span className="text-xs text-muted-foreground">{h.score}</span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {h.score}
+              </span>
             </div>
           </li>
         ))}
@@ -688,10 +692,10 @@ export function ActiveTestsCard() {
                   key={r.badge}
                   className="flex items-center justify-end gap-1.5 text-muted-foreground"
                 >
-                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-foreground">
+                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-secondary text-[10px] font-medium tabular-nums text-foreground">
                     {r.badge}
                   </span>
-                  <span>
+                  <span className="tabular-nums">
                     {r.conversions} conversions / {r.visitors} visitors
                   </span>
                 </div>
@@ -760,7 +764,7 @@ export function PersonalizationCard() {
             <div key={e.id} className="min-w-0 space-y-1">
               <div className="flex items-center gap-1.5">
                 <span
-                  className="inline-flex size-5 items-center justify-center rounded-full text-[10px] font-semibold"
+                  className="inline-flex size-5 items-center justify-center rounded-full text-[10px] font-semibold tabular-nums"
                   style={{
                     backgroundColor: chartSeries(i),
                     color: chartSeriesOn(i),
@@ -772,10 +776,10 @@ export function PersonalizationCard() {
                   {e.label}
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs tabular-nums text-muted-foreground">
                 {e.visitors} Visitors
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs tabular-nums text-muted-foreground">
                 Conversion Rate: {e.conversionRate}
               </p>
               <p className="truncate text-xs text-muted-foreground">
@@ -789,7 +793,8 @@ export function PersonalizationCard() {
           type="button"
           className="ml-auto shrink-0 text-xs font-medium text-foreground underline-offset-2 hover:underline"
         >
-          +{PERSONALIZATION.moreExperiences} more Experiences
+          +<span className="tabular-nums">{PERSONALIZATION.moreExperiences}</span>{" "}
+          more Experiences
         </button>
       </div>
 
@@ -818,7 +823,7 @@ export function TotalExperiencesCard() {
   return (
     <CardShell title="Total experiences">
       <div className="flex flex-1 items-center justify-center rounded-lg bg-muted py-12">
-        <p className="text-5xl font-semibold tracking-tight text-foreground">
+        <p className="text-5xl font-semibold tabular-nums tracking-tight text-foreground">
           {TOTAL_EXPERIENCES}
         </p>
       </div>
@@ -881,10 +886,10 @@ export function SessionRecordingsCard() {
               </p>
             </div>
             <Monitor className="size-3.5 shrink-0 text-muted-foreground" />
-            <span className="w-4 shrink-0 text-center text-muted-foreground">
+            <span className="w-4 shrink-0 text-center tabular-nums text-muted-foreground">
               {s.sessions}
             </span>
-            <span className="w-[64px] shrink-0 font-mono text-xs text-foreground">
+            <span className="w-[64px] shrink-0 text-xs tabular-nums text-foreground">
               {s.duration}
             </span>
             <Button
@@ -928,7 +933,7 @@ export function FormsCard() {
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold tabular-nums text-foreground">
             {FORMS_REPORT.submitsHighlight}
           </span>{" "}
           Form Submits in Last 7 days
@@ -939,7 +944,7 @@ export function FormsCard() {
         {FORMS_REPORT.steps.map((step, i) => (
           <div key={step.label} className="flex flex-1 items-end gap-2">
             <div className="flex w-full flex-col items-center">
-              <p className="mb-1 text-[10px] font-medium text-foreground">
+              <p className="mb-1 text-[10px] font-medium tabular-nums text-foreground">
                 {step.percent}%
               </p>
               <div className="relative flex h-20 w-full flex-col justify-end overflow-hidden rounded-sm bg-muted">
@@ -986,7 +991,7 @@ export function SurveysCard() {
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold tabular-nums text-foreground">
             {SURVEYS_REPORT.responsesHighlight}
           </span>{" "}
           Responses till date
@@ -994,7 +999,10 @@ export function SurveysCard() {
       </div>
 
       <div className="mb-3 flex items-start gap-2">
-        <Badge variant="secondary" className="rounded-sm px-1.5 text-[10px]">
+        <Badge
+          variant="secondary"
+          className="rounded-sm px-1.5 text-[10px] tabular-nums"
+        >
           {SURVEYS_REPORT.questionId}
         </Badge>
         <p className="text-sm text-foreground">{SURVEYS_REPORT.question}</p>
@@ -1012,18 +1020,21 @@ export function SurveysCard() {
                     backgroundColor: chartSeries(i),
                   }}
                 />
-                <span className="text-[10px] text-muted-foreground">{a.n}</span>
+                <span className="text-[10px] tabular-nums text-muted-foreground">
+                  {a.n}
+                </span>
               </div>
             ))}
           </div>
           <div className="min-w-0 flex-1 space-y-1">
             {SURVEYS_REPORT.answers.map((a) => (
-              <p key={a.n} className="truncate text-xs text-muted-foreground">
+              <p key={a.n} className="truncate text-xs tabular-nums text-muted-foreground">
                 {a.n}. {a.label}
               </p>
             ))}
             <p className="text-xs text-muted-foreground">
-              +{SURVEYS_REPORT.moreChoices} more choices
+              +<span className="tabular-nums">{SURVEYS_REPORT.moreChoices}</span>{" "}
+              more choices
             </p>
           </div>
         </div>

@@ -151,6 +151,8 @@ export function applyFonts(assignments: Record<FontRole, FontId>) {
   for (const role of FONT_ROLES) {
     root.style.setProperty(ROLE_CSS_VAR[role], fontStack(assignments[role]));
   }
+  // Drive weight bumps (e.g. DM Sans CTA reads one step heavier).
+  root.setAttribute("data-font-cta", assignments.cta);
 }
 
 export function readStoredFonts(): Record<FontRole, FontId> {

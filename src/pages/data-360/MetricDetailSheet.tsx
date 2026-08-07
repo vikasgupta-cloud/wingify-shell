@@ -136,7 +136,7 @@ function MetricSheetBody({ metric }: { metric: Data360Metric }) {
               className="rounded-none border-b-2 border-transparent px-0 pb-2.5 pt-3 text-sm shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
             >
               Campaigns
-              <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 text-xs font-medium text-secondary-foreground">
+              <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 text-xs font-medium tabular-nums text-secondary-foreground">
                 {metric.campaigns.length}
               </span>
             </TabsTrigger>
@@ -212,19 +212,33 @@ function MetricSheetBody({ metric }: { metric: Data360Metric }) {
                     />
                     <MetaRow
                       label="Minimum Detectable Effect (MDE)"
-                      value={metric.advanced.mde}
+                      value={
+                        <span className="tabular-nums">{metric.advanced.mde}</span>
+                      }
                     />
                     <MetaRow
                       label="Region of Practical Equivalence (ROPE)"
-                      value={metric.advanced.rope}
+                      value={
+                        <span className="tabular-nums">
+                          {metric.advanced.rope}
+                        </span>
+                      }
                     />
                     <MetaRow
                       label="Statistical Power (1 − β)"
-                      value={metric.advanced.statisticalPower}
+                      value={
+                        <span className="tabular-nums">
+                          {metric.advanced.statisticalPower}
+                        </span>
+                      }
                     />
                     <MetaRow
                       label="False Positive Rate (α)"
-                      value={metric.advanced.falsePositiveRate}
+                      value={
+                        <span className="tabular-nums">
+                          {metric.advanced.falsePositiveRate}
+                        </span>
+                      }
                     />
                   </dl>
                 </div>
@@ -235,15 +249,27 @@ function MetricSheetBody({ metric }: { metric: Data360Metric }) {
                   <dl className="mt-2">
                     <MetaRow
                       label="Minimum Detectable Reduction"
-                      value={metric.advanced.guardrailMdr}
+                      value={
+                        <span className="tabular-nums">
+                          {metric.advanced.guardrailMdr}
+                        </span>
+                      }
                     />
                     <MetaRow
                       label="Statistical Power (1 − β)"
-                      value={metric.advanced.guardrailPower}
+                      value={
+                        <span className="tabular-nums">
+                          {metric.advanced.guardrailPower}
+                        </span>
+                      }
                     />
                     <MetaRow
                       label="False Positive Rate (α)"
-                      value={metric.advanced.guardrailAlpha}
+                      value={
+                        <span className="tabular-nums">
+                          {metric.advanced.guardrailAlpha}
+                        </span>
+                      }
                     />
                     <MetaRow
                       label="Action Taken On Breach"

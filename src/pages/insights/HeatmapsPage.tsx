@@ -159,13 +159,13 @@ function ViewsRail({
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
             <p className="text-xs text-muted-foreground">Data Retention</p>
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-sm font-medium tabular-nums text-foreground">
               {HEATMAP_ALL_DATA.retention}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Clicks</p>
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-sm font-medium tabular-nums text-foreground">
               {HEATMAP_ALL_DATA.clicks}
             </p>
           </div>

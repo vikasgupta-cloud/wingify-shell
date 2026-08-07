@@ -7,7 +7,6 @@ import {
 } from "../../config/fonts";
 import { useFontStore } from "../../store/fonts";
 import { cn } from "../../lib/utils";
-import { Button } from "@/components/ui/button";
 
 /**
  * Font playground — assign Ergon / Lyon / DM Sans to typography roles.
@@ -16,7 +15,6 @@ import { Button } from "@/components/ui/button";
 export default function FontPicker({ className }: { className?: string }) {
   const assignments = useFontStore((s) => s.assignments);
   const setRoleFont = useFontStore((s) => s.setRoleFont);
-  const resetFonts = useFontStore((s) => s.resetFonts);
 
   return (
     <section className={cn("px-6 py-6", className)}>
@@ -25,15 +23,6 @@ export default function FontPicker({ className }: { className?: string }) {
           <Type className="h-5 w-5 shrink-0" strokeWidth={1.75} />
           <h3 className="text-base font-semibold tracking-tight">Fonts</h3>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-9 px-3 text-sm text-muted-foreground"
-          onClick={resetFonts}
-        >
-          Reset
-        </Button>
       </div>
 
       <div className="space-y-8">

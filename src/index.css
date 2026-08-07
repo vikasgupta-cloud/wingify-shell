@@ -1264,3 +1264,26 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * DM Sans reads optically lighter than Ergon/Lyon at the same numeric weight.
+ * When CTA text is DM Sans, bump one step: regular→medium, medium→semibold.
+ * Lives in utilities so it beats Tailwind's font-* weight utilities.
+ */
+@layer utilities {
+  html[data-font-cta="dm-sans"] .font-cta.font-normal {
+    font-weight: 500;
+  }
+  html[data-font-cta="dm-sans"] .font-cta.font-medium {
+    font-weight: 600;
+  }
+  html[data-font-cta="dm-sans"] .font-cta.font-semibold {
+    font-weight: 700;
+  }
+  html[data-font-cta="dm-sans"] .font-cta.font-bold {
+    font-weight: 700;
+  }
+  html[data-font-cta="dm-sans"] [data-font-role="cta"] {
+    font-weight: 500;
+  }
+}

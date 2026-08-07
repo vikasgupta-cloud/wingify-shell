@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { ArrowRight, Download, Palette, X } from "lucide-react";
+import { ArrowRight, Download, Palette, RotateCcw, X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useDesignControllerStore } from "../../store/designController";
 import { useThemeStore } from "../../store/theme";
@@ -62,7 +62,9 @@ export default function FontController() {
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
+  const resetAppearance = useThemeStore((s) => s.resetAppearance);
   const fontAssignments = useFontStore((s) => s.assignments);
+  const resetFonts = useFontStore((s) => s.resetFonts);
   const [rendered, setRendered] = useState(false);
   const [shown, setShown] = useState(false);
   const [tabHover, setTabHover] = useState(false);
@@ -86,6 +88,11 @@ export default function FontController() {
     setOpen(false);
     clickCount.current = 0;
     lastClickAt.current = 0;
+  };
+
+  const resetAll = () => {
+    resetAppearance();
+    resetFonts();
   };
 
   useEffect(() => {
@@ -300,11 +307,24 @@ export default function FontController() {
                   </Button>
                 </div>
 
-                <p className="px-4 pb-6 pt-2 text-xs leading-relaxed text-muted-foreground">
-                  Use the palette tab on the right edge. Light/dark mode is also
-                  available in your profile menu.
+                <p className="px-4 pb-4 pt-2 text-xs leading-relaxed text-muted-foreground">
+                  Selections are saved in this browser. Use the palette tab on
+                  the right edge anytime — light/dark is also in your profile
+                  menu.
                 </p>
               </div>
+
+              <footer className="shrink-0 border-t border-border px-4 py-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={resetAll}
+                >
+                  <RotateCcw className="size-3.5" strokeWidth={1.75} />
+                  Reset all
+                </Button>
+              </footer>
             </aside>
           </div>,
           document.body

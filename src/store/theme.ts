@@ -22,6 +22,8 @@ type ThemeState = {
   setTheme: (themeId: ThemeId) => void;
   setColorMode: (colorMode: ColorMode) => void;
   setCtaToken: (ctaTokenId: string | null) => void;
+  /** Restore default theme, light mode, and clear CTA override. */
+  resetAppearance: () => void;
 };
 
 function syncDom(
@@ -54,6 +56,14 @@ export const useThemeStore = create<ThemeState>()(
         const { themeId, colorMode } = get();
         syncDom(themeId, colorMode, ctaTokenId);
         set({ ctaTokenId });
+      },
+      resetAppearance: () => {
+        syncDom(DEFAULT_THEME_ID, DEFAULT_COLOR_MODE, null);
+        set({
+          themeId: DEFAULT_THEME_ID,
+          colorMode: DEFAULT_COLOR_MODE,
+          ctaTokenId: null,
+        });
       },
     }),
     {

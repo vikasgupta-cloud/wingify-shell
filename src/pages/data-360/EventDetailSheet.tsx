@@ -222,7 +222,7 @@ export default function EventDetailSheet({
                     className="rounded-none border-b-2 border-transparent px-0 pb-2.5 pt-3 text-sm shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                   >
                     Properties
-                    <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 text-xs font-medium text-secondary-foreground">
+                    <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 text-xs font-medium tabular-nums text-secondary-foreground">
                       {event.properties.length}
                     </span>
                   </TabsTrigger>

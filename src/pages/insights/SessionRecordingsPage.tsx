@@ -266,7 +266,7 @@ export default function SessionRecordingsPage() {
                   <p className="text-xs leading-tight text-muted-foreground">
                     {stat.label}
                   </p>
-                  <p className="text-sm font-medium leading-tight text-foreground">
+                  <p className="text-sm font-medium leading-tight tabular-nums text-foreground">
                     {stat.value}
                   </p>
                 </div>
