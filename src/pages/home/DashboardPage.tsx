@@ -30,7 +30,7 @@ export default function DashboardPage() {
         icon={iconForPath(pathname)}
       />
 
-      <div className="mt-8 space-y-8 px-12">
+      <div className="mt-14 space-y-8 px-12">
         <WandzHero />
 
         {/* Metric + Funnel stacked full width */}
