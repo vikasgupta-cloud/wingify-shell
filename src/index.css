@@ -525,9 +525,8 @@
   --report-threshold: var(--vwo-green-200);
 
   /* ── Chart tokens — data-viz palette over VWO primitives ────────────
-     Categorical rotates all 8 families (steps picked per mode for contrast);
-     series 8+ are reserve colors for dense charts — avoid for thin lines.
-     Light values here; [data-mode="dark"] overrides the full set. */
+     Independent of theme / CTA. Categorical chart-1…20; sequential +
+     diverging ramps stay fixed. Light values here; dark mode overrides. */
   --chart-1: var(--vwo-cherry-500);
   --chart-2: var(--vwo-ocean-500);
   --chart-3: var(--vwo-green-400);

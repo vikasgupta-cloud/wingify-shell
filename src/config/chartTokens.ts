@@ -2,12 +2,10 @@
  * Chart tokens — data-viz palette for graphs.
  *
  * Colors resolve through the `--chart-*` CSS variables in `src/index.css`
- * (VWO primitives only). Categorical lead colors (`chart-1`…`chart-8`) and
- * the sequential ramp follow the active design-controller theme / CTA so
- * dashboard graphs update with Appearance — mode-tuned steps stay correct
- * for light and dark. Prefer the Tailwind classes (`text-chart-positive`,
- * `bg-chart-1`, …) in markup; use these exports where a chart needs color
- * values in JS (series arrays, SVG fills, scales).
+ * (VWO primitives only). Theme / CTA / button colours never override these.
+ * Categorical series pick a random order from chart-1…chart-20 (stable for
+ * the browser session). Prefer Tailwind (`bg-chart-1`, …) in markup; use
+ * these exports for JS (series arrays, SVG fills, scales).
  *
  * Note: `hsl(var(--…))` strings work anywhere the DOM/SVG resolves CSS —
  * they will NOT work on a raw <canvas>; read the computed style first there.
@@ -17,16 +15,79 @@ const chartVar = (name: string) => `hsl(var(--chart-${name}))`;
 const chartVarAlpha = (name: string, alpha: number) =>
   `hsl(var(--chart-${name}) / ${alpha})`;
 
+const CATEGORICAL_COUNT = 20;
+
+/** Keys theme/CTA used to inline — applyBrand always clears them. */
+export const CHART_CSS_VARS_NEVER_INLINE: readonly string[] = [
+  ...Array.from({ length: CATEGORICAL_COUNT }, (_, i) => `--chart-${i + 1}`),
+  ...Array.from(
+    { length: CATEGORICAL_COUNT },
+    (_, i) => `--chart-${i + 1}-fg`
+  ),
+  "--chart-info",
+  "--chart-info-bg",
+  "--chart-highlight",
+  "--chart-positive",
+  "--chart-positive-bg",
+  "--chart-seq-1",
+  "--chart-seq-2",
+  "--chart-seq-3",
+  "--chart-seq-4",
+  "--chart-seq-5",
+  "--chart-seq-6",
+  "--chart-seq-7",
+];
+
+function mulberry32(seed: number) {
+  return () => {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function readSessionSeed(): number {
+  if (typeof sessionStorage === "undefined") {
+    return Date.now() >>> 0;
+  }
+  try {
+    const raw = sessionStorage.getItem("wingify-chart-series-seed");
+    if (raw) {
+      const n = Number(raw);
+      if (Number.isFinite(n)) return n >>> 0;
+    }
+    const next = (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
+    sessionStorage.setItem("wingify-chart-series-seed", String(next));
+    return next;
+  } catch {
+    return Date.now() >>> 0;
+  }
+}
+
+/** Fisher–Yates shuffle of 0…n-1, session-stable. */
+function shuffledSlots(n: number): number[] {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  const rand = mulberry32(readSessionSeed());
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+const SERIES_ORDER = shuffledSlots(CATEGORICAL_COUNT);
+
 /**
- * Categorical series rotation — all 8 VWO families, mode-tuned steps.
- * Series 8+ are reserve colors for dense charts; avoid them for thin lines.
+ * Categorical series rotation — all 20 chart tokens, shuffled so charts
+ * do not start on a theme/CTA hue.
  */
 export const CHART_CATEGORICAL: readonly string[] = Array.from(
-  { length: 20 },
+  { length: CATEGORICAL_COUNT },
   (_, i) => chartVar(`${i + 1}`)
 );
 
-/** Single-hue (cherry) ramp, low → high intensity. */
+/** Single-hue sequential ramp from CSS (not theme/CTA). */
 export const CHART_SEQUENTIAL: readonly string[] = Array.from(
   { length: 7 },
   (_, i) => chartVar(`seq-${i + 1}`)
@@ -64,24 +125,25 @@ export const CHART = {
   tooltipTextSecondary: chartVar("tooltip-text-secondary"),
 } as const;
 
-/** Categorical series color by index (wraps). */
-export function chartSeries(index: number): string {
+function slot(index: number): number {
   const i =
-    ((index % CHART_CATEGORICAL.length) + CHART_CATEGORICAL.length) %
-    CHART_CATEGORICAL.length;
-  return CHART_CATEGORICAL[i];
+    ((index % CATEGORICAL_COUNT) + CATEGORICAL_COUNT) % CATEGORICAL_COUNT;
+  return SERIES_ORDER[i]!;
+}
+
+/** Categorical series color by index — random chart-palette order. */
+export function chartSeries(index: number): string {
+  return CHART_CATEGORICAL[slot(index)]!;
 }
 
 /** AA-safe label color on a solid `chartSeries(index)` fill. */
 export function chartSeriesOn(index: number): string {
-  const i = ((index % 20) + 20) % 20;
-  return chartVar(`${i + 1}-fg`);
+  return chartVar(`${slot(index) + 1}-fg`);
 }
 
 /** Categorical series with alpha — for area fills / heatmap cells. */
 export function chartSeriesAlpha(index: number, alpha: number): string {
-  const i = ((index % 20) + 20) % 20;
-  return chartVarAlpha(`${i + 1}`, alpha);
+  return chartVarAlpha(`${slot(index) + 1}`, alpha);
 }
 
 /** Sequential ramp by index (wraps). */
@@ -89,7 +151,7 @@ export function chartSequential(index: number): string {
   const i =
     ((index % CHART_SEQUENTIAL.length) + CHART_SEQUENTIAL.length) %
     CHART_SEQUENTIAL.length;
-  return CHART_SEQUENTIAL[i];
+  return CHART_SEQUENTIAL[i]!;
 }
 
 /** Diverging ramp by index (0…6, midpoint 3). */
@@ -97,5 +159,5 @@ export function chartDiverging(index: number): string {
   const i =
     ((index % CHART_DIVERGING.length) + CHART_DIVERGING.length) %
     CHART_DIVERGING.length;
-  return CHART_DIVERGING[i];
+  return CHART_DIVERGING[i]!;
 }

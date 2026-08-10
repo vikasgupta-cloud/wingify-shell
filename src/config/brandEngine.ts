@@ -1,8 +1,6 @@
 /**
- * Brand engine — shared derivation of brand-driven CSS variables from a colour
- * family + mode. Stage 1 uses it for the categorical CHART palette so a custom
- * CTA re-skins the whole series set (not just the lead). Stage 2 will route the
- * theme presets through the same engine so adding a theme is a single entry.
+ * Brand engine — theme presets (primary, ring, links, report brand).
+ * Charts are not derived here; they stay on `--chart-*` in index.css.
  *
  * Everything here returns `hsl`-less `var(--vwo-*)` references (resolved by
  * index.css), so the values follow light/dark like the rest of the system.
@@ -17,77 +15,12 @@ export function familyStepVar(family: string, step: string): string {
   return `var(--vwo-${family}-${step})`;
 }
 
-type SeriesSpec = {
-  family: string;
-  light: string;
-  dark: string;
-  /** Label ink over a solid fill of this family: pale families need dark ink. */
-  ink: "white" | "midnight";
-};
-
-/**
- * Canonical categorical rotation — a distinguishable multi-hue order. The active
- * accent takes series 1; series 2…8 draw from this list (accent removed), so the
- * whole palette follows the accent while staying visually separable. Steps are
- * mode-tuned to mirror the values the hand-authored theme blocks use today.
- */
-export const CANONICAL_SERIES: readonly SeriesSpec[] = [
-  { family: "ocean", light: "500", dark: "400", ink: "white" },
-  { family: "green", light: "400", dark: "300", ink: "white" },
-  { family: "berry", light: "500", dark: "300", ink: "white" },
-  { family: "amber", light: "300", dark: "300", ink: "midnight" },
-  { family: "cherry", light: "500", dark: "400", ink: "white" },
-  { family: "maroon", light: "400", dark: "300", ink: "white" },
-  { family: "neutral", light: "400", dark: "300", ink: "midnight" },
-  { family: "yellow", light: "300", dark: "100", ink: "midnight" },
-];
-
-const inkVar = (ink: SeriesSpec["ink"]) =>
-  ink === "white" ? "var(--vwo-neutral-0)" : "var(--vwo-midnight-base)";
-
-/**
- * Fill + label-ink vars for the categorical series 2…8, given the accent family
- * that already owns series 1. Returns `--chart-2`…`--chart-8` and their `-fg`.
- * Deterministic; the accent family is skipped so it never repeats.
- */
-export function categoricalChartVars(
-  accentFamily: string,
-  mode: ColorMode
-): Record<string, string> {
-  const pool = CANONICAL_SERIES.filter((s) => s.family !== accentFamily).slice(
-    0,
-    7
-  );
-  const out: Record<string, string> = {};
-  pool.forEach((s, i) => {
-    const slot = i + 2; // series 1 is the accent (set elsewhere)
-    const step = mode === "dark" ? s.dark : s.light;
-    out[`--chart-${slot}`] = familyStepVar(s.family, step);
-    out[`--chart-${slot}-fg`] = inkVar(s.ink);
-  });
-  return out;
-}
-
 // ── Theme presets ────────────────────────────────────────────────────────────
 //
-// Each theme = an accent family (drives series 1 + the categorical rotation) plus
-// an EXACT per-mode var map transcribed from the previous hand-authored CSS
-// blocks. Keeping the map explicit preserves every bespoke tweak verbatim
-// (yellow's maroon brand-deep + olive ring, green's darker active + chart-positive
-// override, midnight's dark action tokens, and the yellow/midnight "don't tint
-// links/selection" behaviour — those keys are simply absent and inherit
-// [data-mode]). Only the categorical series 2…8 are now computed (rotated from the
-// accent) instead of hand-listed. Adding a theme = one entry here + THEME_IDS +
-// THEMES swatches.
-
-/** Accent family per theme (series 1 + rotation anchor). */
-export const THEME_ACCENT: Record<ThemeId, string> = {
-  yellow: "yellow",
-  cherry: "cherry",
-  green: "green",
-  midnight: "midnight",
-  berry: "berry",
-};
+// Each theme = an accent family plus an EXACT per-mode var map. Keeping the map
+// explicit preserves every bespoke tweak (yellow's maroon brand-deep, midnight's
+// dark action tokens, yellow/midnight not tinting links/selection). Chart tokens
+// are omitted on purpose. Adding a theme = one entry here + THEME_IDS + swatches.
 
 const v = familyStepVar;
 
@@ -104,18 +37,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--primary-border": "var(--primary-active)",
       "--ring": v("yellow", "300"),
       "--brand-deep": v("maroon", "900"),
-      "--chart-1": v("yellow", "500"),
-      "--chart-1-fg": "var(--vwo-neutral-0)",
-      "--chart-info": v("yellow", "600"),
-      "--chart-info-bg": v("yellow", "50"),
-      "--chart-highlight": v("yellow", "50"),
-      "--chart-seq-1": v("yellow", "100"),
-      "--chart-seq-2": v("yellow", "200"),
-      "--chart-seq-3": v("yellow", "300"),
-      "--chart-seq-4": v("yellow", "400"),
-      "--chart-seq-5": v("yellow", "500"),
-      "--chart-seq-6": v("yellow", "600"),
-      "--chart-seq-7": v("yellow", "800"),
     },
     dark: {
       "--primary": v("yellow", "50"),
@@ -125,18 +46,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--primary-subtle": "var(--vwo-dark-bg-hover)",
       "--primary-border": "var(--primary-active)",
       "--ring": v("yellow", "200"),
-      "--chart-1": v("yellow", "300"),
-      "--chart-1-fg": "var(--vwo-midnight-base)",
-      "--chart-info": v("yellow", "300"),
-      "--chart-info-bg": v("yellow", "900"),
-      "--chart-highlight": v("yellow", "50"),
-      "--chart-seq-1": v("yellow", "900"),
-      "--chart-seq-2": v("yellow", "800"),
-      "--chart-seq-3": v("yellow", "700"),
-      "--chart-seq-4": v("yellow", "600"),
-      "--chart-seq-5": v("yellow", "500"),
-      "--chart-seq-6": v("yellow", "400"),
-      "--chart-seq-7": v("yellow", "300"),
     },
   },
   cherry: {
@@ -158,17 +67,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--report-brand-fg": v("cherry", "800"),
       "--report-brand-tint": v("cherry", "50"),
       "--report-link": v("cherry", "500"),
-      "--chart-1": v("cherry", "500"),
-      "--chart-1-fg": "var(--vwo-neutral-0)",
-      "--chart-info": v("cherry", "600"),
-      "--chart-info-bg": v("cherry", "50"),
-      "--chart-seq-1": v("cherry", "100"),
-      "--chart-seq-2": v("cherry", "200"),
-      "--chart-seq-3": v("cherry", "300"),
-      "--chart-seq-4": v("cherry", "400"),
-      "--chart-seq-5": v("cherry", "500"),
-      "--chart-seq-6": v("cherry", "600"),
-      "--chart-seq-7": v("cherry", "800"),
     },
     dark: {
       "--primary": v("cherry", "400"),
@@ -185,17 +83,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--link": v("cherry", "300"),
       "--link-hover": v("cherry", "200"),
       "--brand-deep": v("cherry", "900"),
-      "--chart-1": v("cherry", "400"),
-      "--chart-1-fg": "var(--vwo-neutral-0)",
-      "--chart-info": v("cherry", "400"),
-      "--chart-info-bg": v("cherry", "900"),
-      "--chart-seq-1": v("cherry", "900"),
-      "--chart-seq-2": v("cherry", "800"),
-      "--chart-seq-3": v("cherry", "700"),
-      "--chart-seq-4": v("cherry", "600"),
-      "--chart-seq-5": v("cherry", "500"),
-      "--chart-seq-6": v("cherry", "400"),
-      "--chart-seq-7": v("cherry", "300"),
     },
   },
   green: {
@@ -217,19 +104,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--report-brand-fg": v("green", "700"),
       "--report-brand-tint": v("green", "50"),
       "--report-link": v("green", "600"),
-      "--chart-1": v("green", "600"),
-      "--chart-1-fg": "var(--vwo-neutral-0)",
-      "--chart-info": v("green", "700"),
-      "--chart-info-bg": v("green", "50"),
-      "--chart-positive": v("green", "600"),
-      "--chart-positive-bg": v("green", "50"),
-      "--chart-seq-1": v("green", "100"),
-      "--chart-seq-2": v("green", "200"),
-      "--chart-seq-3": v("green", "300"),
-      "--chart-seq-4": v("green", "400"),
-      "--chart-seq-5": v("green", "500"),
-      "--chart-seq-6": v("green", "600"),
-      "--chart-seq-7": v("green", "800"),
     },
     dark: {
       "--primary": v("green", "800"),
@@ -246,19 +120,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--link": v("green", "300"),
       "--link-hover": v("green", "200"),
       "--brand-deep": v("green", "900"),
-      "--chart-1": v("green", "400"),
-      "--chart-1-fg": "var(--vwo-neutral-0)",
-      "--chart-info": v("green", "300"),
-      "--chart-info-bg": v("green", "900"),
-      "--chart-positive": v("green", "400"),
-      "--chart-positive-bg": v("green", "900"),
-      "--chart-seq-1": v("green", "900"),
-      "--chart-seq-2": v("green", "800"),
-      "--chart-seq-3": v("green", "700"),
-      "--chart-seq-4": v("green", "600"),
-      "--chart-seq-5": v("green", "500"),
-      "--chart-seq-6": v("green", "400"),
-      "--chart-seq-7": v("green", "300"),
     },
   },
   midnight: {
@@ -274,17 +135,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--report-brand": v("neutral", "900"),
       "--report-brand-fg": v("neutral", "800"),
       "--report-brand-tint": v("neutral", "50"),
-      "--chart-1": "var(--vwo-midnight-base)",
-      "--chart-1-fg": "var(--vwo-neutral-0)",
-      "--chart-info": v("neutral", "700"),
-      "--chart-info-bg": v("neutral", "50"),
-      "--chart-seq-1": v("neutral", "100"),
-      "--chart-seq-2": v("neutral", "200"),
-      "--chart-seq-3": v("neutral", "300"),
-      "--chart-seq-4": v("neutral", "400"),
-      "--chart-seq-5": v("neutral", "500"),
-      "--chart-seq-6": v("neutral", "600"),
-      "--chart-seq-7": v("neutral", "800"),
     },
     dark: {
       "--primary": "var(--vwo-dark-action-primary-bg)",
@@ -295,17 +145,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--primary-border": "var(--primary)",
       "--ring": v("neutral", "100"),
       "--brand-deep": v("neutral", "900"),
-      "--chart-1": v("neutral", "100"),
-      "--chart-1-fg": "var(--vwo-midnight-base)",
-      "--chart-info": v("neutral", "300"),
-      "--chart-info-bg": v("neutral", "800"),
-      "--chart-seq-1": v("neutral", "900"),
-      "--chart-seq-2": v("neutral", "800"),
-      "--chart-seq-3": v("neutral", "700"),
-      "--chart-seq-4": v("neutral", "600"),
-      "--chart-seq-5": v("neutral", "500"),
-      "--chart-seq-6": v("neutral", "400"),
-      "--chart-seq-7": v("neutral", "300"),
     },
   },
   berry: {
@@ -327,17 +166,6 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--report-brand-fg": v("berry", "700"),
       "--report-brand-tint": v("berry", "50"),
       "--report-link": v("berry", "500"),
-      "--chart-1": v("berry", "500"),
-      "--chart-1-fg": "var(--vwo-neutral-0)",
-      "--chart-info": v("berry", "600"),
-      "--chart-info-bg": v("berry", "50"),
-      "--chart-seq-1": v("berry", "100"),
-      "--chart-seq-2": v("berry", "200"),
-      "--chart-seq-3": v("berry", "300"),
-      "--chart-seq-4": v("berry", "400"),
-      "--chart-seq-5": v("berry", "500"),
-      "--chart-seq-6": v("berry", "600"),
-      "--chart-seq-7": v("berry", "800"),
     },
     dark: {
       "--primary": v("berry", "300"),
@@ -354,35 +182,16 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--link": v("berry", "300"),
       "--link-hover": v("berry", "200"),
       "--brand-deep": v("berry", "900"),
-      "--chart-1": v("berry", "300"),
-      "--chart-1-fg": "var(--vwo-midnight-base)",
-      "--chart-info": v("berry", "300"),
-      "--chart-info-bg": v("berry", "900"),
-      "--chart-seq-1": v("berry", "900"),
-      "--chart-seq-2": v("berry", "800"),
-      "--chart-seq-3": v("berry", "700"),
-      "--chart-seq-4": v("berry", "600"),
-      "--chart-seq-5": v("berry", "500"),
-      "--chart-seq-6": v("berry", "400"),
-      "--chart-seq-7": v("berry", "300"),
     },
   },
 };
 
-/**
- * Full brand-var map for a theme + mode: the explicit spec (primary, ring,
- * brand-deep, surrounds, chart lead/seq/info + any bespoke keys) merged with the
- * computed categorical series 2…8 rotated from the accent.
- */
+/** Full brand-var map for a theme + mode (no chart tokens). */
 export function computeThemeVars(
   themeId: ThemeId,
   mode: ColorMode
 ): Record<string, string> {
-  const spec = THEME_VAR_SPEC[themeId][mode];
-  return {
-    ...spec,
-    ...categoricalChartVars(THEME_ACCENT[themeId], mode),
-  };
+  return { ...THEME_VAR_SPEC[themeId][mode] };
 }
 
 /**

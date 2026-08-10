@@ -1,6 +1,7 @@
 import { applyTheme, type ColorMode, type ThemeId } from "./themes";
 import { computeThemeVars, THEME_VARS } from "./brandEngine";
 import { aestheticVarsForCta, ctaTokenById, CTA_VARS } from "./ctaTokens";
+import { CHART_CSS_VARS_NEVER_INLINE } from "./chartTokens";
 import {
   aestheticVarsForBackground,
   aestheticVarsForHeader,
@@ -57,5 +58,10 @@ export function applyBrand(
     const value = vars[key];
     if (value != null) root.style.setProperty(key, value);
     else root.style.removeProperty(key);
+  }
+
+  // Charts stay on index.css palette — never inherit leftover CTA/theme inlines.
+  for (const key of CHART_CSS_VARS_NEVER_INLINE) {
+    root.style.removeProperty(key);
   }
 }

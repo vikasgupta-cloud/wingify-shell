@@ -24,6 +24,7 @@ const FAMILY_LABEL: Record<CtaFamily, string> = {
 /**
  * Pick any VWO scale token as the primary CTA color; surround aesthetics
  * (ring, selection, links, report brand) follow the same family.
+ * Charts are not affected — they use the dedicated chart palette only.
  */
 export default function CtaColorPicker({ className }: { className?: string }) {
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
