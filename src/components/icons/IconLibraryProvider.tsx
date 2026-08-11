@@ -23,7 +23,7 @@ type IconLibraryContextValue = {
 const IconLibraryContext = createContext<IconLibraryContextValue>({
   registry: {},
   ready: false,
-  libraryId: "lucide",
+  libraryId: "phosphor",
   variant: "regular",
 });
 

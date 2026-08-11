@@ -7,6 +7,7 @@ export type AppIconProps = {
   name: AppIconName;
   size?: number | string;
   className?: string;
+  /** Ignored when a library style variant controls weight (Lucide / Tabler stroke). */
   strokeWidth?: number;
   color?: string;
 } & React.SVGAttributes<SVGElement>;
@@ -16,17 +17,18 @@ export default function AppIcon({
   name,
   size,
   className,
-  strokeWidth = 1.75,
+  strokeWidth: _strokeWidth,
   ...props
 }: AppIconProps) {
-  const { registry, ready, libraryId } = useIconRegistry();
+  const { registry, ready } = useIconRegistry();
   const Icon = registry[name];
 
   if (Icon) {
+    // Style weight/variant comes from the registry wrapper — do not let
+    // call-site strokeWidth={1.75} override Thin / Bold / Duotone picks.
     return (
       <Icon
         {...props}
-        {...(libraryId === "lucide" ? { strokeWidth } : {})}
         size={size}
         className={cn("shrink-0", className)}
       />
@@ -51,7 +53,7 @@ export default function AppIcon({
       {...props}
       size={size}
       className={cn("shrink-0 opacity-40", className)}
-      strokeWidth={strokeWidth}
+      strokeWidth={1.75}
     />
   );
 }

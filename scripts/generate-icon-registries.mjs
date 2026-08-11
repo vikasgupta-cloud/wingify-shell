@@ -613,13 +613,49 @@ const FA = {
   WandSparkles: "WandMagicSparkles",
 };
 
+import {
+  HERO,
+  REMIX,
+  BOOTSTRAP,
+  ICONOIR,
+  RADIX,
+  FLUENT,
+  SOLAR,
+} from "./icon-library-aliases.mjs";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+
 async function loadModules() {
   const phosphor = await import("@phosphor-icons/react");
   const tabler = await import("@tabler/icons-react");
   const mui = await import("@mui/icons-material");
   const fa = await import("react-icons/fa6");
   const lucideDynamic = await import("lucide-react/dynamicIconImports.mjs");
-  return { phosphor, tabler, mui, fa, lucideDynamic: lucideDynamic.default };
+  const heroOutline = await import("@heroicons/react/24/outline");
+  const heroSolid = await import("@heroicons/react/24/solid");
+  const heroMini = await import("@heroicons/react/20/solid");
+  const remix = await import("@remixicon/react");
+  const bootstrap = await import("react-bootstrap-icons");
+  const iconoir = await import("iconoir-react");
+  const radix = await import("@radix-ui/react-icons");
+  const fluent = require("@fluentui/react-icons");
+  const solar = require("solar-icon-set");
+  return {
+    phosphor,
+    tabler,
+    mui,
+    fa,
+    lucideDynamic: lucideDynamic.default,
+    heroOutline,
+    heroSolid,
+    heroMini,
+    remix,
+    bootstrap,
+    iconoir,
+    radix,
+    fluent,
+    solar,
+  };
 }
 
 function resolvePhosphor(phosphor, name) {
@@ -677,6 +713,92 @@ function resolveLucide(lucideDynamic, name) {
   return lucideDynamic["circle-help"] ? "circle-help" : "help-circle";
 }
 
+function resolveHero(pack, name) {
+  const key = HERO[name] ?? `${name.replace(/Icon$/, "")}Icon`;
+  if (pack[key]) return key;
+  if (pack.QuestionMarkCircleIcon) return "QuestionMarkCircleIcon";
+  return "InformationCircleIcon";
+}
+
+function resolveRemix(remix, name, fill) {
+  const base = REMIX[name] ?? name.replace(/Icon$/, "");
+  const line = `Ri${base}Line`;
+  const fillKey = `Ri${base}Fill`;
+  if (fill && remix[fillKey]) return fillKey;
+  if (remix[line]) return line;
+  if (remix[fillKey]) return fillKey;
+  return fill ? "RiQuestionFill" : "RiQuestionLine";
+}
+
+function resolveBootstrap(bi, name, fill) {
+  const base = BOOTSTRAP[name] ?? name.replace(/Icon$/, "");
+  const fillKey = `${base}Fill`;
+  if (fill && bi[fillKey]) return fillKey;
+  if (bi[base]) return base;
+  if (bi[fillKey]) return fillKey;
+  return bi.QuestionCircle ? "QuestionCircle" : "InfoCircle";
+}
+
+function resolveIconoir(io, name, solid) {
+  const base = ICONOIR[name] ?? name.replace(/Icon$/, "");
+  const solidKey = `${base}Solid`;
+  if (solid && io[solidKey]) return solidKey;
+  if (io[base]) return base;
+  if (io[solidKey]) return solidKey;
+  return io.HelpCircle ? "HelpCircle" : "InfoCircle";
+}
+
+function resolveRadix(rx, name) {
+  const key = RADIX[name] ?? `${name.replace(/Icon$/, "")}Icon`;
+  if (rx[key]) return key;
+  return rx.QuestionMarkCircledIcon
+    ? "QuestionMarkCircledIcon"
+    : "InfoCircledIcon";
+}
+
+function resolveFluent(fluent, name, style) {
+  const base = FLUENT[name] ?? name.replace(/Icon$/, "");
+  const suffix =
+    style === "filled" ? "Filled" : style === "light" ? "Light" : "Regular";
+  const candidates = [
+    `${base}24${suffix}`,
+    `${base}20${suffix}`,
+    `${base}24Regular`,
+    `${base}20Regular`,
+  ];
+  for (const key of candidates) {
+    if (fluent[key]) return key;
+  }
+  return fluent.QuestionCircle24Regular
+    ? "QuestionCircle24Regular"
+    : "Info24Regular";
+}
+
+function resolveSolar(solar, name, style) {
+  const base = SOLAR[name] ?? name.replace(/Icon$/, "");
+  const suffixByStyle = {
+    linear: "Linear",
+    outline: "Outline",
+    bold: "Bold",
+    broken: "Broken",
+    lineduotone: "LineDuotone",
+    boldduotone: "BoldDuotone",
+  };
+  const suffix = suffixByStyle[style] ?? "Linear";
+  const candidates = [
+    `${base}${suffix}`,
+    `${base}Linear`,
+    `${base}Outline`,
+    `${base}Bold`,
+  ];
+  for (const key of candidates) {
+    if (solar[key]) return key;
+  }
+  return solar.QuestionCircleLinear
+    ? "QuestionCircleLinear"
+    : "InfoCircleLinear";
+}
+
 function writeMaterialRegistryFile(variant, map) {
   const cap = variant.charAt(0).toUpperCase() + variant.slice(1);
   const filename = `material${cap}Registry.ts`;
@@ -713,7 +835,21 @@ ${lines.join("\n")}
 
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
-  const { phosphor, tabler, mui, fa, lucideDynamic } = await loadModules();
+  const mods = await loadModules();
+  const {
+    phosphor,
+    tabler,
+    mui,
+    fa,
+    lucideDynamic,
+    heroOutline,
+    remix,
+    bootstrap,
+    iconoir,
+    radix,
+    fluent,
+    solar,
+  } = mods;
 
   const phosphorMap = {};
   const tablerOutline = {};
@@ -728,6 +864,25 @@ async function main() {
   const faSolid = {};
   const faRegular = {};
   const lucideMap = {};
+  const heroMap = {};
+  const remixLine = {};
+  const remixFill = {};
+  const bootstrapOutline = {};
+  const bootstrapFill = {};
+  const iconoirRegular = {};
+  const iconoirSolid = {};
+  const radixMap = {};
+  const fluentRegular = {};
+  const fluentFilled = {};
+  const fluentLight = {};
+  const solarMaps = {
+    linear: {},
+    outline: {},
+    bold: {},
+    broken: {},
+    lineduotone: {},
+    boldduotone: {},
+  };
 
   for (const name of names) {
     phosphorMap[name] = resolvePhosphor(phosphor, name);
@@ -739,6 +894,20 @@ async function main() {
     faSolid[name] = resolveFa(fa, name, "solid");
     faRegular[name] = resolveFa(fa, name, "regular");
     lucideMap[name] = resolveLucide(lucideDynamic, name);
+    heroMap[name] = resolveHero(heroOutline, name);
+    remixLine[name] = resolveRemix(remix, name, false);
+    remixFill[name] = resolveRemix(remix, name, true);
+    bootstrapOutline[name] = resolveBootstrap(bootstrap, name, false);
+    bootstrapFill[name] = resolveBootstrap(bootstrap, name, true);
+    iconoirRegular[name] = resolveIconoir(iconoir, name, false);
+    iconoirSolid[name] = resolveIconoir(iconoir, name, true);
+    radixMap[name] = resolveRadix(radix, name);
+    fluentRegular[name] = resolveFluent(fluent, name, "regular");
+    fluentFilled[name] = resolveFluent(fluent, name, "filled");
+    fluentLight[name] = resolveFluent(fluent, name, "light");
+    for (const v of Object.keys(solarMaps)) {
+      solarMaps[v][name] = resolveSolar(solar, name, v);
+    }
   }
 
   writeMapFile("phosphorMap.ts", "PHOSPHOR_ICON_MAP", phosphorMap);
@@ -755,6 +924,23 @@ async function main() {
   writeMapFile("faSolidMap.ts", "FA_SOLID_MAP", faSolid);
   writeMapFile("faRegularMap.ts", "FA_REGULAR_MAP", faRegular);
   writeMapFile("lucideMap.ts", "LUCIDE_ICON_MAP", lucideMap);
+  writeMapFile("heroiconsMap.ts", "HEROICONS_MAP", heroMap);
+  writeMapFile("remixLineMap.ts", "REMIX_LINE_MAP", remixLine);
+  writeMapFile("remixFillMap.ts", "REMIX_FILL_MAP", remixFill);
+  writeMapFile("bootstrapOutlineMap.ts", "BOOTSTRAP_OUTLINE_MAP", bootstrapOutline);
+  writeMapFile("bootstrapFillMap.ts", "BOOTSTRAP_FILL_MAP", bootstrapFill);
+  writeMapFile("iconoirRegularMap.ts", "ICONOIR_REGULAR_MAP", iconoirRegular);
+  writeMapFile("iconoirSolidMap.ts", "ICONOIR_SOLID_MAP", iconoirSolid);
+  writeMapFile("radixMap.ts", "RADIX_MAP", radixMap);
+  writeMapFile("fluentRegularMap.ts", "FLUENT_REGULAR_MAP", fluentRegular);
+  writeMapFile("fluentFilledMap.ts", "FLUENT_FILLED_MAP", fluentFilled);
+  writeMapFile("fluentLightMap.ts", "FLUENT_LIGHT_MAP", fluentLight);
+  writeMapFile("solarLinearMap.ts", "SOLAR_LINEAR_MAP", solarMaps.linear);
+  writeMapFile("solarOutlineMap.ts", "SOLAR_OUTLINE_MAP", solarMaps.outline);
+  writeMapFile("solarBoldMap.ts", "SOLAR_BOLD_MAP", solarMaps.bold);
+  writeMapFile("solarBrokenMap.ts", "SOLAR_BROKEN_MAP", solarMaps.broken);
+  writeMapFile("solarLineduotoneMap.ts", "SOLAR_LINEDUOTONE_MAP", solarMaps.lineduotone);
+  writeMapFile("solarBoldduotoneMap.ts", "SOLAR_BOLDDUOTONE_MAP", solarMaps.boldduotone);
 
   console.log(`Generated maps for ${names.length} icons in ${outDir}`);
 }

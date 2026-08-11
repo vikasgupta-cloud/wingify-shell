@@ -23,8 +23,9 @@ export default function IconLibraryPicker() {
           Icon library
         </p>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Swap every app icon (except the mascot logo) between libraries. Closest
-          match is chosen per icon.
+          Swap every app icon (except the mascot logo). Styles below apply to
+          the selected library only — Thin/Duotone for Phosphor, Sharp for
+          Material, and so on.
         </p>
       </div>
 
@@ -49,15 +50,14 @@ export default function IconLibraryPicker() {
         ))}
       </RadioGroup>
 
-      {activeLibrary && activeLibrary.variants.length > 1 ? (
+      {activeLibrary && activeLibrary.variants.length > 0 ? (
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Style
+            Style — {activeLibrary.label}
           </p>
-          {libraryId === "material" ? (
+          {activeLibrary.styleNote ? (
             <p className="text-xs leading-relaxed text-muted-foreground">
-              Outlined, Filled, Rounded, Sharp, and Two-tone are Material-only
-              styles. Other libraries expose their own weight variants above.
+              {activeLibrary.styleNote}
             </p>
           ) : null}
           <div className="flex flex-wrap gap-1.5">

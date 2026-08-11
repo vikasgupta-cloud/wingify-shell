@@ -2,6 +2,7 @@ import type { ComponentType, CSSProperties } from "react";
 import type { IconLibraryId } from "@/config/iconLibraries";
 import type { AppIconName } from "@/config/iconNames";
 import { APP_ICON_NAMES } from "@/config/iconNames";
+import { cn } from "@/lib/utils";
 
 export type IconComponent = ComponentType<{
   size?: number | string;
@@ -13,6 +14,9 @@ export type IconComponent = ComponentType<{
 }>;
 
 export type IconRegistry = Partial<Record<AppIconName, IconComponent>>;
+
+/** Optical scale to cancel Material Symbols' internal padding. */
+const MATERIAL_OPTICAL_SCALE = 1.28;
 
 const LUCIDE_STROKE: Record<string, number> = {
   thin: 1,
@@ -30,28 +34,22 @@ const PHOSPHOR_WEIGHT: Record<string, string> = {
   duotone: "duotone",
 };
 
-function wrapStroke(
-  Icon: IconComponent,
-  strokeWidth: number
-): IconComponent {
+function wrapStroke(Icon: IconComponent, strokeWidth: number): IconComponent {
   return function WrappedIcon(props) {
-    return <Icon {...props} strokeWidth={props.strokeWidth ?? strokeWidth} />;
+    const { strokeWidth: _ignored, ...rest } = props;
+    return <Icon {...rest} strokeWidth={strokeWidth} />;
   };
 }
 
-function wrapPhosphor(
-  Icon: IconComponent,
-  weight: string
-): IconComponent {
+function wrapPhosphor(Icon: IconComponent, weight: string): IconComponent {
   return function WrappedPhosphor(props) {
-    return <Icon {...props} weight={weight} />;
+    const { weight: _ignored, strokeWidth: _sw, ...rest } = props;
+    return <Icon {...rest} weight={weight} />;
   };
 }
 
-function normalizeSizeProps(
-  Icon: IconComponent
-): IconComponent {
-  return function NormalizedIcon({ size, className, ...rest }) {
+function normalizeSizeProps(Icon: IconComponent): IconComponent {
+  return function NormalizedIcon({ size, className, strokeWidth: _sw, ...rest }) {
     const resolvedSize =
       typeof size === "number"
         ? size
@@ -72,6 +70,52 @@ function normalizeSizeProps(
       />
     );
   };
+}
+
+function wrapMuiIcon(Icon: IconComponent): IconComponent {
+  return function MuiWrapped({
+    size,
+    className,
+    strokeWidth: _strokeWidth,
+    color,
+    style,
+    ...rest
+  }) {
+    const numeric =
+      typeof size === "number"
+        ? size
+        : undefined;
+    const sx = {
+      ...(numeric
+        ? {
+            fontSize: numeric,
+            width: numeric,
+            height: numeric,
+          }
+        : { fontSize: "1em", width: "1em", height: "1em" }),
+      ...(color ? { color } : {}),
+      // Cancel Material's empty padding so glyphs match Lucide/Phosphor optical size.
+      transform: `scale(${MATERIAL_OPTICAL_SCALE})`,
+      transformOrigin: "center",
+    };
+
+    return (
+      <Icon
+        {...rest}
+        className={cn("shrink-0", className)}
+        fontSize="inherit"
+        sx={sx}
+        style={style as CSSProperties | undefined}
+      />
+    );
+  };
+}
+
+function pickMap(
+  module: Record<string, unknown>
+): Record<string, string> {
+  const mapKey = Object.keys(module).find((k) => k.endsWith("_MAP"));
+  return (module[mapKey!] as Record<string, string>) ?? {};
 }
 
 async function loadLucideRegistry(variant: string): Promise<IconRegistry> {
@@ -116,37 +160,6 @@ async function loadPhosphorRegistry(variant: string): Promise<IconRegistry> {
   return registry;
 }
 
-function wrapMuiIcon(Icon: IconComponent): IconComponent {
-  return function MuiWrapped({
-    size,
-    className,
-    strokeWidth: _strokeWidth,
-    color,
-    style,
-    ...rest
-  }) {
-    const sx =
-      typeof size === "number" || color
-        ? {
-            ...(typeof size === "number"
-              ? { fontSize: size, width: size, height: size }
-              : {}),
-            ...(color ? { color } : {}),
-          }
-        : undefined;
-
-    return (
-      <Icon
-        {...rest}
-        className={className}
-        fontSize="inherit"
-        sx={sx}
-        style={style as CSSProperties | undefined}
-      />
-    );
-  };
-}
-
 async function loadMaterialRegistry(variant: string): Promise<IconRegistry> {
   const module =
     variant === "filled"
@@ -159,7 +172,9 @@ async function loadMaterialRegistry(variant: string): Promise<IconRegistry> {
             ? await import("./generated/materialTwotoneRegistry")
             : await import("./generated/materialOutlinedRegistry");
 
-  const componentsKey = Object.keys(module).find((k) => k.endsWith("_COMPONENTS"))!;
+  const componentsKey = Object.keys(module).find((k) =>
+    k.endsWith("_COMPONENTS")
+  )!;
   const components = (
     module as Record<string, Record<string, IconComponent>>
   )[componentsKey];
@@ -178,8 +193,7 @@ async function loadFontAwesomeRegistry(variant: string): Promise<IconRegistry> {
     variant === "regular"
       ? await import("./generated/faRegularMap")
       : await import("./generated/faSolidMap");
-  const mapKey = Object.keys(mapModule).find((k) => k.endsWith("_MAP"))!;
-  const map = (mapModule as Record<string, Record<string, string>>)[mapKey];
+  const map = pickMap(mapModule as Record<string, unknown>);
   const registry: IconRegistry = {};
 
   for (const name of APP_ICON_NAMES) {
@@ -197,13 +211,145 @@ async function loadTablerRegistry(variant: string): Promise<IconRegistry> {
     variant === "filled"
       ? await import("./generated/tablerFilledMap")
       : await import("./generated/tablerOutlineMap");
-  const mapKey = Object.keys(mapModule).find((k) => k.endsWith("_MAP"))!;
-  const map = (mapModule as Record<string, Record<string, string>>)[mapKey];
+  const map = pickMap(mapModule as Record<string, unknown>);
   const registry: IconRegistry = {};
 
   for (const name of APP_ICON_NAMES) {
     const key = map[name];
     const Icon = (tabler as unknown as Record<string, IconComponent>)[key];
+    if (Icon) registry[name] = normalizeSizeProps(Icon);
+  }
+
+  return registry;
+}
+
+async function loadHeroiconsRegistry(variant: string): Promise<IconRegistry> {
+  const pack =
+    variant === "solid"
+      ? await import("@heroicons/react/24/solid")
+      : variant === "mini"
+        ? await import("@heroicons/react/20/solid")
+        : await import("@heroicons/react/24/outline");
+  const { HEROICONS_MAP } = await import("./generated/heroiconsMap");
+  const registry: IconRegistry = {};
+
+  for (const name of APP_ICON_NAMES) {
+    const key = HEROICONS_MAP[name as keyof typeof HEROICONS_MAP];
+    const Icon = (pack as unknown as Record<string, IconComponent>)[key];
+    if (Icon) registry[name] = normalizeSizeProps(Icon);
+  }
+
+  return registry;
+}
+
+async function loadRemixRegistry(variant: string): Promise<IconRegistry> {
+  const remix = await import("@remixicon/react");
+  const mapModule =
+    variant === "fill"
+      ? await import("./generated/remixFillMap")
+      : await import("./generated/remixLineMap");
+  const map = pickMap(mapModule as Record<string, unknown>);
+  const registry: IconRegistry = {};
+
+  for (const name of APP_ICON_NAMES) {
+    const key = map[name];
+    const Icon = (remix as unknown as Record<string, IconComponent>)[key];
+    if (Icon) registry[name] = normalizeSizeProps(Icon);
+  }
+
+  return registry;
+}
+
+async function loadBootstrapRegistry(variant: string): Promise<IconRegistry> {
+  const bi = await import("react-bootstrap-icons");
+  const mapModule =
+    variant === "fill"
+      ? await import("./generated/bootstrapFillMap")
+      : await import("./generated/bootstrapOutlineMap");
+  const map = pickMap(mapModule as Record<string, unknown>);
+  const registry: IconRegistry = {};
+
+  for (const name of APP_ICON_NAMES) {
+    const key = map[name];
+    const Icon = (bi as unknown as Record<string, IconComponent>)[key];
+    if (Icon) registry[name] = normalizeSizeProps(Icon);
+  }
+
+  return registry;
+}
+
+async function loadIconoirRegistry(variant: string): Promise<IconRegistry> {
+  const io = await import("iconoir-react");
+  const mapModule =
+    variant === "solid"
+      ? await import("./generated/iconoirSolidMap")
+      : await import("./generated/iconoirRegularMap");
+  const map = pickMap(mapModule as Record<string, unknown>);
+  const registry: IconRegistry = {};
+
+  for (const name of APP_ICON_NAMES) {
+    const key = map[name];
+    const Icon = (io as unknown as Record<string, IconComponent>)[key];
+    if (Icon) registry[name] = normalizeSizeProps(Icon);
+  }
+
+  return registry;
+}
+
+async function loadRadixRegistry(): Promise<IconRegistry> {
+  const rx = await import("@radix-ui/react-icons");
+  const { RADIX_MAP } = await import("./generated/radixMap");
+  const registry: IconRegistry = {};
+
+  for (const name of APP_ICON_NAMES) {
+    const key = RADIX_MAP[name as keyof typeof RADIX_MAP];
+    const Icon = (rx as unknown as Record<string, IconComponent>)[key];
+    if (Icon) registry[name] = normalizeSizeProps(Icon);
+  }
+
+  return registry;
+}
+
+async function loadFluentRegistry(variant: string): Promise<IconRegistry> {
+  const fl = await import("@fluentui/react-icons");
+  const mapModule =
+    variant === "filled"
+      ? await import("./generated/fluentFilledMap")
+      : variant === "light"
+        ? await import("./generated/fluentLightMap")
+        : await import("./generated/fluentRegularMap");
+  const map = pickMap(mapModule as Record<string, unknown>);
+  const registry: IconRegistry = {};
+
+  for (const name of APP_ICON_NAMES) {
+    const key = map[name];
+    const Icon = (fl as unknown as Record<string, IconComponent>)[key];
+    if (Icon) registry[name] = normalizeSizeProps(Icon);
+  }
+
+  return registry;
+}
+
+async function loadSolarRegistry(variant: string): Promise<IconRegistry> {
+  const solar = await import("solar-icon-set");
+  const mapModule =
+    variant === "outline"
+      ? await import("./generated/solarOutlineMap")
+      : variant === "bold"
+        ? await import("./generated/solarBoldMap")
+        : variant === "broken"
+          ? await import("./generated/solarBrokenMap")
+          : variant === "lineduotone"
+            ? await import("./generated/solarLineduotoneMap")
+            : variant === "boldduotone"
+              ? await import("./generated/solarBoldduotoneMap")
+              : await import("./generated/solarLinearMap");
+  const map = pickMap(mapModule as Record<string, unknown>);
+  const registry: IconRegistry = {};
+
+  for (const name of APP_ICON_NAMES) {
+    const key = map[name];
+    const Icon = (solar as unknown as Record<string, IconComponent>)[key];
     if (Icon) registry[name] = normalizeSizeProps(Icon);
   }
 
@@ -254,11 +400,32 @@ export function loadIconRegistry(
     case "tabler":
       promise = loadTablerRegistry(variant);
       break;
+    case "heroicons":
+      promise = loadHeroiconsRegistry(variant);
+      break;
+    case "remix":
+      promise = loadRemixRegistry(variant);
+      break;
+    case "bootstrap":
+      promise = loadBootstrapRegistry(variant);
+      break;
+    case "iconoir":
+      promise = loadIconoirRegistry(variant);
+      break;
+    case "radix":
+      promise = loadRadixRegistry();
+      break;
+    case "fluent":
+      promise = loadFluentRegistry(variant);
+      break;
+    case "solar":
+      promise = loadSolarRegistry(variant);
+      break;
     case "custom":
       promise = loadCustomRegistry();
       break;
     default:
-      promise = loadLucideRegistry("regular");
+      promise = loadPhosphorRegistry("regular");
   }
 
   cache.set(cacheKey, promise);
