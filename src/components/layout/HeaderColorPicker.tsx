@@ -1,6 +1,6 @@
 // Design controller — shared listing header greys (tables, kanban, gantt).
 
-import { Rows3 } from "lucide-react";
+import { Rows3 } from "@/components/icons/protoLucide";
 import {
   NEUTRAL_TOKEN_OPTIONS,
   neutralTokenById,

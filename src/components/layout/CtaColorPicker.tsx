@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Palette } from "lucide-react";
+import { Palette } from "@/components/icons/protoLucide";
 import {
   CTA_FAMILIES,
   CTA_TOKEN_OPTIONS,

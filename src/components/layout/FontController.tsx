@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { ArrowRight, Download, Palette, RotateCcw, X } from "lucide-react";
+import { ArrowRight, Download, Palette, RotateCcw, X } from "@/components/icons/protoLucide";
 import { cn } from "../../lib/utils";
 import { useDesignControllerStore } from "../../store/designController";
 import { useThemeStore } from "../../store/theme";
@@ -16,6 +16,7 @@ import FontPicker from "./FontPicker";
 import CtaColorPicker from "./CtaColorPicker";
 import BackgroundColorPicker from "./BackgroundColorPicker";
 import HeaderColorPicker from "./HeaderColorPicker";
+import IconLibraryPicker from "./IconLibraryPicker";
 
 /** Blank-space clicks required to open (hidden gesture). */
 const OPEN_CLICKS = 5;
@@ -254,6 +255,9 @@ export default function FontController() {
                 </div>
                 <div className="border-b border-border">
                   <HeaderColorPicker />
+                </div>
+                <div className="border-b border-border">
+                  <IconLibraryPicker />
                 </div>
                 <FontPicker />
                 <div className="border-t border-border">

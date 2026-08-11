@@ -1,6 +1,6 @@
 // Design controller — page canvas greys (full Neutral scale).
 
-import { Square } from "lucide-react";
+import { Square } from "@/components/icons/protoLucide";
 import {
   NEUTRAL_TOKEN_OPTIONS,
   neutralTokenById,

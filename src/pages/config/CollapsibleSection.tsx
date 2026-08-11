@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
 import type { SectionId } from "../../config/configSections";

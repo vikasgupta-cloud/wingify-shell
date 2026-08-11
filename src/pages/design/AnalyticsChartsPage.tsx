@@ -1,4 +1,4 @@
-import { BarChart3 } from "lucide-react";
+import { BarChart3 } from "@/components/icons/protoLucide";
 import PageHeader from "../../components/layout/PageHeader";
 import AnalyticsChartGallery from "../../components/layout/AnalyticsChartGallery";
 

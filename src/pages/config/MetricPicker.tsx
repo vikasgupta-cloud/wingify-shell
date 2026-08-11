@@ -9,7 +9,7 @@ import {
   Star,
   X,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

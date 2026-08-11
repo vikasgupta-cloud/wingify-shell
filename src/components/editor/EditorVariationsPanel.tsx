@@ -1,4 +1,4 @@
-import { MoreHorizontal, Plus, X } from "lucide-react";
+import { MoreHorizontal, Plus, X } from "@/components/icons/protoLucide";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

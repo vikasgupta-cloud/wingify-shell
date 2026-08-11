@@ -9,7 +9,7 @@ import {
   Target,
   TrendingUp,
   Users,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import {
   Accordion,
   AccordionContent,

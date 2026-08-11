@@ -1,6 +1,6 @@
 // Shared Feature Management report listing page (rollout / testing / MVT / personalize).
 
-import { Search, Sparkles } from "lucide-react";
+import { Search, Sparkles } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

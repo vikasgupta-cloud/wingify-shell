@@ -1,7 +1,7 @@
 // Feature Management → Feature Flags — Surveys-style views/filters/columns; no status.
 // Create comes from the shell TopBar.
 
-import { Search } from "lucide-react";
+import { Search } from "@/components/icons/protoLucide";
 import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/layout/PageHeader";

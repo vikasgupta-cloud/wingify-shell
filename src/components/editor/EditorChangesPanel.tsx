@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, ListTree, MoreVertical } from "lucide-react";
+import { Filter, ListTree, MoreVertical } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { EditorFloatablePanel } from "./EditorFloatablePanel";

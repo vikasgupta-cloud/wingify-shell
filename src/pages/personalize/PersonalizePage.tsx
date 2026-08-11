@@ -2,7 +2,7 @@
 // Quick view hover is present but disabled; Wandz opens. Campaign click → Coming soon detail.
 
 import { useEffect, useRef } from "react";
-import { Search } from "lucide-react";
+import { Search } from "@/components/icons/protoLucide";
 import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/layout/PageHeader";

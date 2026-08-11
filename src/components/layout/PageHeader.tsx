@@ -1,6 +1,6 @@
 // Page H1 with optional hover description (same pattern as config SectionTitle).
 
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "@/components/icons/protoLucide";
 import {
   Tooltip,
   TooltipContent,

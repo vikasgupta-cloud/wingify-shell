@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {

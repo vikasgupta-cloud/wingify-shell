@@ -6,7 +6,7 @@ import {
   MessageSquare,
   Reply,
   SendHorizontal,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

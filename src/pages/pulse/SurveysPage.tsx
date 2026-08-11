@@ -1,7 +1,7 @@
 // Pulse → Surveys — WE-style views/filters/columns with survey data; table + card layouts.
 // Create comes from the shell TopBar (no page-level Create button).
 
-import { Search } from "lucide-react";
+import { Search } from "@/components/icons/protoLucide";
 import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/layout/PageHeader";

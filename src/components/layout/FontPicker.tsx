@@ -1,4 +1,4 @@
-import { Type } from "lucide-react";
+import { Type } from "@/components/icons/protoLucide";
 import {
   FONTS,
   FONT_ROLE_OPTIONS,

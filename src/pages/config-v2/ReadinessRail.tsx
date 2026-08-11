@@ -4,7 +4,7 @@ import {
   AlertTriangle,
   Check,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import {
   useExperimentReadiness,

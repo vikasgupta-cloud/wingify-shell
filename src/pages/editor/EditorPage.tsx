@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { History, Languages, Layers, ListTree, Pencil, Sparkles } from "lucide-react";
+import { History, Languages, Layers, ListTree, Pencil, Sparkles } from "@/components/icons/protoLucide";
 import { EditorTopBar } from "@/components/editor/EditorTopBar";
 import { EditorVersionBanner } from "@/components/editor/EditorVersionBanner";
 import { EditorScenarioFloat } from "@/components/editor/EditorScenarioFloat";

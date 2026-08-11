@@ -1,7 +1,7 @@
 // Right sheet for an attribute — Metadata / API / Sample Values (+ Store Data Config for custom).
 
 import { useMemo, useState } from "react";
-import { Check, Copy, EllipsisVertical, RefreshCw } from "lucide-react";
+import { Check, Copy, EllipsisVertical, RefreshCw } from "@/components/icons/protoLucide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

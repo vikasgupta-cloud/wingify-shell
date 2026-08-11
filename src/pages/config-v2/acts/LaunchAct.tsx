@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, AlertTriangle, Check, CircleDashed } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, CircleDashed } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

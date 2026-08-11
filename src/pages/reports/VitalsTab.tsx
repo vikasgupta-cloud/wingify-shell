@@ -9,7 +9,7 @@ import {
   MoreVertical,
   X,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import type { Campaign } from "../../data/campaigns";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

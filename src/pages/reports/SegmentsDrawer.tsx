@@ -21,7 +21,7 @@ import {
   Sparkles,
   Users,
   X,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

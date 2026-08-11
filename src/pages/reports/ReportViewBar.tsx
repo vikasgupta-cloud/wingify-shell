@@ -7,7 +7,7 @@ import {
 } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import {
   Popover,

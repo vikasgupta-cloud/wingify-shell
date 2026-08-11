@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ArrowRight, Sparkles } from "@/components/icons/protoLucide";
+import type { LucideIcon } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

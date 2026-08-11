@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { LayoutTemplate } from "lucide-react";
+import { LayoutTemplate } from "@/components/icons/protoLucide";
 import {
   DropdownMenu,
   DropdownMenuContent,

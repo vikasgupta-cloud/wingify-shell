@@ -6,7 +6,7 @@ import {
   Minimize2,
   Sparkles,
   X,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

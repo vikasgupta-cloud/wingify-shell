@@ -1,4 +1,4 @@
-import { Languages } from "lucide-react";
+import { Languages } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { EditorFloatablePanel } from "./EditorFloatablePanel";
 import type {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { GripVertical, RotateCcw, Settings } from "lucide-react";
+import { GripVertical, RotateCcw, Settings } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

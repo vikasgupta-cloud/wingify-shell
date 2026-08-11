@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "@/components/icons/protoLucide";
 import {
   Home,
   Wand2,
@@ -28,7 +28,7 @@ import {
   CodeXml,
   Blocks,
   LogOut,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 export type NavLeaf = {
   label: string;
   path: string;

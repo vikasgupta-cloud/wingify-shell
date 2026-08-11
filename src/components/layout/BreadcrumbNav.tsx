@@ -1,6 +1,6 @@
 import { useLocation, Link, NavLink } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons/protoLucide";
 import { mainNavCrumbPath, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 

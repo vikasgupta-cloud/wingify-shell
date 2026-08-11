@@ -12,7 +12,7 @@ import {
   EllipsisVertical,
   PanelRight,
   Sparkles,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import {
   campaignLandingPath,
   phasesFor,

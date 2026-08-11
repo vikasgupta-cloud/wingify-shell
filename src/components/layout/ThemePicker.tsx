@@ -1,4 +1,4 @@
-import { Moon, Palette, Sun } from "lucide-react";
+import { Moon, Palette, Sun } from "@/components/icons/protoLucide";
 import { THEMES, type ThemeId } from "../../config/themes";
 import { useThemeStore } from "../../store/theme";
 import { cn } from "../../lib/utils";

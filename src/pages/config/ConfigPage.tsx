@@ -4,7 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useVisibleCampaigns } from "../../store/rows";

@@ -15,7 +15,7 @@ import {
   Sparkles,
   Target,
   Trash2,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

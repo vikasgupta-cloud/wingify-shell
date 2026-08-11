@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Plus, Sparkles, Star, X } from "lucide-react";
+import { MoreVertical, Plus, Sparkles, Star, X } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

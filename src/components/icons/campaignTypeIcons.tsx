@@ -1,5 +1,5 @@
 import { forwardRef, type SVGProps } from "react";
-import { Files, type LucideIcon } from "lucide-react";
+import { Files, type LucideIcon } from "@/components/icons/protoLucide";
 import type { CampaignType } from "../../data/campaigns";
 
 type IconProps = SVGProps<SVGSVGElement> & {

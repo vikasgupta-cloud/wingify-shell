@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, Braces, Code2, FileCode2, Plus } from "lucide-react";
+import { ChevronDown, Braces, Code2, FileCode2, Plus } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

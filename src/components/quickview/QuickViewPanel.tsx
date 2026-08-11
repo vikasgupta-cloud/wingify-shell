@@ -9,7 +9,7 @@ import {
   Info,
   MousePointerClick,
   X,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import {
   allVariationsDisabled,
   campaignBestVariant,

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { MousePointerClick } from "lucide-react";
+import { MousePointerClick } from "@/components/icons/protoLucide";
 import { cn } from "../../lib/utils";
 import vwoMark from "../../pages/reports/vwo-mark.svg";
 

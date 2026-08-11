@@ -1,4 +1,4 @@
-import { Equal, ThumbsUp, Trophy, type LucideIcon } from "lucide-react";
+import { Equal, ThumbsUp, Trophy, type LucideIcon } from "@/components/icons/protoLucide";
 import type { Decision } from "../../data/campaigns";
 import { cn } from "../../lib/utils";
 

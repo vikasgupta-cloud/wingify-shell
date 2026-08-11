@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useThemeStore } from "./theme";
 import { useFontStore } from "./fonts";
+import { useIconLibraryStore } from "./iconLibrary";
 
 type DesignControllerState = {
   open: boolean;
@@ -25,6 +26,7 @@ export const useDesignControllerStore = create<DesignControllerState>(
     resetDesign: () => {
       useThemeStore.getState().resetAppearance();
       useFontStore.getState().resetFonts();
+      useIconLibraryStore.getState().resetIconLibrary();
     },
   })
 );

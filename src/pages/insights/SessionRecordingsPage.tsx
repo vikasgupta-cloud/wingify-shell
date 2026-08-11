@@ -18,7 +18,7 @@ import {
   Share2,
   Sparkles,
   Video,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";

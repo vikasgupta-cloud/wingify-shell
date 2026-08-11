@@ -1,4 +1,4 @@
-import { Award, CircleDashed, Hourglass, Scale, ThumbsUp, type LucideIcon } from "lucide-react";
+import { Award, CircleDashed, Hourglass, Scale, ThumbsUp, type LucideIcon } from "@/components/icons/protoLucide";
 import type { Campaign } from "../../data/campaigns";
 import type { ConclusionKind } from "../../data/campaignConclusion";
 import { cn } from "../../lib/utils";

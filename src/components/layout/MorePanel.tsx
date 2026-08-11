@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Pin } from "lucide-react";
+import { Pin } from "@/components/icons/protoLucide";
 import { NAV } from "../../config/navigation";
 import { firstChildPath } from "../../lib/nav";
 import { useUIStore } from "../../store/ui";

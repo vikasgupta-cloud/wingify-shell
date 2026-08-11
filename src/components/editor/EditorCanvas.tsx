@@ -16,7 +16,7 @@ import {
   Plus,
   Sparkles,
   X,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";

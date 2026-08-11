@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Checkbox from "@radix-ui/react-checkbox";
-import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
+import { Check, ChevronDown, Plus, Search, X } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

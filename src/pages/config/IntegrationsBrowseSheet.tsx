@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, Plug, Plus, Search } from "lucide-react";
+import { ChevronDown, Plug, Plus, Search } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

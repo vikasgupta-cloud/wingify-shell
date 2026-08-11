@@ -8,7 +8,7 @@ import {
   Focus,
   Image as ImageIcon,
   MoreVertical,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

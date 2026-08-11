@@ -4,7 +4,7 @@ import {
   MoreVertical,
   PanelRight,
   Sparkles,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import {
   personalizeLandingPath,
   phasesFor,
@@ -15,7 +15,7 @@ import { daysSince, formatShortDate, relativeTime } from "../../lib/dates";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { useWandzStore } from "../../store/wandz";
-import { Target } from "lucide-react";
+import { Target } from "@/components/icons/protoLucide";
 import StatusBadge, { VitalsIcon } from "../ui/StatusBadge";
 import CreatorAvatar from "../ui/CreatorAvatar";
 

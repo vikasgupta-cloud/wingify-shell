@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Maximize2, Minus, PictureInPicture2, X } from "lucide-react";
+import { Maximize2, Minus, PictureInPicture2, X } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

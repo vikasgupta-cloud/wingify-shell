@@ -1,5 +1,5 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Building2, ChevronDown, Plus } from "lucide-react";
+import { Building2, ChevronDown, Plus } from "@/components/icons/protoLucide";
 
 // Visual only — workspace selection is not wired up.
 export default function WorkspaceSwitcher() {

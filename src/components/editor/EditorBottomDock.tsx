@@ -6,7 +6,7 @@ import {
   type ReactElement,
   type WheelEvent as ReactWheelEvent,
 } from "react";
-import { CopyPlus, GripVertical, Plus } from "lucide-react";
+import { CopyPlus, GripVertical, Plus } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,

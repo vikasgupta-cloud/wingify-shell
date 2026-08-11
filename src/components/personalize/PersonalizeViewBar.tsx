@@ -1,7 +1,7 @@
 import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { ChevronRight, MoreVertical, Plus } from "lucide-react";
+import { ChevronRight, MoreVertical, Plus } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import SplitSaveButton from "@/components/ui/SplitSaveButton";
 import {

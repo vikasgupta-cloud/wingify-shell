@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Bookmark, GripVertical, MoreVertical } from "lucide-react";
+import { Bookmark, GripVertical, MoreVertical } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import SplitSaveButton from "@/components/ui/SplitSaveButton";
 import {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Check, CheckCircle2, PanelLeft } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, PanelLeft } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {

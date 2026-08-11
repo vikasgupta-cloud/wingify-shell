@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,

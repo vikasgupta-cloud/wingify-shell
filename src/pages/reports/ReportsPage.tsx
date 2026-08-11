@@ -7,7 +7,7 @@ import {
   RefreshCw,
   Trophy,
   X,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import {
   hasReport,
   type CampaignStatus,

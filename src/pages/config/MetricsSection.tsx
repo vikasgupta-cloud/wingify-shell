@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Eye, Shield, Star, type LucideIcon } from "lucide-react";
+import { Eye, Shield, Star, type LucideIcon } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Monitor, Settings, Smartphone, Tablet } from "lucide-react";
+import { Monitor, Settings, Smartphone, Tablet } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfigStore } from "../../../store/config";

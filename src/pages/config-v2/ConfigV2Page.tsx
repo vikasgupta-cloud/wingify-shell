@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useVisibleCampaigns } from "../../store/rows";

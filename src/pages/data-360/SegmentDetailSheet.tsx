@@ -1,6 +1,6 @@
 // Right sheet for a Data 360 segment — Definition + Metadata tabs.
 
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical } from "@/components/icons/protoLucide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

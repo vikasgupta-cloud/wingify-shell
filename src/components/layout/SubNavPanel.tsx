@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { PinOff } from "lucide-react";
+import { PinOff } from "@/components/icons/protoLucide";
 import type { NavItem } from "../../config/navigation";
 import { canUnpinPath, useUIStore } from "../../store/ui";
 import { cn } from "../../lib/utils";

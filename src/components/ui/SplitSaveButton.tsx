@@ -1,5 +1,5 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

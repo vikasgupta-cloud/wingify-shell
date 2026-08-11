@@ -42,7 +42,7 @@ import {
   Wrench,
   ChevronRight,
   X,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import type { Campaign, Variant } from "../../data/campaigns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

@@ -7,7 +7,7 @@ import {
   Redo2,
   Sparkles,
   Undo2,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import {
   Tooltip,
   TooltipContent,

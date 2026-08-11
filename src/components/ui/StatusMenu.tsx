@@ -1,5 +1,5 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Clock, Info } from "lucide-react";
+import { ChevronDown, Clock, Info } from "@/components/icons/protoLucide";
 import type { CampaignStatus } from "../../data/campaigns";
 import { BLOCKED_NOTICE, STATUS_WORKFLOW } from "../../config/statusWorkflow";
 import { useRowsStore } from "../../store/rows";

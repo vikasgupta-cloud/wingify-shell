@@ -10,7 +10,7 @@ import {
   Paperclip,
   Sparkles,
   Users,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

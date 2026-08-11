@@ -1,4 +1,4 @@
-import { Lock, LockOpen, Plus, Trash2 } from "lucide-react";
+import { Lock, LockOpen, Plus, Trash2 } from "@/components/icons/protoLucide";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

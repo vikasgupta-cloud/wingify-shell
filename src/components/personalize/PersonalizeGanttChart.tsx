@@ -13,7 +13,7 @@ import {
   PanelRight,
   Sparkles,
   Target,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import {
   personalizeLandingPath,
   phasesFor,

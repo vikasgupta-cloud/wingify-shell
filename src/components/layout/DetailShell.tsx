@@ -23,7 +23,7 @@ import {
   Share2,
   Sparkles,
   Trash2,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
 import { mainNavCrumbPath, UTILITY_RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";

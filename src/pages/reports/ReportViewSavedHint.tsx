@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { Check } from "lucide-react";
+import { Check } from "@/components/icons/protoLucide";
 import {
   reportPresetLabel,
   useReportViewsStore,

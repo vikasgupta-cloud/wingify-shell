@@ -1,7 +1,7 @@
 // Survey status picker — same interaction as campaign StatusMenu, survey workflow only.
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons/protoLucide";
 import type { Survey, SurveyStatus } from "@/data/surveys";
 import { SURVEY_STATUS_WORKFLOW } from "@/config/surveyFilters";
 import { useSurveyRowsStore } from "@/store/surveyRows";

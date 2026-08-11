@@ -1,4 +1,4 @@
-import { ChevronDown, PanelLeft, Plus } from "lucide-react";
+import { ChevronDown, PanelLeft, Plus } from "@/components/icons/protoLucide";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";

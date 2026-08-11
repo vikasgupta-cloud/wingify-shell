@@ -26,7 +26,7 @@ import {
   Sparkles,
   Layers,
   UserRound,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

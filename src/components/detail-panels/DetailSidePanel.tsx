@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { X } from "lucide-react";
+import { X } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import {

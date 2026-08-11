@@ -13,7 +13,7 @@ import {
   Smartphone,
   Tablet,
   UnfoldHorizontal,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Link, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";

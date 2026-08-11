@@ -4,7 +4,7 @@ import {
   CalendarRange,
   CalendarClock,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { usePersonalizeTableStore, type GanttZoom } from "../../store/personalizeTable";
 import { cn } from "../../lib/utils";
 

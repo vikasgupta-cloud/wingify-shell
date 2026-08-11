@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Search } from "lucide-react";
+import { Search } from "@/components/icons/protoLucide";
 import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import CampaignTable from "../components/table/CampaignTable";

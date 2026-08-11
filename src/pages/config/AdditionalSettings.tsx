@@ -1,4 +1,4 @@
-import { HelpCircle, Pencil, PlusCircle, X } from "lucide-react";
+import { HelpCircle, Pencil, PlusCircle, X } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

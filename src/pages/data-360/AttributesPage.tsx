@@ -9,10 +9,10 @@ import {
   Plus,
   Search,
   X,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import * as Popover from "@radix-ui/react-popover";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
+import { Check } from "@/components/icons/protoLucide";
 import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -5,6 +5,7 @@ import { applyFonts } from "./config/fonts";
 import { applyBrand } from "./config/applyBrand";
 import { useFontStore } from "./store/fonts";
 import { useThemeStore } from "./store/theme";
+import { IconLibraryProvider } from "./components/icons/IconLibraryProvider";
 
 export default function App() {
   const themeId = useThemeStore((s) => s.themeId);
@@ -22,5 +23,9 @@ export default function App() {
     applyFonts(fontAssignments);
   }, [fontAssignments]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <IconLibraryProvider>
+      <RouterProvider router={router} />
+    </IconLibraryProvider>
+  );
 }

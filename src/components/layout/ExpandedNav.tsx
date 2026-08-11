@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { ChevronDown, MoreHorizontal, Pin, PinOff } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Pin, PinOff } from "@/components/icons/protoLucide";
 import { LOGOUT_PATH, NAV, type NavItem } from "../../config/navigation";
 import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { canUnpinPath, useUIStore } from "../../store/ui";

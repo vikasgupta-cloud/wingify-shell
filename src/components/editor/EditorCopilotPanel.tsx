@@ -5,7 +5,7 @@ import {
   MoreVertical,
   Plus,
   Sparkles,
-} from "lucide-react";
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
