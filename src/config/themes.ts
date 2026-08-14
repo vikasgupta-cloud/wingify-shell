@@ -21,6 +21,8 @@ export const THEME_IDS = [
   "green",
   "midnight",
   "berry",
+  "maroon",
+  "neutral-black",
 ] as const;
 
 export const COLOR_MODES = ["light", "dark"] as const;
@@ -124,6 +126,36 @@ export const THEMES: ThemeOption[] = [
     swatchesDark: [
       semantic.dark["bg.canvas"],
       scales.berry["300"],
+      semantic.dark["bg.surface"],
+    ],
+  },
+  {
+    id: "maroon",
+    label: "Maroon",
+    description: "Maroon 900 primary buttons (#410D23)",
+    swatchesLight: [
+      scales.neutral["0"],
+      scales.maroon["900"],
+      scales.neutral["100"],
+    ],
+    swatchesDark: [
+      semantic.dark["bg.canvas"],
+      scales.maroon["900"],
+      semantic.dark["bg.surface"],
+    ],
+  },
+  {
+    id: "neutral-black",
+    label: "Neutral black",
+    description: "Neutral 950 primary — VWO Neutral black as Primary tokens",
+    swatchesLight: [
+      scales.neutral["0"],
+      scales.neutral["950"],
+      scales.neutral["100"],
+    ],
+    swatchesDark: [
+      semantic.dark["bg.canvas"],
+      scales.neutral["100"],
       semantic.dark["bg.surface"],
     ],
   },

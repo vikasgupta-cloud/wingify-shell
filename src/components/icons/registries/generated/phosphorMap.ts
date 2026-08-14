@@ -47,7 +47,7 @@ export const PHOSPHOR_ICON_MAP = {
   "CircleDashed": "CircleDashed",
   "CircleHelp": "Question",
   "CircleMinus": "Question",
-  "CirclePlus": "Question",
+  "CirclePlus": "PlusCircle",
   "ClipboardList": "Question",
   "Clock": "Clock",
   "Code2": "Code",

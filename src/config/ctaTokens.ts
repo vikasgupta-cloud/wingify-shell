@@ -133,7 +133,7 @@ export function aestheticVarsForCta(
   const { family, step, hex } = token;
   const lightFg = hexLuminance(hex) > 0.55;
   const fg = lightFg
-    ? "var(--vwo-midnight-base)"
+    ? "var(--vwo-neutral-950)"
     : "var(--vwo-neutral-0)";
 
   if (family === "midnight") {
@@ -188,7 +188,7 @@ export function aestheticVarsForCta(
   const activeStep = i <= 3 ? neighborStep(step, 2) : neighborStep(step, -2);
   // Yellow CTAs keep a black stroke; others match the fill.
   const primaryBorder =
-    family === "yellow" ? "var(--vwo-midnight-base)" : primary;
+    family === "yellow" ? "var(--vwo-neutral-950)" : primary;
 
   if (colorMode === "dark") {
     return {

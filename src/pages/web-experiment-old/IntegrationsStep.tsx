@@ -6,7 +6,10 @@ import {
   CalendarDays,
   CheckCircle2,
   HelpCircle,
+  MoreVertical,
+  PlusCircle,
   RotateCcw,
+  Save,
 } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -90,6 +93,7 @@ export default function IntegrationsStep() {
   const [notes, setNotes] = useState("");
   const [pauseOnError, setPauseOnError] = useState(true);
   const [includePii, setIncludePii] = useState(false);
+  const [targetUrl, setTargetUrl] = useState("https://vwo.com");
 
   useEffect(() => {
     if (connected.length > 0) return;
@@ -407,12 +411,56 @@ export default function IntegrationsStep() {
         </div>
       </section>
 
-      {/* CTA hierarchy — primary / secondary / tertiary / ghost / link / destructive */}
+      {/* Page targeting — shadow CTAs (same as Cancel) */}
+      <section className="space-y-4 rounded-lg border border-border bg-background p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-foreground">
+            Include pages where
+          </p>
+          <Button type="button" variant="shadow" size="sm">
+            <Save className="size-3.5" />
+            Save for future use
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select defaultValue="matches">
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="matches">URL matches</SelectItem>
+              <SelectItem value="contains">URL contains</SelectItem>
+              <SelectItem value="starts">URL starts with</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            type="url"
+            value={targetUrl}
+            onChange={(e) => setTargetUrl(e.target.value)}
+            placeholder="https://"
+          />
+          <Button type="button" variant="shadow" size="icon" aria-label="More">
+            <MoreVertical />
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="shadow" size="sm">
+            <PlusCircle className="size-3.5" />
+            Include pages
+          </Button>
+          <Button type="button" variant="shadow" size="sm">
+            <PlusCircle className="size-3.5" />
+            Exclude pages
+          </Button>
+        </div>
+      </section>
+
+      {/* CTA hierarchy — primary / secondary / tertiary / ghost / shadow / link / destructive */}
       <section className="space-y-4 rounded-lg border border-border bg-background px-5 py-4">
         <div>
           <h3 className="text-sm font-medium text-foreground">Actions</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Six CTA levels from the design system — switch themes to compare.
+            CTA levels from the design system — switch themes to compare.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -427,6 +475,10 @@ export default function IntegrationsStep() {
           </Button>
           <Button type="button" variant="ghost" size="sm">
             Cancel
+          </Button>
+          <Button type="button" variant="shadow" size="sm">
+            <Save className="size-3.5" />
+            Save for future use
           </Button>
           <Button type="button" variant="link" size="sm">
             <HelpCircle className="size-3.5" />

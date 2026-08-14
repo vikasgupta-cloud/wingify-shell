@@ -18,8 +18,8 @@ export function familyStepVar(family: string, step: string): string {
 // ── Theme presets ────────────────────────────────────────────────────────────
 //
 // Each theme = an accent family plus an EXACT per-mode var map. Keeping the map
-// explicit preserves every bespoke tweak (yellow's maroon brand-deep, midnight's
-// dark action tokens, yellow/midnight not tinting links/selection). Chart tokens
+// explicit preserves every bespoke tweak (yellow's neutral-950 brand-deep, midnight's
+// dark action tokens, yellow/midnight/neutral-black not tinting links/selection). Chart tokens
 // are omitted on purpose. Adding a theme = one entry here + THEME_IDS + swatches.
 
 const v = familyStepVar;
@@ -30,21 +30,21 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
   yellow: {
     light: {
       "--primary": v("yellow", "50"),
-      "--primary-foreground": "var(--vwo-midnight-base)",
+      "--primary-foreground": "var(--vwo-neutral-950)",
       "--primary-hover": v("yellow", "100"),
       "--primary-active": v("yellow", "200"),
       "--primary-subtle": v("yellow", "100"),
-      "--primary-border": "var(--vwo-midnight-base)",
+      "--primary-border": "var(--vwo-neutral-950)",
       "--ring": v("yellow", "300"),
       "--brand-deep": v("maroon", "900"),
     },
     dark: {
       "--primary": v("yellow", "50"),
-      "--primary-foreground": "var(--vwo-midnight-base)",
+      "--primary-foreground": "var(--vwo-neutral-950)",
       "--primary-hover": v("yellow", "100"),
       "--primary-active": v("yellow", "200"),
       "--primary-subtle": "var(--vwo-dark-bg-hover)",
-      "--primary-border": "var(--vwo-midnight-base)",
+      "--primary-border": "var(--vwo-neutral-950)",
       "--ring": v("yellow", "200"),
     },
   },
@@ -182,6 +182,75 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--link": v("berry", "300"),
       "--link-hover": v("berry", "200"),
       "--brand-deep": v("berry", "900"),
+    },
+  },
+  maroon: {
+    light: {
+      "--primary": v("maroon", "900"),
+      "--primary-foreground": "var(--vwo-neutral-0)",
+      "--primary-hover": v("maroon", "800"),
+      "--primary-active": v("maroon", "700"),
+      "--primary-subtle": v("maroon", "100"),
+      "--primary-border": "var(--primary)",
+      "--ring": v("maroon", "900"),
+      "--accent": v("maroon", "100"),
+      "--selected-bg": v("maroon", "100"),
+      "--selected-fg": v("maroon", "800"),
+      "--link": v("maroon", "700"),
+      "--link-hover": v("maroon", "800"),
+      "--brand-deep": v("maroon", "900"),
+      "--report-brand": v("maroon", "900"),
+      "--report-brand-fg": v("maroon", "800"),
+      "--report-brand-tint": v("maroon", "50"),
+      "--report-link": v("maroon", "700"),
+    },
+    dark: {
+      "--primary": v("maroon", "900"),
+      "--primary-foreground": "var(--vwo-neutral-0)",
+      "--primary-hover": v("maroon", "800"),
+      "--primary-active": v("maroon", "700"),
+      "--primary-subtle": v("maroon", "900"),
+      "--primary-border": "var(--primary)",
+      "--ring": v("maroon", "400"),
+      "--accent": v("maroon", "900"),
+      "--accent-foreground": v("maroon", "100"),
+      "--selected-bg": v("maroon", "900"),
+      "--selected-fg": v("maroon", "200"),
+      "--link": v("maroon", "300"),
+      "--link-hover": v("maroon", "200"),
+      "--brand-deep": v("maroon", "900"),
+    },
+  },
+  /**
+   * Neutral black as Primary — button.primary = neutral/950 (light) /
+   * neutral/100 (dark). Links stay ocean (semantic text.link).
+   */
+  "neutral-black": {
+    light: {
+      "--primary": v("neutral", "950"),
+      "--primary-foreground": "var(--vwo-neutral-0)",
+      "--primary-hover": v("neutral", "900"),
+      "--primary-active": v("neutral", "800"),
+      "--primary-subtle": v("neutral", "100"),
+      "--primary-border": "var(--primary)",
+      "--ring": v("neutral", "800"),
+      "--brand-deep": v("neutral", "950"),
+      "--report-brand": v("neutral", "950"),
+      "--report-brand-fg": v("neutral", "900"),
+      "--report-brand-tint": v("neutral", "50"),
+    },
+    dark: {
+      "--primary": v("neutral", "100"),
+      "--primary-foreground": v("neutral", "950"),
+      "--primary-hover": v("neutral", "50"),
+      "--primary-active": v("neutral", "200"),
+      "--primary-subtle": v("neutral", "800"),
+      "--primary-border": "var(--primary)",
+      "--ring": v("neutral", "100"),
+      "--brand-deep": v("neutral", "950"),
+      "--report-brand": v("neutral", "100"),
+      "--report-brand-fg": v("neutral", "50"),
+      "--report-brand-tint": v("neutral", "800"),
     },
   },
 };

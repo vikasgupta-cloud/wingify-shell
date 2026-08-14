@@ -119,7 +119,7 @@ function blackChrome(mode: ColorMode): Record<string, string> {
   if (mode === "dark") {
     return {
       "--control": "var(--vwo-neutral-0)",
-      "--control-foreground": "var(--vwo-midnight-base)",
+      "--control-foreground": "var(--vwo-neutral-950)",
       "--control-border": "var(--vwo-neutral-0)",
       "--ring": "var(--vwo-neutral-300)",
       "--accent": "var(--vwo-dark-bg-hover)",
@@ -133,16 +133,16 @@ function blackChrome(mode: ColorMode): Record<string, string> {
     };
   }
   return {
-    "--control": "var(--vwo-midnight-base)",
+    "--control": "var(--vwo-neutral-950)",
     "--control-foreground": "var(--vwo-neutral-0)",
-    "--control-border": "var(--vwo-midnight-base)",
+    "--control-border": "var(--vwo-neutral-950)",
     "--ring": "var(--vwo-neutral-800)",
     "--accent": v("neutral", "100"),
-    "--accent-foreground": "var(--vwo-midnight-base)",
+    "--accent-foreground": "var(--vwo-neutral-950)",
     "--selected-bg": v("neutral", "100"),
-    "--selected-fg": "var(--vwo-midnight-base)",
-    "--brand-deep": "var(--vwo-midnight-base)",
-    "--report-brand": "var(--vwo-midnight-base)",
+    "--selected-fg": "var(--vwo-neutral-950)",
+    "--brand-deep": "var(--vwo-neutral-950)",
+    "--report-brand": "var(--vwo-neutral-950)",
     "--report-brand-fg": v("neutral", "800"),
     "--report-brand-tint": v("neutral", "100"),
   };
@@ -155,7 +155,7 @@ function yellowBorderChrome(mode: ColorMode): Record<string, string> {
   if (mode === "dark") {
     return {
       "--control": v("yellow", "50"),
-      "--control-foreground": "var(--vwo-midnight-base)",
+      "--control-foreground": "var(--vwo-neutral-950)",
       "--control-border": v("yellow", "300"),
       "--primary-border": v("yellow", "300"),
       "--cta-secondary-fg": v("yellow", "200"),
@@ -173,7 +173,7 @@ function yellowBorderChrome(mode: ColorMode): Record<string, string> {
 
   return {
     "--control": v("yellow", "50"),
-    "--control-foreground": "var(--vwo-midnight-base)",
+    "--control-foreground": "var(--vwo-neutral-950)",
     "--control-border": v("yellow", "500"),
     "--primary-border": v("yellow", "500"),
     "--primary-foreground": v("yellow", "800"),
@@ -198,7 +198,7 @@ function yellow500Chrome(mode: ColorMode): Record<string, string> {
   if (mode === "dark") {
     return {
       "--control": v("yellow", "300"),
-      "--control-foreground": "var(--vwo-midnight-base)",
+      "--control-foreground": "var(--vwo-neutral-950)",
       "--control-border": v("yellow", "300"),
       "--primary-border": v("yellow", "300"),
       "--cta-secondary-fg": v("yellow", "200"),
@@ -248,7 +248,7 @@ function tintedChrome(
   if (mode === "dark") {
     return {
       "--control": v(family, steps.control),
-      "--control-foreground": "var(--vwo-midnight-base)",
+      "--control-foreground": "var(--vwo-neutral-950)",
       "--control-border": v(family, steps.control),
       "--ring": v(family, steps.ring),
       "--accent": v(family, "900"),
@@ -336,7 +336,7 @@ function swatchFor(
       surface,
       field,
       tint: light ? scales.neutral["100"] : scales.neutral["800"],
-      control: light ? scales.midnight.base : scales.neutral["0"],
+      control: light ? scales.neutral["950"] : scales.neutral["0"],
       cta,
     };
   }

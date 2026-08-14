@@ -14,7 +14,9 @@ export type NeutralTokenOption = {
 /** Full VWO neutral scale — used for page canvas and listing headers. */
 export const NEUTRAL_STEPS = [
   "0",
+  "25",
   "50",
+  "75",
   "100",
   "200",
   "300",
@@ -29,7 +31,9 @@ export const NEUTRAL_STEPS = [
 
 const STEP_LABEL: Record<string, string> = {
   "0": "White",
+  "25": "Porcelain",
   "50": "Canvas",
+  "75": "Parchment",
   "100": "Feather",
   "200": "Stone",
   "300": "Dusk",
@@ -118,12 +122,12 @@ function hexLuminance(hex: string): number {
 }
 
 /**
- * Ink over a solid neutral fill — pale fills get midnight text, mid/deep get white.
+ * Ink over a solid neutral fill — pale fills get neutral-950 text, mid/deep get white.
  * Matches CTA luminance threshold (> 0.55 → dark ink).
  */
 export function inkForNeutralFill(hex: string): string {
   return hexLuminance(hex) > 0.55
-    ? "var(--vwo-midnight-base)"
+    ? "var(--vwo-neutral-950)"
     : "var(--vwo-neutral-0)";
 }
 
@@ -132,8 +136,8 @@ export function inkForNeutralStep(step: string): string {
   const token = NEUTRAL_TOKEN_OPTIONS.find((t) => t.step === step);
   if (token) return inkForNeutralFill(token.hex);
   const n = Number(step);
-  if (!Number.isFinite(n)) return "var(--vwo-midnight-base)";
-  return n >= 300 ? "var(--vwo-neutral-0)" : "var(--vwo-midnight-base)";
+  if (!Number.isFinite(n)) return "var(--vwo-neutral-950)";
+  return n >= 300 ? "var(--vwo-neutral-0)" : "var(--vwo-neutral-950)";
 }
 
 export function aestheticVarsForHeader(

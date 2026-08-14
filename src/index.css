@@ -110,13 +110,15 @@
 
 :root {
   /*
-   * Source: src/config/vwo-colour-tokens.figma.json
+   * Source: src/config/vwo-tokens-neutral-black.figma.json
    * All colour values below are VWO primitives or semantic tokens — no hand-mixed hues.
    */
 
-  /* ── VWO primitives (vwo-colour-tokens.figma.json) ─────────────── */
+  /* ── VWO primitives (vwo-tokens-neutral-black.figma.json) ─────────────── */
   --vwo-neutral-0: 0 0% 100%;  /* neutral/0 * #FFFFFF */
+  --vwo-neutral-25: 48 26.3% 96.3%;  /* neutral/25 #F8F7F3 */
   --vwo-neutral-50: 40 33.3% 94.7%;  /* neutral/50 * #F6F3ED */
+  --vwo-neutral-75: 43.6 25.6% 91.6%;  /* neutral/75 #EFECE4 */
   --vwo-neutral-100: 40 22.4% 86.9%;  /* neutral/100 * #E5E0D6 */
   --vwo-neutral-200: 41 18.2% 82.7%;  /* neutral/200 #DBD6CB */
   --vwo-neutral-300: 42 9.9% 66.5%;  /* neutral/300 * #B2ADA1 */
@@ -253,12 +255,12 @@
   --vwo-light-bg-hover: 40 33.3% 94.7%;
   --vwo-light-bg-active: 40 22.4% 86.9%;
   --vwo-light-bg-selected: 40 22.4% 86.9%;
-  --vwo-light-bg-disabled: 40 33.3% 94.7%;
+  --vwo-light-bg-disabled: 40 22.4% 86.9%; /* surface.disabled #E5E0D6 */
   --vwo-light-text-primary: 45 17.4% 9%;
-  /* Secondary/muted bumped to neutral-700 for WCAG AA on canvas/muted fills. */
-  --vwo-light-text-secondary: 49 7.5% 28.8%;  /* neutral/700 #4F4D44 */
-  --vwo-light-text-tertiary: 45 6.7% 34.9%;   /* neutral/600 #5F5C53 */
-  --vwo-light-text-placeholder: 45 6.7% 34.9%; /* neutral/600 #5F5C53 */
+  /* Exact Neutral-black semantic Light text roles */
+  --vwo-light-text-secondary: 45 6.7% 34.9%;  /* text.secondary #5F5C53 */
+  --vwo-light-text-tertiary: 43 6.1% 44.7%;   /* text.muted #79756B */
+  --vwo-light-text-placeholder: 43 6.1% 44.7%; /* text.placeholder #79756B */
   --vwo-light-text-disabled: 41 7.2% 56.5%;
   --vwo-light-text-inverse: 0 0% 100%;
   --vwo-light-text-link: 225 58.7% 47.5%;
@@ -274,10 +276,10 @@
   --vwo-light-action-primary-text: 0 0% 100%;
   --vwo-light-action-secondary-bg: 0 0% 100%;
   --vwo-light-action-secondary-bg-hover: 40 33.3% 94.7%;
-  --vwo-light-action-secondary-border: 42 9.9% 66.5%;
+  --vwo-light-action-secondary-border: 41 7.2% 56.5%; /* neutral/400 #989388 */
   --vwo-light-action-secondary-text: 45 17.4% 9%;
   --vwo-light-action-subtle-bg-hover: 40 33.3% 94.7%;
-  --vwo-light-action-subtle-text: 49 7.5% 28.8%; /* matches text.secondary */
+  --vwo-light-action-subtle-text: 45 6.7% 34.9%; /* matches text.secondary */
   --vwo-light-action-destructive-bg: 11 100% 35.9%;
   --vwo-light-action-destructive-bg-hover: 10 100% 29.6%;
   --vwo-light-action-destructive-text: 0 0% 100%;
@@ -307,7 +309,7 @@
   --vwo-light-status-info-icon: 225 58.7% 47.5%;
   --vwo-light-status-info-solid: 225 82.8% 59%;
   --vwo-light-status-info-solid-text: 0 0% 100%;
-  --vwo-light-status-neutral-bg: 40 33.3% 94.7%;
+  --vwo-light-status-neutral-bg: 40 22.4% 86.9%; /* status.neutral.surface #E5E0D6 */
   --vwo-light-status-neutral-border: 41 18.2% 82.7%;
   --vwo-light-status-neutral-text: 49 7.5% 28.8%;
   --vwo-light-status-neutral-solid: 45 6.7% 34.9%;
@@ -318,23 +320,23 @@
   --vwo-light-status-ai-solid: 314 71.7% 38.8%;
   --vwo-light-status-ai-solid-text: 0 0% 100%;
   --vwo-light-accent-indicator: 67 100% 71.4%;
-  --vwo-light-accent-emphasis: 335 66.7% 15.3%;
-  --vwo-light-overlay-scrim: 210 6.2% 12.5%;
-  --vwo-light-overlay-inverse-surface: 210 6.2% 12.5%;
+  --vwo-light-accent-emphasis: 45 17.4% 9%; /* accent.on-current #1B1913 */
+  --vwo-light-overlay-scrim: 210 6.2% 12.5%; /* surface.scrim base #1E2022 */
+  --vwo-light-overlay-inverse-surface: 45 17.4% 9%; /* #1B1913 */
 
   --vwo-dark-bg-canvas: 45 17.4% 9%;
   --vwo-dark-bg-surface: 45 10.3% 15.3%;
   --vwo-dark-bg-surface-raised: 42 9.1% 21.6%;
   --vwo-dark-bg-surface-sunken: 45 17.4% 9%;
   --vwo-dark-bg-hover: 42 9.1% 21.6%;
-  --vwo-dark-bg-active: 49 7.5% 28.8%;
+  --vwo-dark-bg-active: 42 9.1% 21.6%; /* surface.selected #3C3932 */
   --vwo-dark-bg-selected: 42 9.1% 21.6%;
   --vwo-dark-bg-disabled: 42 9.1% 21.6%;
   --vwo-dark-text-primary: 40 33.3% 94.7%;
-  /* Secondary brightened to neutral-200 so muted UI text clears AA on raised surfaces. */
-  --vwo-dark-text-secondary: 41 18.2% 82.7%; /* neutral/200 #DBD6CB */
-  --vwo-dark-text-tertiary: 42 9.9% 66.5%;   /* neutral/300 #B2ADA1 */
-  --vwo-dark-text-placeholder: 42 9.9% 66.5%; /* neutral/300 #B2ADA1 */
+  /* Exact Neutral-black semantic Dark text roles */
+  --vwo-dark-text-secondary: 42 9.9% 66.5%; /* text.secondary #B2ADA1 */
+  --vwo-dark-text-tertiary: 41 7.2% 56.5%;   /* text.muted #989388 */
+  --vwo-dark-text-placeholder: 41 7.2% 56.5%; /* text.placeholder #989388 */
   --vwo-dark-text-disabled: 45 6.7% 34.9%;
   --vwo-dark-text-inverse: 45 17.4% 9%;
   --vwo-dark-text-link: 212 100% 78.4%;
@@ -350,10 +352,10 @@
   --vwo-dark-action-primary-text: 45 17.4% 9%;
   --vwo-dark-action-secondary-bg: 42 9.1% 21.6%;
   --vwo-dark-action-secondary-bg-hover: 49 7.5% 28.8%;
-  --vwo-dark-action-secondary-border: 45 6.7% 34.9%;
+  --vwo-dark-action-secondary-border: 43 6.1% 44.7%; /* button.secondary.border #79756B */
   --vwo-dark-action-secondary-text: 40 33.3% 94.7%;
   --vwo-dark-action-subtle-bg-hover: 42 9.1% 21.6%;
-  --vwo-dark-action-subtle-text: 41 18.2% 82.7%; /* matches text.secondary */
+  --vwo-dark-action-subtle-text: 42 9.9% 66.5%; /* button.ghost.label #B2ADA1 */
   --vwo-dark-action-destructive-bg: 12 98.2% 43.9%;
   --vwo-dark-action-destructive-bg-hover: 11 100% 35.9%;
   --vwo-dark-action-destructive-text: 0 0% 100%;
@@ -394,25 +396,25 @@
   --vwo-dark-status-ai-solid: 316 58.7% 50.6%;
   --vwo-dark-status-ai-solid-text: 0 0% 100%;
   --vwo-dark-accent-indicator: 67 100% 71.4%;
-  --vwo-dark-accent-emphasis: 340 76.1% 78.6%;
-  --vwo-dark-overlay-scrim: 210 6.2% 12.5%;
-  --vwo-dark-overlay-inverse-surface: 45 10.3% 15.3%;
+  --vwo-dark-accent-emphasis: 45 17.4% 9%; /* accent.on-current #1B1913 */
+  --vwo-dark-overlay-scrim: 0 0% 0%; /* surface.scrim #000000 */
+  --vwo-dark-overlay-inverse-surface: 45 10.3% 15.3%; /* surface.card #2B2923 */
 
   /* ── App roles ← VWO Semantic Light + yellow accent (default) ──────── */
   --background: var(--vwo-light-bg-surface);
-  --foreground: var(--vwo-midnight-base);
+  --foreground: var(--vwo-neutral-950);
   --card: var(--vwo-light-bg-surface-raised);
-  --card-foreground: var(--vwo-midnight-base);
+  --card-foreground: var(--vwo-neutral-950);
   --popover: var(--vwo-light-bg-surface-raised);
-  --popover-foreground: var(--vwo-midnight-base);
+  --popover-foreground: var(--vwo-neutral-950);
 
   --primary: var(--vwo-yellow-50);
-  --primary-foreground: var(--vwo-midnight-base);
+  --primary-foreground: var(--vwo-neutral-950);
   --primary-hover: var(--vwo-yellow-100);
   --primary-active: var(--vwo-yellow-200);
   --primary-subtle: var(--vwo-yellow-100);
   /* Yellow CTA keeps a black stroke; other themes match fill. */
-  --primary-border: var(--vwo-midnight-base);
+  --primary-border: var(--vwo-neutral-950);
   /* Secondary CTA label — schemes may remap (e.g. yellow-900). */
   --cta-secondary-fg: var(--foreground);
 
@@ -423,7 +425,7 @@
   --control-border: var(--primary-border);
 
   --secondary: var(--vwo-light-bg-hover);
-  --secondary-foreground: var(--vwo-midnight-base);
+  --secondary-foreground: var(--vwo-neutral-950);
   --secondary-hover: var(--vwo-light-bg-active);
 
   --muted: var(--vwo-light-bg-canvas);
@@ -436,10 +438,10 @@
   --listing-header-fg: var(--foreground);
 
   --accent: var(--vwo-light-bg-selected);
-  --accent-foreground: var(--vwo-midnight-base);
+  --accent-foreground: var(--vwo-neutral-950);
 
   --selected-bg: var(--vwo-light-bg-selected);
-  --selected-fg: var(--vwo-midnight-base);
+  --selected-fg: var(--vwo-neutral-950);
 
   --link: var(--vwo-light-text-link);
   --link-hover: var(--vwo-light-text-link-hover);
@@ -455,11 +457,11 @@
   --destructive-foreground: var(--vwo-light-action-destructive-text);
 
   --rail: var(--vwo-light-bg-surface);
-  --rail-foreground: var(--vwo-midnight-base);
-  --rail-active: var(--vwo-midnight-base);
+  --rail-foreground: var(--vwo-neutral-950);
+  --rail-active: var(--vwo-neutral-950);
   --rail-active-foreground: var(--vwo-neutral-0);
   --panel: var(--vwo-light-bg-surface);
-  --panel-foreground: var(--vwo-midnight-base);
+  --panel-foreground: var(--vwo-neutral-950);
   --panel-border: var(--vwo-light-border-subtle);
 
   --status-draft-bg: var(--vwo-light-status-info-bg);
@@ -628,13 +630,13 @@
 [data-mode="light"] {
   color-scheme: light;
   --background: var(--vwo-light-bg-surface);
-  --foreground: var(--vwo-midnight-base);
+  --foreground: var(--vwo-neutral-950);
   --card: var(--vwo-light-bg-surface-raised);
-  --card-foreground: var(--vwo-midnight-base);
+  --card-foreground: var(--vwo-neutral-950);
   --popover: var(--vwo-light-bg-surface-raised);
-  --popover-foreground: var(--vwo-midnight-base);
+  --popover-foreground: var(--vwo-neutral-950);
   --secondary: var(--vwo-light-bg-hover);
-  --secondary-foreground: var(--vwo-midnight-base);
+  --secondary-foreground: var(--vwo-neutral-950);
   --secondary-hover: var(--vwo-light-bg-active);
   --muted: var(--vwo-light-bg-canvas);
   --muted-foreground: var(--vwo-light-text-secondary);
@@ -645,9 +647,9 @@
   --listing-header-bg: var(--background);
   --listing-header-fg: var(--foreground);
   --accent: var(--vwo-light-bg-selected);
-  --accent-foreground: var(--vwo-midnight-base);
+  --accent-foreground: var(--vwo-neutral-950);
   --selected-bg: var(--vwo-light-bg-selected);
-  --selected-fg: var(--vwo-midnight-base);
+  --selected-fg: var(--vwo-neutral-950);
   --border: var(--vwo-light-border-subtle);
   --input: var(--vwo-light-border-control);
   --ring: var(--vwo-light-border-focus);
@@ -656,11 +658,11 @@
   --destructive: var(--vwo-light-action-destructive-bg);
   --destructive-foreground: var(--vwo-light-action-destructive-text);
   --rail: var(--vwo-light-bg-surface);
-  --rail-foreground: var(--vwo-midnight-base);
-  --rail-active: var(--vwo-midnight-base);
+  --rail-foreground: var(--vwo-neutral-950);
+  --rail-active: var(--vwo-neutral-950);
   --rail-active-foreground: var(--vwo-neutral-0);
   --panel: var(--vwo-light-bg-surface);
-  --panel-foreground: var(--vwo-midnight-base);
+  --panel-foreground: var(--vwo-neutral-950);
   --panel-border: var(--vwo-light-border-subtle);
   --success-fg: var(--vwo-light-status-success-text);
   --success-solid: var(--vwo-light-status-success-solid);
@@ -714,8 +716,8 @@
   --destructive-foreground: var(--vwo-dark-action-destructive-text);
   --rail: var(--vwo-dark-bg-canvas);
   --rail-foreground: var(--vwo-dark-text-primary);
-  /* Selection chip stays midnight + white in every accent × mode. */
-  --rail-active: var(--vwo-midnight-base);
+  /* Selection chip stays neutral-950 + white in every accent × mode. */
+  --rail-active: var(--vwo-neutral-950);
   --rail-active-foreground: var(--vwo-neutral-0);
   --panel: var(--vwo-dark-bg-surface);
   --panel-foreground: var(--vwo-dark-text-primary);

@@ -9,11 +9,12 @@ import { cn } from "@/lib/utils"
  * 1. primary   (`default`)  — primary fill
  * 2. secondary              — primary-color outline; feather grey on hover
  * 3. tertiary               — light grey border, dark text
- * 4. ghost                  — no fill, no border
+ * 4. ghost / shadow         — no fill, no border (shadow = product alias)
  * 5. link                   — link-styled button (leading/trailing icons OK)
  * 6. destructive            — danger fill
  *
  * `outline` → tertiary alias (back-compat).
+ * `shadow` → ghost alias (product naming).
  */
 const buttonVariants = cva(
   "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -32,8 +33,11 @@ const buttonVariants = cva(
         // Back-compat alias for tertiary
         outline:
           "border border-border bg-background text-foreground hover:bg-muted hover:text-foreground",
-        // 4. Ghost — no fill, no border
+        // 4. Ghost / shadow — no fill, no border
         ghost:
+          "border border-transparent bg-transparent text-foreground hover:bg-muted hover:text-foreground",
+        // Product alias for ghost
+        shadow:
           "border border-transparent bg-transparent text-foreground hover:bg-muted hover:text-foreground",
         // 5. Link — link-colored button; supports leading/trailing icons
         link:
