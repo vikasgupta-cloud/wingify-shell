@@ -413,6 +413,8 @@
   --primary-subtle: var(--vwo-yellow-100);
   /* Yellow CTA keeps a black stroke; other themes match fill. */
   --primary-border: var(--vwo-midnight-base);
+  /* Secondary CTA label — schemes may remap (e.g. yellow-900). */
+  --cta-secondary-fg: var(--foreground);
 
   /* Form controls (checkbox / radio / switch / slider) — follow primary by
      default; yellow form sub-themes remap these via formElementSchemes. */
@@ -845,20 +847,51 @@
    lived here; a custom CTA overrides the same vars on top. Add a theme in
    brandEngine THEME_VAR_SPEC + THEME_IDS + THEMES — no CSS block needed. */
 
-/* Lemon (yellow) fill is too pale to read without a black stroke — only when
-   form controls still follow the button color (no form-element override). */
+/* Lemon (yellow) fill is too pale to read without a stroke — only when form
+   controls still follow the button color (no form-element override). Stroke
+   sits on the filled range only; the feather track stays unbordered. */
 [data-theme="yellow"]:not([data-form-elements]) [data-slot="slider-track"] {
-  background-color: hsl(var(--foreground) / 0.1);
-  outline: 1px solid hsl(var(--foreground));
+  box-shadow: none;
+}
+[data-theme="yellow"]:not([data-form-elements]) [data-slot="slider-range"] {
+  box-shadow: inset 0 0 0 1px hsl(var(--foreground));
 }
 [data-theme="yellow"]:not([data-form-elements]) [data-slot="slider-thumb"] {
-  border-width: 2px;
   border-color: hsl(var(--foreground));
 }
-[data-theme="yellow"]:not([data-form-elements]) [data-slot="switch"] {
+[data-theme="yellow"]:not([data-form-elements]) [data-slot="switch"][data-state="checked"] {
   border-color: hsl(var(--foreground));
 }
-[data-theme="yellow"]:not([data-form-elements]) [data-slot="switch-thumb"] {
+[data-theme="yellow"]:not([data-form-elements]) [data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"] {
+  background-color: hsl(var(--foreground));
+  box-shadow: none;
+}
+
+/* Yellow 500 — stroke on the filled range only; feather track stays clean. */
+[data-form-elements="yellow-yellow-500"] [data-slot="slider-track"] {
+  box-shadow: none;
+}
+[data-form-elements="yellow-yellow-500"] [data-slot="slider-range"] {
+  box-shadow: inset 0 0 0 1px hsl(var(--control));
+}
+[data-form-elements="yellow-yellow-500"] [data-slot="slider-thumb"] {
+  border-color: hsl(var(--control));
+}
+
+/* Yellow border — lemon fill with yellow-500 stroke on the range only. */
+[data-form-elements="yellow-yellow-border"] [data-slot="slider-track"] {
+  box-shadow: none;
+}
+[data-form-elements="yellow-yellow-border"] [data-slot="slider-range"] {
+  box-shadow: inset 0 0 0 1px hsl(var(--control-border));
+}
+[data-form-elements="yellow-yellow-border"] [data-slot="slider-thumb"] {
+  border-color: hsl(var(--control-border));
+}
+[data-form-elements="yellow-yellow-border"] [data-slot="switch"][data-state="checked"] {
+  border-color: hsl(var(--control-border));
+}
+[data-form-elements="yellow-yellow-border"] [data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"] {
   background-color: hsl(var(--foreground));
   box-shadow: none;
 }

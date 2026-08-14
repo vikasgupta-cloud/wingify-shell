@@ -10,7 +10,7 @@ const Switch = React.forwardRef<
   <SwitchPrimitives.Root
     data-slot="switch"
     className={cn(
-      "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent p-px shadow-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-control data-[state=unchecked]:bg-input",
+      "peer group inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border p-px shadow-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=unchecked]:border-border data-[state=unchecked]:bg-muted data-[state=checked]:border-control-border data-[state=checked]:bg-control",
       className
     )}
     {...props}
@@ -19,7 +19,7 @@ const Switch = React.forwardRef<
     <SwitchPrimitives.Thumb
       data-slot="switch-thumb"
       className={cn(
-        "pointer-events-none block size-4 rounded-full bg-background shadow-sm ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+        "pointer-events-none block size-4 rounded-full bg-background shadow-sm ring-0 transition-transform group-data-[state=checked]:translate-x-4 group-data-[state=unchecked]:translate-x-0 group-data-[state=unchecked]:border group-data-[state=unchecked]:border-border group-data-[state=checked]:border-0 group-data-[state=checked]:shadow-none"
       )}
     />
   </SwitchPrimitives.Root>

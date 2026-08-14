@@ -36,6 +36,19 @@ import { OLD_STEPS } from "./oldFlow";
 
 const SHOW = ["ga4", "snowflake", "segment"] as const;
 
+/** Distinct brand chip fills — live logos, not the theme control accent. */
+const BRAND_CHIP: Record<
+  (typeof SHOW)[number],
+  { bg: string; fg: string }
+> = {
+  ga4: { bg: "hsl(var(--vwo-cherry-500))", fg: "hsl(var(--vwo-neutral-0))" },
+  snowflake: {
+    bg: "hsl(var(--vwo-ocean-500))",
+    fg: "hsl(var(--vwo-neutral-0))",
+  },
+  segment: { bg: "hsl(var(--vwo-green-700))", fg: "hsl(var(--vwo-neutral-0))" },
+};
+
 /** Inline text links (not link CTAs) shown on a few connected-app rows. */
 const ROW_LINKS: Partial<
   Record<(typeof SHOW)[number], { href: string; label: string }>
@@ -128,6 +141,7 @@ export default function IntegrationsStep() {
           {rows.map((item) => {
             const checked = connected.includes(item.id);
             const rowLink = ROW_LINKS[item.id as (typeof SHOW)[number]];
+            const chip = BRAND_CHIP[item.id as (typeof SHOW)[number]];
             return (
               <li key={item.id} className="flex items-start gap-3 px-4 py-4">
                 <Checkbox
@@ -138,7 +152,14 @@ export default function IntegrationsStep() {
                   }
                   className="mt-0.5"
                 />
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-[hsl(var(--report-brand-tint))] text-xs font-semibold text-brand-deep">
+                <div
+                  className="flex size-9 shrink-0 items-center justify-center rounded-md text-xs font-semibold"
+                  style={
+                    chip
+                      ? { backgroundColor: chip.bg, color: chip.fg }
+                      : undefined
+                  }
+                >
                   {item.name
                     .split(" ")
                     .map((w) => w[0])

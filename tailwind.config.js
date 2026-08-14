@@ -118,6 +118,9 @@ export default {
           foreground: "hsl(var(--control-foreground))",
           border: "hsl(var(--control-border))",
         },
+        cta: {
+          secondary: "hsl(var(--cta-secondary-fg))",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

@@ -9,6 +9,8 @@ import type { ColorMode } from "./themes";
 
 export const FORM_ELEMENT_SCHEME_IDS = [
   "yellow-yellow",
+  "yellow-yellow-500",
+  "yellow-yellow-border",
   "yellow-black",
   "yellow-graphite",
   "yellow-blue",
@@ -49,6 +51,8 @@ const { scales, semantic } = tokens;
 
 type ControlFamily =
   | "yellow"
+  | "yellow-500"
+  | "yellow-border"
   | "black"
   | "neutral"
   | "ocean"
@@ -58,7 +62,10 @@ type ControlFamily =
   | "cherry";
 
 /** Families that take the shared tinted recipe below. */
-type TintedFamily = Exclude<ControlFamily, "yellow" | "black">;
+type TintedFamily = Exclude<
+  ControlFamily,
+  "yellow" | "yellow-500" | "yellow-border" | "black"
+>;
 
 /**
  * Per-family steps for the filled control and its focus ring. Steps differ by
@@ -79,6 +86,8 @@ const FAMILY_STEPS: Record<
 
 const SCHEME_CONTROL_FAMILY: Record<FormElementSchemeId, ControlFamily> = {
   "yellow-yellow": "yellow",
+  "yellow-yellow-500": "yellow-500",
+  "yellow-yellow-border": "yellow-border",
   "yellow-black": "black",
   "yellow-graphite": "neutral",
   "yellow-blue": "ocean",
@@ -90,6 +99,8 @@ const SCHEME_CONTROL_FAMILY: Record<FormElementSchemeId, ControlFamily> = {
 
 const SCHEME_LABEL: Record<FormElementSchemeId, string> = {
   "yellow-yellow": "Yellow",
+  "yellow-yellow-500": "Yellow 500",
+  "yellow-yellow-border": "Yellow border",
   "yellow-black": "Black",
   "yellow-graphite": "Graphite",
   "yellow-blue": "Blue",
@@ -134,6 +145,91 @@ function blackChrome(mode: ColorMode): Record<string, string> {
     "--report-brand": "var(--vwo-midnight-base)",
     "--report-brand-fg": v("neutral", "800"),
     "--report-brand-tint": v("neutral", "100"),
+  };
+}
+
+/**
+ * Lemon secondary fills with yellow-500 strokes on controls and primary CTAs.
+ */
+function yellowBorderChrome(mode: ColorMode): Record<string, string> {
+  if (mode === "dark") {
+    return {
+      "--control": v("yellow", "50"),
+      "--control-foreground": "var(--vwo-midnight-base)",
+      "--control-border": v("yellow", "300"),
+      "--primary-border": v("yellow", "300"),
+      "--cta-secondary-fg": v("yellow", "200"),
+      "--ring": v("yellow", "200"),
+      "--accent": v("yellow", "900"),
+      "--accent-foreground": v("yellow", "100"),
+      "--selected-bg": v("yellow", "900"),
+      "--selected-fg": v("yellow", "200"),
+      "--brand-deep": v("yellow", "900"),
+      "--report-brand": v("yellow", "900"),
+      "--report-brand-fg": v("yellow", "300"),
+      "--report-brand-tint": v("yellow", "900"),
+    };
+  }
+
+  return {
+    "--control": v("yellow", "50"),
+    "--control-foreground": "var(--vwo-midnight-base)",
+    "--control-border": v("yellow", "500"),
+    "--primary-border": v("yellow", "500"),
+    "--primary-foreground": v("yellow", "800"),
+    "--cta-secondary-fg": v("yellow", "700"),
+    "--ring": v("yellow", "400"),
+    "--accent": v("yellow", "100"),
+    "--accent-foreground": v("yellow", "800"),
+    "--selected-bg": v("yellow", "100"),
+    "--selected-fg": v("yellow", "800"),
+    "--brand-deep": v("yellow", "900"),
+    "--report-brand": v("yellow", "900"),
+    "--report-brand-fg": v("yellow", "800"),
+    "--report-brand-tint": v("yellow", "50"),
+  };
+}
+
+/**
+ * Yellow-500 secondary controls and primary borders. Slider range uses the
+ * same control fill with no stroke chrome.
+ */
+function yellow500Chrome(mode: ColorMode): Record<string, string> {
+  if (mode === "dark") {
+    return {
+      "--control": v("yellow", "300"),
+      "--control-foreground": "var(--vwo-midnight-base)",
+      "--control-border": v("yellow", "300"),
+      "--primary-border": v("yellow", "300"),
+      "--cta-secondary-fg": v("yellow", "200"),
+      "--ring": v("yellow", "200"),
+      "--accent": v("yellow", "900"),
+      "--accent-foreground": v("yellow", "100"),
+      "--selected-bg": v("yellow", "900"),
+      "--selected-fg": v("yellow", "200"),
+      "--brand-deep": v("yellow", "900"),
+      "--report-brand": v("yellow", "900"),
+      "--report-brand-fg": v("yellow", "300"),
+      "--report-brand-tint": v("yellow", "900"),
+    };
+  }
+
+  return {
+    "--control": v("yellow", "500"),
+    "--control-foreground": "var(--vwo-neutral-0)",
+    "--control-border": v("yellow", "500"),
+    "--primary-border": v("yellow", "500"),
+    "--primary-foreground": v("yellow", "800"),
+    "--cta-secondary-fg": v("yellow", "700"),
+    "--ring": v("yellow", "400"),
+    "--accent": v("yellow", "100"),
+    "--accent-foreground": v("yellow", "800"),
+    "--selected-bg": v("yellow", "100"),
+    "--selected-fg": v("yellow", "800"),
+    "--brand-deep": v("yellow", "900"),
+    "--report-brand": v("yellow", "900"),
+    "--report-brand-fg": v("yellow", "800"),
+    "--report-brand-tint": v("yellow", "50"),
   };
 }
 
@@ -187,6 +283,8 @@ function controlChrome(
   mode: ColorMode
 ): Record<string, string> {
   if (family === "yellow") return {};
+  if (family === "yellow-500") return yellow500Chrome(mode);
+  if (family === "yellow-border") return yellowBorderChrome(mode);
   if (family === "black") return blackChrome(mode);
   return tintedChrome(family, mode);
 }
@@ -206,6 +304,28 @@ function swatchFor(
       surface,
       field,
       tint: light ? scales.neutral["100"] : scales.neutral["800"],
+      control: scales.yellow["50"],
+      cta,
+    };
+  }
+
+  if (family === "yellow-500") {
+    return {
+      surface,
+      field,
+      // Secondary CTA label (--cta-secondary-fg).
+      tint: light ? scales.yellow["700"] : scales.yellow["200"],
+      control: light ? scales.yellow["500"] : scales.yellow["300"],
+      cta,
+    };
+  }
+
+  if (family === "yellow-border") {
+    return {
+      surface,
+      field,
+      // Secondary CTA label (--cta-secondary-fg).
+      tint: light ? scales.yellow["700"] : scales.yellow["200"],
       control: scales.yellow["50"],
       cta,
     };
@@ -239,7 +359,12 @@ export const FORM_ELEMENT_SCHEMES: FormElementSchemeOption[] =
     return {
       id,
       label,
-      description: `Yellow buttons, ${label.toLowerCase()} form controls`,
+      description:
+        id === "yellow-yellow-500"
+          ? "Yellow-500 controls and borders; primary text 800, secondary text 700"
+          : id === "yellow-yellow-border"
+            ? "Lemon controls, yellow-500 borders; primary text 800, secondary text 700"
+            : `Yellow buttons, ${label.toLowerCase()} form controls`,
       swatch: {
         light: swatchFor(family, "light"),
         dark: swatchFor(family, "dark"),

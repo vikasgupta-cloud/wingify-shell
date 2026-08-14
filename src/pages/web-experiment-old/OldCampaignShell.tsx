@@ -53,7 +53,7 @@ export default function OldCampaignShell() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-canvas">
-      <header className="flex h-14 shrink-0 items-stretch justify-between gap-4 border-b border-border bg-background px-6">
+      <header className="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-stretch gap-4 border-b border-border bg-background px-6">
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate font-title text-sm font-semibold text-foreground">
             {campaign.name}
@@ -71,7 +71,7 @@ export default function OldCampaignShell() {
           </span>
         </div>
 
-        <nav className="flex items-stretch gap-6 text-sm">
+        <nav className="flex items-stretch justify-center gap-6 text-sm">
           <NavLink
             to={oldCampaignPath(campaign.id, "pages")}
             className={() =>
@@ -100,7 +100,7 @@ export default function OldCampaignShell() {
           </NavLink>
         </nav>
 
-        <div className="flex items-center">
+        <div className="flex items-center justify-end">
           <Button type="button" variant="ghost" size="sm" disabled>
             Send for Approval
           </Button>

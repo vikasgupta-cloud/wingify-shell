@@ -278,8 +278,9 @@ export default function FontController() {
                       Tokens
                     </p>
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      Download scales, semantic values, fonts, and resolved
-                      roles for light and dark.
+                      Downloads scales, semantic values, fonts, and resolved
+                      light/dark roles for the current button color, form
+                      elements, and surface presets.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

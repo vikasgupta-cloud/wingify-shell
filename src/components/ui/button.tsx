@@ -23,9 +23,9 @@ const buttonVariants = cva(
         // 1. Primary — filled brand CTA
         default:
           "border border-primary-border bg-primary font-cta text-primary-foreground hover:bg-primary-hover",
-        // 2. Secondary — primary-color outline; feather grey fill on hover
+        // 2. Secondary — primary-color outline; label follows --cta-secondary-fg
         secondary:
-          "border border-primary-border bg-background font-cta text-foreground hover:bg-brand-feather",
+          "border border-primary-border bg-background font-cta text-cta-secondary hover:bg-brand-feather",
         // 3. Tertiary — light grey border, dark grey text
         tertiary:
           "border border-border bg-background text-foreground hover:bg-muted hover:text-foreground",

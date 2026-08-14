@@ -4,11 +4,117 @@ import { Layers } from "@/components/icons/protoLucide";
 import {
   SURFACE_SCHEMES,
   surfaceSchemeById,
+  type SurfaceLayerFills,
   type SurfaceSchemeId,
 } from "../../config/surfaceTokens";
 import { useThemeStore } from "../../store/theme";
 import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
+
+/** Mini app shell — rail + top bar + card, tones from the preset fills. */
+function SurfaceThumb({
+  fills,
+  selected,
+}: {
+  fills: SurfaceLayerFills;
+  selected: boolean;
+}) {
+  const chromeEqualsBody = fills.chrome === fills.body;
+  const cardFloats = fills.card !== fills.body;
+  const hairline = "hsl(var(--foreground) / 0.08)";
+  const railRule = chromeEqualsBody ? hairline : "hsl(var(--foreground) / 0.06)";
+
+  return (
+    <span
+      className={cn(
+        "relative flex aspect-[5/4] w-full overflow-hidden rounded-md border transition-[border-color]",
+        selected
+          ? "border-foreground"
+          : "border-border group-hover:border-foreground/40"
+      )}
+      style={{ backgroundColor: fills.body }}
+      aria-hidden
+    >
+      {/* Side nav */}
+      <span
+        className="flex h-full w-[26%] shrink-0 flex-col gap-[3px] px-[5px] py-1.5"
+        style={{
+          backgroundColor: fills.chrome,
+          boxShadow: `inset -1px 0 0 ${railRule}`,
+        }}
+      >
+        <span
+          className="mb-0.5 size-1.5 rounded-[2px]"
+          style={{ backgroundColor: "hsl(var(--foreground) / 0.22)" }}
+        />
+        <span
+          className="h-[2px] w-full rounded-full"
+          style={{ backgroundColor: "hsl(var(--foreground) / 0.14)" }}
+        />
+        <span
+          className="h-[2px] w-[85%] rounded-full"
+          style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+        />
+        <span
+          className="h-[2px] w-[70%] rounded-full"
+          style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+        />
+      </span>
+
+      <span className="flex min-w-0 flex-1 flex-col">
+        {/* Top bar */}
+        <span
+          className="flex h-[22%] w-full shrink-0 items-center gap-1 px-1.5"
+          style={{
+            backgroundColor: fills.chrome,
+            boxShadow: chromeEqualsBody
+              ? `inset 0 -1px 0 ${hairline}`
+              : `inset 0 -1px 0 hsl(var(--foreground) / 0.05)`,
+          }}
+        >
+          <span
+            className="h-[2px] w-3 rounded-full"
+            style={{ backgroundColor: "hsl(var(--foreground) / 0.14)" }}
+          />
+          <span
+            className="h-[2px] w-2 rounded-full"
+            style={{ backgroundColor: "hsl(var(--foreground) / 0.08)" }}
+          />
+        </span>
+
+        {/* Body + card */}
+        <span className="flex min-h-0 flex-1 p-1.5">
+          <span
+            className="flex min-h-0 w-full flex-1 flex-col gap-1 rounded-[4px] p-1.5"
+            style={{
+              backgroundColor: fills.card,
+              boxShadow: cardFloats
+                ? `inset 0 0 0 1px ${hairline}, 0 1px 2px hsl(var(--foreground) / 0.06)`
+                : `inset 0 0 0 1px ${hairline}`,
+            }}
+          >
+            <span
+              className="h-[2px] w-[48%] rounded-full"
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.18)" }}
+            />
+            <span
+              className="h-[2px] w-[78%] rounded-full"
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.08)" }}
+            />
+            <span
+              className="h-[2px] w-[62%] rounded-full"
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.08)" }}
+            />
+            <span
+              className="mt-auto h-[28%] w-full rounded-[2px]"
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.05)" }}
+            />
+          </span>
+        </span>
+      </span>
+    </span>
+  );
+}
 
 export default function SurfacePicker({ className }: { className?: string }) {
   const surfaceSchemeId = useThemeStore((s) => s.surfaceSchemeId);
@@ -67,36 +173,7 @@ export default function SurfacePicker({ className }: { className?: string }) {
                 selected && "bg-accent"
               )}
             >
-              <span
-                className={cn(
-                  "relative flex aspect-[4/3] w-full overflow-hidden rounded-md ring-1 ring-inset transition-shadow",
-                  selected
-                    ? "ring-2 ring-foreground"
-                    : "ring-border group-hover:ring-foreground/40"
-                )}
-                style={{ backgroundColor: fills.body }}
-                aria-hidden
-              >
-                {/* side nav */}
-                <span
-                  className="h-full w-[22%] shrink-0 border-r border-border/60"
-                  style={{ backgroundColor: fills.chrome }}
-                />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  {/* top bar */}
-                  <span
-                    className="h-[26%] w-full border-b border-border/60"
-                    style={{ backgroundColor: fills.chrome }}
-                  />
-                  {/* card on the body */}
-                  <span className="flex-1 p-1">
-                    <span
-                      className="block h-full w-full rounded-[3px] border border-border/60"
-                      style={{ backgroundColor: fills.card }}
-                    />
-                  </span>
-                </span>
-              </span>
+              <SurfaceThumb fills={fills} selected={selected} />
               <span className="truncate px-0.5 text-center text-[11px] font-medium leading-none text-foreground">
                 {scheme.label}
               </span>
