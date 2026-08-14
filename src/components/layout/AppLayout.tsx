@@ -10,9 +10,14 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <ExpandedNav />
-      <div className="flex min-w-0 flex-1 flex-col bg-background">
+      {/* bg-panel matches --background by default; under a surface preset it
+          fills the notch behind the body's rounded corners with nav chrome. */}
+      <div className="flex min-w-0 flex-1 flex-col bg-panel">
         <TopBar />
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-canvas">
+        <main
+          data-slot="app-body"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-canvas"
+        >
           <Outlet />
         </main>
       </div>

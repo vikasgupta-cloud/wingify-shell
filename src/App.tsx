@@ -14,6 +14,7 @@ export default function App() {
   const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
   const headerTokenId = useThemeStore((s) => s.headerTokenId);
   const formElementSchemeId = useThemeStore((s) => s.formElementSchemeId);
+  const surfaceSchemeId = useThemeStore((s) => s.surfaceSchemeId);
   const fontAssignments = useFontStore((s) => s.assignments);
 
   useEffect(() => {
@@ -23,7 +24,8 @@ export default function App() {
       ctaTokenId,
       backgroundTokenId,
       headerTokenId,
-      formElementSchemeId
+      formElementSchemeId,
+      surfaceSchemeId
     );
   }, [
     themeId,
@@ -32,6 +34,7 @@ export default function App() {
     backgroundTokenId,
     headerTokenId,
     formElementSchemeId,
+    surfaceSchemeId,
   ]);
 
   useEffect(() => {

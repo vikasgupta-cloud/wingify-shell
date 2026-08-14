@@ -22,7 +22,12 @@ const FLYOUT_CLOSE_GRACE_MS = 120;
 const MORE_CLOSE_GRACE_MS = 150;
 const FLYOUT_VIEWPORT_MARGIN = 8;
 const MORE_FLYOUT_WIDTH = 248;
-const WIDTH_MS = 220;
+/** Rail ↔ expanded morph — keep label/accordion timing in sync. */
+const WIDTH_MS = 280;
+const WIDTH_EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+const widthTransition = `width ${WIDTH_MS}ms ${WIDTH_EASE}`;
+const revealTransition = `opacity ${WIDTH_MS}ms ${WIDTH_EASE}, transform ${WIDTH_MS}ms ${WIDTH_EASE}`;
+const accordionTransition = `grid-template-rows ${WIDTH_MS}ms ${WIDTH_EASE}, opacity ${WIDTH_MS}ms ${WIDTH_EASE}`;
 
 const tooltipContentClass =
   "z-50 rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md";
@@ -101,9 +106,12 @@ export default function ExpandedNav({
       setFlyout(null);
       setMoreFlyout(null);
       setMoreNested(null);
-    } else {
-      setOpenPath(null);
+      return;
     }
+    // Keep accordion mounted while the rail clips shut so content slides away
+    // with the width morph instead of vanishing on the first frame.
+    const clearOpen = window.setTimeout(() => setOpenPath(null), WIDTH_MS);
+    return () => window.clearTimeout(clearOpen);
   }, [expanded]);
 
   const closeMore = () => {
@@ -190,19 +198,23 @@ export default function ExpandedNav({
   };
 
   const labelClass = cn(
-    "min-w-0 flex-1 truncate text-left font-main-menu transition-opacity duration-200",
-    expanded ? "opacity-100" : "pointer-events-none opacity-0"
+    "min-w-0 flex-1 truncate text-left font-main-menu will-change-transform",
+    expanded
+      ? "translate-x-0 opacity-100"
+      : "pointer-events-none -translate-x-1.5 opacity-0"
   );
   const chromeClass = cn(
-    "shrink-0 transition-opacity duration-200",
-    expanded ? "opacity-100" : "pointer-events-none opacity-0"
+    "shrink-0 will-change-transform",
+    expanded
+      ? "translate-x-0 opacity-100"
+      : "pointer-events-none translate-x-1 opacity-0"
   );
 
   const renderItem = (item: NavItem, inMore = false) => {
     const Icon = item.icon;
     const isActive = findItemByPath(pathname)?.path === item.path;
     const hasSections = !!item.sections;
-    const open = expanded && openPath === item.path;
+    const open = openPath === item.path;
     const tooltipOnly = !!item.flyoutOnly && !hasSections;
     const expandOnly = !!item.flyoutOnly && hasSections;
     const showUnpin = !inMore && item.pinnable && canUnpin(item.path);
@@ -283,7 +295,9 @@ export default function ExpandedNav({
           <span className="flex h-10 w-10 shrink-0 items-center justify-center">
             {leadingIcon}
           </span>
-          <span className={labelClass}>{item.label}</span>
+          <span className={labelClass} style={{ transition: revealTransition }}>
+            {item.label}
+          </span>
         </button>
 
         {item.pinnable && (inMore || showUnpin) && (
@@ -308,6 +322,7 @@ export default function ExpandedNav({
                     ? "opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
                     : "opacity-0"
                 )}
+                style={{ transition: revealTransition }}
               >
                 {inMore ? (
                   <Pin className="h-3.5 w-3.5" />
@@ -340,10 +355,11 @@ export default function ExpandedNav({
               chromeClass,
               "rounded-sm p-1 text-muted-foreground hover:text-foreground"
             )}
+            style={{ transition: revealTransition }}
           >
             <ChevronDown
               className={cn(
-                "h-4 w-4 transition-transform duration-150",
+                "h-4 w-4 transition-transform duration-200",
                 open && "rotate-180"
               )}
             />
@@ -403,58 +419,74 @@ export default function ExpandedNav({
       <div key={item.path}>
         {hoverRow}
 
-        {hasSections && open && item.sections && (
-          <div className="ml-[22px] mt-1.5 flex flex-col border-l border-panel-border pb-2 pl-3">
-            {item.sections.map((section, i) => {
-              const isLogoutSection = section.items.some(
-                (leaf) => leaf.path === LOGOUT_PATH
-              );
-              return (
-                <div key={section.heading ?? i} className="flex flex-col gap-1">
-                  {i > 0 && (
+        {hasSections && item.sections && (
+          <div
+            className="grid"
+            style={{
+              gridTemplateRows: open ? "1fr" : "0fr",
+              opacity: open ? 1 : 0,
+              transition: accordionTransition,
+            }}
+            aria-hidden={!open}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="ml-[22px] mt-1.5 flex flex-col border-l border-panel-border pb-2 pl-3">
+                {item.sections.map((section, i) => {
+                  const isLogoutSection = section.items.some(
+                    (leaf) => leaf.path === LOGOUT_PATH
+                  );
+                  return (
                     <div
-                      className="my-2 h-px bg-panel-border"
-                      aria-hidden="true"
-                    />
-                  )}
-                  {item.path === "/profile" && isLogoutSection ? (
-                    <>
-                      <ColorModeToggle className="px-0" />
-                      <div
-                        className="my-2 h-px bg-panel-border"
-                        aria-hidden="true"
-                      />
-                    </>
-                  ) : null}
-                  {section.items.map((leaf) => {
-                    const LeafIcon = leaf.icon;
-                    return (
-                      <NavLink
-                        key={leaf.path}
-                        to={leaf.path}
-                        className={({ isActive: leafActive }) =>
-                          cn(
-                            "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                            leafActive &&
-                              "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                          )
-                        }
-                      >
-                        {LeafIcon && (
-                          <LeafIcon
-                            className="h-4 w-4 shrink-0 text-foreground"
-                            strokeWidth={1.75}
+                      key={section.heading ?? i}
+                      className="flex flex-col gap-1"
+                    >
+                      {i > 0 && (
+                        <div
+                          className="my-2 h-px bg-panel-border"
+                          aria-hidden="true"
+                        />
+                      )}
+                      {item.path === "/profile" && isLogoutSection ? (
+                        <>
+                          <ColorModeToggle className="px-0" />
+                          <div
+                            className="my-2 h-px bg-panel-border"
+                            aria-hidden="true"
                           />
-                        )}
-                        <span className="min-w-0 flex-1 truncate">
-                          {leaf.label}
-                        </span>
-                      </NavLink>
-                    );
-                  })}
-                </div>
-              );
-            })}
+                        </>
+                      ) : null}
+                      {section.items.map((leaf) => {
+                        const LeafIcon = leaf.icon;
+                        return (
+                          <NavLink
+                            key={leaf.path}
+                            to={leaf.path}
+                            tabIndex={open ? undefined : -1}
+                            className={({ isActive: leafActive }) =>
+                              cn(
+                                "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                                leafActive &&
+                                  "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                              )
+                            }
+                          >
+                            {LeafIcon && (
+                              <LeafIcon
+                                className="h-4 w-4 shrink-0 text-foreground"
+                                strokeWidth={1.75}
+                              />
+                            )}
+                            <span className="min-w-0 flex-1 truncate">
+                              {leaf.label}
+                            </span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -465,23 +497,28 @@ export default function ExpandedNav({
     <div className="my-3 shrink-0 px-3" aria-hidden="true">
       {/* Collapsed rule spans the icon slot exactly, so it stays inside the rail. */}
       <div
-        className={cn(
-          "h-px bg-panel-border transition-[width] duration-200",
-          expanded ? "w-full" : "w-10"
-        )}
+        className="h-px bg-panel-border"
+        style={{
+          width: expanded ? "100%" : 40,
+          transition: widthTransition,
+        }}
       />
     </div>
   );
 
   return (
     <Tooltip.Provider delayDuration={300} skipDelayDuration={100}>
-      <div className="relative h-full shrink-0">
+      <div
+        className="relative h-full shrink-0 overflow-hidden"
+        style={{
+          width: expanded ? EXPANDED_NAV_WIDTH : RAIL_WIDTH,
+          transition: widthTransition,
+        }}
+      >
         <nav
+          data-slot="app-nav"
           className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-panel pb-4 text-panel-foreground"
-          style={{
-            width: expanded ? EXPANDED_NAV_WIDTH : RAIL_WIDTH,
-            transition: `width ${WIDTH_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
-          }}
+          style={{ width: EXPANDED_NAV_WIDTH }}
         >
           {/* Inner stays full expanded width so icons never shift while the outer clips. */}
           <div
@@ -502,31 +539,57 @@ export default function ExpandedNav({
             {separator}
             <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {group2.map((i) => renderItem(i))}
-              {unpinned.length > 0 &&
-                (expanded ? (
-                  <>
-                    <div className="px-2.5 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      More
-                    </div>
-                    {unpinned.map((i) => renderItem(i, true))}
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    aria-label="More navigation items"
-                    onClick={(e) => openMoreFlyout(e.currentTarget)}
-                    onMouseEnter={(e) => openMoreFlyout(e.currentTarget)}
-                    onMouseLeave={scheduleMoreClose}
-                    onFocus={(e) => openMoreFlyout(e.currentTarget)}
-                    onBlur={scheduleMoreClose}
-                    className={cn(
-                      "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
-                      !!moreFlyout && "bg-muted"
-                    )}
+              {unpinned.length > 0 && (
+                <>
+                  <div
+                    className="grid"
+                    style={{
+                      gridTemplateRows: expanded ? "1fr" : "0fr",
+                      opacity: expanded ? 1 : 0,
+                      transition: accordionTransition,
+                    }}
+                    aria-hidden={!expanded}
                   >
-                    <MoreHorizontal className="h-5 w-5" strokeWidth={1.75} />
-                  </button>
-                ))}
+                    <div className="min-h-0 overflow-hidden">
+                      <div className="px-2.5 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        More
+                      </div>
+                      {unpinned.map((i) => renderItem(i, true))}
+                    </div>
+                  </div>
+                  <div
+                    className="grid"
+                    style={{
+                      gridTemplateRows: expanded ? "0fr" : "1fr",
+                      opacity: expanded ? 0 : 1,
+                      transition: accordionTransition,
+                    }}
+                    aria-hidden={expanded}
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      <button
+                        type="button"
+                        aria-label="More navigation items"
+                        tabIndex={expanded ? -1 : undefined}
+                        onClick={(e) => openMoreFlyout(e.currentTarget)}
+                        onMouseEnter={(e) => openMoreFlyout(e.currentTarget)}
+                        onMouseLeave={scheduleMoreClose}
+                        onFocus={(e) => openMoreFlyout(e.currentTarget)}
+                        onBlur={scheduleMoreClose}
+                        className={cn(
+                          "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
+                          !!moreFlyout && "bg-muted"
+                        )}
+                      >
+                        <MoreHorizontal
+                          className="h-5 w-5"
+                          strokeWidth={1.75}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             {separator}
             <div className="flex shrink-0 flex-col gap-0.5 px-3">

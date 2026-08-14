@@ -9,6 +9,10 @@ import {
   type FormElementSchemeId,
 } from "../config/formElementSchemes";
 import {
+  resolveSurfaceSchemeId,
+  type SurfaceSchemeId,
+} from "../config/surfaceTokens";
+import {
   DEFAULT_COLOR_MODE,
   DEFAULT_THEME_ID,
   resolveColorMode,
@@ -25,12 +29,15 @@ type ThemeState = {
   /** Shared grey for table / kanban / gantt headers. */
   headerTokenId: string | null;
   formElementSchemeId: FormElementSchemeId;
+  /** Chrome / body / card surface preset. null = theme defaults. */
+  surfaceSchemeId: SurfaceSchemeId | null;
   setTheme: (themeId: ThemeId) => void;
   setColorMode: (colorMode: ColorMode) => void;
   setCtaToken: (ctaTokenId: string | null) => void;
   setBackgroundToken: (backgroundTokenId: string | null) => void;
   setHeaderToken: (headerTokenId: string | null) => void;
   setFormElementScheme: (formElementSchemeId: FormElementSchemeId) => void;
+  setSurfaceScheme: (surfaceSchemeId: SurfaceSchemeId | null) => void;
   resetAppearance: () => void;
 };
 
@@ -40,7 +47,8 @@ function syncDom(
   ctaTokenId: string | null,
   backgroundTokenId: string | null,
   headerTokenId: string | null,
-  formElementSchemeId: FormElementSchemeId
+  formElementSchemeId: FormElementSchemeId,
+  surfaceSchemeId: SurfaceSchemeId | null
 ) {
   applyBrand(
     themeId,
@@ -48,7 +56,8 @@ function syncDom(
     ctaTokenId,
     backgroundTokenId,
     headerTokenId,
-    formElementSchemeId
+    formElementSchemeId,
+    surfaceSchemeId
   );
 }
 
@@ -61,12 +70,14 @@ export const useThemeStore = create<ThemeState>()(
       backgroundTokenId: null,
       headerTokenId: null,
       formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+      surfaceSchemeId: null,
       setTheme: (themeId) => {
         const {
           colorMode,
           backgroundTokenId,
           headerTokenId,
           formElementSchemeId,
+          surfaceSchemeId,
         } = get();
         syncDom(
           themeId,
@@ -74,7 +85,8 @@ export const useThemeStore = create<ThemeState>()(
           null,
           backgroundTokenId,
           headerTokenId,
-          formElementSchemeId
+          formElementSchemeId,
+          surfaceSchemeId
         );
         set({ themeId, ctaTokenId: null });
       },
@@ -85,6 +97,7 @@ export const useThemeStore = create<ThemeState>()(
           backgroundTokenId,
           headerTokenId,
           formElementSchemeId,
+          surfaceSchemeId,
         } = get();
         syncDom(
           themeId,
@@ -92,7 +105,8 @@ export const useThemeStore = create<ThemeState>()(
           ctaTokenId,
           backgroundTokenId,
           headerTokenId,
-          formElementSchemeId
+          formElementSchemeId,
+          surfaceSchemeId
         );
         set({ colorMode });
       },
@@ -103,6 +117,7 @@ export const useThemeStore = create<ThemeState>()(
           backgroundTokenId,
           headerTokenId,
           formElementSchemeId,
+          surfaceSchemeId,
         } = get();
         syncDom(
           themeId,
@@ -110,7 +125,8 @@ export const useThemeStore = create<ThemeState>()(
           ctaTokenId,
           backgroundTokenId,
           headerTokenId,
-          formElementSchemeId
+          formElementSchemeId,
+          surfaceSchemeId
         );
         set({ ctaTokenId });
       },
@@ -121,6 +137,7 @@ export const useThemeStore = create<ThemeState>()(
           ctaTokenId,
           headerTokenId,
           formElementSchemeId,
+          surfaceSchemeId,
         } = get();
         const next = resolveNeutralTokenId(backgroundTokenId);
         syncDom(
@@ -129,7 +146,8 @@ export const useThemeStore = create<ThemeState>()(
           ctaTokenId,
           next,
           headerTokenId,
-          formElementSchemeId
+          formElementSchemeId,
+          surfaceSchemeId
         );
         set({ backgroundTokenId: next });
       },
@@ -140,6 +158,7 @@ export const useThemeStore = create<ThemeState>()(
           ctaTokenId,
           backgroundTokenId,
           formElementSchemeId,
+          surfaceSchemeId,
         } = get();
         const next = resolveNeutralTokenId(headerTokenId);
         syncDom(
@@ -148,25 +167,49 @@ export const useThemeStore = create<ThemeState>()(
           ctaTokenId,
           backgroundTokenId,
           next,
-          formElementSchemeId
+          formElementSchemeId,
+          surfaceSchemeId
         );
         set({ headerTokenId: next });
       },
       setFormElementScheme: (formElementSchemeId) => {
-        const { colorMode, backgroundTokenId, headerTokenId } = get();
+        const { colorMode, backgroundTokenId, headerTokenId, surfaceSchemeId } =
+          get();
         syncDom(
           "yellow",
           colorMode,
           null,
           backgroundTokenId,
           headerTokenId,
-          formElementSchemeId
+          formElementSchemeId,
+          surfaceSchemeId
         );
         set({
           formElementSchemeId,
           themeId: "yellow",
           ctaTokenId: null,
         });
+      },
+      setSurfaceScheme: (surfaceSchemeId) => {
+        const {
+          themeId,
+          colorMode,
+          ctaTokenId,
+          backgroundTokenId,
+          headerTokenId,
+          formElementSchemeId,
+        } = get();
+        const next = resolveSurfaceSchemeId(surfaceSchemeId);
+        syncDom(
+          themeId,
+          colorMode,
+          ctaTokenId,
+          backgroundTokenId,
+          headerTokenId,
+          formElementSchemeId,
+          next
+        );
+        set({ surfaceSchemeId: next });
       },
       resetAppearance: () => {
         syncDom(
@@ -175,7 +218,8 @@ export const useThemeStore = create<ThemeState>()(
           null,
           null,
           null,
-          DEFAULT_FORM_ELEMENT_SCHEME_ID
+          DEFAULT_FORM_ELEMENT_SCHEME_ID,
+          null
         );
         set({
           themeId: DEFAULT_THEME_ID,
@@ -184,6 +228,7 @@ export const useThemeStore = create<ThemeState>()(
           backgroundTokenId: null,
           headerTokenId: null,
           formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+          surfaceSchemeId: null,
         });
       },
     }),
@@ -196,6 +241,7 @@ export const useThemeStore = create<ThemeState>()(
         backgroundTokenId: s.backgroundTokenId,
         headerTokenId: s.headerTokenId,
         formElementSchemeId: s.formElementSchemeId,
+        surfaceSchemeId: s.surfaceSchemeId,
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<ThemeState> & {
@@ -222,6 +268,9 @@ export const useThemeStore = create<ThemeState>()(
             p.headerTokenId ?? current.headerTokenId
           ),
           formElementSchemeId,
+          surfaceSchemeId: resolveSurfaceSchemeId(
+            p.surfaceSchemeId ?? current.surfaceSchemeId
+          ),
         };
       },
       onRehydrateStorage: () => (state) => {
@@ -232,7 +281,8 @@ export const useThemeStore = create<ThemeState>()(
           resolveCtaTokenId(state.ctaTokenId),
           resolveNeutralTokenId(state.backgroundTokenId),
           resolveNeutralTokenId(state.headerTokenId),
-          resolveFormElementSchemeId(state.formElementSchemeId)
+          resolveFormElementSchemeId(state.formElementSchemeId),
+          resolveSurfaceSchemeId(state.surfaceSchemeId)
         );
       },
     }

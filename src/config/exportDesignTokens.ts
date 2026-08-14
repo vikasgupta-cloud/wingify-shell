@@ -4,6 +4,10 @@ import {
   resolveFormElementSchemeId,
   type FormElementSchemeId,
 } from "./formElementSchemes";
+import {
+  resolveSurfaceSchemeId,
+  type SurfaceSchemeId,
+} from "./surfaceTokens";
 import type { ColorMode, ThemeId } from "./themes";
 import type { FontId, FontRole } from "./fonts";
 import { FONTS } from "./fonts";
@@ -140,6 +144,7 @@ export function buildDesignTokenExport(options: {
   backgroundTokenId?: string | null;
   headerTokenId?: string | null;
   formElementSchemeId?: FormElementSchemeId | null;
+  surfaceSchemeId?: SurfaceSchemeId | null;
   fontAssignments: Record<FontRole, FontId>;
 }): DesignTokenExport {
   const {
@@ -149,10 +154,12 @@ export function buildDesignTokenExport(options: {
     backgroundTokenId = null,
     headerTokenId = null,
     formElementSchemeId = null,
+    surfaceSchemeId = null,
     fontAssignments,
   } = options;
   const root = document.documentElement;
   const scheme = resolveFormElementSchemeId(formElementSchemeId);
+  const surface = resolveSurfaceSchemeId(surfaceSchemeId);
 
   const snapMode = (mode: ColorMode) => {
     applyBrand(
@@ -161,7 +168,8 @@ export function buildDesignTokenExport(options: {
       ctaTokenId,
       backgroundTokenId,
       headerTokenId,
-      scheme
+      scheme,
+      surface
     );
     // Force style recalc before reading computed colors.
     void root.offsetHeight;
@@ -178,7 +186,8 @@ export function buildDesignTokenExport(options: {
     ctaTokenId,
     backgroundTokenId,
     headerTokenId,
-    scheme
+    scheme,
+    surface
   );
 
   return {
@@ -212,6 +221,7 @@ export function downloadDesignTokensJson(options: {
   backgroundTokenId?: string | null;
   headerTokenId?: string | null;
   formElementSchemeId?: FormElementSchemeId | null;
+  surfaceSchemeId?: SurfaceSchemeId | null;
   fontAssignments: Record<FontRole, FontId>;
 }) {
   const payload = buildDesignTokenExport(options);
@@ -231,6 +241,7 @@ export function downloadDesignTokensCss(options: {
   backgroundTokenId?: string | null;
   headerTokenId?: string | null;
   formElementSchemeId?: FormElementSchemeId | null;
+  surfaceSchemeId?: SurfaceSchemeId | null;
   fontAssignments: Record<FontRole, FontId>;
 }) {
   const payload = buildDesignTokenExport(options);

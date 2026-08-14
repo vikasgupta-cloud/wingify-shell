@@ -15,6 +15,7 @@ import ThemePicker from "./ThemePicker";
 import FontPicker from "./FontPicker";
 import CtaColorPicker from "./CtaColorPicker";
 import BackgroundColorPicker from "./BackgroundColorPicker";
+import SurfacePicker from "./SurfacePicker";
 import HeaderColorPicker from "./HeaderColorPicker";
 import IconLibraryPicker from "./IconLibraryPicker";
 
@@ -69,6 +70,7 @@ export default function FontController() {
   const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
   const headerTokenId = useThemeStore((s) => s.headerTokenId);
   const formElementSchemeId = useThemeStore((s) => s.formElementSchemeId);
+  const surfaceSchemeId = useThemeStore((s) => s.surfaceSchemeId);
   const fontAssignments = useFontStore((s) => s.assignments);
   const [rendered, setRendered] = useState(false);
   const [shown, setShown] = useState(false);
@@ -84,6 +86,7 @@ export default function FontController() {
     backgroundTokenId,
     headerTokenId,
     formElementSchemeId,
+    surfaceSchemeId,
     fontAssignments,
   };
 
@@ -251,6 +254,9 @@ export default function FontController() {
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className="border-b border-border px-3 py-2">
                   <ThemePicker />
+                </div>
+                <div className="border-b border-border">
+                  <SurfacePicker />
                 </div>
                 <div className="border-b border-border">
                   <BackgroundColorPicker />

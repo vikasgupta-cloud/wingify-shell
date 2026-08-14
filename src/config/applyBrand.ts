@@ -16,6 +16,11 @@ import {
   formElementSchemeOverridesTheme,
   type FormElementSchemeId,
 } from "./formElementSchemes";
+import {
+  computeSurfaceVars,
+  SURFACE_VARS,
+  type SurfaceSchemeId,
+} from "./surfaceTokens";
 
 const ALL_BRAND_VARS: readonly string[] = Array.from(
   new Set([
@@ -24,6 +29,7 @@ const ALL_BRAND_VARS: readonly string[] = Array.from(
     ...BACKGROUND_VARS,
     ...HEADER_VARS,
     ...FORM_ELEMENT_VARS,
+    ...SURFACE_VARS,
   ])
 );
 
@@ -33,7 +39,8 @@ export function applyBrand(
   ctaTokenId: string | null,
   backgroundTokenId: string | null = null,
   headerTokenId: string | null = null,
-  formElementSchemeId: FormElementSchemeId = "yellow-yellow"
+  formElementSchemeId: FormElementSchemeId = "yellow-yellow",
+  surfaceSchemeId: SurfaceSchemeId | null = null
 ) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -48,6 +55,7 @@ export function applyBrand(
   const vars: Record<string, string> = {
     ...computeThemeVars(themeId, colorMode),
     ...formVars,
+    ...computeSurfaceVars(surfaceSchemeId, colorMode),
   };
   const token = ctaTokenId ? ctaTokenById(ctaTokenId) : undefined;
   if (token) {
@@ -71,6 +79,12 @@ export function applyBrand(
     root.setAttribute("data-listing-header", header.id);
   } else {
     root.removeAttribute("data-listing-header");
+  }
+
+  if (surfaceSchemeId) {
+    root.setAttribute("data-surface", surfaceSchemeId);
+  } else {
+    root.removeAttribute("data-surface");
   }
 
   if (

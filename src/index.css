@@ -863,6 +863,20 @@
   box-shadow: none;
 }
 
+/* Feather-nav surface preset — the tint is a whisper against white, so the
+   body reads as its own bordered sheet tucked into the nav chrome. The nav
+   and top bar drop their own edges so the sheet's border isn't doubled. */
+[data-surface="feather-nav"] [data-slot="app-body"] {
+  border: 1px solid hsl(var(--border));
+  border-bottom: 0;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+[data-surface="feather-nav"] [data-slot="top-bar"],
+[data-surface="feather-nav"] [data-slot="app-nav"] {
+  border-color: transparent;
+}
+
 
 * {
   border-color: hsl(var(--border));

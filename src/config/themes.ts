@@ -1,5 +1,9 @@
 import tokens from "./tokens.json";
 import {
+  resolveSurfaceSchemeId,
+  type SurfaceSchemeId,
+} from "./surfaceTokens";
+import {
   DEFAULT_FORM_ELEMENT_SCHEME_ID,
   resolveFormElementSchemeId,
   type FormElementSchemeId,
@@ -165,6 +169,7 @@ export function readStoredTheme(): {
   backgroundTokenId: string | null;
   headerTokenId: string | null;
   formElementSchemeId: FormElementSchemeId;
+  surfaceSchemeId: SurfaceSchemeId | null;
 } {
   if (typeof localStorage === "undefined") {
     return {
@@ -174,6 +179,7 @@ export function readStoredTheme(): {
       backgroundTokenId: null,
       headerTokenId: null,
       formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+      surfaceSchemeId: null,
     };
   }
   try {
@@ -186,6 +192,7 @@ export function readStoredTheme(): {
         backgroundTokenId: null,
         headerTokenId: null,
         formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+        surfaceSchemeId: null,
       };
     }
     const parsed = JSON.parse(raw) as {
@@ -196,6 +203,7 @@ export function readStoredTheme(): {
         backgroundTokenId?: unknown;
         headerTokenId?: unknown;
         formElementSchemeId?: unknown;
+        surfaceSchemeId?: unknown;
       };
     };
     const cta =
@@ -222,6 +230,7 @@ export function readStoredTheme(): {
           ? "yellow-maroon"
           : parsed?.state?.formElementSchemeId
       ),
+      surfaceSchemeId: resolveSurfaceSchemeId(parsed?.state?.surfaceSchemeId),
     };
   } catch {
     return {
@@ -231,6 +240,7 @@ export function readStoredTheme(): {
       backgroundTokenId: null,
       headerTokenId: null,
       formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+      surfaceSchemeId: null,
     };
   }
 }

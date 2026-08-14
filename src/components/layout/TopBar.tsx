@@ -12,6 +12,7 @@ import {
 } from "../../config/createMenu";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import BreadcrumbNav from "./BreadcrumbNav";
+import { cn } from "../../lib/utils";
 
 function CreateItem({ option, onSelect }: { option: CreateOption; onSelect: () => void }) {
   const Icon = option.icon;
@@ -62,6 +63,7 @@ function CreateSection({
 
 export default function TopBar() {
   const toggleDock = useUIStore((s) => s.toggleDock);
+  const isDocked = useUIStore((s) => s.isDocked);
   const navigate = useNavigate();
   const createCampaign = useRowsStore((s) => s.createCampaign);
   const { pathname } = useLocation();
@@ -86,13 +88,21 @@ export default function TopBar() {
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background/95 px-4 backdrop-blur-sm">
+    <header data-slot="top-bar" className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-panel/95 px-4 text-panel-foreground backdrop-blur-sm">
       <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
-          aria-label="Toggle docked navigation panel"
+          aria-label={
+            isDocked ? "Collapse navigation" : "Expand navigation"
+          }
+          aria-pressed={isDocked}
           onClick={toggleDock}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-md outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none",
+            isDocked
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground"
+          )}
         >
           <PanelLeft className="h-4 w-4" />
         </button>
