@@ -1,5 +1,9 @@
 import tokens from "./tokens.json";
 import { applyBrand } from "./applyBrand";
+import {
+  resolveFormElementSchemeId,
+  type FormElementSchemeId,
+} from "./formElementSchemes";
 import type { ColorMode, ThemeId } from "./themes";
 import type { FontId, FontRole } from "./fonts";
 import { FONTS } from "./fonts";
@@ -18,6 +22,9 @@ const ROLE_VARS = [
   "--primary-active",
   "--primary-subtle",
   "--primary-border",
+  "--control",
+  "--control-foreground",
+  "--control-border",
   "--secondary",
   "--secondary-foreground",
   "--secondary-hover",
@@ -132,6 +139,7 @@ export function buildDesignTokenExport(options: {
   ctaTokenId: string | null;
   backgroundTokenId?: string | null;
   headerTokenId?: string | null;
+  formElementSchemeId?: FormElementSchemeId | null;
   fontAssignments: Record<FontRole, FontId>;
 }): DesignTokenExport {
   const {
@@ -140,12 +148,21 @@ export function buildDesignTokenExport(options: {
     ctaTokenId,
     backgroundTokenId = null,
     headerTokenId = null,
+    formElementSchemeId = null,
     fontAssignments,
   } = options;
   const root = document.documentElement;
+  const scheme = resolveFormElementSchemeId(formElementSchemeId);
 
   const snapMode = (mode: ColorMode) => {
-    applyBrand(themeId, mode, ctaTokenId, backgroundTokenId, headerTokenId);
+    applyBrand(
+      themeId,
+      mode,
+      ctaTokenId,
+      backgroundTokenId,
+      headerTokenId,
+      scheme
+    );
     // Force style recalc before reading computed colors.
     void root.offsetHeight;
     return snapshotRoles();
@@ -155,7 +172,14 @@ export function buildDesignTokenExport(options: {
   const dark = snapMode("dark");
 
   // Restore the user's active mode.
-  applyBrand(themeId, colorMode, ctaTokenId, backgroundTokenId, headerTokenId);
+  applyBrand(
+    themeId,
+    colorMode,
+    ctaTokenId,
+    backgroundTokenId,
+    headerTokenId,
+    scheme
+  );
 
   return {
     exportedAt: new Date().toISOString(),
@@ -187,6 +211,7 @@ export function downloadDesignTokensJson(options: {
   ctaTokenId: string | null;
   backgroundTokenId?: string | null;
   headerTokenId?: string | null;
+  formElementSchemeId?: FormElementSchemeId | null;
   fontAssignments: Record<FontRole, FontId>;
 }) {
   const payload = buildDesignTokenExport(options);
@@ -205,6 +230,7 @@ export function downloadDesignTokensCss(options: {
   ctaTokenId: string | null;
   backgroundTokenId?: string | null;
   headerTokenId?: string | null;
+  formElementSchemeId?: FormElementSchemeId | null;
   fontAssignments: Record<FontRole, FontId>;
 }) {
   const payload = buildDesignTokenExport(options);

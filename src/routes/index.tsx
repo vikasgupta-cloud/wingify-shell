@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet, type RouteObject } from "react-router-dom";
 import {
   NAV,
   PROFILE_MODES,
@@ -18,6 +18,15 @@ import ReportsPage from "../pages/reports/ReportsPage";
 import EditorPage from "../pages/editor/EditorPage";
 import IntegrationsPage from "../pages/integrations/IntegrationsPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
+import FormGalleryPage from "../pages/design/FormGalleryPage";
+import WebExperimentationOldPage from "../pages/web-experiment-old/WebExperimentationOldPage";
+import OldCampaignShell from "../pages/web-experiment-old/OldCampaignShell";
+import PagesStep from "../pages/web-experiment-old/PagesStep";
+import VariationsStep from "../pages/web-experiment-old/VariationsStep";
+import MetricsStep from "../pages/web-experiment-old/MetricsStep";
+import TargetingStep from "../pages/web-experiment-old/TargetingStep";
+import IntegrationsStep from "../pages/web-experiment-old/IntegrationsStep";
+import OldReportsPage from "../pages/web-experiment-old/OldReportsPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
 import SurveysPage from "../pages/pulse/SurveysPage";
@@ -104,6 +113,27 @@ for (const item of NAV) {
       ],
     });
     appLeaves.forEach((leaf) => addDetailRoute(leaf.path));
+  } else if (item.path === "/web-experiment-old") {
+    pageRoutes.push({
+      path: item.path,
+      element: <Outlet />,
+      children: [
+        { index: true, element: <WebExperimentationOldPage /> },
+        {
+          path: "c/:entityId",
+          element: <OldCampaignShell />,
+          children: [
+            { index: true, element: <Navigate to="pages" replace /> },
+            { path: "pages", element: <PagesStep /> },
+            { path: "variations", element: <VariationsStep /> },
+            { path: "metrics", element: <MetricsStep /> },
+            { path: "targeting", element: <TargetingStep /> },
+            { path: "integrations", element: <IntegrationsStep /> },
+            { path: "reports", element: <OldReportsPage /> },
+          ],
+        },
+      ],
+    });
   } else {
     pageRoutes.push({ path: item.path, element: leafElement(item.path) });
     addDetailRoute(item.path);
@@ -166,6 +196,7 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <Navigate to="/home/dashboard" replace /> },
           { path: "/design/charts", element: <AnalyticsChartsPage /> },
+          { path: "/design/forms", element: <FormGalleryPage /> },
           ...pageRoutes,
           { path: "*", element: <PlaceholderPage /> },
         ],

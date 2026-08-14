@@ -68,6 +68,7 @@ export default function FontController() {
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
   const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
   const headerTokenId = useThemeStore((s) => s.headerTokenId);
+  const formElementSchemeId = useThemeStore((s) => s.formElementSchemeId);
   const fontAssignments = useFontStore((s) => s.assignments);
   const [rendered, setRendered] = useState(false);
   const [shown, setShown] = useState(false);
@@ -82,6 +83,7 @@ export default function FontController() {
     ctaTokenId,
     backgroundTokenId,
     headerTokenId,
+    formElementSchemeId,
     fontAssignments,
   };
 
@@ -314,6 +316,28 @@ export default function FontController() {
                   >
                     <Link to="/design/charts" onClick={close}>
                       Open chart gallery
+                      <ArrowRight className="size-3.5" strokeWidth={1.75} />
+                    </Link>
+                  </Button>
+                </div>
+
+                <div className="space-y-2 border-t border-border px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Form elements
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Inputs, dropdowns, buttons, sliders, radios, and checkboxes
+                    in a real campaign form.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    asChild
+                  >
+                    <Link to="/design/forms" onClick={close}>
+                      Open form gallery
                       <ArrowRight className="size-3.5" strokeWidth={1.75} />
                     </Link>
                   </Button>

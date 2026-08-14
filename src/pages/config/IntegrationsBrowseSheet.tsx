@@ -31,7 +31,7 @@ function MonogramTile({ name, className }: { name: string; className?: string })
     <div
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-md border border-border bg-accent text-xs font-semibold text-muted-foreground",
+        "flex shrink-0 items-center justify-center rounded-md border border-border bg-[hsl(var(--report-brand-tint))] text-xs font-semibold text-brand-deep",
         className
       )}
     >

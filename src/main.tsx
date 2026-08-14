@@ -5,6 +5,7 @@ import "./index.css";
 import { applyFonts, readStoredFonts } from "./config/fonts";
 import { resolveCtaTokenId } from "./config/ctaTokens";
 import { resolveBackgroundTokenId } from "./config/backgroundTokens";
+import { resolveFormElementSchemeId } from "./config/formElementSchemes";
 import { readStoredTheme } from "./config/themes";
 import { applyBrand } from "./config/applyBrand";
 import App from "./App.tsx";
@@ -15,7 +16,8 @@ applyBrand(
   stored.colorMode,
   resolveCtaTokenId(stored.ctaTokenId),
   resolveBackgroundTokenId(stored.backgroundTokenId),
-  resolveBackgroundTokenId(stored.headerTokenId ?? null)
+  resolveBackgroundTokenId(stored.headerTokenId ?? null),
+  resolveFormElementSchemeId(stored.formElementSchemeId)
 );
 applyFonts(readStoredFonts());
 

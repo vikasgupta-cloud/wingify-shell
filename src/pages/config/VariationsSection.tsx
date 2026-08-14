@@ -346,7 +346,7 @@ function NameCell({
   const renameVariation = useConfigStore((s) => s.renameVariation);
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <span className="flex size-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-medium text-foreground">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded bg-[hsl(var(--report-brand-tint))] text-xs font-medium text-brand-deep">
         {variation.label}
       </span>
       {editing ? (

@@ -136,6 +136,8 @@ export const NAV: NavItem[] = [
     { heading: "Discover", items: [{ label: "What's New", path: "/wandz/whats-new" }]},
   ]},
   { label: "Web Experimentation", path: "/web-experiment", icon: FlaskConical, group: 2, pinnable: true },
+  { label: "Web experimentation (Old)", path: "/web-experiment-old", icon: FlaskConical, group: 2 },
+  { label: "Personalize", path: "/personalize", icon: Target, group: 2, pinnable: true },
   { label: "Personalize", path: "/personalize", icon: Target, group: 2, pinnable: true },
   { label: "Feature Management", path: "/feature-management", icon: Flag, group: 2, pinnable: true, sections: [
     { heading: "Create", items: [

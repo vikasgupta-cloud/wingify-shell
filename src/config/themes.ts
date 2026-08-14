@@ -1,4 +1,9 @@
 import tokens from "./tokens.json";
+import {
+  DEFAULT_FORM_ELEMENT_SCHEME_ID,
+  resolveFormElementSchemeId,
+  type FormElementSchemeId,
+} from "./formElementSchemes";
 
 /**
  * Accent families = primary button / CTA color.
@@ -25,6 +30,7 @@ export const DEFAULT_COLOR_MODE: ColorMode = "light";
 const LEGACY_THEME_IDS: Record<string, ThemeId> = {
   warm: "yellow",
   neutral: "yellow",
+  "yellow-b": "yellow",
   cool: "green",
   contrast: "midnight",
 };
@@ -45,7 +51,7 @@ export const THEMES: ThemeOption[] = [
   {
     id: "yellow",
     label: "Yellow",
-    description: "Yellow primary buttons",
+    description: "Yellow primary buttons — pick a secondary under Form elements",
     swatchesLight: [
       scales.neutral["0"],
       scales.yellow["50"],
@@ -158,6 +164,7 @@ export function readStoredTheme(): {
   ctaTokenId: string | null;
   backgroundTokenId: string | null;
   headerTokenId: string | null;
+  formElementSchemeId: FormElementSchemeId;
 } {
   if (typeof localStorage === "undefined") {
     return {
@@ -166,6 +173,7 @@ export function readStoredTheme(): {
       ctaTokenId: null,
       backgroundTokenId: null,
       headerTokenId: null,
+      formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
     };
   }
   try {
@@ -177,6 +185,7 @@ export function readStoredTheme(): {
         ctaTokenId: null,
         backgroundTokenId: null,
         headerTokenId: null,
+        formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
       };
     }
     const parsed = JSON.parse(raw) as {
@@ -186,6 +195,7 @@ export function readStoredTheme(): {
         ctaTokenId?: unknown;
         backgroundTokenId?: unknown;
         headerTokenId?: unknown;
+        formElementSchemeId?: unknown;
       };
     };
     const cta =
@@ -200,12 +210,18 @@ export function readStoredTheme(): {
       typeof parsed?.state?.headerTokenId === "string"
         ? parsed.state.headerTokenId
         : null;
+    const rawTheme = parsed?.state?.themeId;
     return {
-      themeId: resolveThemeId(parsed?.state?.themeId),
+      themeId: resolveThemeId(rawTheme),
       colorMode: resolveColorMode(parsed?.state?.colorMode),
       ctaTokenId: cta,
       backgroundTokenId: background,
       headerTokenId: header,
+      formElementSchemeId: resolveFormElementSchemeId(
+        rawTheme === "yellow-b"
+          ? "yellow-maroon"
+          : parsed?.state?.formElementSchemeId
+      ),
     };
   } catch {
     return {
@@ -214,6 +230,7 @@ export function readStoredTheme(): {
       ctaTokenId: null,
       backgroundTokenId: null,
       headerTokenId: null,
+      formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
     };
   }
 }

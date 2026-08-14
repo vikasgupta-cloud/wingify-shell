@@ -38,7 +38,7 @@ function MetricRow({
 }) {
   return (
     <div className="flex items-center gap-2 rounded-md border border-border px-3 py-2.5">
-      <span className="inline-flex size-7 shrink-0 items-center justify-center rounded bg-muted text-[10px] font-bold text-foreground">
+      <span className="inline-flex size-7 shrink-0 items-center justify-center rounded bg-[hsl(var(--report-brand-tint))] text-[10px] font-bold text-brand-deep">
         {id}
       </span>
       <div className="min-w-0 flex-1">

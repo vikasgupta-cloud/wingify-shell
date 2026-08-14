@@ -1,6 +1,5 @@
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
-import { Circle } from "@/components/icons/protoLucide"
 
 import { cn } from "@/lib/utils"
 
@@ -28,13 +27,13 @@ const RadioGroupItem = React.forwardRef<
       className={cn(
         // Same rule as Checkbox: neutral outline when off, accent fill when on.
         // The dot is primary-foreground so it stays legible on any accent.
-        "aspect-square h-4 w-4 rounded-full border border-input bg-background shadow-none transition-colors hover:border-foreground/40 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary-border data-[state=checked]:bg-primary",
+        "aspect-square h-4 w-4 rounded-full border border-input bg-background shadow-none transition-colors hover:border-foreground/40 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-control-border data-[state=checked]:bg-control",
         className
       )}
       {...props}
     >
-      <RadioGroupPrimitive.Indicator className="flex h-full w-full items-center justify-center">
-        <Circle className="h-1.5 w-1.5 fill-primary-foreground text-primary-foreground" />
+      <RadioGroupPrimitive.Indicator className="flex size-full items-center justify-center">
+        <span className="block size-1.5 rounded-full bg-control-foreground" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )

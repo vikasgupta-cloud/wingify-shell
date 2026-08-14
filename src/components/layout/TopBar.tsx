@@ -79,7 +79,10 @@ export default function TopBar() {
     }
     if (!option.campaignType) return; // stub
     const id = createCampaign(option.campaignType);
-    navigate(`/web-experiment/c/${id}`);
+    const base = pathname.startsWith("/web-experiment-old")
+      ? "/web-experiment-old"
+      : "/web-experiment";
+    navigate(`${base}/c/${id}`);
   };
 
   return (

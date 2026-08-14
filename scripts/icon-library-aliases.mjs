@@ -290,6 +290,10 @@ export const REMIX = {
   Target: "Focus",
   GripVertical: "DragMove",
   Cog: "Settings",
+  PanelLeft: "SideBar",
+  PanelLeftClose: "SideBar",
+  PanelLeftOpen: "SideBar",
+  PanelRight: "SideBar",
 };
 
 export const BOOTSTRAP = {
@@ -405,6 +409,10 @@ export const BOOTSTRAP = {
   Target: "Bullseye",
   GripVertical: "GripVertical",
   Cog: "Gear",
+  PanelLeft: "LayoutSidebar",
+  PanelLeftClose: "LayoutSidebar",
+  PanelLeftOpen: "LayoutSidebar",
+  PanelRight: "LayoutSidebar",
 };
 
 export const ICONOIR = {
@@ -520,6 +528,10 @@ export const ICONOIR = {
   Target: "Target",
   GripVertical: "Drag",
   Cog: "Settings",
+  PanelLeft: "SidebarCollapse",
+  PanelLeftClose: "SidebarCollapse",
+  PanelLeftOpen: "SidebarCollapse",
+  PanelRight: "SidebarCollapse",
 };
 
 export const RADIX = {
@@ -618,6 +630,10 @@ export const RADIX = {
   Circle: "CircleIcon",
   CircleIcon: "CircleIcon",
   Square: "SquareIcon",
+  PanelLeft: "ViewVerticalIcon",
+  PanelLeftClose: "ViewVerticalIcon",
+  PanelLeftOpen: "ViewVerticalIcon",
+  PanelRight: "ViewVerticalIcon",
 };
 
 export const FLUENT = {
@@ -853,4 +869,8 @@ export const SOLAR = {
   Target: "Target",
   GripVertical: "HamburgerMenu",
   Cog: "Settings",
+  PanelLeft: "SidebarMinimalistic",
+  PanelLeftClose: "SidebarMinimalistic",
+  PanelLeftOpen: "SidebarMinimalistic",
+  PanelRight: "SidebarMinimalistic",
 };

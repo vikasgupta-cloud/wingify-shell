@@ -186,9 +186,9 @@ export function aestheticVarsForCta(
   const i = stepIndex(step);
   const hoverStep = i <= 3 ? neighborStep(step, 1) : neighborStep(step, -1);
   const activeStep = i <= 3 ? neighborStep(step, 2) : neighborStep(step, -2);
-  // Only yellow CTAs keep a darker outline; others match the fill.
+  // Yellow CTAs keep a black stroke; others match the fill.
   const primaryBorder =
-    family === "yellow" ? familyVar(family, activeStep) : primary;
+    family === "yellow" ? "var(--vwo-midnight-base)" : primary;
 
   if (colorMode === "dark") {
     return {

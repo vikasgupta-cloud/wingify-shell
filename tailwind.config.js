@@ -113,6 +113,11 @@ export default {
           subtle: "hsl(var(--primary-subtle))",
           border: "hsl(var(--primary-border))",
         },
+        control: {
+          DEFAULT: "hsl(var(--control))",
+          foreground: "hsl(var(--control-foreground))",
+          border: "hsl(var(--control-border))",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

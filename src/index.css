@@ -245,6 +245,8 @@
 
   /* ── VWO Semantic Light / Dark (from figma tokens) ─────────── */
   --vwo-light-bg-canvas: 40 33.3% 94.7%;
+  /* Trial lighter canvas (not a token yet). Swap --canvas to this; promote when signed off. */
+  --canvas-trial: 40 18% 97.8%;
   --vwo-light-bg-surface: 0 0% 100%;
   --vwo-light-bg-surface-raised: 0 0% 100%;
   --vwo-light-bg-surface-sunken: 40 22.4% 86.9%;
@@ -409,8 +411,14 @@
   --primary-hover: var(--vwo-yellow-100);
   --primary-active: var(--vwo-yellow-200);
   --primary-subtle: var(--vwo-yellow-100);
-  /* Yellow CTA needs a darker edge; other themes match fill (no visible border). */
-  --primary-border: var(--primary-active);
+  /* Yellow CTA keeps a black stroke; other themes match fill. */
+  --primary-border: var(--vwo-midnight-base);
+
+  /* Form controls (checkbox / radio / switch / slider) — follow primary by
+     default; yellow form sub-themes remap these via formElementSchemes. */
+  --control: var(--primary);
+  --control-foreground: var(--primary-foreground);
+  --control-border: var(--primary-border);
 
   --secondary: var(--vwo-light-bg-hover);
   --secondary-foreground: var(--vwo-midnight-base);
@@ -418,7 +426,7 @@
 
   --muted: var(--vwo-light-bg-canvas);
   --muted-foreground: var(--vwo-light-text-secondary);
-  --canvas: var(--vwo-light-bg-canvas);
+  --canvas: var(--canvas-trial);
   --surface: var(--vwo-light-bg-canvas);
   --surface-border: var(--vwo-light-border-subtle);
   /* Listing headers (tables / kanban / gantt) — design controller can override. */
@@ -628,7 +636,7 @@
   --secondary-hover: var(--vwo-light-bg-active);
   --muted: var(--vwo-light-bg-canvas);
   --muted-foreground: var(--vwo-light-text-secondary);
-  --canvas: var(--vwo-light-bg-canvas);
+  --canvas: var(--canvas-trial);
   --surface: var(--vwo-light-bg-canvas);
   --surface-border: var(--vwo-light-border-subtle);
   /* Listing headers (tables / kanban / gantt) — design controller can override. */
@@ -836,6 +844,24 @@
    (src/config/brandEngine.ts). The former [data-theme][data-mode] CSS blocks
    lived here; a custom CTA overrides the same vars on top. Add a theme in
    brandEngine THEME_VAR_SPEC + THEME_IDS + THEMES — no CSS block needed. */
+
+/* Lemon (yellow) fill is too pale to read without a black stroke — only when
+   form controls still follow the button color (no form-element override). */
+[data-theme="yellow"]:not([data-form-elements]) [data-slot="slider-track"] {
+  background-color: hsl(var(--foreground) / 0.1);
+  outline: 1px solid hsl(var(--foreground));
+}
+[data-theme="yellow"]:not([data-form-elements]) [data-slot="slider-thumb"] {
+  border-width: 2px;
+  border-color: hsl(var(--foreground));
+}
+[data-theme="yellow"]:not([data-form-elements]) [data-slot="switch"] {
+  border-color: hsl(var(--foreground));
+}
+[data-theme="yellow"]:not([data-form-elements]) [data-slot="switch-thumb"] {
+  background-color: hsl(var(--foreground));
+  box-shadow: none;
+}
 
 
 * {

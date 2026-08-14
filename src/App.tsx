@@ -13,11 +13,26 @@ export default function App() {
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
   const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
   const headerTokenId = useThemeStore((s) => s.headerTokenId);
+  const formElementSchemeId = useThemeStore((s) => s.formElementSchemeId);
   const fontAssignments = useFontStore((s) => s.assignments);
 
   useEffect(() => {
-    applyBrand(themeId, colorMode, ctaTokenId, backgroundTokenId, headerTokenId);
-  }, [themeId, colorMode, ctaTokenId, backgroundTokenId, headerTokenId]);
+    applyBrand(
+      themeId,
+      colorMode,
+      ctaTokenId,
+      backgroundTokenId,
+      headerTokenId,
+      formElementSchemeId
+    );
+  }, [
+    themeId,
+    colorMode,
+    ctaTokenId,
+    backgroundTokenId,
+    headerTokenId,
+    formElementSchemeId,
+  ]);
 
   useEffect(() => {
     applyFonts(fontAssignments);

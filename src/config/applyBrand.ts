@@ -10,9 +10,21 @@ import {
   HEADER_VARS,
   neutralTokenById,
 } from "./backgroundTokens";
+import {
+  computeFormElementVars,
+  FORM_ELEMENT_VARS,
+  formElementSchemeOverridesTheme,
+  type FormElementSchemeId,
+} from "./formElementSchemes";
 
 const ALL_BRAND_VARS: readonly string[] = Array.from(
-  new Set([...THEME_VARS, ...CTA_VARS, ...BACKGROUND_VARS, ...HEADER_VARS])
+  new Set([
+    ...THEME_VARS,
+    ...CTA_VARS,
+    ...BACKGROUND_VARS,
+    ...HEADER_VARS,
+    ...FORM_ELEMENT_VARS,
+  ])
 );
 
 export function applyBrand(
@@ -20,15 +32,22 @@ export function applyBrand(
   colorMode: ColorMode,
   ctaTokenId: string | null,
   backgroundTokenId: string | null = null,
-  headerTokenId: string | null = null
+  headerTokenId: string | null = null,
+  formElementSchemeId: FormElementSchemeId = "yellow-yellow"
 ) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
 
   applyTheme(themeId, colorMode);
 
+  const formVars =
+    themeId === "yellow"
+      ? computeFormElementVars(formElementSchemeId, colorMode)
+      : {};
+
   const vars: Record<string, string> = {
     ...computeThemeVars(themeId, colorMode),
+    ...formVars,
   };
   const token = ctaTokenId ? ctaTokenById(ctaTokenId) : undefined;
   if (token) {
@@ -52,6 +71,15 @@ export function applyBrand(
     root.setAttribute("data-listing-header", header.id);
   } else {
     root.removeAttribute("data-listing-header");
+  }
+
+  if (
+    themeId === "yellow" &&
+    formElementSchemeOverridesTheme(formElementSchemeId)
+  ) {
+    root.setAttribute("data-form-elements", formElementSchemeId);
+  } else {
+    root.removeAttribute("data-form-elements");
   }
 
   for (const key of ALL_BRAND_VARS) {
