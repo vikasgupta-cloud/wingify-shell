@@ -412,15 +412,11 @@ if (profileItem) {
 
 export const PINNABLE_PATHS = NAV.filter((i) => i.pinnable).map((i) => i.path);
 
-/** Theme-QA campaign flow — togglable from the design controller. */
+/** Theme-QA campaign flow — hidden from the rail; open via design controller. */
 export const WEB_EXPERIMENT_OLD_PATH = "/web-experiment-old";
 
-/** NAV filtered by design-controller prototype flags. */
-export function visibleNav(options: {
-  showWebExperimentOld?: boolean;
-}): NavItem[] {
-  const showOld = options.showWebExperimentOld !== false;
-  if (showOld) return NAV;
+/** NAV without prototype-only items (e.g. Web experimentation Old). */
+export function visibleNav(): NavItem[] {
   return NAV.filter((item) => item.path !== WEB_EXPERIMENT_OLD_PATH);
 }
 

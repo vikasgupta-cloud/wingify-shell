@@ -59,6 +59,57 @@ function buildNeutralOptions(): NeutralTokenOption[] {
 
 export const NEUTRAL_TOKEN_OPTIONS = buildNeutralOptions();
 
+/** Wingify light defaults — Canvas · #F6F3ED / Parchment · #EFECE4 */
+export const DEFAULT_BACKGROUND_TOKEN_ID = "neutral.50";
+export const DEFAULT_HEADER_TOKEN_ID = "neutral.75";
+
+/** Wingify dark defaults — ink pane / raised chrome */
+export const DEFAULT_BACKGROUND_TOKEN_ID_DARK = "neutral.950";
+export const DEFAULT_HEADER_TOKEN_ID_DARK = "neutral.900";
+
+/** Mode-aware Wingify chrome (surface / background / headers). */
+export function wingifyChromeTokenIds(mode: ColorMode): {
+  backgroundTokenId: string;
+  headerTokenId: string;
+} {
+  if (mode === "dark") {
+    return {
+      backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID_DARK,
+      headerTokenId: DEFAULT_HEADER_TOKEN_ID_DARK,
+    };
+  }
+  return {
+    backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+    headerTokenId: DEFAULT_HEADER_TOKEN_ID,
+  };
+}
+
+/**
+ * Keeps Wingify Canvas/Parchment (light) from sticking when the UI is dark —
+ * and the dark ink pair from sticking when returning to light — if the user
+ * is still on the auto defaults for the opposite mode.
+ */
+export function resolveWingifyChromeTokens(
+  mode: ColorMode,
+  backgroundTokenId: string | null | undefined,
+  headerTokenId: string | null | undefined
+): { backgroundTokenId: string | null; headerTokenId: string | null } {
+  const defaults = wingifyChromeTokenIds(mode);
+  const opposite = wingifyChromeTokenIds(mode === "dark" ? "light" : "dark");
+  let bg =
+    backgroundTokenId === undefined
+      ? defaults.backgroundTokenId
+      : resolveNeutralTokenId(backgroundTokenId);
+  let header =
+    headerTokenId === undefined
+      ? defaults.headerTokenId
+      : resolveNeutralTokenId(headerTokenId);
+
+  if (bg === opposite.backgroundTokenId) bg = defaults.backgroundTokenId;
+  if (header === opposite.headerTokenId) header = defaults.headerTokenId;
+  return { backgroundTokenId: bg, headerTokenId: header };
+}
+
 const BY_ID = Object.fromEntries(
   NEUTRAL_TOKEN_OPTIONS.map((t) => [t.id, t])
 ) as Record<string, NeutralTokenOption>;

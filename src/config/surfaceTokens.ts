@@ -11,6 +11,9 @@ export const SURFACE_SCHEME_IDS = [
 
 export type SurfaceSchemeId = (typeof SURFACE_SCHEME_IDS)[number];
 
+/** Default surface preset on first load / Reset appearance. */
+export const DEFAULT_SURFACE_SCHEME_ID: SurfaceSchemeId = "feather-body";
+
 /** The three layers a preset paints. */
 type SurfaceLayer = "chrome" | "body" | "card";
 

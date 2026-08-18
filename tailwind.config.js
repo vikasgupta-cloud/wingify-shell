@@ -120,6 +120,21 @@ export default {
         },
         cta: {
           secondary: "hsl(var(--cta-secondary-fg))",
+          tertiary: {
+            DEFAULT: "hsl(var(--cta-tertiary-bg))",
+            foreground: "hsl(var(--cta-tertiary-fg))",
+            border: "hsl(var(--cta-tertiary-border))",
+            hover: "hsl(var(--cta-tertiary-hover))",
+          },
+          ai: {
+            DEFAULT: "hsl(var(--cta-ai-bg))",
+            foreground: "hsl(var(--cta-ai-fg))",
+            hover: "hsl(var(--cta-ai-hover))",
+          },
+          disabled: {
+            DEFAULT: "hsl(var(--cta-disabled-bg))",
+            foreground: "hsl(var(--cta-disabled-fg))",
+          },
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",

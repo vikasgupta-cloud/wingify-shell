@@ -1,7 +1,4 @@
-import { useEffect } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { WEB_EXPERIMENT_OLD_PATH } from "../../config/navigation";
-import { useDesignControllerStore } from "../../store/designController";
+import { Outlet } from "react-router-dom";
 import ExpandedNav from "./ExpandedNav";
 import TopBar from "./TopBar";
 
@@ -10,22 +7,6 @@ export default function AppLayout() {
   // with hover flyouts. One ExpandedNav morphs between both — icons stay put.
   // Flex (not grid) so the content column follows the sidebar's animated width
   // instead of relying on grid-template-columns interpolation.
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const showWebExperimentOld = useDesignControllerStore(
-    (s) => s.showWebExperimentOld
-  );
-
-  useEffect(() => {
-    if (showWebExperimentOld) return;
-    if (
-      pathname === WEB_EXPERIMENT_OLD_PATH ||
-      pathname.startsWith(`${WEB_EXPERIMENT_OLD_PATH}/`)
-    ) {
-      navigate("/web-experiment", { replace: true });
-    }
-  }, [showWebExperimentOld, pathname, navigate]);
-
   return (
     <div className="flex h-screen bg-background text-foreground">
       <ExpandedNav />

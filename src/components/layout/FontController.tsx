@@ -11,8 +11,6 @@ import {
   downloadDesignTokensJson,
 } from "../../config/exportDesignTokens";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import ThemePicker from "./ThemePicker";
 import FontPicker from "./FontPicker";
 import CtaColorPicker from "./CtaColorPicker";
@@ -20,6 +18,7 @@ import BackgroundColorPicker from "./BackgroundColorPicker";
 import SurfacePicker from "./SurfacePicker";
 import HeaderColorPicker from "./HeaderColorPicker";
 import IconLibraryPicker from "./IconLibraryPicker";
+import { WEB_EXPERIMENT_OLD_PATH } from "../../config/navigation";
 
 /** Blank-space clicks required to open (hidden gesture). */
 const OPEN_CLICKS = 5;
@@ -66,12 +65,6 @@ export default function FontController() {
   const open = useDesignControllerStore((s) => s.open);
   const setOpen = useDesignControllerStore((s) => s.setOpen);
   const resetDesign = useDesignControllerStore((s) => s.resetDesign);
-  const showWebExperimentOld = useDesignControllerStore(
-    (s) => s.showWebExperimentOld
-  );
-  const setShowWebExperimentOld = useDesignControllerStore(
-    (s) => s.setShowWebExperimentOld
-  );
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
@@ -364,22 +357,21 @@ export default function FontController() {
                       Prototypes
                     </p>
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      Toggle prototype nav items in the product rail.
+                      Open prototype flows that stay off the product rail.
                     </p>
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <Label
-                      htmlFor="show-web-experiment-old"
-                      className="cursor-pointer text-sm font-normal leading-snug text-foreground"
-                    >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between gap-1.5"
+                    asChild
+                  >
+                    <Link to={WEB_EXPERIMENT_OLD_PATH} onClick={close}>
                       Web experimentation (Old)
-                    </Label>
-                    <Switch
-                      id="show-web-experiment-old"
-                      checked={showWebExperimentOld}
-                      onCheckedChange={setShowWebExperimentOld}
-                    />
-                  </div>
+                      <ArrowRight className="size-3.5" strokeWidth={1.75} />
+                    </Link>
+                  </Button>
                 </div>
 
                 <p className="px-4 pb-4 pt-2 text-xs leading-relaxed text-muted-foreground">

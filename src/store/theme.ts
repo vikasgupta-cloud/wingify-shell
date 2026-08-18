@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { resolveCtaTokenId } from "../config/ctaTokens";
-import { resolveNeutralTokenId } from "../config/backgroundTokens";
+import {
+  DEFAULT_BACKGROUND_TOKEN_ID,
+  DEFAULT_HEADER_TOKEN_ID,
+  resolveNeutralTokenId,
+  resolveWingifyChromeTokens,
+  wingifyChromeTokenIds,
+} from "../config/backgroundTokens";
 import { applyBrand } from "../config/applyBrand";
 import {
   DEFAULT_FORM_ELEMENT_SCHEME_ID,
@@ -9,6 +15,7 @@ import {
   type FormElementSchemeId,
 } from "../config/formElementSchemes";
 import {
+  DEFAULT_SURFACE_SCHEME_ID,
   resolveSurfaceSchemeId,
   type SurfaceSchemeId,
 } from "../config/surfaceTokens";
@@ -20,6 +27,26 @@ import {
   type ColorMode,
   type ThemeId,
 } from "../config/themes";
+
+/** Chrome defaults that ship with the Wingify theme (mode-aware). */
+function wingifyChromeDefaults(mode: ColorMode) {
+  return {
+    ...wingifyChromeTokenIds(mode),
+    surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
+  } as const;
+}
+
+function isWingifyDefaultChrome(
+  mode: ColorMode,
+  backgroundTokenId: string | null,
+  headerTokenId: string | null
+): boolean {
+  const d = wingifyChromeTokenIds(mode);
+  return (
+    backgroundTokenId === d.backgroundTokenId &&
+    headerTokenId === d.headerTokenId
+  );
+}
 
 type ThemeState = {
   themeId: ThemeId;
@@ -67,28 +94,30 @@ export const useThemeStore = create<ThemeState>()(
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
       ctaTokenId: null,
-      backgroundTokenId: null,
-      headerTokenId: null,
+      backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+      headerTokenId: DEFAULT_HEADER_TOKEN_ID,
       formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
-      surfaceSchemeId: null,
+      surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
       setTheme: (themeId) => {
-        const {
-          colorMode,
-          backgroundTokenId,
-          headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId,
-        } = get();
+        const { colorMode, formElementSchemeId } = get();
+        const chrome =
+          themeId === "wingify"
+            ? wingifyChromeDefaults(colorMode)
+            : {
+                backgroundTokenId: get().backgroundTokenId,
+                headerTokenId: get().headerTokenId,
+                surfaceSchemeId: get().surfaceSchemeId,
+              };
         syncDom(
           themeId,
           colorMode,
           null,
-          backgroundTokenId,
-          headerTokenId,
+          chrome.backgroundTokenId,
+          chrome.headerTokenId,
           formElementSchemeId,
-          surfaceSchemeId
+          chrome.surfaceSchemeId
         );
-        set({ themeId, ctaTokenId: null });
+        set({ themeId, ctaTokenId: null, ...chrome });
       },
       setColorMode: (colorMode) => {
         const {
@@ -98,17 +127,37 @@ export const useThemeStore = create<ThemeState>()(
           headerTokenId,
           formElementSchemeId,
           surfaceSchemeId,
+          colorMode: prevMode,
         } = get();
+        // Wingify light defaults (Canvas 50 / Parchment 75) must not stick in
+        // dark mode — swap to the dark pair when still on auto defaults.
+        let nextBg = backgroundTokenId;
+        let nextHeader = headerTokenId;
+        let nextSurface = surfaceSchemeId;
+        if (
+          themeId === "wingify" &&
+          isWingifyDefaultChrome(prevMode, backgroundTokenId, headerTokenId)
+        ) {
+          const chrome = wingifyChromeDefaults(colorMode);
+          nextBg = chrome.backgroundTokenId;
+          nextHeader = chrome.headerTokenId;
+          nextSurface = chrome.surfaceSchemeId;
+        }
         syncDom(
           themeId,
           colorMode,
           ctaTokenId,
-          backgroundTokenId,
-          headerTokenId,
+          nextBg,
+          nextHeader,
           formElementSchemeId,
-          surfaceSchemeId
+          nextSurface
         );
-        set({ colorMode });
+        set({
+          colorMode,
+          backgroundTokenId: nextBg,
+          headerTokenId: nextHeader,
+          surfaceSchemeId: nextSurface,
+        });
       },
       setCtaToken: (ctaTokenId) => {
         const {
@@ -212,23 +261,24 @@ export const useThemeStore = create<ThemeState>()(
         set({ surfaceSchemeId: next });
       },
       resetAppearance: () => {
+        const chrome = wingifyChromeDefaults(DEFAULT_COLOR_MODE);
         syncDom(
           DEFAULT_THEME_ID,
           DEFAULT_COLOR_MODE,
           null,
-          null,
-          null,
+          chrome.backgroundTokenId,
+          chrome.headerTokenId,
           DEFAULT_FORM_ELEMENT_SCHEME_ID,
-          null
+          chrome.surfaceSchemeId
         );
         set({
           themeId: DEFAULT_THEME_ID,
           colorMode: DEFAULT_COLOR_MODE,
           ctaTokenId: null,
-          backgroundTokenId: null,
-          headerTokenId: null,
+          backgroundTokenId: chrome.backgroundTokenId,
+          headerTokenId: chrome.headerTokenId,
           formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
-          surfaceSchemeId: null,
+          surfaceSchemeId: chrome.surfaceSchemeId,
         });
       },
     }),
@@ -250,39 +300,78 @@ export const useThemeStore = create<ThemeState>()(
         const rawTheme = p.themeId;
         const wasYellowB = rawTheme === "yellow-b";
         const themeId = resolveThemeId(p.themeId ?? current.themeId);
+        const colorMode = resolveColorMode(p.colorMode ?? current.colorMode);
         const formElementSchemeId = resolveFormElementSchemeId(
           wasYellowB
             ? "yellow-maroon"
             : (p.formElementSchemeId ?? current.formElementSchemeId)
         );
+        const chrome =
+          themeId === "wingify"
+            ? resolveWingifyChromeTokens(
+                colorMode,
+                p.backgroundTokenId === undefined
+                  ? current.backgroundTokenId
+                  : p.backgroundTokenId,
+                p.headerTokenId === undefined
+                  ? current.headerTokenId
+                  : p.headerTokenId
+              )
+            : {
+                backgroundTokenId:
+                  p.backgroundTokenId === undefined
+                    ? current.backgroundTokenId
+                    : resolveNeutralTokenId(p.backgroundTokenId),
+                headerTokenId:
+                  p.headerTokenId === undefined
+                    ? current.headerTokenId
+                    : resolveNeutralTokenId(p.headerTokenId),
+              };
         return {
           ...current,
           ...p,
           themeId,
-          colorMode: resolveColorMode(p.colorMode ?? current.colorMode),
+          colorMode,
           ctaTokenId: resolveCtaTokenId(p.ctaTokenId ?? current.ctaTokenId),
-          backgroundTokenId: resolveNeutralTokenId(
-            p.backgroundTokenId ?? current.backgroundTokenId
-          ),
-          headerTokenId: resolveNeutralTokenId(
-            p.headerTokenId ?? current.headerTokenId
-          ),
+          backgroundTokenId: chrome.backgroundTokenId,
+          headerTokenId: chrome.headerTokenId,
           formElementSchemeId,
-          surfaceSchemeId: resolveSurfaceSchemeId(
-            p.surfaceSchemeId ?? current.surfaceSchemeId
-          ),
+          surfaceSchemeId:
+            p.surfaceSchemeId === undefined
+              ? DEFAULT_SURFACE_SCHEME_ID
+              : resolveSurfaceSchemeId(p.surfaceSchemeId),
         };
       },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+        const themeId = resolveThemeId(state.themeId);
+        const colorMode = resolveColorMode(state.colorMode);
+        const surfaceSchemeId =
+          state.surfaceSchemeId === undefined
+            ? DEFAULT_SURFACE_SCHEME_ID
+            : resolveSurfaceSchemeId(state.surfaceSchemeId);
+        const chrome =
+          themeId === "wingify"
+            ? resolveWingifyChromeTokens(
+                colorMode,
+                state.backgroundTokenId,
+                state.headerTokenId
+              )
+            : {
+                backgroundTokenId: resolveNeutralTokenId(state.backgroundTokenId),
+                headerTokenId: resolveNeutralTokenId(state.headerTokenId),
+              };
+        state.surfaceSchemeId = surfaceSchemeId;
+        state.backgroundTokenId = chrome.backgroundTokenId;
+        state.headerTokenId = chrome.headerTokenId;
         syncDom(
-          resolveThemeId(state.themeId),
-          resolveColorMode(state.colorMode),
+          themeId,
+          colorMode,
           resolveCtaTokenId(state.ctaTokenId),
-          resolveNeutralTokenId(state.backgroundTokenId),
-          resolveNeutralTokenId(state.headerTokenId),
+          chrome.backgroundTokenId,
+          chrome.headerTokenId,
           resolveFormElementSchemeId(state.formElementSchemeId),
-          resolveSurfaceSchemeId(state.surfaceSchemeId)
+          surfaceSchemeId
         );
       },
     }

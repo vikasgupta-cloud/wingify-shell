@@ -1,5 +1,6 @@
 import tokens from "./tokens.json";
 import {
+  DEFAULT_SURFACE_SCHEME_ID,
   resolveSurfaceSchemeId,
   type SurfaceSchemeId,
 } from "./surfaceTokens";
@@ -8,6 +9,12 @@ import {
   resolveFormElementSchemeId,
   type FormElementSchemeId,
 } from "./formElementSchemes";
+import {
+  DEFAULT_BACKGROUND_TOKEN_ID,
+  DEFAULT_HEADER_TOKEN_ID,
+  resolveBackgroundTokenId,
+  resolveWingifyChromeTokens,
+} from "./backgroundTokens";
 
 /**
  * Accent families = primary button / CTA color.
@@ -163,7 +170,8 @@ export const THEMES: ThemeOption[] = [
   {
     id: "wingify",
     label: "Wingify",
-    description: "Wingify pack — neutral primary, yellow selection (colors only)",
+    description:
+      "Full Wingify pack — white cards/nav, warm pane, ink primary, lemon selection",
     swatchesLight: ["#FFFFFF", "#1B1913", "#EEFF6D"],
     swatchesDark: ["#1B1913", "#F6F3ED", "#EEFF6D"],
   },
@@ -216,10 +224,10 @@ export function readStoredTheme(): {
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
       ctaTokenId: null,
-      backgroundTokenId: null,
-      headerTokenId: null,
+      backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+      headerTokenId: DEFAULT_HEADER_TOKEN_ID,
       formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
-      surfaceSchemeId: null,
+      surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
     };
   }
   try {
@@ -229,10 +237,10 @@ export function readStoredTheme(): {
         themeId: DEFAULT_THEME_ID,
         colorMode: DEFAULT_COLOR_MODE,
         ctaTokenId: null,
-        backgroundTokenId: null,
-        headerTokenId: null,
+        backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+        headerTokenId: DEFAULT_HEADER_TOKEN_ID,
         formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
-        surfaceSchemeId: null,
+        surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
       };
     }
     const parsed = JSON.parse(raw) as {
@@ -250,37 +258,51 @@ export function readStoredTheme(): {
       typeof parsed?.state?.ctaTokenId === "string"
         ? parsed.state.ctaTokenId
         : null;
-    const background =
-      typeof parsed?.state?.backgroundTokenId === "string"
-        ? parsed.state.backgroundTokenId
-        : null;
-    const header =
-      typeof parsed?.state?.headerTokenId === "string"
-        ? parsed.state.headerTokenId
-        : null;
     const rawTheme = parsed?.state?.themeId;
+    const themeId = resolveThemeId(rawTheme);
+    const colorMode = resolveColorMode(parsed?.state?.colorMode);
+    const chrome =
+      themeId === "wingify"
+        ? resolveWingifyChromeTokens(
+            colorMode,
+            parsed?.state?.backgroundTokenId,
+            parsed?.state?.headerTokenId
+          )
+        : {
+            backgroundTokenId:
+              parsed?.state?.backgroundTokenId === undefined
+                ? null
+                : resolveBackgroundTokenId(parsed?.state?.backgroundTokenId),
+            headerTokenId:
+              parsed?.state?.headerTokenId === undefined
+                ? null
+                : resolveBackgroundTokenId(parsed?.state?.headerTokenId),
+          };
     return {
-      themeId: resolveThemeId(rawTheme),
-      colorMode: resolveColorMode(parsed?.state?.colorMode),
+      themeId,
+      colorMode,
       ctaTokenId: cta,
-      backgroundTokenId: background,
-      headerTokenId: header,
+      backgroundTokenId: chrome.backgroundTokenId,
+      headerTokenId: chrome.headerTokenId,
       formElementSchemeId: resolveFormElementSchemeId(
         rawTheme === "yellow-b"
           ? "yellow-maroon"
           : parsed?.state?.formElementSchemeId
       ),
-      surfaceSchemeId: resolveSurfaceSchemeId(parsed?.state?.surfaceSchemeId),
+      surfaceSchemeId:
+        parsed?.state?.surfaceSchemeId === undefined
+          ? DEFAULT_SURFACE_SCHEME_ID
+          : resolveSurfaceSchemeId(parsed?.state?.surfaceSchemeId),
     };
   } catch {
     return {
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
       ctaTokenId: null,
-      backgroundTokenId: null,
-      headerTokenId: null,
+      backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+      headerTokenId: DEFAULT_HEADER_TOKEN_ID,
       formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
-      surfaceSchemeId: null,
+      surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
     };
   }
 }

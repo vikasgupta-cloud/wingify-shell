@@ -6,7 +6,6 @@ import { ChevronDown, MoreHorizontal, Pin, PinOff } from "@/components/icons/pro
 import { LOGOUT_PATH, visibleNav, type NavItem } from "../../config/navigation";
 import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { canUnpinPath, useUIStore } from "../../store/ui";
-import { useDesignControllerStore } from "../../store/designController";
 import { useMascotPreviewStore } from "../../store/mascotPreview";
 import { mascotForPath } from "../../config/mascots";
 import { cn } from "../../lib/utils";
@@ -70,10 +69,7 @@ export default function ExpandedNav({
   const previewMascot = useMascotPreviewStore((s) => s.preview);
   const scheduleMascotClear = useMascotPreviewStore((s) => s.scheduleClear);
   const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
-  const showWebExperimentOld = useDesignControllerStore(
-    (s) => s.showWebExperimentOld
-  );
-  const nav = visibleNav({ showWebExperimentOld });
+  const nav = visibleNav();
 
   const previewMascotFor = (item: NavItem) => {
     previewMascot(mascotForPath(item.path));

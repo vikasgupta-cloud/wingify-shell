@@ -10,10 +10,9 @@ import {
   Save,
   Search,
   Trash2,
-  X,
 } from "@/components/icons/protoLucide";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AddTag, Tag, tagSwatchClass, type TagSwatch } from "@/components/ui/tag";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -45,7 +44,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -106,7 +104,13 @@ const SECONDARY_METRICS = [
   { id: "time", label: "Time on page" },
 ] as const;
 
-const LABELS = ["Growth", "Checkout", "Mobile", "Q3", "Priority"] as const;
+const LABELS = [
+  { id: "checkout", label: "checkout", swatch: 1 as TagSwatch },
+  { id: "q3-roadmap", label: "q3-roadmap", swatch: 4 as TagSwatch },
+  { id: "mobile-only", label: "mobile-only", swatch: 6 as TagSwatch },
+  { id: "needs-review", label: "needs-review", swatch: 7 as TagSwatch },
+  { id: "revenue", label: "revenue", swatch: 3 as TagSwatch },
+] as const;
 
 /**
  * Living form used by the design-controller gallery — campaign setup
@@ -143,7 +147,13 @@ export default function FormGallery() {
   const [matchType, setMatchType] = useState<"url" | "pattern" | "regex">(
     "pattern"
   );
-  const [tags, setTags] = useState<string[]>(["Growth", "Checkout"]);
+  const [tags, setTags] = useState<string[]>([
+    "checkout",
+    "q3-roadmap",
+    "mobile-only",
+    "needs-review",
+    "revenue",
+  ]);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
@@ -275,75 +285,57 @@ export default function FormGallery() {
             </div>
 
             <Field label="Labels" tip="Tags help filter campaigns in the list.">
-              <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={tagsOpen}
-                    className="h-auto min-h-9 w-full justify-between font-normal"
-                  >
-                    <span className="flex flex-wrap gap-1.5">
-                      {tags.length === 0 ? (
-                        <span className="text-muted-foreground">
-                          Select labels
-                        </span>
-                      ) : (
-                        tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="gap-1">
-                            {tag}
-                            <span
-                              role="button"
-                              tabIndex={-1}
-                              aria-label={`Remove ${tag}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleTag(tag);
-                              }}
-                              className="-mr-0.5 rounded-sm text-muted-foreground hover:text-foreground"
-                            >
-                              <X className="size-3" />
-                            </span>
-                          </Badge>
-                        ))
-                      )}
-                    </span>
-                    <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  align="start"
-                  className="w-[var(--radix-popover-trigger-width)] p-0"
-                >
-                  <Command>
-                    <CommandInput placeholder="Search labels…" />
-                    <CommandList>
-                      <CommandEmpty>No label found.</CommandEmpty>
-                      <CommandGroup>
-                        {LABELS.map((tag) => {
-                          const checked = tags.includes(tag);
-                          return (
-                            <CommandItem
-                              key={tag}
-                              value={tag}
-                              onSelect={() => toggleTag(tag)}
-                            >
-                              <Check
-                                className={cn(
-                                  "size-4",
-                                  checked ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <span className="flex-1">{tag}</span>
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {tags.map((id) => {
+                  const meta = LABELS.find((l) => l.id === id);
+                  if (!meta) return null;
+                  return (
+                    <Tag
+                      key={id}
+                      label={meta.label}
+                      swatch={meta.swatch}
+                      onRemove={() => toggleTag(id)}
+                    />
+                  );
+                })}
+                <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
+                  <PopoverTrigger asChild>
+                    <AddTag aria-expanded={tagsOpen} />
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-56 p-0">
+                    <Command>
+                      <CommandInput placeholder="Search labels…" />
+                      <CommandList>
+                        <CommandEmpty>No label found.</CommandEmpty>
+                        <CommandGroup>
+                          {LABELS.map((tag) => {
+                            const checked = tags.includes(tag.id);
+                            return (
+                              <CommandItem
+                                key={tag.id}
+                                value={tag.label}
+                                onSelect={() => toggleTag(tag.id)}
+                              >
+                                <span
+                                  aria-hidden
+                                  className={cn(
+                                    "mr-2 size-2.5 shrink-0 rounded-[2px]",
+                                    tagSwatchClass(tag.swatch)
+                                  )}
+                                />
+                                <span className="flex-1">{tag.label}</span>
+                                {checked ? (
+                                  <Check className="size-4 text-foreground" />
+                                ) : null}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </Field>
 
             <Field label="Environment">
@@ -906,67 +898,31 @@ export default function FormGallery() {
           <CardHeader className="space-y-1.5">
             <CardTitle className="font-title text-xl">Actions</CardTitle>
             <CardDescription>
-              Six CTA levels — primary, secondary (primary outline), tertiary,
-              ghost, link, and destructive.
+              Hover and press each one. Tab through to see the focus ring on
+              every fill. Prominence runs primary → secondary → tertiary →
+              ghost.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-wrap items-center gap-2">
-              <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                <DialogTrigger asChild>
-                  <Button type="button">Launch campaign</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Launch {name}?</DialogTitle>
-                    <DialogDescription>
-                      {traffic[0]}% of {segment.toLowerCase()} on{" "}
-                      {devices.join(", ") || "no devices"} will enter the test.
-                      This is a client-side demo — nothing is published.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setConfirmOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        setSaved(true);
-                        setConfirmOpen(false);
-                      }}
-                    >
-                      Confirm launch
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <Button type="button">Primary button</Button>
               <Button type="button" variant="secondary">
-                Test connection
+                Secondary button
               </Button>
               <Button type="button" variant="tertiary">
-                Preview
+                Tertiary button
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setTraffic([40]);
-                  setConfidence([95]);
-                  setSaved(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button type="button" variant="link">
-                View docs
+              <Button type="button" variant="ghost">
+                Ghost button
               </Button>
               <Button type="button" variant="destructive">
-                Discard
+                For danger button
+              </Button>
+              <Button type="button" variant="ai">
+                CTA shade for AI
+              </Button>
+              <Button type="button" disabled>
+                Disabled
               </Button>
             </div>
 

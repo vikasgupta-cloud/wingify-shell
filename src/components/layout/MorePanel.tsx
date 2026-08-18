@@ -4,7 +4,6 @@ import { Pin } from "@/components/icons/protoLucide";
 import { visibleNav } from "../../config/navigation";
 import { firstChildPath } from "../../lib/nav";
 import { useUIStore } from "../../store/ui";
-import { useDesignControllerStore } from "../../store/designController";
 import { cn } from "../../lib/utils";
 
 // Docked-mode More panel: fills the docked panel column with every unpinned
@@ -14,10 +13,7 @@ export default function MorePanel() {
   const navigate = useNavigate();
   const pinnedPaths = useUIStore((s) => s.pinnedPaths);
   const pin = useUIStore((s) => s.pin);
-  const showWebExperimentOld = useDesignControllerStore(
-    (s) => s.showWebExperimentOld
-  );
-  const unpinned = visibleNav({ showWebExperimentOld }).filter(
+  const unpinned = visibleNav().filter(
     (i) => i.pinnable && !pinnedPaths.includes(i.path)
   );
 
