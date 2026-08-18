@@ -11,6 +11,8 @@ import {
   downloadDesignTokensJson,
 } from "../../config/exportDesignTokens";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import ThemePicker from "./ThemePicker";
 import FontPicker from "./FontPicker";
 import CtaColorPicker from "./CtaColorPicker";
@@ -64,6 +66,12 @@ export default function FontController() {
   const open = useDesignControllerStore((s) => s.open);
   const setOpen = useDesignControllerStore((s) => s.setOpen);
   const resetDesign = useDesignControllerStore((s) => s.resetDesign);
+  const showWebExperimentOld = useDesignControllerStore(
+    (s) => s.showWebExperimentOld
+  );
+  const setShowWebExperimentOld = useDesignControllerStore(
+    (s) => s.setShowWebExperimentOld
+  );
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
@@ -348,6 +356,30 @@ export default function FontController() {
                       <ArrowRight className="size-3.5" strokeWidth={1.75} />
                     </Link>
                   </Button>
+                </div>
+
+                <div className="space-y-3 border-t border-border px-4 py-4">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Prototypes
+                    </p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Toggle prototype nav items in the product rail.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <Label
+                      htmlFor="show-web-experiment-old"
+                      className="cursor-pointer text-sm font-normal leading-snug text-foreground"
+                    >
+                      Web experimentation (Old)
+                    </Label>
+                    <Switch
+                      id="show-web-experiment-old"
+                      checked={showWebExperimentOld}
+                      onCheckedChange={setShowWebExperimentOld}
+                    />
+                  </div>
                 </div>
 
                 <p className="px-4 pb-4 pt-2 text-xs leading-relaxed text-muted-foreground">

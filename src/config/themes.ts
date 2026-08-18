@@ -23,6 +23,7 @@ export const THEME_IDS = [
   "berry",
   "maroon",
   "neutral-black",
+  "wingify",
 ] as const;
 
 export const COLOR_MODES = ["light", "dark"] as const;
@@ -30,7 +31,7 @@ export const COLOR_MODES = ["light", "dark"] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 export type ColorMode = (typeof COLOR_MODES)[number];
 
-export const DEFAULT_THEME_ID: ThemeId = "yellow";
+export const DEFAULT_THEME_ID: ThemeId = "wingify";
 export const DEFAULT_COLOR_MODE: ColorMode = "light";
 
 const LEGACY_THEME_IDS: Record<string, ThemeId> = {
@@ -158,6 +159,13 @@ export const THEMES: ThemeOption[] = [
       scales.neutral["100"],
       semantic.dark["bg.surface"],
     ],
+  },
+  {
+    id: "wingify",
+    label: "Wingify",
+    description: "Wingify pack — neutral primary, yellow selection (colors only)",
+    swatchesLight: ["#FFFFFF", "#1B1913", "#EEFF6D"],
+    swatchesDark: ["#1B1913", "#F6F3ED", "#EEFF6D"],
   },
 ];
 

@@ -8,6 +8,7 @@
 
 import type { ColorMode, ThemeId } from "./themes";
 import { THEME_IDS, COLOR_MODES } from "./themes";
+import { computeWingifyThemeVars } from "./wingifyTheme";
 
 /** A raw VWO scale family reference. `midnight` has a single `base` step. */
 export function familyStepVar(family: string, step: string): string {
@@ -20,7 +21,8 @@ export function familyStepVar(family: string, step: string): string {
 // Each theme = an accent family plus an EXACT per-mode var map. Keeping the map
 // explicit preserves every bespoke tweak (yellow's neutral-950 brand-deep, midnight's
 // dark action tokens, yellow/midnight/neutral-black not tinting links/selection). Chart tokens
-// are omitted on purpose. Adding a theme = one entry here + THEME_IDS + swatches.
+// are omitted on purpose (except Wingify, which sets charts via data-theme CSS).
+// Adding a theme = one entry here + THEME_IDS + swatches.
 
 const v = familyStepVar;
 
@@ -252,6 +254,11 @@ const THEME_VAR_SPEC: Record<ThemeId, { light: ModeVars; dark: ModeVars }> = {
       "--report-brand-fg": v("neutral", "50"),
       "--report-brand-tint": v("neutral", "800"),
     },
+  },
+  /** Full Wingify pack colors — see wingifyTheme.ts / wingifyThemeTokens.json */
+  wingify: {
+    light: computeWingifyThemeVars("light"),
+    dark: computeWingifyThemeVars("dark"),
   },
 };
 

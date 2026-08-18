@@ -138,7 +138,6 @@ export const NAV: NavItem[] = [
   { label: "Web Experimentation", path: "/web-experiment", icon: FlaskConical, group: 2, pinnable: true },
   { label: "Web experimentation (Old)", path: "/web-experiment-old", icon: FlaskConical, group: 2 },
   { label: "Personalize", path: "/personalize", icon: Target, group: 2, pinnable: true },
-  { label: "Personalize", path: "/personalize", icon: Target, group: 2, pinnable: true },
   { label: "Feature Management", path: "/feature-management", icon: Flag, group: 2, pinnable: true, sections: [
     { heading: "Create", items: [
       { label: "Feature Flags", path: "/feature-management/feature-flags" },
@@ -412,6 +411,18 @@ if (profileItem) {
 }
 
 export const PINNABLE_PATHS = NAV.filter((i) => i.pinnable).map((i) => i.path);
+
+/** Theme-QA campaign flow — togglable from the design controller. */
+export const WEB_EXPERIMENT_OLD_PATH = "/web-experiment-old";
+
+/** NAV filtered by design-controller prototype flags. */
+export function visibleNav(options: {
+  showWebExperimentOld?: boolean;
+}): NavItem[] {
+  const showOld = options.showWebExperimentOld !== false;
+  if (showOld) return NAV;
+  return NAV.filter((item) => item.path !== WEB_EXPERIMENT_OLD_PATH);
+}
 
 export function findProfileMode(pathname: string): ProfileMode | undefined {
   // Longest prefix wins so nested paths resolve correctly.

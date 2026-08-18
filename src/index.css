@@ -400,7 +400,7 @@
   --vwo-dark-overlay-scrim: 0 0% 0%; /* surface.scrim #000000 */
   --vwo-dark-overlay-inverse-surface: 45 10.3% 15.3%; /* surface.card #2B2923 */
 
-  /* ── App roles ← VWO Semantic Light + yellow accent (default) ──────── */
+  /* ── App roles ← Wingify pack (default) ──────── */
   --background: var(--vwo-light-bg-surface);
   --foreground: var(--vwo-neutral-950);
   --card: var(--vwo-light-bg-surface-raised);
@@ -408,12 +408,11 @@
   --popover: var(--vwo-light-bg-surface-raised);
   --popover-foreground: var(--vwo-neutral-950);
 
-  --primary: var(--vwo-yellow-50);
-  --primary-foreground: var(--vwo-neutral-950);
-  --primary-hover: var(--vwo-yellow-100);
-  --primary-active: var(--vwo-yellow-200);
-  --primary-subtle: var(--vwo-yellow-100);
-  /* Yellow CTA keeps a black stroke; other themes match fill. */
+  --primary: var(--vwo-neutral-950);
+  --primary-foreground: var(--vwo-neutral-50);
+  --primary-hover: var(--vwo-neutral-800);
+  --primary-active: var(--vwo-neutral-700);
+  --primary-subtle: var(--vwo-neutral-100);
   --primary-border: var(--vwo-neutral-950);
   /* Secondary CTA label — schemes may remap (e.g. yellow-900). */
   --cta-secondary-fg: var(--foreground);
@@ -437,10 +436,10 @@
   --listing-header-bg: var(--background);
   --listing-header-fg: var(--foreground);
 
-  --accent: var(--vwo-light-bg-selected);
+  --accent: var(--vwo-yellow-50);
   --accent-foreground: var(--vwo-neutral-950);
 
-  --selected-bg: var(--vwo-light-bg-selected);
+  --selected-bg: var(--vwo-yellow-50);
   --selected-fg: var(--vwo-neutral-950);
 
   --link: var(--vwo-light-text-link);
@@ -458,8 +457,8 @@
 
   --rail: var(--vwo-light-bg-surface);
   --rail-foreground: var(--vwo-neutral-950);
-  --rail-active: var(--vwo-neutral-950);
-  --rail-active-foreground: var(--vwo-neutral-0);
+  --rail-active: var(--vwo-yellow-50);
+  --rail-active-foreground: var(--vwo-neutral-950);
   --panel: var(--vwo-light-bg-surface);
   --panel-foreground: var(--vwo-neutral-950);
   --panel-border: var(--vwo-light-border-subtle);
@@ -1053,4 +1052,82 @@ table > thead > tr:has(> th) > th button,
 table > thead > tr:has(> th) > th [class*="text-muted"],
 table > thead > tr:has(> th) > th [class*="text-foreground"] {
   color: hsl(var(--listing-header-fg)) !important;
+}
+
+/*
+ * Wingify theme — categorical charts from wingifyThemeTokens.json.
+ * Charts are never inlined by applyBrand; theme owns them via data-theme.
+ */
+[data-theme="wingify"] {
+  --chart-1: 27.8 100% 26.7%;
+  --chart-2: 49.4 100% 27.8%;
+  --chart-3: 71.2 100% 34.5%;
+  --chart-4: 155.3 100% 22.4%;
+  --chart-5: 188.6 100% 32.9%;
+  --chart-6: 201.8 100% 35.1%;
+  --chart-7: 256.7 51.4% 50.8%;
+  --chart-8: 286.4 68.8% 66.1%;
+  --chart-9: 27.8 100% 26.7%;
+  --chart-10: 49.4 100% 27.8%;
+  --chart-11: 71.2 100% 34.5%;
+  --chart-12: 155.3 100% 22.4%;
+  --chart-13: 188.6 100% 32.9%;
+  --chart-14: 201.8 100% 35.1%;
+  --chart-15: 256.7 51.4% 50.8%;
+  --chart-16: 286.4 68.8% 66.1%;
+  --chart-17: 27.8 100% 26.7%;
+  --chart-18: 155.3 100% 22.4%;
+  --chart-19: 201.8 100% 35.1%;
+  --chart-20: 286.4 68.8% 66.1%;
+  --chart-1-fg: 0 0% 100%;
+  --chart-2-fg: 0 0% 100%;
+  --chart-3-fg: 45 17.4% 9%;
+  --chart-4-fg: 0 0% 100%;
+  --chart-5-fg: 0 0% 100%;
+  --chart-6-fg: 0 0% 100%;
+  --chart-7-fg: 0 0% 100%;
+  --chart-8-fg: 45 17.4% 9%;
+  --chart-info: 225 60% 39.2%;
+  --chart-info-bg: 220 100% 93.5%;
+  --chart-highlight: 315.8 58.7% 50.6%;
+  --chart-positive: 159.5 100% 17.3%;
+  --chart-positive-bg: 148.5 60.6% 87.1%;
+  --status-paused-fg: 9.9 83.6% 31.2%;
+  --status-analysis-fg: 315.3 55.3% 33.3%;
+  --vitals-healthy: 159.5 100% 17.3%;
+  --vitals-unhealthy: 11.7 98.2% 43.9%;
+}
+
+[data-theme="wingify"][data-mode="dark"] {
+  --chart-1: 28.2 100% 32.5%;
+  --chart-2: 49.7 100% 36.7%;
+  --chart-3: 75.5 59% 58.8%;
+  --chart-4: 156 100% 29.4%;
+  --chart-5: 188.5 100% 42.9%;
+  --chart-6: 201.9 100% 37.6%;
+  --chart-7: 251.8 72.8% 71.2%;
+  --chart-8: 286.5 100% 80.8%;
+  --chart-9: 28.2 100% 32.5%;
+  --chart-10: 49.7 100% 36.7%;
+  --chart-11: 75.5 59% 58.8%;
+  --chart-12: 156 100% 29.4%;
+  --chart-13: 188.5 100% 42.9%;
+  --chart-14: 201.9 100% 37.6%;
+  --chart-15: 251.8 72.8% 71.2%;
+  --chart-16: 286.5 100% 80.8%;
+  --chart-17: 28.2 100% 32.5%;
+  --chart-18: 156 100% 29.4%;
+  --chart-19: 201.9 100% 37.6%;
+  --chart-20: 286.5 100% 80.8%;
+  --chart-3-fg: 45 17.4% 9%;
+  --chart-8-fg: 45 17.4% 9%;
+  --chart-info: 222.4 100% 77.3%;
+  --chart-info-bg: 224.3 60.7% 21%;
+  --chart-highlight: 315.8 58.7% 50.6%;
+  --chart-positive: 160 93.2% 40.4%;
+  --chart-positive-bg: 157.5 100% 9.4%;
+  --status-paused-fg: 10.5 94% 73.7%;
+  --status-analysis-fg: 315.9 89.6% 73.5%;
+  --vitals-healthy: 160 93.2% 40.4%;
+  --vitals-unhealthy: 11.7 98.2% 43.9%;
 }
