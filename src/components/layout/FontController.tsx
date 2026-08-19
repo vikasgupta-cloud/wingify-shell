@@ -1,9 +1,9 @@
 /**
  * Embedded design controller — docks as a right-hand column so the page stays
  * usable while colours, fonts, and tokens are tweaked. Compact palette tab on
- * the right edge when closed; blank-space 5-click gesture still opens it.
+ * the right edge when closed, shown only when Settings → General enables it.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Download, Palette, RotateCcw, X } from "@/components/icons/protoLucide";
 import { cn } from "../../lib/utils";
@@ -22,46 +22,12 @@ import HeaderColorPicker from "./HeaderColorPicker";
 import IconLibraryPicker from "./IconLibraryPicker";
 import ComponentAppearancePicker from "./ComponentAppearancePicker";
 
-/** Blank-space clicks required to open the panel (hidden gesture). */
-const OPEN_CLICKS = 5;
-const CLICK_STREAK_MS = 2500;
 const PANEL_WIDTH_PX = 360;
-
-const INTERACTIVE_SELECTOR = [
-  "a",
-  "button",
-  "input",
-  "textarea",
-  "select",
-  "label",
-  "summary",
-  "option",
-  "[role='button']",
-  "[role='link']",
-  "[role='menuitem']",
-  "[role='menuitemcheckbox']",
-  "[role='menuitemradio']",
-  "[role='option']",
-  "[role='tab']",
-  "[role='checkbox']",
-  "[role='radio']",
-  "[role='switch']",
-  "[role='slider']",
-  "[role='combobox']",
-  "[contenteditable='true']",
-  "[data-design-controller]",
-].join(",");
-
-function isBlankSpaceClick(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  if (target.closest("[data-design-controller]")) return false;
-  if (target.closest(INTERACTIVE_SELECTOR)) return false;
-  return true;
-}
 
 export default function FontController() {
   const open = useDesignControllerStore((s) => s.open);
   const setOpen = useDesignControllerStore((s) => s.setOpen);
+  const tabVisible = useDesignControllerStore((s) => s.tabVisible);
   const resetDesign = useDesignControllerStore((s) => s.resetDesign);
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
@@ -70,9 +36,6 @@ export default function FontController() {
   const headerTokenId = useThemeStore((s) => s.headerTokenId);
   const fontAssignments = useFontStore((s) => s.assignments);
   const [tabHover, setTabHover] = useState(false);
-  const openRef = useRef(false);
-  const clickCount = useRef(0);
-  const lastClickAt = useRef(0);
 
   const exportOptions = {
     themeId,
@@ -84,45 +47,12 @@ export default function FontController() {
   };
 
   useEffect(() => {
-    openRef.current = open;
     if (open) setTabHover(false);
   }, [open]);
 
-  const close = () => {
-    setOpen(false);
-    clickCount.current = 0;
-    lastClickAt.current = 0;
-  };
+  const close = () => setOpen(false);
 
   const resetAll = resetDesign;
-
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (openRef.current) return;
-      if (e.button !== 0) return;
-      if (!isBlankSpaceClick(e.target)) {
-        clickCount.current = 0;
-        lastClickAt.current = 0;
-        return;
-      }
-
-      const now = Date.now();
-      if (now - lastClickAt.current > CLICK_STREAK_MS) {
-        clickCount.current = 0;
-      }
-      lastClickAt.current = now;
-      clickCount.current += 1;
-
-      if (clickCount.current >= OPEN_CLICKS) {
-        clickCount.current = 0;
-        lastClickAt.current = 0;
-        setOpen(true);
-      }
-    };
-
-    window.addEventListener("click", onClick, true);
-    return () => window.removeEventListener("click", onClick, true);
-  }, [setOpen]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -133,6 +63,10 @@ export default function FontController() {
   }, [open]);
 
   const tabExpanded = tabHover;
+
+  // Opt-in via Settings → General. Rendering nothing (rather than a hidden
+  // tab) keeps the zero-width column out of the layout entirely.
+  if (!open && !tabVisible) return null;
 
   // Zero-width column at the right edge; the tab peeks into the page so it
   // never covers interactive content until opened (then it docks and pushes).

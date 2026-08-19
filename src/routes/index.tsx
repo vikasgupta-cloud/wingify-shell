@@ -17,6 +17,7 @@ import ConfigPage from "../pages/config/ConfigPage";
 import ReportsPage from "../pages/reports/ReportsPage";
 import EditorPage from "../pages/editor/EditorPage";
 import IntegrationsPage from "../pages/integrations/IntegrationsPage";
+import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
@@ -144,6 +145,8 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
         element:
           mode.id === "integrations" ? (
             <IntegrationsPage />
+          ) : leaf.path === "/settings/accounts/general" ? (
+            <AccountGeneralPage />
           ) : (
             <PlaceholderPage />
           ),
