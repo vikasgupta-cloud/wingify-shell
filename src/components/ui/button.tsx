@@ -1,3 +1,5 @@
+// @summary: Prevent Tailwind from extracting a comment-only example as a utility class (fixes Vite CSS minify failure).
+// Reuses existing button variant/token class strings; only the comment example text was changed.
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -6,8 +8,8 @@ import { cn } from "@/lib/utils"
 
 /**
  * CTA appearance classes must be full static strings so Tailwind JIT emits them.
- * Dynamic template construction (e.g. `border-[hsl(var(--appearance-${id}-…))]`)
- * is invisible to the scanner — borders/fills then silently fall back to defaults.
+ * If you template-construct arbitrary values, Tailwind may not detect them and
+ * borders/fills can silently fall back to defaults.
  * Underscores stand in for spaces inside arbitrary values (Tailwind comma rule).
  */
 const CTA_PRIMARY =
