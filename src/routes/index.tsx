@@ -21,6 +21,7 @@ import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
+import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
 import SurveysPage from "../pages/pulse/SurveysPage";
 import FeatureFlagsPage from "../pages/feature-management/FeatureFlagsPage";
 import FlagRolloutPage from "../pages/feature-management/FlagRolloutPage";
@@ -163,6 +164,12 @@ export const router = createBrowserRouter([
       {
         path: "/web-experiment/c/:entityId/editor/:variationId",
         element: <EditorPage />,
+      },
+      // Full-tab heatmap viewer — same reasoning: opens in its own tab with
+      // no app chrome, so it lives outside AppLayout.
+      {
+        path: "/insights/heatmaps/viewer",
+        element: <HeatmapViewerPage />,
       },
       ...detailRoutes,
       ...profileModeRoutes,
