@@ -29,6 +29,7 @@ import IntegrationsStep from "../pages/web-experiment-old/IntegrationsStep";
 import OldReportsPage from "../pages/web-experiment-old/OldReportsPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
+import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
 import SurveysPage from "../pages/pulse/SurveysPage";
 import FeatureFlagsPage from "../pages/feature-management/FeatureFlagsPage";
 import FlagRolloutPage from "../pages/feature-management/FlagRolloutPage";
@@ -42,6 +43,7 @@ import MetricsPage from "../pages/data-360/MetricsPage";
 import DashboardPage from "../pages/home/DashboardPage";
 import PersonalizePage from "../pages/personalize/PersonalizePage";
 import PersonalizeComingSoonPage from "../pages/personalize/PersonalizeComingSoonPage";
+import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -172,6 +174,8 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
         element:
           mode.id === "integrations" ? (
             <IntegrationsPage />
+          ) : leaf.path === "/settings/accounts/general" ? (
+            <AccountGeneralPage />
           ) : (
             <PlaceholderPage />
           ),
@@ -188,6 +192,10 @@ export const router = createBrowserRouter([
       {
         path: "/web-experiment/c/:entityId/editor/:variationId",
         element: <EditorPage />,
+      },
+      {
+        path: "/insights/heatmaps/viewer",
+        element: <HeatmapViewerPage />,
       },
       ...detailRoutes,
       ...profileModeRoutes,

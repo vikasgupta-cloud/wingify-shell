@@ -11,6 +11,7 @@ import {
   Mail,
   Plus,
   Settings,
+  Trash2,
 } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,6 +43,7 @@ import {
   HEATMAP_VIEWS,
   type HeatmapView,
 } from "@/data/heatmaps";
+import { useHeatmapsStore } from "@/store/heatmaps";
 
 function FilterSegment({
   value,
@@ -132,6 +134,8 @@ function ViewsRail({
   query: string;
   onQueryChange: (q: string) => void;
 }) {
+  const observations = useHeatmapsStore((s) => s.observations);
+  const removeObservation = useHeatmapsStore((s) => s.removeObservation);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return views;
@@ -252,13 +256,47 @@ function ViewsRail({
             </ul>
           </TabsContent>
 
-          <TabsContent
-            value="observations"
-            className="mt-0 flex flex-1 items-center justify-center p-6"
-          >
-            <p className="text-center text-sm text-muted-foreground">
-              Observations coming soon
-            </p>
+          <TabsContent value="observations" className="mt-0 flex flex-1 flex-col p-3">
+            {observations.length === 0 ? (
+              <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+                No observations yet. Open a heatmap and use the eye control to
+                record one.
+              </p>
+            ) : (
+              <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+                {observations.map((o, i) => (
+                  <li
+                    key={o.id}
+                    className="group flex gap-2.5 rounded-md border border-border p-3"
+                  >
+                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background">
+                      {i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm leading-5 text-foreground">
+                        {o.text}
+                      </span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {o.viz} ·{" "}
+                        {new Date(o.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Delete observation"
+                      className="size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={() => removeObservation(o.id)}
+                    >
+                      <Trash2 className="size-3.5" aria-hidden />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </TabsContent>
 
           <TabsContent
@@ -277,16 +315,31 @@ function ViewsRail({
 
 export default function HeatmapsPage() {
   const [mode, setMode] = useState<"simple" | "advanced">("simple");
-  const [url, setUrl] = useState("");
   const [pastVersion, setPastVersion] = useState(false);
-  const [visualization, setVisualization] = useState("heatmap");
-  const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const [viewQuery, setViewQuery] = useState("");
+  // URL, visualization, and the selected view live in the shared store so the
+  // viewer tab opens on exactly what this page is showing.
+  const url = useHeatmapsStore((s) => s.url);
+  const setUrl = useHeatmapsStore((s) => s.setUrl);
+  const visualization = useHeatmapsStore((s) => s.visualization);
+  const setVisualization = useHeatmapsStore((s) => s.setVisualization);
+  const activeViewId = useHeatmapsStore((s) => s.activeViewId);
+  const selectViewInStore = useHeatmapsStore((s) => s.selectView);
+  const observationCount = useHeatmapsStore((s) => s.observations.length);
 
   const selectView = (id: string) => {
-    setActiveViewId(id);
     const view = HEATMAP_VIEWS.find((v) => v.id === id);
-    if (view) setUrl(view.url);
+    selectViewInStore(id, view?.url);
+  };
+
+  const openViewer = (viz: string) => {
+    setVisualization(viz);
+    const qs = new URLSearchParams({ viz });
+    window.open(
+      `/insights/heatmaps/viewer?${qs.toString()}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   return (
@@ -411,13 +464,34 @@ export default function HeatmapsPage() {
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <Button>View Heatmap</Button>
-                <Button variant="outline" className="gap-2">
+                <Button
+                  type="button"
+                  disabled={!url.trim()}
+                  onClick={() => openViewer(visualization)}
+                >
+                  View Heatmap
+                </Button>
+                {/* Compare opens the same page as a click area, which is the
+                    tool for pitting two regions against each other. */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  disabled={!url.trim()}
+                  onClick={() => openViewer("click-area")}
+                >
                   <Columns2 className="size-4" aria-hidden />
                   Compare
                 </Button>
               </div>
-              <Button variant="outline">View Saved Snapshots</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => openViewer(visualization)}
+              >
+                View Saved Snapshots
+                {observationCount > 0 ? ` (${observationCount})` : ""}
+              </Button>
             </div>
 
             {mode === "advanced" && (

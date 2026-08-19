@@ -89,17 +89,17 @@ function RangeToggle({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex overflow-hidden rounded-md border border-border text-xs">
+    <div className="flex overflow-hidden rounded-md border border-input text-xs">
       {options.map((r) => (
         <button
           key={r}
           type="button"
           onClick={() => onChange(r)}
           className={cn(
-            "border-r border-border px-2.5 py-1.5 last:border-r-0 transition-colors",
+            "border-r border-input px-2.5 py-1.5 last:border-r-0 transition-colors",
             value === r
-              ? "bg-secondary font-medium text-foreground"
-              : "bg-background text-muted-foreground hover:text-foreground"
+              ? "bg-muted font-medium text-foreground"
+              : "bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"
           )}
         >
           {r}

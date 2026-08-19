@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ArrowRight, Download, Palette, RotateCcw, X } from "@/components/icons/protoLucide";
@@ -20,42 +20,7 @@ import HeaderColorPicker from "./HeaderColorPicker";
 import IconLibraryPicker from "./IconLibraryPicker";
 import { WEB_EXPERIMENT_OLD_PATH } from "../../config/navigation";
 
-/** Blank-space clicks required to open (hidden gesture). */
-const OPEN_CLICKS = 5;
-const CLICK_STREAK_MS = 2500;
 const CLOSE_ANIM_MS = 180;
-
-const INTERACTIVE_SELECTOR = [
-  "a",
-  "button",
-  "input",
-  "textarea",
-  "select",
-  "label",
-  "summary",
-  "option",
-  "[role='button']",
-  "[role='link']",
-  "[role='menuitem']",
-  "[role='menuitemcheckbox']",
-  "[role='menuitemradio']",
-  "[role='option']",
-  "[role='tab']",
-  "[role='checkbox']",
-  "[role='radio']",
-  "[role='switch']",
-  "[role='slider']",
-  "[role='combobox']",
-  "[contenteditable='true']",
-  "[data-design-controller]",
-].join(",");
-
-function isBlankSpaceClick(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  if (target.closest("[data-design-controller]")) return false;
-  if (target.closest(INTERACTIVE_SELECTOR)) return false;
-  return true;
-}
 
 /**
  * Floating design CTA — compact icon tab on the right; expands label on hover;
@@ -64,6 +29,7 @@ function isBlankSpaceClick(target: EventTarget | null): boolean {
 export default function FontController() {
   const open = useDesignControllerStore((s) => s.open);
   const setOpen = useDesignControllerStore((s) => s.setOpen);
+  const tabVisible = useDesignControllerStore((s) => s.tabVisible);
   const resetDesign = useDesignControllerStore((s) => s.resetDesign);
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
@@ -76,9 +42,6 @@ export default function FontController() {
   const [rendered, setRendered] = useState(false);
   const [shown, setShown] = useState(false);
   const [tabHover, setTabHover] = useState(false);
-  const openRef = useRef(false);
-  const clickCount = useRef(0);
-  const lastClickAt = useRef(0);
 
   const exportOptions = {
     themeId,
@@ -92,45 +55,12 @@ export default function FontController() {
   };
 
   useEffect(() => {
-    openRef.current = open;
     if (open) setTabHover(false);
   }, [open]);
 
-  const close = () => {
-    setOpen(false);
-    clickCount.current = 0;
-    lastClickAt.current = 0;
-  };
+  const close = () => setOpen(false);
 
   const resetAll = resetDesign;
-
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (openRef.current) return;
-      if (e.button !== 0) return;
-      if (!isBlankSpaceClick(e.target)) {
-        clickCount.current = 0;
-        lastClickAt.current = 0;
-        return;
-      }
-
-      const now = Date.now();
-      if (now - lastClickAt.current > CLICK_STREAK_MS) {
-        clickCount.current = 0;
-      }
-      lastClickAt.current = now;
-      clickCount.current += 1;
-
-      if (clickCount.current >= OPEN_CLICKS) {
-        clickCount.current = 0;
-        lastClickAt.current = 0;
-        setOpen(true);
-      }
-    };
-
-    window.addEventListener("click", onClick, true);
-    return () => window.removeEventListener("click", onClick, true);
-  }, [setOpen]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -164,8 +94,8 @@ export default function FontController() {
 
   return (
     <>
-      {/* Compact icon tab — always visible; label expands on hover. */}
-      {!open ? (
+      {/* Compact icon tab — opt-in via Settings → General; label expands on hover. */}
+      {!open && tabVisible ? (
         <div
           data-design-controller=""
           className="pointer-events-none fixed inset-y-0 right-0 z-[65] flex items-center"
