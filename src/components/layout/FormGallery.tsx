@@ -38,14 +38,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -157,7 +149,7 @@ export default function FormGallery() {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [, setConfirmOpen] = useState(false);
 
   const allDevicesSelected = devices.length === DEVICES.length;
   const someDevicesSelected =

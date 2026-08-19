@@ -41,6 +41,9 @@ const buttonVariants = cva(
         secondary: "shadow-sm " + CTA_SECONDARY,
         ghost: CTA_GHOST,
         link: "underline-offset-4 hover:underline " + CTA_LINK,
+        tertiary: "shadow-sm " + CTA_TERTIARY,
+        ai: "font-cta shadow-[0_1px_2px_hsl(var(--brand-midnight)/0.06)] " + CTA_PRIMARY,
+        shadow: "shadow-sm " + CTA_SECONDARY,
       },
       size: {
         default: "h-9 px-4 py-2",

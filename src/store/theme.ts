@@ -26,7 +26,11 @@ type ThemeState = {
   backgroundTokenId: string | null;
   /** Shared grey for table / kanban / gantt headers. */
   headerTokenId: string | null;
+  surfaceSchemeId: string | null;
+  formElementSchemeId: string | null;
   setTheme: (themeId: ThemeId) => void;
+  setSurfaceScheme: (id: string | null) => void;
+  setFormElementScheme: (id: string | null) => void;
   setColorMode: (colorMode: ColorMode) => void;
   setPalette: (paletteId: PaletteId) => void;
   setCtaToken: (ctaTokenId: string | null) => void;
@@ -65,6 +69,10 @@ export const useThemeStore = create<ThemeState>()(
       ctaTokenId: null,
       backgroundTokenId: null,
       headerTokenId: null,
+      surfaceSchemeId: null,
+      formElementSchemeId: null,
+      setSurfaceScheme: (id) => set({ surfaceSchemeId: id }),
+      setFormElementScheme: (id) => set({ formElementSchemeId: id }),
       setTheme: (themeId) => {
         const { colorMode, paletteId, backgroundTokenId, headerTokenId } = get();
         syncDom(themeId, colorMode, paletteId, null, backgroundTokenId, headerTokenId);

@@ -161,27 +161,22 @@ export function readStoredTheme(): {
   ctaTokenId: string | null;
   backgroundTokenId: string | null;
   headerTokenId: string | null;
+  formElementSchemeId: string | null;
+  surfaceSchemeId: string | null;
 } {
-  if (typeof localStorage === "undefined") {
-    return {
-      themeId: DEFAULT_THEME_ID,
-      colorMode: DEFAULT_COLOR_MODE,
-      ctaTokenId: null,
-      backgroundTokenId: null,
-      headerTokenId: null,
-    };
-  }
+  const defaults = {
+    themeId: DEFAULT_THEME_ID as ThemeId,
+    colorMode: DEFAULT_COLOR_MODE as ColorMode,
+    ctaTokenId: null as string | null,
+    backgroundTokenId: null as string | null,
+    headerTokenId: null as string | null,
+    formElementSchemeId: null as string | null,
+    surfaceSchemeId: null as string | null,
+  };
+  if (typeof localStorage === "undefined") return defaults;
   try {
     const raw = localStorage.getItem("wingify-theme");
-    if (!raw) {
-      return {
-        themeId: DEFAULT_THEME_ID,
-        colorMode: DEFAULT_COLOR_MODE,
-        ctaTokenId: null,
-        backgroundTokenId: null,
-        headerTokenId: null,
-      };
-    }
+    if (!raw) return defaults;
     const parsed = JSON.parse(raw) as {
       state?: {
         themeId?: unknown;
@@ -189,35 +184,22 @@ export function readStoredTheme(): {
         ctaTokenId?: unknown;
         backgroundTokenId?: unknown;
         headerTokenId?: unknown;
+        formElementSchemeId?: unknown;
+        surfaceSchemeId?: unknown;
       };
     };
-    const cta =
-      typeof parsed?.state?.ctaTokenId === "string"
-        ? parsed.state.ctaTokenId
-        : null;
-    const background =
-      typeof parsed?.state?.backgroundTokenId === "string"
-        ? parsed.state.backgroundTokenId
-        : null;
-    const header =
-      typeof parsed?.state?.headerTokenId === "string"
-        ? parsed.state.headerTokenId
-        : null;
+    const str = (v: unknown) => (typeof v === "string" ? v : null);
     return {
       themeId: resolveThemeId(parsed?.state?.themeId),
       colorMode: resolveColorMode(parsed?.state?.colorMode),
-      ctaTokenId: cta,
-      backgroundTokenId: background,
-      headerTokenId: header,
+      ctaTokenId: str(parsed?.state?.ctaTokenId),
+      backgroundTokenId: str(parsed?.state?.backgroundTokenId),
+      headerTokenId: str(parsed?.state?.headerTokenId),
+      formElementSchemeId: str(parsed?.state?.formElementSchemeId),
+      surfaceSchemeId: str(parsed?.state?.surfaceSchemeId),
     };
   } catch {
-    return {
-      themeId: DEFAULT_THEME_ID,
-      colorMode: DEFAULT_COLOR_MODE,
-      ctaTokenId: null,
-      backgroundTokenId: null,
-      headerTokenId: null,
-    };
+    return defaults;
   }
 }
 

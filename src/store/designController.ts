@@ -6,7 +6,9 @@ import { useComponentAppearanceStore } from "./componentAppearance";
 
 type DesignControllerState = {
   open: boolean;
+  tabVisible: boolean;
   setOpen: (open: boolean) => void;
+  setTabVisible: (checked: boolean) => void;
   openController: () => void;
   closeController: () => void;
   /**
@@ -21,7 +23,9 @@ type DesignControllerState = {
 export const useDesignControllerStore = create<DesignControllerState>(
   (set) => ({
     open: false,
+    tabVisible: true,
     setOpen: (open) => set({ open }),
+    setTabVisible: (checked) => set({ tabVisible: checked }),
     openController: () => set({ open: true }),
     closeController: () => set({ open: false }),
     resetDesign: () => {
