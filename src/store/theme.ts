@@ -1,24 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { resolveCtaTokenId } from "../config/ctaTokens";
-import {
-  DEFAULT_BACKGROUND_TOKEN_ID,
-  DEFAULT_HEADER_TOKEN_ID,
-  resolveNeutralTokenId,
-  resolveWingifyChromeTokens,
-  wingifyChromeTokenIds,
-} from "../config/backgroundTokens";
+import { resolveNeutralTokenId } from "../config/backgroundTokens";
 import { applyBrand } from "../config/applyBrand";
 import {
-  DEFAULT_FORM_ELEMENT_SCHEME_ID,
-  resolveFormElementSchemeId,
-  type FormElementSchemeId,
-} from "../config/formElementSchemes";
-import {
-  DEFAULT_SURFACE_SCHEME_ID,
-  resolveSurfaceSchemeId,
-  type SurfaceSchemeId,
-} from "../config/surfaceTokens";
+  applyPalette,
+  DEFAULT_PALETTE_ID,
+  resolvePaletteId,
+  type PaletteId,
+} from "../config/palettes";
 import {
   DEFAULT_COLOR_MODE,
   DEFAULT_THEME_ID,
@@ -28,64 +18,42 @@ import {
   type ThemeId,
 } from "../config/themes";
 
-/** Chrome defaults that ship with the Wingify theme (mode-aware). */
-function wingifyChromeDefaults(mode: ColorMode) {
-  return {
-    ...wingifyChromeTokenIds(mode),
-    surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
-  } as const;
-}
-
-function isWingifyDefaultChrome(
-  mode: ColorMode,
-  backgroundTokenId: string | null,
-  headerTokenId: string | null
-): boolean {
-  const d = wingifyChromeTokenIds(mode);
-  return (
-    backgroundTokenId === d.backgroundTokenId &&
-    headerTokenId === d.headerTokenId
-  );
-}
-
 type ThemeState = {
   themeId: ThemeId;
   colorMode: ColorMode;
+  paletteId: PaletteId;
   ctaTokenId: string | null;
   backgroundTokenId: string | null;
   /** Shared grey for table / kanban / gantt headers. */
   headerTokenId: string | null;
-  formElementSchemeId: FormElementSchemeId;
-  /** Chrome / body / card surface preset. null = theme defaults. */
-  surfaceSchemeId: SurfaceSchemeId | null;
   setTheme: (themeId: ThemeId) => void;
   setColorMode: (colorMode: ColorMode) => void;
+  setPalette: (paletteId: PaletteId) => void;
   setCtaToken: (ctaTokenId: string | null) => void;
   setBackgroundToken: (backgroundTokenId: string | null) => void;
   setHeaderToken: (headerTokenId: string | null) => void;
-  setFormElementScheme: (formElementSchemeId: FormElementSchemeId) => void;
-  setSurfaceScheme: (surfaceSchemeId: SurfaceSchemeId | null) => void;
+  /** Restore a full appearance snapshot from a saved theme. */
+  applySnapshot: (snapshot: {
+    themeId: ThemeId;
+    colorMode: ColorMode;
+    paletteId: PaletteId;
+    ctaTokenId: string | null;
+    backgroundTokenId: string | null;
+    headerTokenId: string | null;
+  }) => void;
   resetAppearance: () => void;
 };
 
 function syncDom(
   themeId: ThemeId,
   colorMode: ColorMode,
+  paletteId: PaletteId,
   ctaTokenId: string | null,
   backgroundTokenId: string | null,
-  headerTokenId: string | null,
-  formElementSchemeId: FormElementSchemeId,
-  surfaceSchemeId: SurfaceSchemeId | null
+  headerTokenId: string | null
 ) {
-  applyBrand(
-    themeId,
-    colorMode,
-    ctaTokenId,
-    backgroundTokenId,
-    headerTokenId,
-    formElementSchemeId,
-    surfaceSchemeId
-  );
+  applyPalette(paletteId);
+  applyBrand(themeId, colorMode, ctaTokenId, backgroundTokenId, headerTokenId);
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -93,192 +61,130 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
+      paletteId: DEFAULT_PALETTE_ID,
       ctaTokenId: null,
-      backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
-      headerTokenId: DEFAULT_HEADER_TOKEN_ID,
-      formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
-      surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
+      backgroundTokenId: null,
+      headerTokenId: null,
       setTheme: (themeId) => {
-        const { colorMode, formElementSchemeId } = get();
-        const chrome =
-          themeId === "wingify"
-            ? wingifyChromeDefaults(colorMode)
-            : {
-                backgroundTokenId: get().backgroundTokenId,
-                headerTokenId: get().headerTokenId,
-                surfaceSchemeId: get().surfaceSchemeId,
-              };
-        syncDom(
-          themeId,
-          colorMode,
-          null,
-          chrome.backgroundTokenId,
-          chrome.headerTokenId,
-          formElementSchemeId,
-          chrome.surfaceSchemeId
-        );
-        set({ themeId, ctaTokenId: null, ...chrome });
+        const { colorMode, paletteId, backgroundTokenId, headerTokenId } = get();
+        syncDom(themeId, colorMode, paletteId, null, backgroundTokenId, headerTokenId);
+        set({ themeId, ctaTokenId: null });
       },
       setColorMode: (colorMode) => {
         const {
           themeId,
+          paletteId,
           ctaTokenId,
           backgroundTokenId,
           headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId,
-          colorMode: prevMode,
         } = get();
-        // Wingify light defaults (Canvas 50 / Parchment 75) must not stick in
-        // dark mode — swap to the dark pair when still on auto defaults.
-        let nextBg = backgroundTokenId;
-        let nextHeader = headerTokenId;
-        let nextSurface = surfaceSchemeId;
-        if (
-          themeId === "wingify" &&
-          isWingifyDefaultChrome(prevMode, backgroundTokenId, headerTokenId)
-        ) {
-          const chrome = wingifyChromeDefaults(colorMode);
-          nextBg = chrome.backgroundTokenId;
-          nextHeader = chrome.headerTokenId;
-          nextSurface = chrome.surfaceSchemeId;
-        }
         syncDom(
           themeId,
           colorMode,
+          paletteId,
           ctaTokenId,
-          nextBg,
-          nextHeader,
-          formElementSchemeId,
-          nextSurface
+          backgroundTokenId,
+          headerTokenId
         );
-        set({
+        set({ colorMode });
+      },
+      setPalette: (paletteId) => {
+        const {
+          themeId,
           colorMode,
-          backgroundTokenId: nextBg,
-          headerTokenId: nextHeader,
-          surfaceSchemeId: nextSurface,
-        });
+          ctaTokenId,
+          backgroundTokenId,
+          headerTokenId,
+        } = get();
+        syncDom(
+          themeId,
+          colorMode,
+          paletteId,
+          ctaTokenId,
+          backgroundTokenId,
+          headerTokenId
+        );
+        set({ paletteId });
       },
       setCtaToken: (ctaTokenId) => {
         const {
           themeId,
           colorMode,
+          paletteId,
           backgroundTokenId,
           headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId,
         } = get();
         syncDom(
           themeId,
           colorMode,
+          paletteId,
           ctaTokenId,
           backgroundTokenId,
-          headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId
+          headerTokenId
         );
         set({ ctaTokenId });
       },
       setBackgroundToken: (backgroundTokenId) => {
-        const {
-          themeId,
-          colorMode,
-          ctaTokenId,
-          headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId,
-        } = get();
+        const { themeId, colorMode, paletteId, ctaTokenId, headerTokenId } =
+          get();
         const next = resolveNeutralTokenId(backgroundTokenId);
-        syncDom(
-          themeId,
-          colorMode,
-          ctaTokenId,
-          next,
-          headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId
-        );
+        syncDom(themeId, colorMode, paletteId, ctaTokenId, next, headerTokenId);
         set({ backgroundTokenId: next });
       },
       setHeaderToken: (headerTokenId) => {
         const {
           themeId,
           colorMode,
+          paletteId,
           ctaTokenId,
           backgroundTokenId,
-          formElementSchemeId,
-          surfaceSchemeId,
         } = get();
         const next = resolveNeutralTokenId(headerTokenId);
         syncDom(
           themeId,
           colorMode,
+          paletteId,
           ctaTokenId,
           backgroundTokenId,
-          next,
-          formElementSchemeId,
-          surfaceSchemeId
+          next
         );
         set({ headerTokenId: next });
       },
-      setFormElementScheme: (formElementSchemeId) => {
-        const { colorMode, backgroundTokenId, headerTokenId, surfaceSchemeId } =
-          get();
+      applySnapshot: (snapshot) => {
+        const themeId = resolveThemeId(snapshot.themeId);
+        const colorMode = resolveColorMode(snapshot.colorMode);
+        const paletteId = resolvePaletteId(snapshot.paletteId);
+        const ctaTokenId = resolveCtaTokenId(snapshot.ctaTokenId);
+        const backgroundTokenId = resolveNeutralTokenId(
+          snapshot.backgroundTokenId
+        );
+        const headerTokenId = resolveNeutralTokenId(snapshot.headerTokenId);
         syncDom(
-          "yellow",
+          themeId,
           colorMode,
-          null,
+          paletteId,
+          ctaTokenId,
           backgroundTokenId,
-          headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId
+          headerTokenId
         );
         set({
-          formElementSchemeId,
-          themeId: "yellow",
-          ctaTokenId: null,
+          themeId,
+          colorMode,
+          paletteId,
+          ctaTokenId,
+          backgroundTokenId,
+          headerTokenId,
         });
       },
-      setSurfaceScheme: (surfaceSchemeId) => {
-        const {
-          themeId,
-          colorMode,
-          ctaTokenId,
-          backgroundTokenId,
-          headerTokenId,
-          formElementSchemeId,
-        } = get();
-        const next = resolveSurfaceSchemeId(surfaceSchemeId);
-        syncDom(
-          themeId,
-          colorMode,
-          ctaTokenId,
-          backgroundTokenId,
-          headerTokenId,
-          formElementSchemeId,
-          next
-        );
-        set({ surfaceSchemeId: next });
-      },
       resetAppearance: () => {
-        const chrome = wingifyChromeDefaults(DEFAULT_COLOR_MODE);
-        syncDom(
-          DEFAULT_THEME_ID,
-          DEFAULT_COLOR_MODE,
-          null,
-          chrome.backgroundTokenId,
-          chrome.headerTokenId,
-          DEFAULT_FORM_ELEMENT_SCHEME_ID,
-          chrome.surfaceSchemeId
-        );
+        syncDom(DEFAULT_THEME_ID, DEFAULT_COLOR_MODE, DEFAULT_PALETTE_ID, null, null, null);
         set({
           themeId: DEFAULT_THEME_ID,
           colorMode: DEFAULT_COLOR_MODE,
+          paletteId: DEFAULT_PALETTE_ID,
           ctaTokenId: null,
-          backgroundTokenId: chrome.backgroundTokenId,
-          headerTokenId: chrome.headerTokenId,
-          formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
-          surfaceSchemeId: chrome.surfaceSchemeId,
+          backgroundTokenId: null,
+          headerTokenId: null,
         });
       },
     }),
@@ -287,91 +193,37 @@ export const useThemeStore = create<ThemeState>()(
       partialize: (s) => ({
         themeId: s.themeId,
         colorMode: s.colorMode,
+        paletteId: s.paletteId,
         ctaTokenId: s.ctaTokenId,
         backgroundTokenId: s.backgroundTokenId,
         headerTokenId: s.headerTokenId,
-        formElementSchemeId: s.formElementSchemeId,
-        surfaceSchemeId: s.surfaceSchemeId,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<ThemeState> & {
-          themeId?: unknown;
-        };
-        const rawTheme = p.themeId;
-        const wasYellowB = rawTheme === "yellow-b";
-        const themeId = resolveThemeId(p.themeId ?? current.themeId);
-        const colorMode = resolveColorMode(p.colorMode ?? current.colorMode);
-        const formElementSchemeId = resolveFormElementSchemeId(
-          wasYellowB
-            ? "yellow-maroon"
-            : (p.formElementSchemeId ?? current.formElementSchemeId)
-        );
-        const chrome =
-          themeId === "wingify"
-            ? resolveWingifyChromeTokens(
-                colorMode,
-                p.backgroundTokenId === undefined
-                  ? current.backgroundTokenId
-                  : p.backgroundTokenId,
-                p.headerTokenId === undefined
-                  ? current.headerTokenId
-                  : p.headerTokenId
-              )
-            : {
-                backgroundTokenId:
-                  p.backgroundTokenId === undefined
-                    ? current.backgroundTokenId
-                    : resolveNeutralTokenId(p.backgroundTokenId),
-                headerTokenId:
-                  p.headerTokenId === undefined
-                    ? current.headerTokenId
-                    : resolveNeutralTokenId(p.headerTokenId),
-              };
+        const p = (persisted ?? {}) as Partial<ThemeState>;
         return {
           ...current,
           ...p,
-          themeId,
-          colorMode,
+          themeId: resolveThemeId(p.themeId ?? current.themeId),
+          colorMode: resolveColorMode(p.colorMode ?? current.colorMode),
+          paletteId: resolvePaletteId(p.paletteId ?? current.paletteId),
           ctaTokenId: resolveCtaTokenId(p.ctaTokenId ?? current.ctaTokenId),
-          backgroundTokenId: chrome.backgroundTokenId,
-          headerTokenId: chrome.headerTokenId,
-          formElementSchemeId,
-          surfaceSchemeId:
-            p.surfaceSchemeId === undefined
-              ? DEFAULT_SURFACE_SCHEME_ID
-              : resolveSurfaceSchemeId(p.surfaceSchemeId),
+          backgroundTokenId: resolveNeutralTokenId(
+            p.backgroundTokenId ?? current.backgroundTokenId
+          ),
+          headerTokenId: resolveNeutralTokenId(
+            p.headerTokenId ?? current.headerTokenId
+          ),
         };
       },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        const themeId = resolveThemeId(state.themeId);
-        const colorMode = resolveColorMode(state.colorMode);
-        const surfaceSchemeId =
-          state.surfaceSchemeId === undefined
-            ? DEFAULT_SURFACE_SCHEME_ID
-            : resolveSurfaceSchemeId(state.surfaceSchemeId);
-        const chrome =
-          themeId === "wingify"
-            ? resolveWingifyChromeTokens(
-                colorMode,
-                state.backgroundTokenId,
-                state.headerTokenId
-              )
-            : {
-                backgroundTokenId: resolveNeutralTokenId(state.backgroundTokenId),
-                headerTokenId: resolveNeutralTokenId(state.headerTokenId),
-              };
-        state.surfaceSchemeId = surfaceSchemeId;
-        state.backgroundTokenId = chrome.backgroundTokenId;
-        state.headerTokenId = chrome.headerTokenId;
         syncDom(
-          themeId,
-          colorMode,
+          resolveThemeId(state.themeId),
+          resolveColorMode(state.colorMode),
+          resolvePaletteId(state.paletteId),
           resolveCtaTokenId(state.ctaTokenId),
-          chrome.backgroundTokenId,
-          chrome.headerTokenId,
-          resolveFormElementSchemeId(state.formElementSchemeId),
-          surfaceSchemeId
+          resolveNeutralTokenId(state.backgroundTokenId),
+          resolveNeutralTokenId(state.headerTokenId)
         );
       },
     }

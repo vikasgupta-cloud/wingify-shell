@@ -319,7 +319,7 @@ export default function SurveyTable() {
               {pageRows.map((s) => (
                 <tr
                   key={s.id}
-                  className="group border-b border-border last:border-b-0 hover:bg-muted/40"
+                  className="group border-b border-border last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)/0.4))]"
                 >
                   <td className={cn("px-3 align-middle", DENSITY_PAD[rowDensity])}>
                     <Checkbox

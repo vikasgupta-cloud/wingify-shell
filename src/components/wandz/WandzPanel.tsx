@@ -51,8 +51,8 @@ function usePrefersReducedMotion() {
 function ThinkingRow({ reduced }: { reduced: boolean }) {
   return (
     <div className="flex gap-3">
-      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">
-        <Sparkles className="h-3 w-3 text-muted-foreground" aria-hidden />
+      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-highlight-bg">
+        <Sparkles className="h-3 w-3 text-highlight-fg" aria-hidden />
       </div>
       {reduced ? (
         <span className="text-sm text-muted-foreground">Thinking…</span>
@@ -61,7 +61,7 @@ function ThinkingRow({ reduced }: { reduced: boolean }) {
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="wandz-dot size-1.5 rounded-full bg-muted-foreground/60"
+              className="wandz-dot size-1.5 rounded-full bg-highlight-fg/60"
               style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}
@@ -139,8 +139,8 @@ function ChatMessages({
         {messages.map((msg) =>
           msg.role === "assistant" ? (
             <div key={msg.id} className={cn("flex gap-3", wide && "mx-auto w-full max-w-4xl")}>
-              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">
-                <Sparkles className="h-3 w-3 text-muted-foreground" aria-hidden />
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-highlight-bg">
+                <Sparkles className="h-3 w-3 text-highlight-fg" aria-hidden />
               </div>
               <p
                 className={cn(
@@ -245,8 +245,8 @@ function PanelHeader({ fullPreview }: { fullPreview: boolean }) {
   return (
     <div className="flex shrink-0 flex-col border-b border-border">
       <div className="flex items-center gap-2 px-4 py-3">
-        <Sparkles className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
-        <span className="text-sm font-medium text-foreground">Wandz</span>
+        <Sparkles className="h-4 w-4 shrink-0 text-highlight-fg" aria-hidden />
+        <span className="text-sm font-medium text-highlight-fg">Wandz</span>
         <div className="ml-auto flex items-center gap-0.5">
           <TooltipProvider delayDuration={200}>
             <Tooltip>

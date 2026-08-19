@@ -318,7 +318,7 @@ function GroupBlock({
       <div className="mt-4 flex items-center gap-2">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => addRule(campaignId, group.id)}
         >
@@ -328,7 +328,7 @@ function GroupBlock({
         {isFirstInclude && !hasExclude && (
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => addExcludeGroup(campaignId)}
           >

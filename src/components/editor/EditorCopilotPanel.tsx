@@ -155,8 +155,11 @@ export function EditorCopilotPanel({
       <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
         {empty ? (
           <div className="flex h-full min-h-[200px] flex-col items-center justify-center px-3 text-center">
-            <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-muted">
-              <Sparkles className="size-5" strokeWidth={1.75} />
+            <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-highlight-bg">
+              <Sparkles
+                className="size-5 text-highlight-fg"
+                strokeWidth={1.75}
+              />
             </div>
             <p className="text-sm font-semibold text-foreground">
               Select an element, then ask

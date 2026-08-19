@@ -1,35 +1,8 @@
 import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
+import { Check, Minus } from "@/components/icons/protoLucide"
 
 import { cn } from "@/lib/utils"
-
-/** Geometry — not the icon library. Library glyphs overflow this 16px control. */
-function CheckGlyph() {
-  return (
-    <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden>
-      <path
-        d="M3.5 8.5 6.75 11.5 12.5 4.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function MinusGlyph() {
-  return (
-    <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden>
-      <path
-        d="M3.5 8h9"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
@@ -38,18 +11,19 @@ const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      // Unchecked reads as a control outline (border-input), not as the accent:
-      // a pale accent border is near-invisible on white. The accent lands on
-      // the checked fill, where it carries meaning and has contrast behind it.
-      "peer flex size-4 shrink-0 items-center justify-center overflow-hidden rounded-[3px] border border-input bg-background shadow-none transition-colors hover:border-foreground/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-control-border data-[state=checked]:bg-control data-[state=checked]:text-control-foreground data-[state=indeterminate]:border-control-border data-[state=indeterminate]:bg-control data-[state=indeterminate]:text-control-foreground",
+      "peer h-4 w-4 shrink-0 rounded-sm border border-[hsl(var(--appearance-checkbox-default-border,_var(--input)))] bg-[hsl(var(--appearance-checkbox-default-background,_var(--background)))] text-[hsl(var(--appearance-checkbox-default-text,_var(--foreground)))] shadow-none transition-colors hover:border-[hsl(var(--appearance-checkbox-hover-border,_var(--foreground)/0.4))] hover:bg-[hsl(var(--appearance-checkbox-hover-background,_var(--appearance-checkbox-default-background,_var(--background))))] hover:text-[hsl(var(--appearance-checkbox-hover-text,_var(--appearance-checkbox-default-text,_var(--foreground))))] focus-visible:outline-none focus-visible:border-[hsl(var(--appearance-checkbox-focus-border,_var(--appearance-checkbox-default-border,_var(--input))))] focus-visible:bg-[hsl(var(--appearance-checkbox-focus-background,_var(--appearance-checkbox-default-background,_var(--background))))] focus-visible:text-[hsl(var(--appearance-checkbox-focus-text,_var(--appearance-checkbox-default-text,_var(--foreground))))] focus-visible:ring-1 focus-visible:ring-[hsl(var(--appearance-checkbox-focus-ring,_var(--ring)))] disabled:cursor-not-allowed disabled:border-[hsl(var(--appearance-checkbox-disabled-border,_var(--appearance-checkbox-default-border,_var(--input))))] disabled:bg-[hsl(var(--appearance-checkbox-disabled-background,_var(--appearance-checkbox-default-background,_var(--background))))] disabled:text-[hsl(var(--appearance-checkbox-disabled-text,_var(--appearance-checkbox-default-text,_var(--foreground))))] disabled:opacity-50 data-[state=checked]:border-[hsl(var(--appearance-checkbox-selected-border,_var(--control-selected-border,_var(--primary-border))))] data-[state=checked]:bg-[hsl(var(--appearance-checkbox-selected-background,_var(--control-selected-bg,_var(--primary))))] data-[state=checked]:text-[hsl(var(--appearance-checkbox-selected-text,_var(--control-selected-fg,_var(--primary-foreground))))] data-[state=indeterminate]:border-[hsl(var(--appearance-checkbox-selected-border,_var(--control-selected-border,_var(--primary-border))))] data-[state=indeterminate]:bg-[hsl(var(--appearance-checkbox-selected-background,_var(--control-selected-bg,_var(--primary))))] data-[state=indeterminate]:text-[hsl(var(--appearance-checkbox-selected-text,_var(--control-selected-fg,_var(--primary-foreground))))]",
       className
     )}
     {...props}
   >
     <CheckboxPrimitive.Indicator
-      className="flex size-full items-center justify-center text-current"
+      className={cn("flex items-center justify-center text-current")}
     >
-      {props.checked === "indeterminate" ? <MinusGlyph /> : <CheckGlyph />}
+      {props.checked === "indeterminate" ? (
+        <Minus className="h-4 w-4" />
+      ) : (
+        <Check className="h-4 w-4" />
+      )}
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ))

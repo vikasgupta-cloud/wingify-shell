@@ -591,7 +591,7 @@ export default function EditorPage() {
 
   return (
     <div
-      className="relative flex h-screen flex-col overflow-hidden bg-background text-foreground"
+      className="relative flex h-full flex-col overflow-hidden bg-background text-foreground"
       data-campaign-id={entityId}
       data-variation-id={variationId}
       data-scenario={scenarioId}

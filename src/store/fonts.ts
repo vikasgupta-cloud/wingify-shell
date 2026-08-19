@@ -11,6 +11,7 @@ import {
 type FontState = {
   assignments: Record<FontRole, FontId>;
   setRoleFont: (role: FontRole, fontId: FontId) => void;
+  setAssignments: (assignments: Record<FontRole, FontId>) => void;
   resetFonts: () => void;
 };
 
@@ -24,6 +25,11 @@ export const useFontStore = create<FontState>()(
       assignments: { ...DEFAULT_FONT_ASSIGNMENTS },
       setRoleFont: (role, fontId) => {
         const assignments = { ...get().assignments, [role]: fontId };
+        syncDom(assignments);
+        set({ assignments });
+      },
+      setAssignments: (next) => {
+        const assignments = resolveFontAssignments(next);
         syncDom(assignments);
         set({ assignments });
       },

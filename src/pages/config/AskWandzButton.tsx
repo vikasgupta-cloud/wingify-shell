@@ -26,7 +26,7 @@ export default function AskWandzButton({
             size="icon"
             aria-label={label}
             onClick={onClick}
-            className="h-6 w-6 text-muted-foreground [&_svg]:size-3.5"
+            className="h-6 w-6 text-highlight-fg hover:bg-highlight-bg hover:text-highlight-fg [&_svg]:size-3.5"
           >
             <Sparkles />
           </Button>

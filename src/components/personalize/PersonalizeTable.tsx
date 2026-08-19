@@ -98,9 +98,9 @@ const ROW_ICON_BUTTON =
 // bleed through the pinned region. (An alpha hover like bg-muted/50 would let the
 // content scrolling underneath show through the pinned cells.)
 const STICKY_CHECKBOX_BODY =
-  "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
+  "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-[hsl(var(--table-row-hover,_var(--muted)))] group-data-[selected=true]:bg-muted";
 const STICKY_NAME_BODY =
-  "sticky left-[44px] z-10 bg-background group-hover:bg-muted group-data-[selected=true]:bg-muted";
+  "sticky left-[44px] z-10 bg-background group-hover:bg-[hsl(var(--table-row-hover,_var(--muted)))] group-data-[selected=true]:bg-muted";
 const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-listing-header";
 const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-listing-header";
 // The pinned name column's right edge. It CANNOT be a box-shadow on the <td>/<th>:
@@ -480,7 +480,7 @@ export default function PersonalizeTable() {
       data-selected={isQuickView || undefined}
       aria-current={isQuickView ? "true" : undefined}
       className={cn(
-        "group border-b border-border transition-colors duration-150 last:border-b-0 hover:bg-muted",
+        "group border-b border-border transition-colors duration-150 last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)))]",
         isQuickView && "bg-muted"
       )}
     >

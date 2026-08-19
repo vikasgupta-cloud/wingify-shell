@@ -8,18 +8,16 @@ const Switch = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
-    data-slot="switch"
     className={cn(
-      "peer group inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border p-px shadow-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=unchecked]:border-border data-[state=unchecked]:bg-muted data-[state=checked]:border-control-border data-[state=checked]:bg-control",
+      "group peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-[hsl(var(--appearance-toggle-off-border,_transparent))] bg-[hsl(var(--appearance-toggle-off-background,_var(--input)))] text-[hsl(var(--appearance-toggle-off-text,_var(--foreground)))] shadow-sm transition-colors hover:border-[hsl(var(--appearance-toggle-hover-border,_var(--appearance-toggle-off-border,_transparent)))] hover:bg-[hsl(var(--appearance-toggle-hover-background,_var(--appearance-toggle-off-background,_var(--input))))] hover:text-[hsl(var(--appearance-toggle-hover-text,_var(--appearance-toggle-off-text,_var(--foreground))))] focus-visible:outline-none focus-visible:border-[hsl(var(--appearance-toggle-focus-border,_var(--appearance-toggle-off-border,_transparent)))] focus-visible:bg-[hsl(var(--appearance-toggle-focus-background,_var(--appearance-toggle-off-background,_var(--input))))] focus-visible:text-[hsl(var(--appearance-toggle-focus-text,_var(--appearance-toggle-off-text,_var(--foreground))))] focus-visible:ring-2 focus-visible:ring-[hsl(var(--appearance-toggle-focus-ring,_var(--ring)))] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:border-[hsl(var(--appearance-toggle-disabled-border,_var(--appearance-toggle-off-border,_transparent)))] disabled:bg-[hsl(var(--appearance-toggle-disabled-background,_var(--input)))] disabled:text-[hsl(var(--appearance-toggle-disabled-text,_var(--muted-foreground)))] disabled:opacity-50 data-[state=checked]:border-[hsl(var(--appearance-toggle-on-border,_var(--control-selected-border,_transparent)))] data-[state=checked]:bg-[hsl(var(--appearance-toggle-on-background,_var(--control-selected-bg,_var(--primary))))] data-[state=checked]:text-[hsl(var(--appearance-toggle-on-text,_var(--control-selected-fg,_var(--primary-foreground))))] data-[state=checked]:hover:border-[hsl(var(--appearance-toggle-hover-border,_var(--appearance-toggle-on-border,_var(--control-selected-border,_transparent))))] data-[state=checked]:hover:bg-[hsl(var(--appearance-toggle-hover-background,_var(--appearance-toggle-on-background,_var(--control-selected-bg,_var(--primary)))))] data-[state=checked]:hover:text-[hsl(var(--appearance-toggle-hover-text,_var(--appearance-toggle-on-text,_var(--control-selected-fg,_var(--primary-foreground)))))]",
       className
     )}
     {...props}
     ref={ref}
   >
     <SwitchPrimitives.Thumb
-      data-slot="switch-thumb"
       className={cn(
-        "pointer-events-none block size-4 rounded-full bg-background shadow-sm ring-0 transition-transform group-data-[state=checked]:translate-x-4 group-data-[state=unchecked]:translate-x-0 group-data-[state=unchecked]:border group-data-[state=unchecked]:border-border group-data-[state=checked]:border-0 group-data-[state=checked]:shadow-none"
+        "pointer-events-none block h-4 w-4 rounded-full bg-[hsl(var(--appearance-toggle-thumb,_var(--background)))] shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0 group-disabled:bg-[hsl(var(--appearance-toggle-disabled-thumb,_var(--appearance-toggle-thumb,_var(--background))))]"
       )}
     />
   </SwitchPrimitives.Root>

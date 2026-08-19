@@ -459,6 +459,8 @@
   --brand-deep: var(--vwo-light-accent-emphasis);
 
   --border: var(--vwo-light-border-subtle);
+  /* Fully transparent HSL channels for Ghost/Link CTA chrome fallbacks. */
+  --transparent: 0 0% 0% / 0;
   --input: var(--vwo-light-border-control);
   --ring: var(--vwo-light-border-focus);
   --radius: 0.625rem;
@@ -661,6 +663,7 @@
   --selected-bg: var(--vwo-light-bg-selected);
   --selected-fg: var(--vwo-neutral-950);
   --border: var(--vwo-light-border-subtle);
+  --transparent: 0 0% 0% / 0;
   --input: var(--vwo-light-border-control);
   --ring: var(--vwo-light-border-focus);
   --link: var(--vwo-light-text-link);
@@ -718,6 +721,7 @@
   --selected-bg: var(--vwo-dark-bg-selected);
   --selected-fg: var(--vwo-dark-text-primary);
   --border: var(--vwo-dark-border-default);
+  --transparent: 0 0% 0% / 0;
   --input: var(--vwo-dark-border-control);
   --ring: var(--vwo-dark-border-focus);
   --link: var(--vwo-dark-text-link);

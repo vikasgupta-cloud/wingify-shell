@@ -5,50 +5,42 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 /**
- * CTA hierarchy:
- * 1. primary   (`default`)  — primary fill
- * 2. secondary              — outline on primary border; soft hover fill
- * 3. tertiary               — soft fill (Wingify: feather); outline elsewhere
- * 4. ghost / shadow         — no fill, no border
- * 5. link                   — link-styled button
- * 6. destructive            — danger fill
- * 7. ai                     — AI CTA fill
- *
- * `outline` → tertiary alias (back-compat).
- * `shadow` → ghost alias (product naming).
+ * CTA appearance classes must be full static strings so Tailwind JIT emits them.
+ * Dynamic template construction (e.g. `border-[hsl(var(--appearance-${id}-…))]`)
+ * is invisible to the scanner — borders/fills then silently fall back to defaults.
+ * Underscores stand in for spaces inside arbitrary values (Tailwind comma rule).
  */
+const CTA_PRIMARY =
+  "border border-[hsl(var(--appearance-cta-primary-border,_var(--primary-border)))] bg-[hsl(var(--appearance-cta-primary-background,_var(--primary)))] text-[hsl(var(--appearance-cta-primary-text,_var(--primary-foreground)))] hover:border-[hsl(var(--appearance-cta-primary-hover-border,_var(--appearance-cta-primary-border,_var(--primary-border))))] hover:bg-[hsl(var(--appearance-cta-primary-hover-background,_var(--primary-hover)))] hover:text-[hsl(var(--appearance-cta-primary-hover-text,_var(--appearance-cta-primary-text,_var(--primary-hover-foreground,_var(--primary-foreground)))))] focus-visible:border-[hsl(var(--appearance-cta-primary-focus-border,_var(--appearance-cta-primary-border,_var(--primary-border))))] focus-visible:bg-[hsl(var(--appearance-cta-primary-focus-background,_var(--appearance-cta-primary-background,_var(--primary))))] focus-visible:text-[hsl(var(--appearance-cta-primary-focus-text,_var(--appearance-cta-primary-text,_var(--primary-foreground))))] focus-visible:ring-[hsl(var(--appearance-cta-primary-focus-ring,_var(--ring)))] disabled:border-[hsl(var(--appearance-cta-primary-disabled-border,_var(--appearance-cta-primary-border,_var(--primary-border))))] disabled:bg-[hsl(var(--appearance-cta-primary-disabled-background,_var(--appearance-cta-primary-background,_var(--primary))))] disabled:text-[hsl(var(--appearance-cta-primary-disabled-text,_var(--appearance-cta-primary-text,_var(--primary-foreground))))] disabled:opacity-50"
+
+const CTA_SECONDARY =
+  "border border-[hsl(var(--appearance-cta-secondary-border,_var(--border)))] bg-[hsl(var(--appearance-cta-secondary-background,_var(--secondary)))] text-[hsl(var(--appearance-cta-secondary-text,_var(--secondary-foreground)))] hover:border-[hsl(var(--appearance-cta-secondary-hover-border,_var(--appearance-cta-secondary-border,_var(--border))))] hover:bg-[hsl(var(--appearance-cta-secondary-hover-background,_var(--secondary-hover)))] hover:text-[hsl(var(--appearance-cta-secondary-hover-text,_var(--appearance-cta-secondary-text,_var(--secondary-foreground))))] focus-visible:border-[hsl(var(--appearance-cta-secondary-focus-border,_var(--appearance-cta-secondary-border,_var(--border))))] focus-visible:bg-[hsl(var(--appearance-cta-secondary-focus-background,_var(--appearance-cta-secondary-background,_var(--secondary))))] focus-visible:text-[hsl(var(--appearance-cta-secondary-focus-text,_var(--appearance-cta-secondary-text,_var(--secondary-foreground))))] focus-visible:ring-[hsl(var(--appearance-cta-secondary-focus-ring,_var(--ring)))] disabled:border-[hsl(var(--appearance-cta-secondary-disabled-border,_var(--appearance-cta-secondary-border,_var(--border))))] disabled:bg-[hsl(var(--appearance-cta-secondary-disabled-background,_var(--appearance-cta-secondary-background,_var(--secondary))))] disabled:text-[hsl(var(--appearance-cta-secondary-disabled-text,_var(--appearance-cta-secondary-text,_var(--secondary-foreground))))] disabled:opacity-50"
+
+const CTA_TERTIARY =
+  "border border-[hsl(var(--appearance-cta-tertiary-border,_var(--border)))] bg-[hsl(var(--appearance-cta-tertiary-background,_var(--background)))] text-[hsl(var(--appearance-cta-tertiary-text,_var(--foreground)))] hover:border-[hsl(var(--appearance-cta-tertiary-hover-border,_var(--appearance-cta-tertiary-border,_var(--border))))] hover:bg-[hsl(var(--appearance-cta-tertiary-hover-background,_var(--muted)))] hover:text-[hsl(var(--appearance-cta-tertiary-hover-text,_var(--appearance-cta-tertiary-text,_var(--foreground))))] focus-visible:border-[hsl(var(--appearance-cta-tertiary-focus-border,_var(--appearance-cta-tertiary-border,_var(--border))))] focus-visible:bg-[hsl(var(--appearance-cta-tertiary-focus-background,_var(--appearance-cta-tertiary-background,_var(--background))))] focus-visible:text-[hsl(var(--appearance-cta-tertiary-focus-text,_var(--appearance-cta-tertiary-text,_var(--foreground))))] focus-visible:ring-[hsl(var(--appearance-cta-tertiary-focus-ring,_var(--ring)))] disabled:border-[hsl(var(--appearance-cta-tertiary-disabled-border,_var(--appearance-cta-tertiary-border,_var(--border))))] disabled:bg-[hsl(var(--appearance-cta-tertiary-disabled-background,_var(--appearance-cta-tertiary-background,_var(--background))))] disabled:text-[hsl(var(--appearance-cta-tertiary-disabled-text,_var(--appearance-cta-tertiary-text,_var(--foreground))))] disabled:opacity-50"
+
+/** Ghost defaults to no chrome; Appearance border/fill/text apply when set. */
+const CTA_GHOST =
+  "border border-[hsl(var(--appearance-cta-ghost-border,_var(--transparent)))] bg-[hsl(var(--appearance-cta-ghost-background,_var(--transparent)))] text-[hsl(var(--appearance-cta-ghost-text,_var(--foreground)))] hover:border-[hsl(var(--appearance-cta-ghost-hover-border,_var(--appearance-cta-ghost-border,_var(--transparent))))] hover:bg-[hsl(var(--appearance-cta-ghost-hover-background,_var(--muted)))] hover:text-[hsl(var(--appearance-cta-ghost-hover-text,_var(--appearance-cta-ghost-text,_var(--foreground))))] focus-visible:border-[hsl(var(--appearance-cta-ghost-focus-border,_var(--appearance-cta-ghost-border,_var(--transparent))))] focus-visible:bg-[hsl(var(--appearance-cta-ghost-focus-background,_var(--appearance-cta-ghost-background,_var(--transparent))))] focus-visible:text-[hsl(var(--appearance-cta-ghost-focus-text,_var(--appearance-cta-ghost-text,_var(--foreground))))] focus-visible:ring-[hsl(var(--appearance-cta-ghost-focus-ring,_var(--ring)))] disabled:border-[hsl(var(--appearance-cta-ghost-disabled-border,_var(--appearance-cta-ghost-border,_var(--transparent))))] disabled:bg-[hsl(var(--appearance-cta-ghost-disabled-background,_var(--appearance-cta-ghost-background,_var(--transparent))))] disabled:text-[hsl(var(--appearance-cta-ghost-disabled-text,_var(--appearance-cta-ghost-text,_var(--foreground))))] disabled:opacity-50"
+
+/** Link defaults to text-only (underline on hover); Appearance can add border/fill. */
+const CTA_LINK =
+  "border border-[hsl(var(--appearance-cta-link-border,_var(--transparent)))] bg-[hsl(var(--appearance-cta-link-background,_var(--transparent)))] text-[hsl(var(--appearance-cta-link-text,_var(--link)))] hover:border-[hsl(var(--appearance-cta-link-hover-border,_var(--appearance-cta-link-border,_var(--transparent))))] hover:bg-[hsl(var(--appearance-cta-link-hover-background,_var(--transparent)))] hover:text-[hsl(var(--appearance-cta-link-hover-text,_var(--appearance-cta-link-text,_var(--link))))] focus-visible:border-[hsl(var(--appearance-cta-link-focus-border,_var(--appearance-cta-link-border,_var(--transparent))))] focus-visible:bg-[hsl(var(--appearance-cta-link-focus-background,_var(--appearance-cta-link-background,_var(--transparent))))] focus-visible:text-[hsl(var(--appearance-cta-link-focus-text,_var(--appearance-cta-link-text,_var(--link))))] focus-visible:ring-[hsl(var(--appearance-cta-link-focus-ring,_var(--ring)))] disabled:border-[hsl(var(--appearance-cta-link-disabled-border,_var(--appearance-cta-link-border,_var(--transparent))))] disabled:bg-[hsl(var(--appearance-cta-link-disabled-background,_var(--appearance-cta-link-background,_var(--transparent))))] disabled:text-[hsl(var(--appearance-cta-link-disabled-text,_var(--appearance-cta-link-text,_var(--link))))] disabled:opacity-50"
+
 const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:border-transparent disabled:bg-cta-disabled disabled:text-cta-disabled-foreground disabled:opacity-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        // 1. Primary — filled brand CTA
         default:
-          "border border-primary-border bg-primary font-cta text-primary-foreground hover:bg-primary-hover active:bg-primary-active",
-        // 2. Secondary — primary-color outline; label follows --cta-secondary-fg
-        secondary:
-          "border border-primary-border bg-background font-cta text-cta-secondary hover:bg-secondary-hover active:bg-secondary-hover",
-        // 3. Tertiary — soft fill (tokenized; Wingify uses feather)
-        tertiary:
-          "border border-cta-tertiary-border bg-cta-tertiary font-cta text-cta-tertiary-foreground hover:bg-cta-tertiary-hover active:bg-cta-tertiary-hover",
-        // Back-compat alias for tertiary
-        outline:
-          "border border-cta-tertiary-border bg-cta-tertiary font-cta text-cta-tertiary-foreground hover:bg-cta-tertiary-hover active:bg-cta-tertiary-hover",
-        // 4. Ghost / shadow — no fill, no border
-        ghost:
-          "border border-transparent bg-transparent text-foreground hover:bg-muted hover:text-foreground active:bg-muted",
-        // Product alias for ghost
-        shadow:
-          "border border-transparent bg-transparent text-foreground hover:bg-muted hover:text-foreground active:bg-muted",
-        // 5. Link — link-colored button; supports leading/trailing icons
-        link:
-          "h-auto border-transparent bg-transparent px-0 text-link underline-offset-4 hover:bg-transparent hover:text-link-hover hover:underline active:bg-transparent disabled:bg-transparent",
-        // 6. Destructive
+          "font-cta shadow-[0_1px_2px_hsl(var(--brand-midnight)/0.06)] " +
+          CTA_PRIMARY,
         destructive:
-          "border border-transparent bg-destructive font-cta text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
-        // 7. AI CTA
-        ai:
-          "border border-transparent bg-cta-ai font-cta text-cta-ai-foreground hover:bg-cta-ai-hover active:bg-cta-ai-hover",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 focus-visible:ring-ring disabled:opacity-50",
+        outline: "shadow-sm " + CTA_TERTIARY,
+        secondary: "shadow-sm " + CTA_SECONDARY,
+        ghost: CTA_GHOST,
+        link: "underline-offset-4 hover:underline " + CTA_LINK,
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -57,12 +49,6 @@ const buttonVariants = cva(
         icon: "h-9 w-9",
       },
     },
-    compoundVariants: [
-      {
-        variant: "link",
-        class: "h-auto px-0",
-      },
-    ],
     defaultVariants: {
       variant: "default",
       size: "default",
@@ -81,7 +67,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
-        data-slot="button"
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}

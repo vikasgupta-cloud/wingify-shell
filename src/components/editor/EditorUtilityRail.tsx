@@ -86,7 +86,12 @@ export function EditorUtilityRail({
               aria-label={label}
               aria-pressed={active}
               onClick={() => onToggle(id)}
-              className={railButton(active)}
+              className={cn(
+                railButton(id === "copilot" ? false : active),
+                id === "copilot" &&
+                  "text-highlight-fg hover:bg-highlight-bg hover:text-highlight-fg",
+                id === "copilot" && active && "bg-highlight-bg text-highlight-fg"
+              )}
             >
               <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </button>

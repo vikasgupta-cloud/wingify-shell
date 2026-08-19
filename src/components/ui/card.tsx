@@ -9,7 +9,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
+      "rounded-xl border border-[hsl(var(--appearance-cards-border,_var(--border)))] bg-[hsl(var(--appearance-cards-background,_var(--card)))] text-[hsl(var(--appearance-cards-text,_var(--card-foreground)))] shadow transition-colors hover:border-[hsl(var(--appearance-cards-hover-border,_var(--appearance-cards-border,_var(--border))))] hover:bg-[hsl(var(--appearance-cards-hover-background,_var(--appearance-cards-background,_var(--card))))] hover:text-[hsl(var(--appearance-cards-hover-text,_var(--appearance-cards-text,_var(--card-foreground))))] focus-within:border-[hsl(var(--appearance-cards-focus-border,_var(--appearance-cards-border,_var(--border))))] focus-within:bg-[hsl(var(--appearance-cards-focus-background,_var(--appearance-cards-background,_var(--card))))] focus-within:text-[hsl(var(--appearance-cards-focus-text,_var(--appearance-cards-text,_var(--card-foreground))))] focus-within:ring-1 focus-within:ring-[hsl(var(--appearance-cards-focus-ring,_var(--ring)))] disabled:border-[hsl(var(--appearance-cards-disabled-border,_var(--appearance-cards-border,_var(--border))))] disabled:bg-[hsl(var(--appearance-cards-disabled-background,_var(--appearance-cards-background,_var(--card))))] disabled:text-[hsl(var(--appearance-cards-disabled-text,_var(--appearance-cards-text,_var(--card-foreground))))] disabled:opacity-50",
       className
     )}
     {...props}

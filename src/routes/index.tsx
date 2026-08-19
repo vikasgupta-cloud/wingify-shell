@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter, Navigate, Outlet, type RouteObject } from "react-router-dom";
+import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
 import {
   NAV,
   PROFILE_MODES,
@@ -18,18 +18,8 @@ import ReportsPage from "../pages/reports/ReportsPage";
 import EditorPage from "../pages/editor/EditorPage";
 import IntegrationsPage from "../pages/integrations/IntegrationsPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
-import FormGalleryPage from "../pages/design/FormGalleryPage";
-import WebExperimentationOldPage from "../pages/web-experiment-old/WebExperimentationOldPage";
-import OldCampaignShell from "../pages/web-experiment-old/OldCampaignShell";
-import PagesStep from "../pages/web-experiment-old/PagesStep";
-import VariationsStep from "../pages/web-experiment-old/VariationsStep";
-import MetricsStep from "../pages/web-experiment-old/MetricsStep";
-import TargetingStep from "../pages/web-experiment-old/TargetingStep";
-import IntegrationsStep from "../pages/web-experiment-old/IntegrationsStep";
-import OldReportsPage from "../pages/web-experiment-old/OldReportsPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
-import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
 import SurveysPage from "../pages/pulse/SurveysPage";
 import FeatureFlagsPage from "../pages/feature-management/FeatureFlagsPage";
 import FlagRolloutPage from "../pages/feature-management/FlagRolloutPage";
@@ -43,7 +33,7 @@ import MetricsPage from "../pages/data-360/MetricsPage";
 import DashboardPage from "../pages/home/DashboardPage";
 import PersonalizePage from "../pages/personalize/PersonalizePage";
 import PersonalizeComingSoonPage from "../pages/personalize/PersonalizeComingSoonPage";
-import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
+import ComponentLabPage from "../pages/design/ComponentLabPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -62,6 +52,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/data-360/events": EventsPage,
   "/data-360/segments": SegmentsPage,
   "/data-360/metrics": MetricsPage,
+  "/component-lab": ComponentLabPage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
@@ -115,27 +106,6 @@ for (const item of NAV) {
       ],
     });
     appLeaves.forEach((leaf) => addDetailRoute(leaf.path));
-  } else if (item.path === "/web-experiment-old") {
-    pageRoutes.push({
-      path: item.path,
-      element: <Outlet />,
-      children: [
-        { index: true, element: <WebExperimentationOldPage /> },
-        {
-          path: "c/:entityId",
-          element: <OldCampaignShell />,
-          children: [
-            { index: true, element: <Navigate to="pages" replace /> },
-            { path: "pages", element: <PagesStep /> },
-            { path: "variations", element: <VariationsStep /> },
-            { path: "metrics", element: <MetricsStep /> },
-            { path: "targeting", element: <TargetingStep /> },
-            { path: "integrations", element: <IntegrationsStep /> },
-            { path: "reports", element: <OldReportsPage /> },
-          ],
-        },
-      ],
-    });
   } else {
     pageRoutes.push({ path: item.path, element: leafElement(item.path) });
     addDetailRoute(item.path);
@@ -174,8 +144,6 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
         element:
           mode.id === "integrations" ? (
             <IntegrationsPage />
-          ) : leaf.path === "/settings/accounts/general" ? (
-            <AccountGeneralPage />
           ) : (
             <PlaceholderPage />
           ),
@@ -193,10 +161,6 @@ export const router = createBrowserRouter([
         path: "/web-experiment/c/:entityId/editor/:variationId",
         element: <EditorPage />,
       },
-      {
-        path: "/insights/heatmaps/viewer",
-        element: <HeatmapViewerPage />,
-      },
       ...detailRoutes,
       ...profileModeRoutes,
       {
@@ -204,7 +168,6 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <Navigate to="/home/dashboard" replace /> },
           { path: "/design/charts", element: <AnalyticsChartsPage /> },
-          { path: "/design/forms", element: <FormGalleryPage /> },
           ...pageRoutes,
           { path: "*", element: <PlaceholderPage /> },
         ],

@@ -10,6 +10,7 @@ import {
   HeartPulse,
   Megaphone,
   Database,
+  ClipboardList,
   Activity,
   LifeBuoy,
   UserCircle,
@@ -192,6 +193,13 @@ export const NAV: NavItem[] = [
     { heading: "Automation", items: [{ label: "Triggers", path: "/data-360/triggers" }]},
     { heading: "Administration", items: [{ label: "Audit", path: "/data-360/audit", hideCreate: true }]},
   ]},
+  {
+    label: "Component Lab",
+    path: "/component-lab",
+    icon: ClipboardList,
+    group: 2,
+    hideCreate: true,
+  },
   { label: "Activity", path: "/activity-timeline", icon: Activity, group: 3, flyoutOnly: true, hideCreate: true },
   { label: "Help", path: "/helpdesk", icon: LifeBuoy, group: 3, flyoutOnly: true, hideCreate: true },
   // Settings lives in the Profile flyout (no rail gear). Avatar expands options; does not navigate.
