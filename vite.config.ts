@@ -10,6 +10,9 @@ export default defineConfig({
   // browsers resolving localhost→127.0.0.1 couldn't reach.
   server: {
     host: true,
+    port: 5174,
+    // Fail loudly instead of silently sliding to the next free port.
+    strictPort: true,
   },
   resolve: {
     alias: {
