@@ -28,9 +28,9 @@ export default function SubNavPanel({
       className={cn(
         "w-[248px] shrink-0 overflow-y-auto py-6",
         variant === "docked" &&
-          "h-full border-r border-[hsl(var(--appearance-main-nav-border,_var(--panel-border)))] bg-[hsl(var(--appearance-main-nav-background,_var(--panel)))] text-[hsl(var(--appearance-main-nav-text,_var(--panel-foreground)))]",
+          "h-full bg-panel text-panel-foreground border-r border-panel-border",
         variant === "flyout" &&
-          "max-h-[calc(100vh-2rem)] rounded-lg border border-[hsl(var(--appearance-main-nav-border,_var(--border)))] bg-[hsl(var(--appearance-main-nav-background,_var(--popover)))] text-[hsl(var(--appearance-main-nav-text,_var(--popover-foreground)))] shadow-lg"
+          "max-h-[calc(100vh-2rem)] rounded-lg border border-border bg-popover text-popover-foreground shadow-lg"
       )}
     >
       <div className="flex items-center justify-between gap-2 px-5 pb-4">
@@ -48,7 +48,7 @@ export default function SubNavPanel({
                     unpin(item.path);
                     onRequestClose?.();
                   }}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-current"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <PinOff className="h-3.5 w-3.5" />
                 </button>
@@ -70,10 +70,7 @@ export default function SubNavPanel({
         {item.sections.map((section, i) => (
           <div key={section.heading ?? i} className="flex flex-col gap-1">
             {i > 0 && (
-              <div
-                className="my-3 h-px bg-[hsl(var(--appearance-main-nav-border,_var(--panel-border)))]"
-                aria-hidden="true"
-              />
+              <div className="my-3 h-px bg-panel-border" aria-hidden="true" />
             )}
             {section.items.map((leaf) => (
               <NavLink
@@ -82,9 +79,9 @@ export default function SubNavPanel({
                 onClick={() => onRequestClose?.()}
                 className={({ isActive }) =>
                   cn(
-                    "rounded-md border border-transparent px-2.5 py-2 text-sm text-current transition-colors hover:border-[hsl(var(--appearance-main-nav-hover-border,_transparent))] hover:bg-[hsl(var(--appearance-main-nav-hover-background,_var(--main-nav-hover-background,_var(--muted))))] hover:text-[hsl(var(--appearance-main-nav-hover-text,_var(--main-nav-hover-foreground,_var(--appearance-main-nav-text,_var(--panel-foreground)))))]",
+                    "rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
                     isActive &&
-                      "border-[hsl(var(--appearance-main-nav-active-border,_transparent))] bg-[hsl(var(--appearance-main-nav-active-background,_var(--accent)))] font-medium text-[hsl(var(--appearance-main-nav-active-text,_var(--accent-foreground)))] hover:border-[hsl(var(--appearance-main-nav-active-border,_transparent))] hover:bg-[hsl(var(--appearance-main-nav-active-background,_var(--accent)))] hover:text-[hsl(var(--appearance-main-nav-active-text,_var(--accent-foreground)))]"
+                      "bg-accent font-medium text-accent-foreground hover:bg-accent"
                   )
                 }
               >

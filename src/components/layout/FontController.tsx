@@ -1,9 +1,5 @@
-/**
- * Embedded design controller — docks as a right-hand column so the page stays
- * usable while colours, fonts, and tokens are tweaked. Compact palette tab on
- * the right edge when closed, shown only when Settings → General enables it.
- */
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ArrowRight, Download, Palette, RotateCcw, X } from "@/components/icons/protoLucide";
 import { cn } from "../../lib/utils";
@@ -16,14 +12,20 @@ import {
 } from "../../config/exportDesignTokens";
 import { Button } from "@/components/ui/button";
 import ThemePicker from "./ThemePicker";
-import SavedThemesPicker from "./SavedThemesPicker";
 import FontPicker from "./FontPicker";
+import CtaColorPicker from "./CtaColorPicker";
+import BackgroundColorPicker from "./BackgroundColorPicker";
+import SurfacePicker from "./SurfacePicker";
 import HeaderColorPicker from "./HeaderColorPicker";
 import IconLibraryPicker from "./IconLibraryPicker";
-import ComponentAppearancePicker from "./ComponentAppearancePicker";
+import { WEB_EXPERIMENT_OLD_PATH } from "../../config/navigation";
 
-const PANEL_WIDTH_PX = 360;
+const CLOSE_ANIM_MS = 180;
 
+/**
+ * Floating design CTA — compact icon tab on the right; expands label on hover;
+ * stays fully open until dismissed. Hosts appearance, fonts, and CTA color.
+ */
 export default function FontController() {
   const open = useDesignControllerStore((s) => s.open);
   const setOpen = useDesignControllerStore((s) => s.setOpen);
@@ -34,7 +36,11 @@ export default function FontController() {
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
   const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
   const headerTokenId = useThemeStore((s) => s.headerTokenId);
+  const formElementSchemeId = useThemeStore((s) => s.formElementSchemeId);
+  const surfaceSchemeId = useThemeStore((s) => s.surfaceSchemeId);
   const fontAssignments = useFontStore((s) => s.assignments);
+  const [rendered, setRendered] = useState(false);
+  const [shown, setShown] = useState(false);
   const [tabHover, setTabHover] = useState(false);
 
   const exportOptions = {
@@ -43,6 +49,8 @@ export default function FontController() {
     ctaTokenId,
     backgroundTokenId,
     headerTokenId,
+    formElementSchemeId,
+    surfaceSchemeId,
     fontAssignments,
   };
 
@@ -62,21 +70,36 @@ export default function FontController() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      setRendered(true);
+      let raf2: number | undefined;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setShown(true));
+      });
+      return () => {
+        cancelAnimationFrame(raf1);
+        if (raf2 !== undefined) cancelAnimationFrame(raf2);
+      };
+    }
+    setShown(false);
+    const unmountTimer = window.setTimeout(
+      () => setRendered(false),
+      CLOSE_ANIM_MS
+    );
+    return () => window.clearTimeout(unmountTimer);
+  }, [open]);
+
   const tabExpanded = tabHover;
 
-  // Opt-in via Settings → General. Rendering nothing (rather than a hidden
-  // tab) keeps the zero-width column out of the layout entirely.
-  if (!open && !tabVisible) return null;
-
-  // Zero-width column at the right edge; the tab peeks into the page so it
-  // never covers interactive content until opened (then it docks and pushes).
-  if (!open) {
-    return (
-      <div
-        data-design-controller=""
-        className="pointer-events-none relative w-0 shrink-0 self-stretch"
-      >
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-[65] flex items-center">
+  return (
+    <>
+      {/* Compact icon tab — opt-in via Settings → General; label expands on hover. */}
+      {!open && tabVisible ? (
+        <div
+          data-design-controller=""
+          className="pointer-events-none fixed inset-y-0 right-0 z-[65] flex items-center"
+        >
           <button
             type="button"
             aria-label="Open design controller"
@@ -106,128 +129,203 @@ export default function FontController() {
             </span>
           </button>
         </div>
-      </div>
-    );
-  }
+      ) : null}
 
-  return (
-    <aside
-      data-design-controller=""
-      role="complementary"
-      aria-label="Design controller"
-      className="flex h-full shrink-0 flex-col border-l border-border bg-background"
-      style={{ width: PANEL_WIDTH_PX }}
-    >
-      <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-4">
-        <div className="min-w-0 space-y-0.5">
-          <h2 className="font-title text-lg font-semibold tracking-tight text-foreground">
-            Design controller
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Appearance, fonts, tokens, and charts
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0 text-muted-foreground"
-          aria-label="Close design controller"
-          onClick={close}
-        >
-          <X className="h-4 w-4" strokeWidth={1.75} />
-        </Button>
-      </header>
-
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="border-b border-border px-3 py-2">
-          <ThemePicker />
-        </div>
-        <div className="border-b border-border">
-          <SavedThemesPicker />
-        </div>
-        <div className="border-b border-border">
-          <HeaderColorPicker />
-        </div>
-        <div className="border-b border-border">
-          <IconLibraryPicker />
-        </div>
-        <ComponentAppearancePicker />
-        <FontPicker />
-
-        <div className="space-y-3 border-t border-border px-4 py-4">
-          <div className="space-y-0.5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Tokens
-            </p>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Download scales, semantic values, fonts, and resolved roles for
-              light and dark.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => downloadDesignTokensJson(exportOptions)}
-            >
-              <Download className="size-3.5" strokeWidth={1.75} />
-              JSON
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => downloadDesignTokensCss(exportOptions)}
-            >
-              <Download className="size-3.5" strokeWidth={1.75} />
-              CSS
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-2 border-t border-border px-4 py-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Analytics charts
-          </p>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Browse Mixpanel/Amplitude-style chart types on a full page.
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            asChild
+      {rendered &&
+        createPortal(
+          <div
+            data-design-controller=""
+            className={cn(
+              "fixed inset-0 z-[70]",
+              !shown && "pointer-events-none"
+            )}
           >
-            <Link to="/design/charts">
-              Open chart gallery
-              <ArrowRight className="size-3.5" strokeWidth={1.75} />
-            </Link>
-          </Button>
-        </div>
+            <button
+              type="button"
+              aria-label="Dismiss design controller"
+              className={cn(
+                "absolute inset-0 bg-foreground transition-opacity ease-out motion-reduce:transition-none",
+                shown ? "opacity-[0.18]" : "opacity-0"
+              )}
+              style={{ transitionDuration: `${CLOSE_ANIM_MS}ms` }}
+              onClick={close}
+            />
 
-        <p className="px-4 pb-4 pt-2 text-xs leading-relaxed text-muted-foreground">
-          Docked beside the app so you can tweak and use the page at the same
-          time. Selections are saved in this browser — light/dark is also in
-          your profile menu.
-        </p>
-      </div>
+            <aside
+              role="dialog"
+              aria-modal="true"
+              aria-label="Design controller"
+              className={cn(
+                "absolute inset-y-0 right-0 flex w-[min(100vw-1rem,360px)] flex-col border-l border-border bg-background shadow-xl transition-transform ease-out motion-reduce:transition-none",
+                shown ? "translate-x-0" : "translate-x-full"
+              )}
+              style={{ transitionDuration: `${CLOSE_ANIM_MS}ms` }}
+            >
+              <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-4">
+                <div className="min-w-0 space-y-0.5">
+                  <h2 className="font-title text-lg font-semibold tracking-tight text-foreground">
+                    Design controller
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Appearance, fonts, tokens, and charts
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground"
+                  aria-label="Close design controller"
+                  onClick={close}
+                >
+                  <X className="h-4 w-4" strokeWidth={1.75} />
+                </Button>
+              </header>
 
-      <footer className="shrink-0 border-t border-border px-4 py-3">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full gap-2"
-          onClick={resetAll}
-        >
-          <RotateCcw className="size-3.5" strokeWidth={1.75} />
-          Reset all
-        </Button>
-      </footer>
-    </aside>
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <div className="border-b border-border px-3 py-2">
+                  <ThemePicker />
+                </div>
+                <div className="border-b border-border">
+                  <SurfacePicker />
+                </div>
+                <div className="border-b border-border">
+                  <BackgroundColorPicker />
+                </div>
+                <div className="border-b border-border">
+                  <HeaderColorPicker />
+                </div>
+                <div className="border-b border-border">
+                  <IconLibraryPicker />
+                </div>
+                <FontPicker />
+                <div className="border-t border-border">
+                  <CtaColorPicker />
+                </div>
+
+                <div className="space-y-3 border-t border-border px-4 py-4">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Tokens
+                    </p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Downloads scales, semantic values, fonts, and resolved
+                      light/dark roles for the current button color, form
+                      elements, and surface presets.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => downloadDesignTokensJson(exportOptions)}
+                    >
+                      <Download className="size-3.5" strokeWidth={1.75} />
+                      JSON
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => downloadDesignTokensCss(exportOptions)}
+                    >
+                      <Download className="size-3.5" strokeWidth={1.75} />
+                      CSS
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t border-border px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Analytics charts
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Browse Mixpanel/Amplitude-style chart types on a full page.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    asChild
+                  >
+                    <Link to="/design/charts" onClick={close}>
+                      Open chart gallery
+                      <ArrowRight className="size-3.5" strokeWidth={1.75} />
+                    </Link>
+                  </Button>
+                </div>
+
+                <div className="space-y-2 border-t border-border px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Form elements
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Inputs, dropdowns, buttons, sliders, radios, and checkboxes
+                    in a real campaign form.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    asChild
+                  >
+                    <Link to="/design/forms" onClick={close}>
+                      Open form gallery
+                      <ArrowRight className="size-3.5" strokeWidth={1.75} />
+                    </Link>
+                  </Button>
+                </div>
+
+                <div className="space-y-3 border-t border-border px-4 py-4">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Prototypes
+                    </p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Open prototype flows that stay off the product rail.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between gap-1.5"
+                    asChild
+                  >
+                    <Link to={WEB_EXPERIMENT_OLD_PATH} onClick={close}>
+                      Web experimentation (Old)
+                      <ArrowRight className="size-3.5" strokeWidth={1.75} />
+                    </Link>
+                  </Button>
+                </div>
+
+                <p className="px-4 pb-4 pt-2 text-xs leading-relaxed text-muted-foreground">
+                  Selections are saved in this browser. Use the palette tab on
+                  the right edge anytime — light/dark is also in your profile
+                  menu.
+                </p>
+              </div>
+
+              <footer className="shrink-0 border-t border-border px-4 py-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={resetAll}
+                >
+                  <RotateCcw className="size-3.5" strokeWidth={1.75} />
+                  Reset all
+                </Button>
+              </footer>
+            </aside>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }

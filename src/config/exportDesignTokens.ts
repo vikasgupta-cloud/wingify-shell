@@ -34,6 +34,9 @@ const ROLE_VARS = [
   "--control",
   "--control-foreground",
   "--control-border",
+  "--control-selected-bg",
+  "--control-selected-fg",
+  "--control-selected-border",
   "--secondary",
   "--secondary-foreground",
   "--secondary-hover",
@@ -99,7 +102,7 @@ function resolveRoleColor(varName: string): string {
   return rgbToHex(resolved);
 }
 
-function snapshotRoles(): Record<string, string> {
+export function snapshotRoles(): Record<string, string> {
   const out: Record<string, string> = {};
   for (const name of ROLE_VARS) {
     out[name] = resolveRoleColor(name);

@@ -19,8 +19,8 @@ export default function MorePanel() {
 
   return (
     <Tooltip.Provider delayDuration={300}>
-      <nav className="h-full w-[248px] shrink-0 overflow-y-auto border-r border-[hsl(var(--appearance-main-nav-border,_var(--panel-border)))] bg-[hsl(var(--appearance-main-nav-background,_var(--panel)))] py-6 text-[hsl(var(--appearance-main-nav-text,_var(--panel-foreground)))] [scrollbar-width:thin]">
-        <div className="px-5 pb-4 text-sm font-semibold text-current">
+      <nav className="h-full w-[248px] shrink-0 overflow-y-auto border-r border-panel-border bg-panel py-6 text-panel-foreground [scrollbar-width:thin]">
+        <div className="px-5 pb-4 text-sm font-semibold text-foreground">
           More
         </div>
         <div className="flex flex-col px-3">
@@ -38,7 +38,7 @@ export default function MorePanel() {
                     className="flex min-w-0 flex-1 items-center gap-2.5 px-2 py-2 text-left"
                   >
                     <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-sm font-medium text-current">
+                    <span className="truncate text-sm font-medium text-foreground">
                       {item.label}
                     </span>
                   </button>

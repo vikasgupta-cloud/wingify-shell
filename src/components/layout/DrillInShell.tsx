@@ -81,7 +81,7 @@ export default function DrillInShell() {
   }
 
   return (
-    <div className="flex h-full bg-background text-foreground">
+    <div className="flex h-screen bg-background text-foreground">
       <DrillInNav mode={mode} />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -98,13 +98,7 @@ export default function DrillInShell() {
           </span>
         </header>
 
-        <main
-          className="min-h-0 flex-1 overflow-y-auto"
-          style={{
-            backgroundColor:
-              "hsl(var(--appearance-app-background-canvas, var(--canvas)))",
-          }}
-        >
+        <main className="min-h-0 flex-1 overflow-y-auto bg-canvas">
           <Outlet />
         </main>
       </div>

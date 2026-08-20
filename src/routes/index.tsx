@@ -19,6 +19,8 @@ import EditorPage from "../pages/editor/EditorPage";
 import IntegrationsPage from "../pages/integrations/IntegrationsPage";
 import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
+import FormGalleryPage from "../pages/design/FormGalleryPage";
+import DesignSystemPage from "../pages/design/DesignSystemPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
 import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
@@ -35,7 +37,6 @@ import MetricsPage from "../pages/data-360/MetricsPage";
 import DashboardPage from "../pages/home/DashboardPage";
 import PersonalizePage from "../pages/personalize/PersonalizePage";
 import PersonalizeComingSoonPage from "../pages/personalize/PersonalizeComingSoonPage";
-import ComponentLabPage from "../pages/design/ComponentLabPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -54,7 +55,6 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/data-360/events": EventsPage,
   "/data-360/segments": SegmentsPage,
   "/data-360/metrics": MetricsPage,
-  "/component-lab": ComponentLabPage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
@@ -178,6 +178,8 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <Navigate to="/home/dashboard" replace /> },
           { path: "/design/charts", element: <AnalyticsChartsPage /> },
+          { path: "/design/forms", element: <FormGalleryPage /> },
+          { path: "/design-system", element: <DesignSystemPage /> },
           ...pageRoutes,
           { path: "*", element: <PlaceholderPage /> },
         ],

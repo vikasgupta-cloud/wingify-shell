@@ -68,6 +68,13 @@ export default {
           "system-ui",
           "sans-serif",
         ],
+        numeric: [
+          "var(--font-numeric)",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "monospace",
+        ],
       },
       colors: {
         background: "hsl(var(--background))",
@@ -319,6 +326,12 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xs: "var(--radius-xs)",
+      },
+      boxShadow: {
+        "foundation-sm": "var(--shadow-sm)",
+        "foundation-md": "var(--shadow-md)",
+        "foundation-lg": "var(--shadow-lg)",
       },
       keyframes: {
         "accordion-down": {

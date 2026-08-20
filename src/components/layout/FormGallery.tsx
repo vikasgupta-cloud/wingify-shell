@@ -38,6 +38,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -149,7 +157,7 @@ export default function FormGallery() {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
-  const [, setConfirmOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const allDevicesSelected = devices.length === DEVICES.length;
   const someDevicesSelected =
@@ -897,18 +905,27 @@ export default function FormGallery() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button">Primary button</Button>
+              <Button type="button">Default Button</Button>
+              <Button type="button" variant="inverted">
+                Default Inverted Button
+              </Button>
               <Button type="button" variant="secondary">
-                Secondary button
+                Secondary Button
               </Button>
-              <Button type="button" variant="tertiary">
-                Tertiary button
-              </Button>
-              <Button type="button" variant="ghost">
-                Ghost button
+              <Button type="button" variant="shadow">
+                Shadow Button
               </Button>
               <Button type="button" variant="destructive">
-                For danger button
+                Danger Button
+              </Button>
+              <Button type="button" variant="destructiveInverted">
+                Danger Inverted Button
+              </Button>
+              <Button type="button" variant="destructiveShadow">
+                Danger Shadow Button
+              </Button>
+              <Button type="button" variant="link">
+                Upload file
               </Button>
               <Button type="button" variant="ai">
                 CTA shade for AI

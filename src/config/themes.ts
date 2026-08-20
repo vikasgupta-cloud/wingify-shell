@@ -1,4 +1,20 @@
 import tokens from "./tokens.json";
+import {
+  DEFAULT_SURFACE_SCHEME_ID,
+  resolveSurfaceSchemeId,
+  type SurfaceSchemeId,
+} from "./surfaceTokens";
+import {
+  DEFAULT_FORM_ELEMENT_SCHEME_ID,
+  resolveFormElementSchemeId,
+  type FormElementSchemeId,
+} from "./formElementSchemes";
+import {
+  DEFAULT_BACKGROUND_TOKEN_ID,
+  DEFAULT_HEADER_TOKEN_ID,
+  resolveBackgroundTokenId,
+  resolveWingifyChromeTokens,
+} from "./backgroundTokens";
 
 /**
  * Accent families = primary button / CTA color.
@@ -8,10 +24,13 @@ import tokens from "./tokens.json";
 
 export const THEME_IDS = [
   "yellow",
-  "maroon",
   "cherry",
-  "black",
-  "black-yellow",
+  "green",
+  "midnight",
+  "berry",
+  "maroon",
+  "neutral-black",
+  "wingify",
 ] as const;
 
 export const COLOR_MODES = ["light", "dark"] as const;
@@ -19,17 +38,15 @@ export const COLOR_MODES = ["light", "dark"] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 export type ColorMode = (typeof COLOR_MODES)[number];
 
-export const DEFAULT_THEME_ID: ThemeId = "yellow";
+export const DEFAULT_THEME_ID: ThemeId = "wingify";
 export const DEFAULT_COLOR_MODE: ColorMode = "light";
 
 const LEGACY_THEME_IDS: Record<string, ThemeId> = {
   warm: "yellow",
   neutral: "yellow",
-  cool: "maroon",
-  contrast: "black",
-  green: "black",
-  midnight: "black",
-  berry: "maroon",
+  "yellow-b": "yellow",
+  cool: "green",
+  contrast: "midnight",
 };
 
 export type ThemeOption = {
@@ -48,7 +65,7 @@ export const THEMES: ThemeOption[] = [
   {
     id: "yellow",
     label: "Yellow",
-    description: "Yellow primary buttons",
+    description: "Yellow primary buttons — pick a secondary under Form elements",
     swatchesLight: [
       scales.neutral["0"],
       scales.yellow["50"],
@@ -61,9 +78,69 @@ export const THEMES: ThemeOption[] = [
     ],
   },
   {
+    id: "cherry",
+    label: "Cherry",
+    description: "Cherry primary buttons",
+    swatchesLight: [
+      scales.neutral["0"],
+      scales.cherry["400"],
+      scales.neutral["100"],
+    ],
+    swatchesDark: [
+      semantic.dark["bg.canvas"],
+      scales.cherry["400"],
+      semantic.dark["bg.surface"],
+    ],
+  },
+  {
+    id: "green",
+    label: "Green",
+    description: "Green Rich primary buttons (#004842)",
+    swatchesLight: [
+      scales.neutral["0"],
+      scales.green["800"],
+      scales.neutral["100"],
+    ],
+    swatchesDark: [
+      semantic.dark["bg.canvas"],
+      scales.green["800"],
+      semantic.dark["bg.surface"],
+    ],
+  },
+  {
+    id: "midnight",
+    label: "Midnight",
+    description: "Midnight primary buttons (light surfaces by default)",
+    swatchesLight: [
+      scales.neutral["0"],
+      scales.midnight.base,
+      scales.neutral["100"],
+    ],
+    swatchesDark: [
+      semantic.dark["bg.canvas"],
+      semantic.dark["action.primary.bg"],
+      semantic.dark["bg.surface"],
+    ],
+  },
+  {
+    id: "berry",
+    label: "Berry",
+    description: "Berry primary buttons",
+    swatchesLight: [
+      scales.neutral["0"],
+      scales.berry["500"],
+      scales.neutral["100"],
+    ],
+    swatchesDark: [
+      semantic.dark["bg.canvas"],
+      scales.berry["300"],
+      semantic.dark["bg.surface"],
+    ],
+  },
+  {
     id: "maroon",
     label: "Maroon",
-    description: "Maroon primary controls",
+    description: "Maroon 900 primary buttons (#410D23)",
     swatchesLight: [
       scales.neutral["0"],
       scales.maroon["900"],
@@ -71,54 +148,32 @@ export const THEMES: ThemeOption[] = [
     ],
     swatchesDark: [
       semantic.dark["bg.canvas"],
-      scales.maroon["400"],
+      scales.maroon["900"],
       semantic.dark["bg.surface"],
     ],
   },
   {
-    id: "cherry",
-    label: "Cherry",
-    description: "Cherry primary controls",
+    id: "neutral-black",
+    label: "Neutral black",
+    description: "Neutral 950 primary — VWO Neutral black as Primary tokens",
     swatchesLight: [
       scales.neutral["0"],
-      scales.cherry["400"],
+      scales.neutral["950"],
       scales.neutral["100"],
     ],
     swatchesDark: [
       semantic.dark["bg.canvas"],
-      scales.cherry["400"],
-      semantic.dark["bg.surface"],
-    ],
-  },
-  {
-    id: "black",
-    label: "Black",
-    description: "Black primary controls",
-    swatchesLight: [
-      scales.neutral["0"],
-      scales.midnight.base,
       scales.neutral["100"],
-    ],
-    swatchesDark: [
-      semantic.dark["bg.canvas"],
-      semantic.dark["action.primary.bg"],
       semantic.dark["bg.surface"],
     ],
   },
   {
-    id: "black-yellow",
-    label: "Black & Yellow",
-    description: "Black primary, yellow secondary",
-    swatchesLight: [
-      scales.midnight.base,
-      scales.yellow["50"],
-      scales.neutral["0"],
-    ],
-    swatchesDark: [
-      semantic.dark["action.primary.bg"],
-      scales.yellow["50"],
-      semantic.dark["bg.surface"],
-    ],
+    id: "wingify",
+    label: "Wingify",
+    description:
+      "Full Wingify pack — white cards/nav, warm pane, ink primary, lemon selection",
+    swatchesLight: ["#FFFFFF", "#1B1913", "#EEFF6D"],
+    swatchesDark: ["#1B1913", "#F6F3ED", "#EEFF6D"],
   },
 ];
 
@@ -161,22 +216,33 @@ export function readStoredTheme(): {
   ctaTokenId: string | null;
   backgroundTokenId: string | null;
   headerTokenId: string | null;
-  formElementSchemeId: string | null;
-  surfaceSchemeId: string | null;
+  formElementSchemeId: FormElementSchemeId;
+  surfaceSchemeId: SurfaceSchemeId | null;
 } {
-  const defaults = {
-    themeId: DEFAULT_THEME_ID as ThemeId,
-    colorMode: DEFAULT_COLOR_MODE as ColorMode,
-    ctaTokenId: null as string | null,
-    backgroundTokenId: null as string | null,
-    headerTokenId: null as string | null,
-    formElementSchemeId: null as string | null,
-    surfaceSchemeId: null as string | null,
-  };
-  if (typeof localStorage === "undefined") return defaults;
+  if (typeof localStorage === "undefined") {
+    return {
+      themeId: DEFAULT_THEME_ID,
+      colorMode: DEFAULT_COLOR_MODE,
+      ctaTokenId: null,
+      backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+      headerTokenId: DEFAULT_HEADER_TOKEN_ID,
+      formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+      surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
+    };
+  }
   try {
     const raw = localStorage.getItem("wingify-theme");
-    if (!raw) return defaults;
+    if (!raw) {
+      return {
+        themeId: DEFAULT_THEME_ID,
+        colorMode: DEFAULT_COLOR_MODE,
+        ctaTokenId: null,
+        backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+        headerTokenId: DEFAULT_HEADER_TOKEN_ID,
+        formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+        surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
+      };
+    }
     const parsed = JSON.parse(raw) as {
       state?: {
         themeId?: unknown;
@@ -188,18 +254,56 @@ export function readStoredTheme(): {
         surfaceSchemeId?: unknown;
       };
     };
-    const str = (v: unknown) => (typeof v === "string" ? v : null);
+    const cta =
+      typeof parsed?.state?.ctaTokenId === "string"
+        ? parsed.state.ctaTokenId
+        : null;
+    const rawTheme = parsed?.state?.themeId;
+    const themeId = resolveThemeId(rawTheme);
+    const colorMode = resolveColorMode(parsed?.state?.colorMode);
+    const chrome =
+      themeId === "wingify"
+        ? resolveWingifyChromeTokens(
+            colorMode,
+            parsed?.state?.backgroundTokenId,
+            parsed?.state?.headerTokenId
+          )
+        : {
+            backgroundTokenId:
+              parsed?.state?.backgroundTokenId === undefined
+                ? null
+                : resolveBackgroundTokenId(parsed?.state?.backgroundTokenId),
+            headerTokenId:
+              parsed?.state?.headerTokenId === undefined
+                ? null
+                : resolveBackgroundTokenId(parsed?.state?.headerTokenId),
+          };
     return {
-      themeId: resolveThemeId(parsed?.state?.themeId),
-      colorMode: resolveColorMode(parsed?.state?.colorMode),
-      ctaTokenId: str(parsed?.state?.ctaTokenId),
-      backgroundTokenId: str(parsed?.state?.backgroundTokenId),
-      headerTokenId: str(parsed?.state?.headerTokenId),
-      formElementSchemeId: str(parsed?.state?.formElementSchemeId),
-      surfaceSchemeId: str(parsed?.state?.surfaceSchemeId),
+      themeId,
+      colorMode,
+      ctaTokenId: cta,
+      backgroundTokenId: chrome.backgroundTokenId,
+      headerTokenId: chrome.headerTokenId,
+      formElementSchemeId: resolveFormElementSchemeId(
+        rawTheme === "yellow-b"
+          ? "yellow-maroon"
+          : parsed?.state?.formElementSchemeId
+      ),
+      surfaceSchemeId:
+        parsed?.state?.surfaceSchemeId === undefined
+          ? DEFAULT_SURFACE_SCHEME_ID
+          : resolveSurfaceSchemeId(parsed?.state?.surfaceSchemeId),
     };
   } catch {
-    return defaults;
+    return {
+      themeId: DEFAULT_THEME_ID,
+      colorMode: DEFAULT_COLOR_MODE,
+      ctaTokenId: null,
+      backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
+      headerTokenId: DEFAULT_HEADER_TOKEN_ID,
+      formElementSchemeId: DEFAULT_FORM_ELEMENT_SCHEME_ID,
+      surfaceSchemeId: DEFAULT_SURFACE_SCHEME_ID,
+    };
   }
 }
 

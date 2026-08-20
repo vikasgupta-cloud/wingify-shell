@@ -167,29 +167,6 @@ export function resolveIconVariant(
   return lib?.variants.some((v) => v.id === id) ? id : fallback;
 }
 
-/** Filled / solid style for the active library (falls back when none exists). */
-export function filledVariantForLibrary(libraryId: IconLibraryId): string {
-  switch (libraryId) {
-    case "phosphor":
-    case "remix":
-    case "bootstrap":
-      return "fill";
-    case "material":
-    case "tabler":
-    case "fluent":
-      return "filled";
-    case "heroicons":
-    case "iconoir":
-    case "fontawesome":
-      return "solid";
-    case "lucide":
-    case "solar":
-      return "bold";
-    default:
-      return defaultVariantForLibrary(libraryId);
-  }
-}
-
 export function defaultVariantForLibrary(libraryId: IconLibraryId): string {
   switch (libraryId) {
     case "lucide":
