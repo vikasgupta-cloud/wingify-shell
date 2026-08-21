@@ -23,7 +23,6 @@ import {
   Save,
   Share2,
   UserRound,
-  type LucideIcon,
 } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,6 +34,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
@@ -153,32 +158,6 @@ function PlayerToggle({
       />
       {label}
     </label>
-  );
-}
-
-/** Stage-edge tool — the vertical rail that reveals on hover. */
-function StageTool({
-  icon: Icon,
-  label,
-}: {
-  icon: LucideIcon;
-  label: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={label}
-          className="size-9 rounded-none text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <Icon className="size-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="left">{label}</TooltipContent>
-    </Tooltip>
   );
 }
 
@@ -336,9 +315,9 @@ export default function SessionRecordingPlayerPage() {
 
   return (
     <TooltipProvider delayDuration={250}>
-      <div className="flex h-screen w-screen flex-col overflow-hidden bg-panel text-panel-foreground">
-        <div className="flex min-h-0 min-w-0 flex-1">
-          <div className="group/stage relative min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
+      <div className="flex h-screen w-screen flex-col overflow-hidden bg-canvas text-foreground">
+        <div className="flex min-h-0 min-w-0 flex-1 gap-3 p-3 pb-0">
+          <div className="group/stage relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-panel-border bg-background shadow-sm">
             <div className="relative h-full w-full overflow-hidden">
               <iframe
                 ref={iframeRef}
@@ -425,14 +404,6 @@ export default function SessionRecordingPlayerPage() {
                 </TooltipContent>
               </Tooltip>
             </div>
-
-            {/* Stage tools — quiet until the pointer is over the stage. */}
-            <div className="absolute right-7 top-1/2 flex -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-panel-border bg-panel opacity-0 shadow-sm transition-opacity focus-within:opacity-100 group-hover/stage:opacity-100">
-              <StageTool icon={Share2} label="Share recording" />
-              <StageTool icon={Download} label="Download recording" />
-              <StageTool icon={Save} label="Save to a view" />
-              <StageTool icon={ImageIcon} label="Capture screenshot" />
-            </div>
           </div>
 
           {panelOpen ? (
@@ -457,7 +428,7 @@ export default function SessionRecordingPlayerPage() {
           ) : null}
         </div>
 
-        <div className="shrink-0 border-t border-panel-border bg-panel">
+        <div className="mx-3 mb-3 mt-3 shrink-0 overflow-hidden rounded-lg border border-panel-border bg-panel text-panel-foreground shadow-sm">
             <RecordingTimeline
               timeMs={timeMs}
               durationMs={durationMs}
@@ -469,7 +440,7 @@ export default function SessionRecordingPlayerPage() {
               }}
             />
 
-            <div className="flex h-14 items-center px-3">
+            <div className="flex h-14 items-center border-t border-panel-border px-3">
               <div className="flex h-full shrink-0 items-center gap-3 px-2">
                 <img
                   src={mascotAsset(DEFAULT_MASCOT_ID, colorMode)}
@@ -484,29 +455,34 @@ export default function SessionRecordingPlayerPage() {
               />
 
               <div className="flex h-full shrink-0 items-center px-1">
-                <div className="group/transport flex items-center rounded-full bg-muted px-0.5 transition-colors hover:bg-muted/80">
+                <div className="group/transport flex items-center rounded-full bg-muted px-0.5 transition-colors hover:bg-secondary">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-background/70 hover:text-foreground"
-                        aria-label="Previous recording"
-                        disabled={sessionIndex <= 0}
-                        onClick={() => goToSession(-1)}
+                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                        aria-label="Previous page"
+                        disabled={pageIndex <= 0}
+                        onClick={() => {
+                          const prev = pages[pageIndex - 1];
+                          if (!prev) return;
+                          setPlaying(false);
+                          seek(prev.startsAt * durationMs);
+                        }}
                       >
                         <SkipBackIcon className="size-4 transition-transform group-hover/transport:scale-105" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Previous recording</TooltipContent>
+                    <TooltipContent side="top">Previous page</TooltipContent>
                   </Tooltip>
 
                   <Button
                     type="button"
                     variant="inverted"
                     size="icon"
-                    className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground/90 hover:shadow-md active:scale-100"
+                    className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground hover:shadow-md active:scale-95"
                     aria-label={playing ? "Pause" : "Play"}
                     onClick={() => {
                       if (timeMs >= durationMs) setTimeMs(0);
@@ -526,15 +502,20 @@ export default function SessionRecordingPlayerPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-background/70 hover:text-foreground"
-                        aria-label="Next recording"
-                        disabled={sessionIndex < 0 || sessionIndex >= SESSION_ROWS.length - 1}
-                        onClick={() => goToSession(1)}
+                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                        aria-label="Next page"
+                        disabled={pageIndex >= pages.length - 1}
+                        onClick={() => {
+                          const next = pages[pageIndex + 1];
+                          if (!next) return;
+                          setPlaying(false);
+                          seek(next.startsAt * durationMs);
+                        }}
                       >
                         <SkipForwardIcon className="size-4 transition-transform group-hover/transport:scale-105" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Next recording</TooltipContent>
+                    <TooltipContent side="top">Next page</TooltipContent>
                   </Tooltip>
                 </div>
               </div>
@@ -723,7 +704,7 @@ export default function SessionRecordingPlayerPage() {
                     <Tooltip key={item.label}>
                       <TooltipTrigger asChild>
                         <span
-                          className="flex size-7 items-center justify-center text-muted-foreground"
+                          className="flex size-7 cursor-default items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
                           tabIndex={0}
                         >
                           <item.icon className="size-3.5" aria-label={item.label} />
@@ -735,7 +716,7 @@ export default function SessionRecordingPlayerPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span
-                        className="flex size-7 items-center justify-center overflow-hidden text-sm leading-none"
+                        className="flex size-7 cursor-default items-center justify-center overflow-hidden rounded-md text-sm leading-none transition-colors hover:bg-foreground/10"
                         tabIndex={0}
                       >
                         {countryFlagEmoji(visitor.countryCode)}
@@ -751,7 +732,7 @@ export default function SessionRecordingPlayerPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-7 text-muted-foreground hover:text-foreground"
+                      className="size-7 rounded-md text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
                       aria-label={expanded ? "Exit full screen" : "Full screen"}
                       onClick={() => {
                         setExpanded((v) => !v);
@@ -773,15 +754,37 @@ export default function SessionRecordingPlayerPage() {
                     {expanded ? "Exit full screen" : "Full screen"}
                   </TooltipContent>
                 </Tooltip>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 text-muted-foreground hover:text-foreground"
-                  aria-label="More options"
-                >
-                  <MoreVertical className="size-3.5" aria-hidden />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 rounded-md text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                      aria-label="More options"
+                    >
+                      <MoreVertical className="size-3.5" aria-hidden />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-52">
+                    <DropdownMenuItem className="gap-2">
+                      <Share2 className="size-4" aria-hidden />
+                      Share recording
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2">
+                      <Download className="size-4" aria-hidden />
+                      Download recording
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2">
+                      <Save className="size-4" aria-hidden />
+                      Save to a view
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2">
+                      <ImageIcon className="size-4" aria-hidden />
+                      Capture screenshot
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>

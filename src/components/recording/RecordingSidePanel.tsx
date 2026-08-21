@@ -278,7 +278,7 @@ export default function RecordingSidePanel({
   }, [activeEventId, playing]);
 
   return (
-    <aside className="flex h-full min-h-0 w-[368px] shrink-0 flex-col border-l border-panel-border bg-panel text-panel-foreground 2xl:w-[420px]">
+    <aside className="flex h-full min-h-0 w-[368px] shrink-0 flex-col overflow-hidden rounded-lg border border-panel-border bg-panel text-panel-foreground shadow-sm 2xl:w-[420px]">
       <header className="flex items-center gap-1 px-4 pb-2 pt-3.5">
         <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <p className="mr-1 truncate text-sm font-semibold tracking-tight text-foreground">
