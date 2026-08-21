@@ -32,13 +32,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type {
-  RecordedPage,
-  RecordingEvent,
-  RecordingEventKind,
-  SessionLogEntry,
-  SessionRow,
-  SessionVisitor,
+import {
+  countryFlagEmoji,
+  type RecordedPage,
+  type RecordingEvent,
+  type RecordingEventKind,
+  type SessionLogEntry,
+  type SessionRow,
+  type SessionVisitor,
 } from "@/data/sessionRecordings";
 
 /** One glyph per event kind — the log reads by shape, not by colour. */
@@ -288,8 +289,12 @@ export default function RecordingSidePanel({
         <PanelIcon icon={Globe} label={visitor.os} />
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="ml-0.5 flex h-5 items-center rounded-[4px] border border-panel-border px-1.5 text-[10px] font-semibold leading-none text-muted-foreground">
-              {visitor.countryCode}
+            <span
+              className="ml-0.5 flex size-5 items-center justify-center overflow-hidden text-sm leading-none"
+              tabIndex={0}
+              aria-hidden
+            >
+              {countryFlagEmoji(visitor.countryCode)}
             </span>
           </TooltipTrigger>
           <TooltipContent side="bottom">{visitor.country}</TooltipContent>

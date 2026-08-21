@@ -54,7 +54,7 @@
   --radius-modal: var(--radius-md);
   --radius-popover: var(--radius-md);
   --radius-toast: var(--radius-md);
-  --radius-checkbox: var(--radius-xs);
+  --radius-checkbox: var(--radius-sm);
   --radius-chip: var(--radius-sm);
   --radius-bar: var(--radius-sm);
   --radius-badge: var(--radius-lg);

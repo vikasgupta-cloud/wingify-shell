@@ -9,8 +9,6 @@ import {
   Check,
   ChevronDown,
   ChevronsRight,
-  ChevronLeft,
-  ChevronRight,
   Download,
   FileText,
   Globe,
@@ -62,6 +60,7 @@ import {
   buildSessionEvents,
   buildSessionLog,
   buildVisitor,
+  countryFlagEmoji,
   parseDurationMs,
   sampleTrack,
   type SessionRow,
@@ -107,6 +106,35 @@ function resolveSession(id: string | null): SessionRow {
   return SESSION_ROWS[0] ?? FALLBACK;
 }
 
+/** Media skip icons — |◀ and ▶| — match the transport pill reference. */
+function SkipBackIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M5 4h2v16H5z" />
+      <path d="M19 4 9 12l10 8z" />
+    </svg>
+  );
+}
+
+function SkipForwardIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M17 4h2v16h-2z" />
+      <path d="M5 4v16l10-8z" />
+    </svg>
+  );
+}
+
 /** Playback toggle — four of these sit in the control bar. */
 function PlayerToggle({
   label,
@@ -122,7 +150,6 @@ function PlayerToggle({
       <Checkbox
         checked={checked}
         onCheckedChange={(v) => onChange(v === true)}
-        className="size-3.5"
       />
       {label}
     </label>
@@ -442,238 +469,289 @@ export default function SessionRecordingPlayerPage() {
               }}
             />
 
-            <div className="flex h-14 items-center gap-2 px-4">
-              <img
-                src={mascotAsset(DEFAULT_MASCOT_ID, colorMode)}
-                alt="Wingify"
-                className="mr-1 h-6 w-auto shrink-0"
-              />
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    aria-label="Previous recording"
-                    disabled={sessionIndex <= 0}
-                    onClick={() => goToSession(-1)}
-                  >
-                    <ChevronLeft className="size-4" aria-hidden />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Previous recording</TooltipContent>
-              </Tooltip>
-
-              <Button
-                type="button"
-                variant="inverted"
-                size="icon"
-                className="size-9 shrink-0 rounded-full"
-                aria-label={playing ? "Pause" : "Play"}
-                onClick={() => {
-                  if (timeMs >= durationMs) setTimeMs(0);
-                  setPlaying((v) => !v);
-                }}
-              >
-                {playing ? (
-                  <Pause className="size-4 fill-current" aria-hidden />
-                ) : (
-                  <Play className="size-4 fill-current" aria-hidden />
-                )}
-              </Button>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    aria-label="Next recording"
-                    disabled={sessionIndex < 0 || sessionIndex >= SESSION_ROWS.length - 1}
-                    onClick={() => goToSession(1)}
-                  >
-                    <ChevronRight className="size-4" aria-hidden />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Next recording</TooltipContent>
-              </Tooltip>
-
-              <Popover open={speedOpen} onOpenChange={setSpeedOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-14 shrink-0 justify-center tabular-nums"
-                  >
-                    {speed}×
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="top"
-                  align="center"
-                  sideOffset={8}
-                  className="w-14 overflow-hidden rounded-lg p-1"
-                >
-                  {[...SPEEDS].reverse().map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => {
-                        setSpeed(value);
-                        setSpeedOpen(false);
-                      }}
-                      className={cn(
-                        "flex w-full justify-center rounded-md px-2 py-1.5 text-sm tabular-nums text-foreground transition-colors hover:bg-muted",
-                        value === speed && "bg-muted font-medium"
-                      )}
-                    >
-                      {value}×
-                    </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
-
-              <Popover open={pagesOpen} onOpenChange={setPagesOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="min-w-[8rem] max-w-[34rem] flex-1 justify-start gap-2 font-normal"
-                  >
-                    <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="shrink-0">
-                      Page {pageIndex + 1} of {pages.length}:
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-left text-muted-foreground">
-                      {currentPage.url}
-                    </span>
-                    <ChevronDown className="ml-auto size-3.5 shrink-0 opacity-60" aria-hidden />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="top"
-                  align="start"
-                  sideOffset={8}
-                  className="w-[--radix-popover-trigger-width] overflow-hidden rounded-lg p-0"
-                >
-                  <Command>
-                    <CommandInput placeholder="Search pages..." />
-                    <CommandList>
-                      <CommandEmpty>No page found.</CommandEmpty>
-                      <CommandGroup>
-                        {pages.map((page, i) => (
-                          <CommandItem
-                            key={page.id}
-                            value={`Page ${i + 1} ${page.url}`}
-                            onSelect={() => {
-                              seek(page.startsAt * durationMs);
-                              setPagesOpen(false);
-                            }}
-                            // Keep the roomier two-line row the bar had
-                            // before search: neutral highlight, not the
-                            // Command default accent.
-                            className="flex-col items-start gap-0.5 rounded-md px-3 py-2 data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
-                          >
-                            <span className="flex w-full items-center gap-2">
-                              <span className="text-xs font-medium text-foreground">
-                                Page {i + 1}
-                              </span>
-                              {i === pageIndex ? (
-                                <Check
-                                  className="ml-auto size-3.5 text-foreground"
-                                  aria-label="Currently playing"
-                                />
-                              ) : null}
-                            </span>
-                            <span className="w-full truncate text-[11px] text-muted-foreground">
-                              {page.url}
-                            </span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-
-              <span className="hidden shrink-0 flex-col justify-center gap-0.5 rounded-md bg-secondary px-3 py-1.5 text-[11px] font-medium leading-none text-secondary-foreground lg:flex">
-                <span className="flex items-center gap-1.5">
-                  <UserRound className="size-3.5 opacity-70" aria-hidden />
-                  Session
-                </span>
-                <span className="pl-5 tabular-nums">
-                  {sessionIndex < 0 ? 1 : sessionIndex + 1} of{" "}
-                  {SESSION_ROWS.length}
-                </span>
-              </span>
-
-              <div className="hidden shrink-0 grid-cols-2 gap-x-4 gap-y-1.5 lg:grid">
-                <PlayerToggle
-                  label="Show clicks"
-                  checked={showClicks}
-                  onChange={setShowClicks}
-                />
-                <PlayerToggle
-                  label="Skip Pauses"
-                  checked={skipPauses}
-                  onChange={setSkipPauses}
-                />
-                <PlayerToggle
-                  label="Show Mouse Trail"
-                  checked={showTrail}
-                  onChange={setShowTrail}
-                />
-                <PlayerToggle
-                  label="Autoplay Next Recording"
-                  checked={autoplay}
-                  onChange={setAutoplay}
+            <div className="flex h-14 items-center px-3">
+              <div className="flex h-full shrink-0 items-center gap-3 px-2">
+                <img
+                  src={mascotAsset(DEFAULT_MASCOT_ID, colorMode)}
+                  alt="Wingify"
+                  className="h-5 w-auto shrink-0"
                 />
               </div>
 
-              <div className="ml-auto hidden shrink-0 items-center gap-0.5 pr-1 lg:flex">
-                {[
-                  { icon: Monitor, label: visitor.device },
-                  { icon: Globe, label: visitor.browser },
-                  { icon: AppWindow, label: visitor.os },
-                ].map((item) => (
-                  <Tooltip key={item.label}>
+              <div
+                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border sm:block"
+                aria-hidden
+              />
+
+              <div className="flex h-full shrink-0 items-center px-1">
+                <div className="group/transport flex items-center rounded-full bg-muted px-0.5 transition-colors hover:bg-muted/80">
+                  <Tooltip>
                     <TooltipTrigger asChild>
-                      <span
-                        className="flex size-8 items-center justify-center text-muted-foreground"
-                        tabIndex={0}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-background/70 hover:text-foreground"
+                        aria-label="Previous recording"
+                        disabled={sessionIndex <= 0}
+                        onClick={() => goToSession(-1)}
                       >
-                        <item.icon className="size-4" aria-label={item.label} />
-                      </span>
+                        <SkipBackIcon className="size-4 transition-transform group-hover/transport:scale-105" />
+                      </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">{item.label}</TooltipContent>
+                    <TooltipContent side="top">Previous recording</TooltipContent>
                   </Tooltip>
-                ))}
+
+                  <Button
+                    type="button"
+                    variant="inverted"
+                    size="icon"
+                    className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground/90 hover:shadow-md active:scale-100"
+                    aria-label={playing ? "Pause" : "Play"}
+                    onClick={() => {
+                      if (timeMs >= durationMs) setTimeMs(0);
+                      setPlaying((v) => !v);
+                    }}
+                  >
+                    {playing ? (
+                      <Pause className="size-4 fill-current" aria-hidden />
+                    ) : (
+                      <Play className="size-4 fill-current" aria-hidden />
+                    )}
+                  </Button>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-background/70 hover:text-foreground"
+                        aria-label="Next recording"
+                        disabled={sessionIndex < 0 || sessionIndex >= SESSION_ROWS.length - 1}
+                        onClick={() => goToSession(1)}
+                      >
+                        <SkipForwardIcon className="size-4 transition-transform group-hover/transport:scale-105" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Next recording</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+
+              <div
+                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border sm:block"
+                aria-hidden
+              />
+
+              <div className="flex h-full shrink-0 items-center px-1">
+                <Popover open={speedOpen} onOpenChange={setSpeedOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-11 shrink-0 px-0 text-xs tabular-nums"
+                    >
+                      {speed}×
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="top"
+                    align="center"
+                    sideOffset={8}
+                    className="w-14 overflow-hidden rounded-lg p-1"
+                  >
+                    {[...SPEEDS].reverse().map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setSpeed(value);
+                          setSpeedOpen(false);
+                        }}
+                        className={cn(
+                          "flex w-full justify-center rounded-md px-2 py-1.5 text-sm tabular-nums text-foreground transition-colors hover:bg-muted",
+                          value === speed && "bg-muted font-medium"
+                        )}
+                      >
+                        {value}×
+                      </button>
+                    ))}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div
+                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border md:block"
+                aria-hidden
+              />
+
+              <div className="flex h-full min-w-0 flex-1 items-center px-1">
+                <Popover open={pagesOpen} onOpenChange={setPagesOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-full min-w-0 max-w-none justify-start gap-2 px-2 font-normal"
+                    >
+                      <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="shrink-0">
+                        Page {pageIndex + 1} of {pages.length}:
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-left text-muted-foreground">
+                        {currentPage?.url}
+                      </span>
+                      <ChevronDown className="ml-auto size-3.5 shrink-0 opacity-60" aria-hidden />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="top"
+                    align="start"
+                    sideOffset={8}
+                    className="w-[--radix-popover-trigger-width] overflow-hidden rounded-lg p-0"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search pages..." />
+                      <CommandList>
+                        <CommandEmpty>No page found.</CommandEmpty>
+                        <CommandGroup>
+                          {pages.map((page, i) => (
+                            <CommandItem
+                              key={page.id}
+                              value={`Page ${i + 1} ${page.url}`}
+                              onSelect={() => {
+                                seek(page.startsAt * durationMs);
+                                setPagesOpen(false);
+                              }}
+                              className="flex-col items-start gap-0.5 rounded-md px-3 py-2 data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+                            >
+                              <span className="flex w-full items-center gap-2">
+                                <span className="text-xs font-medium text-foreground">
+                                  Page {i + 1}
+                                </span>
+                                {i === pageIndex ? (
+                                  <Check
+                                    className="ml-auto size-3.5 text-foreground"
+                                    aria-label="Currently playing"
+                                  />
+                                ) : null}
+                              </span>
+                              <span className="w-full truncate text-[11px] text-muted-foreground">
+                                {page.url}
+                              </span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div
+                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
+                aria-hidden
+              />
+
+              <div className="hidden h-full shrink-0 items-center px-1 lg:flex">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span
-                      className="flex h-5 items-center rounded-[4px] border border-panel-border px-1.5 text-[10px] font-semibold leading-none text-muted-foreground"
-                      tabIndex={0}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      aria-pressed={panelOpen}
+                      aria-label={panelOpen ? "Hide session details" : "Show session details"}
+                      onClick={() => setPanelOpen((v) => !v)}
+                      className="h-8 gap-1.5 rounded-md px-3 text-[11px] font-medium"
                     >
-                      {visitor.countryCode}
-                    </span>
+                      <UserRound className="size-3.5 text-muted-foreground" aria-hidden />
+                      Session {sessionIndex < 0 ? 1 : sessionIndex + 1} of{" "}
+                      {SESSION_ROWS.length}
+                    </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">{visitor.country}</TooltipContent>
+                  <TooltipContent side="top">
+                    {panelOpen ? "Hide session details" : "Show session details"}
+                  </TooltipContent>
                 </Tooltip>
               </div>
 
-              <div className="ml-auto flex shrink-0 items-center gap-0.5 lg:ml-0">
+              <div
+                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
+                aria-hidden
+              />
+
+              <div className="hidden h-full shrink-0 items-center px-2 lg:flex">
+                <div className="grid grid-cols-2 gap-x-5 gap-y-1.5">
+                  <PlayerToggle
+                    label="Show clicks"
+                    checked={showClicks}
+                    onChange={setShowClicks}
+                  />
+                  <PlayerToggle
+                    label="Skip Pauses"
+                    checked={skipPauses}
+                    onChange={setSkipPauses}
+                  />
+                  <PlayerToggle
+                    label="Show Mouse Trail"
+                    checked={showTrail}
+                    onChange={setShowTrail}
+                  />
+                  <PlayerToggle
+                    label="Autoplay Next Recording"
+                    checked={autoplay}
+                    onChange={setAutoplay}
+                  />
+                </div>
+              </div>
+
+              <div
+                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
+                aria-hidden
+              />
+
+              <div className="ml-auto flex h-full shrink-0 items-center gap-0.5 px-1 lg:ml-0">
+                <div className="hidden items-center lg:flex">
+                  {[
+                    { icon: Monitor, label: visitor.device },
+                    { icon: Globe, label: visitor.browser },
+                    { icon: AppWindow, label: visitor.os },
+                  ].map((item) => (
+                    <Tooltip key={item.label}>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="flex size-7 items-center justify-center text-muted-foreground"
+                          tabIndex={0}
+                        >
+                          <item.icon className="size-3.5" aria-label={item.label} />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{item.label}</TooltipContent>
+                    </Tooltip>
+                  ))}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="flex size-7 items-center justify-center overflow-hidden text-sm leading-none"
+                        tabIndex={0}
+                      >
+                        {countryFlagEmoji(visitor.countryCode)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{visitor.country}</TooltipContent>
+                  </Tooltip>
+                </div>
+
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-8"
+                      className="size-7 text-muted-foreground hover:text-foreground"
                       aria-label={expanded ? "Exit full screen" : "Full screen"}
                       onClick={() => {
                         setExpanded((v) => !v);
@@ -685,9 +763,9 @@ export default function SessionRecordingPlayerPage() {
                       }}
                     >
                       {expanded ? (
-                        <Minimize2 className="size-4" aria-hidden />
+                        <Minimize2 className="size-3.5" aria-hidden />
                       ) : (
-                        <Maximize2 className="size-4" aria-hidden />
+                        <Maximize2 className="size-3.5" aria-hidden />
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -699,10 +777,10 @@ export default function SessionRecordingPlayerPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8"
+                  className="size-7 text-muted-foreground hover:text-foreground"
                   aria-label="More options"
                 >
-                  <MoreVertical className="size-4" aria-hidden />
+                  <MoreVertical className="size-3.5" aria-hidden />
                 </Button>
               </div>
             </div>

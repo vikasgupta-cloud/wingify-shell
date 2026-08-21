@@ -141,6 +141,7 @@ export const PHOSPHOR_ICON_MAP = {
   "PieChart": "ChartPie",
   "Pin": "PushPin",
   "PinOff": "PushPinSlash",
+  "Pause": "Pause",
   "Play": "Play",
   "Plug": "Plug",
   "Plus": "Plus",

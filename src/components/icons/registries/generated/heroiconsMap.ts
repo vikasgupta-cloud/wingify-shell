@@ -141,6 +141,7 @@ export const HEROICONS_MAP = {
   "PieChart": "ChartPieIcon",
   "Pin": "QuestionMarkCircleIcon",
   "PinOff": "QuestionMarkCircleIcon",
+  "Pause": "PauseIcon",
   "Play": "PlayIcon",
   "Plug": "QuestionMarkCircleIcon",
   "Plus": "PlusIcon",

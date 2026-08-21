@@ -141,6 +141,7 @@ export const LUCIDE_ICON_MAP = {
   "PieChart": "pie-chart",
   "Pin": "pin",
   "PinOff": "pin-off",
+  "Pause": "pause",
   "Play": "play",
   "Plug": "plug",
   "Plus": "plus",

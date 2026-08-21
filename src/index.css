@@ -430,15 +430,15 @@
   --cta-disabled-bg: var(--muted);
   --cta-disabled-fg: var(--muted-foreground);
 
-  /* Form controls (checkbox / radio / switch / slider) — follow primary by
-     default; yellow form sub-themes remap these via formElementSchemes. */
+  /* Form controls (checkbox / radio / switch / slider) — follow --control,
+     not the CTA. Wingify sets --control to lemon + ink. */
   --control: var(--primary);
   --control-foreground: var(--primary-foreground);
   --control-border: var(--primary-border);
-  /* Selected fill matches primary; border matches fill (not the CTA black stroke). */
-  --control-selected-bg: var(--primary);
-  --control-selected-fg: var(--primary-foreground);
-  --control-selected-border: var(--primary);
+  /* Selected fill matches the control, not the black CTA stroke. */
+  --control-selected-bg: var(--control);
+  --control-selected-fg: var(--control-foreground);
+  --control-selected-border: var(--control);
 
   --secondary: var(--vwo-light-bg-hover);
   --secondary-foreground: var(--vwo-neutral-950);

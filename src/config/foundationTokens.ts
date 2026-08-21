@@ -55,7 +55,7 @@ export const RADIUS_ALIASES = [
   { name: "modal", token: "--radius-modal", ref: "md" },
   { name: "popover", token: "--radius-popover", ref: "md" },
   { name: "toast", token: "--radius-toast", ref: "md" },
-  { name: "checkbox", token: "--radius-checkbox", ref: "xs" },
+  { name: "checkbox", token: "--radius-checkbox", ref: "sm" },
   { name: "chip", token: "--radius-chip", ref: "sm" },
   { name: "bar", token: "--radius-bar", ref: "sm" },
   { name: "badge", token: "--radius-badge", ref: "lg" },

@@ -42,6 +42,7 @@ import {
   RECORDING_STATS,
   RECORDING_VIEWS,
   SESSION_ROWS,
+  countryFlagEmoji,
   openSessionPlayer,
   type RecordingView,
 } from "@/data/sessionRecordings";
@@ -396,10 +397,10 @@ export default function SessionRecordingsPage() {
                         <td className="px-3 py-3 align-middle">
                           <div className="flex items-center gap-2.5">
                             <span
-                              className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-[10px] font-medium text-muted-foreground"
+                              className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-base leading-none"
                               aria-hidden
                             >
-                              US
+                              {countryFlagEmoji("US")}
                             </span>
                             <span className="min-w-0">
                               <span className="block truncate leading-snug font-medium text-foreground">

@@ -106,10 +106,13 @@ export function computeWingifyThemeVars(
       "--primary-subtle": c.charcoal,
       "--primary-border": c.canvas,
       "--cta-secondary-fg": c.canvas,
-      /* Form controls — select.bg / select.fg / select.border (not primary) */
+      /* Form controls — pack select.* (fill lemon, mark ink, edge lemon in dark) */
       "--control": c.lemon,
       "--control-foreground": c.ink,
       "--control-border": c.lemon,
+      "--control-selected-bg": c.lemon,
+      "--control-selected-fg": c.ink,
+      "--control-selected-border": c.lemon,
       "--ring": c.canvas,
       "--brand-deep": c.ink,
 
@@ -226,10 +229,13 @@ export function computeWingifyThemeVars(
     "--primary-subtle": c.feather,
     "--primary-border": c.ink,
     "--cta-secondary-fg": c.ink,
-    /* Form controls — select.bg / select.fg / select.border (not primary) */
+    /* Form controls — pack select.* (fill lemon, mark + edge ink) */
     "--control": c.lemon,
     "--control-foreground": c.ink,
     "--control-border": c.ink,
+    "--control-selected-bg": c.lemon,
+    "--control-selected-fg": c.ink,
+    "--control-selected-border": c.ink,
     "--ring": c.near,
     "--brand-deep": c.ink,
 

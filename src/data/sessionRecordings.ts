@@ -494,6 +494,13 @@ const COUNTRY_CODES: Record<string, string> = {
   Switzerland: "CH",
 };
 
+/** ISO alpha-2 → regional-indicator flag emoji. */
+export function countryFlagEmoji(code: string) {
+  return code
+    .toUpperCase()
+    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
 export function buildVisitor(session: SessionRow): SessionVisitor {
   const seed = hashId(session.id);
   const code = seed.toString(16).toUpperCase().padStart(7, "0").slice(0, 7);
