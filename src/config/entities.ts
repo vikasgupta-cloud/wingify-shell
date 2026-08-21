@@ -25,7 +25,11 @@ const CURATED: Record<string, Entity[]> = {
 
 // Which detail sections read from a REAL product store rather than dummy getEntities().
 export function isRealDataPath(basePath: string) {
-  return basePath === "/web-experiment" || basePath === "/personalize";
+  return (
+    basePath === "/web-experiment" ||
+    basePath === "/personalize" ||
+    basePath === "/commerce/recommendation"
+  );
 }
 
 /** Filter chips for the entity popover of a given page path. */

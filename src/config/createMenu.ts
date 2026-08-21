@@ -35,6 +35,15 @@ export const CREATE_MENU: Record<string, CreateOption[]> = {
 
 CREATE_MENU["/web-experiment-old"] = CREATE_MENU["/web-experiment"];
 
+CREATE_MENU["/commerce/recommendation"] = [
+  {
+    id: "recommendation",
+    label: "Recommendation",
+    description: "Create a product recommendation strategy",
+    icon: Plus,
+  },
+];
+
 // Sections without a bespoke menu fall back to a single generic option.
 export function getCreateOptions(pathname: string, label: string): CreateOption[] {
   return (

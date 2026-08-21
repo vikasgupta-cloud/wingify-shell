@@ -265,8 +265,8 @@ export function readStoredTheme(): {
       themeId === "wingify"
         ? resolveWingifyChromeTokens(
             colorMode,
-            parsed?.state?.backgroundTokenId,
-            parsed?.state?.headerTokenId
+            parsed?.state?.backgroundTokenId as string | null | undefined,
+            parsed?.state?.headerTokenId as string | null | undefined
           )
         : {
             backgroundTokenId:

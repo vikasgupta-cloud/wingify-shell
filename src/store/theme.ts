@@ -294,12 +294,11 @@ export const useThemeStore = create<ThemeState>()(
         surfaceSchemeId: s.surfaceSchemeId,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<ThemeState> & {
-          themeId?: unknown;
-        };
-        const rawTheme = p.themeId;
+        const p = (persisted ?? {}) as Partial<ThemeState>;
+        const rawTheme: unknown = (persisted as { themeId?: unknown } | null)
+          ?.themeId;
         const wasYellowB = rawTheme === "yellow-b";
-        const themeId = resolveThemeId(p.themeId ?? current.themeId);
+        const themeId = resolveThemeId(rawTheme ?? current.themeId);
         const colorMode = resolveColorMode(p.colorMode ?? current.colorMode);
         const formElementSchemeId = resolveFormElementSchemeId(
           wasYellowB

@@ -38,6 +38,9 @@ import MetricsPage from "../pages/data-360/MetricsPage";
 import DashboardPage from "../pages/home/DashboardPage";
 import PersonalizePage from "../pages/personalize/PersonalizePage";
 import PersonalizeComingSoonPage from "../pages/personalize/PersonalizeComingSoonPage";
+import RecommendationPage from "../pages/commerce/RecommendationPage";
+import RecommendationDetailPage from "../pages/commerce/RecommendationDetailPage";
+import RecommendationReportPage from "../pages/commerce/RecommendationReportPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -56,6 +59,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/data-360/events": EventsPage,
   "/data-360/segments": SegmentsPage,
   "/data-360/metrics": MetricsPage,
+  "/commerce/recommendation": RecommendationPage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
@@ -65,12 +69,14 @@ const pageRoutes: RouteObject[] = [];
 const detailRoutes: RouteObject[] = [];
 
 const addDetailRoute = (leafPath: string) => {
-  // Web Exp → ConfigPage; Personalize → Coming soon shell; others → empty body.
+  // Web Exp → ConfigPage; Personalize → Coming soon; Recommendation → edit form.
   const body =
     leafPath === "/web-experiment" ? (
       <ConfigPage />
     ) : leafPath === "/personalize" ? (
       <PersonalizeComingSoonPage />
+    ) : leafPath === "/commerce/recommendation" ? (
+      <RecommendationDetailPage />
     ) : undefined;
   detailRoutes.push({
     path: `${leafPath}/c/:entityId`,
@@ -131,6 +137,16 @@ detailRoutes.push({
   element: (
     <DetailShell basePath="/personalize">
       <PersonalizeComingSoonPage />
+    </DetailShell>
+  ),
+});
+
+// Commerce Recommendation reporting surface.
+detailRoutes.push({
+  path: "/commerce/recommendation/c/:entityId/reports",
+  element: (
+    <DetailShell basePath="/commerce/recommendation">
+      <RecommendationReportPage />
     </DetailShell>
   ),
 });

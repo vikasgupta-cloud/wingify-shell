@@ -64,6 +64,10 @@ import {
   useVisiblePersonalizations,
 } from "../../store/personalizeRows";
 import {
+  useRecommendationRowsStore,
+  useVisibleRecommendations,
+} from "../../store/recommendationRows";
+import {
   campaignLandingPath,
   CAMPAIGN_STATUSES,
   type CampaignStatus,
@@ -72,6 +76,7 @@ import {
   personalizeLandingPath,
   PERSONALIZATION_STATUSES,
 } from "../../data/personalizations";
+import { recommendationLandingPath } from "../../data/recommendations";
 import ExpandedNav from "./ExpandedNav";
 import WingifyLogoButton from "./WingifyLogoButton";
 
@@ -428,22 +433,40 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   // Breadcrumb trail: main-nav label, plus the sub-nav label when basePath is a leaf.
   const { item, leaf, siblings } = resolveBreadcrumb(basePath);
 
-  // Real-data paths: Web Exp campaigns or Personalize rows. Others use dummy lists.
+  // Real-data paths: Web Exp, Personalize, or Commerce Recommendation.
   const realData = isRealDataPath(basePath);
   const isPersonalize = basePath === "/personalize";
+  const isRecommendation = basePath === "/commerce/recommendation";
   const webCampaigns = useVisibleCampaigns();
   const personalizations = useVisiblePersonalizations();
+  const recommendations = useVisibleRecommendations();
   const webArchive = useRowsStore((s) => s.archive);
   const webRemove = useRowsStore((s) => s.remove);
   const persArchive = usePersonalizeRowsStore((s) => s.archive);
   const persRemove = usePersonalizeRowsStore((s) => s.remove);
   const persSetStatus = usePersonalizeRowsStore((s) => s.setStatus);
+  const recoArchive = useRecommendationRowsStore((s) => s.archive);
+  const recoRemove = useRecommendationRowsStore((s) => s.remove);
+  const recoSetStatus = useRecommendationRowsStore((s) => s.setStatus);
   const [activeFilter, setActiveFilter] = useState("All");
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [entitySearch, setEntitySearch] = useState("");
 
-  const productRows = isPersonalize ? personalizations : webCampaigns;
-  const statusList = isPersonalize ? PERSONALIZATION_STATUSES : CAMPAIGN_STATUSES;
+  const productRows = isPersonalize
+    ? personalizations
+    : isRecommendation
+      ? recommendations.map((r) => ({
+          id: r.id,
+          name: r.name,
+          status: r.status,
+          lastUpdated: r.lastEdit,
+        }))
+      : webCampaigns;
+  const statusList = isPersonalize
+    ? PERSONALIZATION_STATUSES
+    : isRecommendation
+      ? CAMPAIGN_STATUSES
+      : CAMPAIGN_STATUSES;
 
   const dummyEntities = getEntities(basePath);
   const filters = realData
@@ -669,14 +692,16 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           // dummy sections keep their plain detail path.
                           const target = isPersonalize
                             ? personalizeLandingPath({ id: entity.id })
-                            : realData
-                              ? campaignLandingPath({
-                                  id: entity.id,
-                                  status:
-                                    (productRows.find((c) => c.id === entity.id)
-                                      ?.status as CampaignStatus) ?? "Draft",
-                                })
-                              : `${basePath}/c/${entity.id}`;
+                            : isRecommendation
+                              ? recommendationLandingPath({ id: entity.id })
+                              : realData
+                                ? campaignLandingPath({
+                                    id: entity.id,
+                                    status:
+                                      (productRows.find((c) => c.id === entity.id)
+                                        ?.status as CampaignStatus) ?? "Draft",
+                                  })
+                                : `${basePath}/c/${entity.id}`;
                           navigate(target);
                           setEntityOpen(false);
                         }}
@@ -708,7 +733,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
             basePath={basePath}
             entityId={entityId}
             showViewToggle={
-              !isPersonalize && Boolean(campaign) && !pathname.endsWith("/reports")
+              !isPersonalize &&
+              !isRecommendation &&
+              Boolean(campaign) &&
+              !pathname.endsWith("/reports")
             }
           />
         </div>
@@ -716,20 +744,40 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
             the list pages only. Status + kebab need a real campaign. */}
         <div className="flex flex-1 items-center justify-end gap-2">
-          {!isPersonalize && <SaveButton entityId={entityId} />}
+          {!isPersonalize && !isRecommendation && (
+            <SaveButton entityId={entityId} />
+          )}
           {campaign && (
             <StatusMenu
               campaign={campaign}
               triggerVariant="button"
-              onSetStatus={isPersonalize ? persSetStatus : undefined}
+              onSetStatus={
+                isPersonalize
+                  ? persSetStatus
+                  : isRecommendation
+                    ? recoSetStatus
+                    : undefined
+              }
             />
           )}
           {campaign && (
             <KebabMenu
               campaign={campaign}
               listPath={basePath}
-              onArchive={isPersonalize ? persArchive : webArchive}
-              onRemove={isPersonalize ? persRemove : webRemove}
+              onArchive={
+                isPersonalize
+                  ? persArchive
+                  : isRecommendation
+                    ? recoArchive
+                    : webArchive
+              }
+              onRemove={
+                isPersonalize
+                  ? persRemove
+                  : isRecommendation
+                    ? recoRemove
+                    : webRemove
+              }
             />
           )}
         </div>

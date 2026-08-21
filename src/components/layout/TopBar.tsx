@@ -4,6 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "../../store/ui";
 import { useRowsStore } from "../../store/rows";
+import { useRecommendationRowsStore } from "../../store/recommendationRows";
 import { showsCreate, pageLabel } from "../../lib/nav";
 import {
   CREATE_GROUP_LABELS,
@@ -66,6 +67,7 @@ export default function TopBar() {
   const isDocked = useUIStore((s) => s.isDocked);
   const navigate = useNavigate();
   const createCampaign = useRowsStore((s) => s.createCampaign);
+  const createRecommendation = useRecommendationRowsStore((s) => s.create);
   const { pathname } = useLocation();
   const createOptions = getCreateOptions(pathname, pageLabel(pathname));
   const aiOptions = createOptions.filter((o) => o.group === "ai");
@@ -77,6 +79,11 @@ export default function TopBar() {
     // Route-backed options (e.g. Create with Copilot) navigate to their screen.
     if (option.route) {
       navigate(option.route);
+      return;
+    }
+    if (option.id === "recommendation") {
+      const id = createRecommendation();
+      navigate(`/commerce/recommendation/c/${id}`);
       return;
     }
     if (!option.campaignType) return; // stub

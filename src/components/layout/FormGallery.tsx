@@ -38,14 +38,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -157,7 +149,6 @@ export default function FormGallery() {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const allDevicesSelected = devices.length === DEVICES.length;
   const someDevicesSelected =
@@ -191,7 +182,7 @@ export default function FormGallery() {
         className="space-y-8"
         onSubmit={(e) => {
           e.preventDefault();
-          setConfirmOpen(true);
+          setSaved(true);
         }}
       >
         <Card className="shadow-sm">
@@ -999,7 +990,7 @@ export default function FormGallery() {
                 ? "Draft stored in this session — nothing is sent to a server."
                 : "Changes stay on this page until you launch or save."}
             </p>
-            <Button type="button" onClick={() => setConfirmOpen(true)}>
+            <Button type="button" onClick={() => setSaved(true)}>
               Launch campaign
             </Button>
           </CardFooter>
