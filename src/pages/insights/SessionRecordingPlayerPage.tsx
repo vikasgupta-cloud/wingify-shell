@@ -54,9 +54,11 @@ import {
 import { EDITOR_PREVIEW_SRC } from "@/components/editor/EditorCanvas";
 import RecordingSidePanel from "@/components/recording/RecordingSidePanel";
 import RecordingTimeline from "@/components/recording/RecordingTimeline";
+import SessionRecordingDesignController from "@/components/recording/SessionRecordingDesignController";
 import { DEFAULT_MASCOT_ID, mascotAsset } from "@/config/mascots";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/store/theme";
+import { useSessionRecordingDesignStore } from "@/store/sessionRecordingDesign";
 import { SESSION_RECORDINGS } from "@/data/dashboard";
 import {
   SESSION_ROWS,
@@ -164,6 +166,7 @@ function PlayerToggle({
 export default function SessionRecordingPlayerPage() {
   const [params, setParams] = useSearchParams();
   const colorMode = useThemeStore((s) => s.colorMode);
+  const panelSeparator = useSessionRecordingDesignStore((s) => s.panelSeparator);
 
   const session = useMemo(() => resolveSession(params.get("id")), [params]);
   const durationMs = parseDurationMs(session.duration);
@@ -316,8 +319,20 @@ export default function SessionRecordingPlayerPage() {
   return (
     <TooltipProvider delayDuration={250}>
       <div className="flex h-screen w-screen flex-col overflow-hidden bg-canvas text-foreground">
-        <div className="flex min-h-0 min-w-0 flex-1 gap-3 p-3 pb-0">
-          <div className="group/stage relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-panel-border bg-background shadow-sm">
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 p-3 pb-0",
+            panelSeparator ? "gap-3" : "gap-0"
+          )}
+        >
+          <div
+            className={cn(
+              "group/stage relative min-h-0 min-w-0 flex-1 overflow-hidden border border-panel-border bg-background shadow-sm",
+              panelSeparator || !panelOpen
+                ? "rounded-lg"
+                : "rounded-l-lg rounded-r-none border-r-0"
+            )}
+          >
             <div className="relative h-full w-full overflow-hidden">
               <iframe
                 ref={iframeRef}
@@ -416,6 +431,7 @@ export default function SessionRecordingPlayerPage() {
               playing={playing}
               autoplay={autoplay}
               onAutoplayChange={setAutoplay}
+              flushLeft={!panelSeparator}
               onSeek={(ms) => {
                 setPlaying(false);
                 seek(ms);
@@ -428,7 +444,12 @@ export default function SessionRecordingPlayerPage() {
           ) : null}
         </div>
 
-        <div className="mx-3 mb-3 mt-3 shrink-0 overflow-hidden rounded-lg border border-panel-border bg-panel text-panel-foreground shadow-sm">
+        <div
+          className={cn(
+            "mx-3 mb-3 shrink-0 overflow-hidden rounded-lg border border-panel-border bg-panel text-panel-foreground shadow-sm",
+            panelSeparator ? "mt-3" : "mt-0"
+          )}
+        >
             <RecordingTimeline
               timeMs={timeMs}
               durationMs={durationMs}
@@ -440,8 +461,8 @@ export default function SessionRecordingPlayerPage() {
               }}
             />
 
-            <div className="flex h-14 items-center border-t border-panel-border px-3">
-              <div className="flex h-full shrink-0 items-center gap-3 px-2">
+            <div className="flex h-14 items-center gap-2.5 border-t border-panel-border px-3">
+              <div className="flex h-full shrink-0 items-center px-1">
                 <img
                   src={mascotAsset(DEFAULT_MASCOT_ID, colorMode)}
                   alt="Wingify"
@@ -449,90 +470,76 @@ export default function SessionRecordingPlayerPage() {
                 />
               </div>
 
-              <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border sm:block"
-                aria-hidden
-              />
+              <div className="group/transport flex shrink-0 items-center rounded-full bg-muted px-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                      aria-label="Previous page"
+                      disabled={pageIndex <= 0}
+                      onClick={() => {
+                        const prev = pages[pageIndex - 1];
+                        if (!prev) return;
+                        setPlaying(false);
+                        seek(prev.startsAt * durationMs);
+                      }}
+                    >
+                      <SkipBackIcon className="size-4 transition-transform group-hover/transport:scale-105" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Previous page</TooltipContent>
+                </Tooltip>
 
-              <div className="flex h-full shrink-0 items-center px-1">
-                <div className="group/transport flex items-center rounded-full bg-muted px-0.5 transition-colors hover:bg-secondary">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                        aria-label="Previous page"
-                        disabled={pageIndex <= 0}
-                        onClick={() => {
-                          const prev = pages[pageIndex - 1];
-                          if (!prev) return;
-                          setPlaying(false);
-                          seek(prev.startsAt * durationMs);
-                        }}
-                      >
-                        <SkipBackIcon className="size-4 transition-transform group-hover/transport:scale-105" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Previous page</TooltipContent>
-                  </Tooltip>
+                <Button
+                  type="button"
+                  variant="inverted"
+                  size="icon"
+                  className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground hover:shadow-md active:scale-95"
+                  aria-label={playing ? "Pause" : "Play"}
+                  onClick={() => {
+                    if (timeMs >= durationMs) setTimeMs(0);
+                    setPlaying((v) => !v);
+                  }}
+                >
+                  {playing ? (
+                    <Pause className="size-4 fill-current" aria-hidden />
+                  ) : (
+                    <Play className="size-4 fill-current" aria-hidden />
+                  )}
+                </Button>
 
-                  <Button
-                    type="button"
-                    variant="inverted"
-                    size="icon"
-                    className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground hover:shadow-md active:scale-95"
-                    aria-label={playing ? "Pause" : "Play"}
-                    onClick={() => {
-                      if (timeMs >= durationMs) setTimeMs(0);
-                      setPlaying((v) => !v);
-                    }}
-                  >
-                    {playing ? (
-                      <Pause className="size-4 fill-current" aria-hidden />
-                    ) : (
-                      <Play className="size-4 fill-current" aria-hidden />
-                    )}
-                  </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                      aria-label="Next page"
+                      disabled={pageIndex >= pages.length - 1}
+                      onClick={() => {
+                        const next = pages[pageIndex + 1];
+                        if (!next) return;
+                        setPlaying(false);
+                        seek(next.startsAt * durationMs);
+                      }}
+                    >
+                      <SkipForwardIcon className="size-4 transition-transform group-hover/transport:scale-105" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Next page</TooltipContent>
+                </Tooltip>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                        aria-label="Next page"
-                        disabled={pageIndex >= pages.length - 1}
-                        onClick={() => {
-                          const next = pages[pageIndex + 1];
-                          if (!next) return;
-                          setPlaying(false);
-                          seek(next.startsAt * durationMs);
-                        }}
-                      >
-                        <SkipForwardIcon className="size-4 transition-transform group-hover/transport:scale-105" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Next page</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-
-              <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border sm:block"
-                aria-hidden
-              />
-
-              <div className="flex h-full shrink-0 items-center px-1">
                 <Popover open={speedOpen} onOpenChange={setSpeedOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-11 shrink-0 px-0 text-xs tabular-nums"
+                      className="ml-0.5 h-8 w-10 shrink-0 rounded-full px-0 text-xs tabular-nums hover:bg-foreground/10"
                     >
                       {speed}×
                     </Button>
@@ -552,8 +559,8 @@ export default function SessionRecordingPlayerPage() {
                           setSpeedOpen(false);
                         }}
                         className={cn(
-                          "flex w-full justify-center rounded-md px-2 py-1.5 text-sm tabular-nums text-foreground transition-colors hover:bg-muted",
-                          value === speed && "bg-muted font-medium"
+                          "flex w-full justify-center rounded-md px-2 py-1.5 text-sm tabular-nums text-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+                          value === speed && "bg-accent font-medium text-accent-foreground"
                         )}
                       >
                         {value}×
@@ -563,12 +570,7 @@ export default function SessionRecordingPlayerPage() {
                 </Popover>
               </div>
 
-              <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border md:block"
-                aria-hidden
-              />
-
-              <div className="flex h-full min-w-0 flex-1 items-center px-1">
+              <div className="flex h-full min-w-0 flex-1 items-center">
                 <Popover open={pagesOpen} onOpenChange={setPagesOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -631,12 +633,7 @@ export default function SessionRecordingPlayerPage() {
                 </Popover>
               </div>
 
-              <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
-                aria-hidden
-              />
-
-              <div className="hidden h-full shrink-0 items-center px-1 lg:flex">
+              <div className="hidden h-full shrink-0 items-center lg:flex">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -646,7 +643,7 @@ export default function SessionRecordingPlayerPage() {
                       aria-pressed={panelOpen}
                       aria-label={panelOpen ? "Hide session details" : "Show session details"}
                       onClick={() => setPanelOpen((v) => !v)}
-                      className="h-8 gap-1.5 rounded-md px-3 text-[11px] font-medium"
+                      className="h-8 gap-1.5 rounded-full px-3 text-[11px] font-medium"
                     >
                       <UserRound className="size-3.5 text-muted-foreground" aria-hidden />
                       Session {sessionIndex < 0 ? 1 : sessionIndex + 1} of{" "}
@@ -659,13 +656,8 @@ export default function SessionRecordingPlayerPage() {
                 </Tooltip>
               </div>
 
-              <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
-                aria-hidden
-              />
-
-              <div className="hidden h-full shrink-0 items-center px-2 lg:flex">
-                <div className="grid grid-cols-2 gap-x-5 gap-y-1.5">
+              <div className="hidden h-full shrink-0 items-center lg:flex">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                   <PlayerToggle
                     label="Show clicks"
                     checked={showClicks}
@@ -689,13 +681,8 @@ export default function SessionRecordingPlayerPage() {
                 </div>
               </div>
 
-              <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
-                aria-hidden
-              />
-
-              <div className="ml-auto flex h-full shrink-0 items-center gap-0.5 px-1 lg:ml-0">
-                <div className="hidden items-center lg:flex">
+              <div className="ml-auto flex h-full shrink-0 items-center gap-1.5 lg:ml-0">
+                <div className="hidden items-center gap-0.5 rounded-full bg-muted p-0.5 lg:flex">
                   {[
                     { icon: Monitor, label: visitor.device },
                     { icon: Globe, label: visitor.browser },
@@ -704,7 +691,7 @@ export default function SessionRecordingPlayerPage() {
                     <Tooltip key={item.label}>
                       <TooltipTrigger asChild>
                         <span
-                          className="flex size-7 cursor-default items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                          className="flex size-6 cursor-default items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
                           tabIndex={0}
                         >
                           <item.icon className="size-3.5" aria-label={item.label} />
@@ -716,7 +703,7 @@ export default function SessionRecordingPlayerPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span
-                        className="flex size-7 cursor-default items-center justify-center overflow-hidden rounded-md text-sm leading-none transition-colors hover:bg-foreground/10"
+                        className="flex size-6 cursor-default items-center justify-center overflow-hidden rounded-full text-sm leading-none transition-colors hover:bg-foreground/10"
                         tabIndex={0}
                       >
                         {countryFlagEmoji(visitor.countryCode)}
@@ -726,69 +713,72 @@ export default function SessionRecordingPlayerPage() {
                   </Tooltip>
                 </div>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 rounded-md text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
-                      aria-label={expanded ? "Exit full screen" : "Full screen"}
-                      onClick={() => {
-                        setExpanded((v) => !v);
-                        if (!document.fullscreenElement) {
-                          document.documentElement.requestFullscreen?.().catch(() => {});
-                        } else {
-                          document.exitFullscreen?.().catch(() => {});
-                        }
-                      }}
-                    >
-                      {expanded ? (
-                        <Minimize2 className="size-3.5" aria-hidden />
-                      ) : (
-                        <Maximize2 className="size-3.5" aria-hidden />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {expanded ? "Exit full screen" : "Full screen"}
-                  </TooltipContent>
-                </Tooltip>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 rounded-md text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
-                      aria-label="More options"
-                    >
-                      <MoreVertical className="size-3.5" aria-hidden />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-52">
-                    <DropdownMenuItem className="gap-2">
-                      <Share2 className="size-4" aria-hidden />
-                      Share recording
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2">
-                      <Download className="size-4" aria-hidden />
-                      Download recording
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2">
-                      <Save className="size-4" aria-hidden />
-                      Save to a view
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2">
-                      <ImageIcon className="size-4" aria-hidden />
-                      Capture screenshot
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-0.5 rounded-full bg-muted p-0.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 rounded-full text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                        aria-label={expanded ? "Exit full screen" : "Full screen"}
+                        onClick={() => {
+                          setExpanded((v) => !v);
+                          if (!document.fullscreenElement) {
+                            document.documentElement.requestFullscreen?.().catch(() => {});
+                          } else {
+                            document.exitFullscreen?.().catch(() => {});
+                          }
+                        }}
+                      >
+                        {expanded ? (
+                          <Minimize2 className="size-3.5" aria-hidden />
+                        ) : (
+                          <Maximize2 className="size-3.5" aria-hidden />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      {expanded ? "Exit full screen" : "Full screen"}
+                    </TooltipContent>
+                  </Tooltip>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 rounded-full text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                        aria-label="More options"
+                      >
+                        <MoreVertical className="size-3.5" aria-hidden />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-52">
+                      <DropdownMenuItem className="gap-2">
+                        <Share2 className="size-4" aria-hidden />
+                        Share recording
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="gap-2">
+                        <Download className="size-4" aria-hidden />
+                        Download recording
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="gap-2">
+                        <Save className="size-4" aria-hidden />
+                        Save to a view
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="gap-2">
+                        <ImageIcon className="size-4" aria-hidden />
+                        Capture screenshot
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
           </div>
       </div>
+      <SessionRecordingDesignController />
     </TooltipProvider>
   );
 }

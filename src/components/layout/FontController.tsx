@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ArrowRight, Download, Palette, RotateCcw, X } from "@/components/icons/protoLucide";
 import { cn } from "../../lib/utils";
-import { useDesignControllerStore } from "../../store/designController";
+import { DESIGN_CONTROLLER_ENABLED, useDesignControllerStore } from "../../store/designController";
 import { useThemeStore } from "../../store/theme";
 import { useFontStore } from "../../store/fonts";
 import {
@@ -27,6 +27,8 @@ const CLOSE_ANIM_MS = 180;
  * stays fully open until dismissed. Hosts appearance, fonts, and CTA color.
  */
 export default function FontController() {
+  if (!DESIGN_CONTROLLER_ENABLED) return null;
+
   const open = useDesignControllerStore((s) => s.open);
   const setOpen = useDesignControllerStore((s) => s.setOpen);
   const tabVisible = useDesignControllerStore((s) => s.tabVisible);

@@ -251,6 +251,8 @@ export type RecordingSidePanelProps = {
   onAutoplayChange: (next: boolean) => void;
   onSeek: (ms: number) => void;
   onTogglePlay: () => void;
+  /** Drop the left edge so the panel can sit flush against the stage. */
+  flushLeft?: boolean;
 };
 
 export default function RecordingSidePanel({
@@ -264,6 +266,7 @@ export default function RecordingSidePanel({
   onAutoplayChange,
   onSeek,
   onTogglePlay,
+  flushLeft = false,
 }: RecordingSidePanelProps) {
   const [showMore, setShowMore] = useState(false);
   const listRef = useRef<HTMLOListElement>(null);
@@ -278,7 +281,12 @@ export default function RecordingSidePanel({
   }, [activeEventId, playing]);
 
   return (
-    <aside className="flex h-full min-h-0 w-[368px] shrink-0 flex-col overflow-hidden rounded-lg border border-panel-border bg-panel text-panel-foreground shadow-sm 2xl:w-[420px]">
+    <aside
+      className={cn(
+        "flex h-full min-h-0 w-[368px] shrink-0 flex-col overflow-hidden border border-panel-border bg-panel text-panel-foreground shadow-sm 2xl:w-[420px]",
+        flushLeft ? "rounded-l-none rounded-r-lg border-l-0" : "rounded-lg"
+      )}
+    >
       <header className="flex items-center gap-1 px-4 pb-2 pt-3.5">
         <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <p className="mr-1 truncate text-sm font-semibold tracking-tight text-foreground">

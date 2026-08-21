@@ -4,6 +4,9 @@ import { useThemeStore } from "./theme";
 import { useFontStore } from "./fonts";
 import { useIconLibraryStore } from "./iconLibrary";
 
+/** Set true to remount the Appearance tab, player controller, and Settings switch. */
+export const DESIGN_CONTROLLER_ENABLED = false;
+
 type DesignControllerState = {
   open: boolean;
   setOpen: (open: boolean) => void;
