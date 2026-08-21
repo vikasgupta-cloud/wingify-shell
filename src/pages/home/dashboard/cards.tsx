@@ -56,6 +56,7 @@ import {
   WANDZ_DEFAULT_PROMPT,
   WANDZ_RECENT_CHATS,
 } from "@/data/dashboard";
+import { openSessionPlayer } from "@/data/sessionRecordings";
 import { cn } from "@/lib/utils";
 import {
   CHART,
@@ -898,6 +899,7 @@ export function SessionRecordingsCard() {
               size="icon"
               className="size-7 shrink-0 rounded-full"
               aria-label="Play recording"
+              onClick={() => openSessionPlayer(s.id)}
             >
               <Play className="size-3.5" />
             </Button>

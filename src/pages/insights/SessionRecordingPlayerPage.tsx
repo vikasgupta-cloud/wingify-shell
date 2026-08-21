@@ -1,0 +1,713 @@
+// Full-tab session recording player — opens from Insights → Session Recordings.
+// The recorded site replays in an iframe; a synthetic cursor track drives the
+// pointer, scroll position and click flashes, and the right panel logs events.
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import {
+  AppWindow,
+  Check,
+  ChevronDown,
+  ChevronsRight,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileText,
+  Globe,
+  ImageIcon,
+  Maximize2,
+  Minimize2,
+  MoreVertical,
+  MousePointerClick,
+  Pause,
+  Monitor,
+  Play,
+  Save,
+  Share2,
+  UserRound,
+  type LucideIcon,
+} from "@/components/icons/protoLucide";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { EDITOR_PREVIEW_SRC } from "@/components/editor/EditorCanvas";
+import RecordingSidePanel from "@/components/recording/RecordingSidePanel";
+import RecordingTimeline from "@/components/recording/RecordingTimeline";
+import { DEFAULT_MASCOT_ID, mascotAsset } from "@/config/mascots";
+import { cn } from "@/lib/utils";
+import { useThemeStore } from "@/store/theme";
+import { SESSION_RECORDINGS } from "@/data/dashboard";
+import {
+  SESSION_ROWS,
+  buildRecordedPages,
+  buildRecordingTrack,
+  buildSessionEvents,
+  buildSessionLog,
+  buildVisitor,
+  parseDurationMs,
+  sampleTrack,
+  type SessionRow,
+} from "@/data/sessionRecordings";
+
+const SPEEDS = [0.25, 0.5, 1, 2, 4] as const;
+type Speed = (typeof SPEEDS)[number];
+
+/** A gap longer than this counts as a pause worth skipping. */
+const PAUSE_MS = 4_000;
+/** Trail sample spacing, as a fraction of the whole session. */
+const TRAIL_STEP = 0.008;
+const TRAIL_LENGTH = 10;
+
+const FALLBACK: SessionRow = {
+  id: "sess-1",
+  city: "Sunnyvale",
+  country: "United States",
+  url: "https://vwo.com/campaign/get-started/",
+  company: 1,
+  duration: "00:00:54",
+  events: 20,
+  timestamp: "17:54 hrs, 20 Aug, 2026",
+};
+
+function resolveSession(id: string | null): SessionRow {
+  const fromTable = SESSION_ROWS.find((row) => row.id === id);
+  if (fromTable) return fromTable;
+  const fromDash = SESSION_RECORDINGS.find((row) => row.id === id);
+  if (fromDash) {
+    const [city, country = ""] = fromDash.location.split(",").map((p) => p.trim());
+    return {
+      id: fromDash.id,
+      city: city || fromDash.location,
+      country: country || "United States",
+      url: fromDash.url,
+      company: 1,
+      duration: fromDash.duration,
+      events: 20,
+      timestamp: FALLBACK.timestamp,
+    };
+  }
+  return SESSION_ROWS[0] ?? FALLBACK;
+}
+
+/** Playback toggle — four of these sit in the control bar. */
+function PlayerToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer select-none items-center gap-1.5 text-[11px] leading-none text-muted-foreground transition-colors hover:text-foreground">
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(v) => onChange(v === true)}
+        className="size-3.5"
+      />
+      {label}
+    </label>
+  );
+}
+
+/** Stage-edge tool — the vertical rail that reveals on hover. */
+function StageTool({
+  icon: Icon,
+  label,
+}: {
+  icon: LucideIcon;
+  label: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={label}
+          className="size-9 rounded-none text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <Icon className="size-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+export default function SessionRecordingPlayerPage() {
+  const [params, setParams] = useSearchParams();
+  const colorMode = useThemeStore((s) => s.colorMode);
+
+  const session = useMemo(() => resolveSession(params.get("id")), [params]);
+  const durationMs = parseDurationMs(session.duration);
+  const track = useMemo(
+    () => buildRecordingTrack(session.id, durationMs),
+    [session.id, durationMs]
+  );
+  const events = useMemo(() => buildSessionEvents(session.id), [session.id]);
+  const pages = useMemo(() => buildRecordedPages(session), [session]);
+  const visitor = useMemo(() => buildVisitor(session), [session]);
+  const log = useMemo(() => buildSessionLog(pages, events), [pages, events]);
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const lastTick = useRef<number | null>(null);
+  const lastFlashAt = useRef(-1);
+
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState<Speed>(1);
+  const [speedOpen, setSpeedOpen] = useState(false);
+  const [pagesOpen, setPagesOpen] = useState(false);
+  const [timeMs, setTimeMs] = useState(0);
+  const [clickFlash, setClickFlash] = useState(false);
+  const [showClicks, setShowClicks] = useState(true);
+  const [showTrail, setShowTrail] = useState(true);
+  const [skipPauses, setSkipPauses] = useState(false);
+  const [autoplay, setAutoplay] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  /** The stage can take the full window by folding the detail panel away. */
+  const [panelOpen, setPanelOpen] = useState(true);
+
+  const progress = durationMs > 0 ? Math.min(1, timeMs / durationMs) : 0;
+  const pose = sampleTrack(track, progress);
+
+  const sessionIndex = SESSION_ROWS.findIndex((row) => row.id === session.id);
+  const goToSession = useCallback(
+    (delta: number) => {
+      if (sessionIndex < 0) return;
+      const next = SESSION_ROWS[sessionIndex + delta];
+      if (!next) return;
+      setTimeMs(0);
+      setParams({ id: next.id });
+    },
+    [sessionIndex, setParams]
+  );
+
+  const seek = useCallback(
+    (ms: number) => setTimeMs(Math.min(durationMs, Math.max(0, ms))),
+    [durationMs]
+  );
+
+  useEffect(() => {
+    document.title = `Session · ${session.city}, ${session.country}`;
+  }, [session.city, session.country]);
+
+  // Playback clock. Skip Pauses fast-forwards any stretch with no event in it.
+  useEffect(() => {
+    if (!playing) {
+      lastTick.current = null;
+      return;
+    }
+    let raf = 0;
+    const step = (now: number) => {
+      if (lastTick.current == null) lastTick.current = now;
+      const delta = (now - lastTick.current) * speed;
+      lastTick.current = now;
+      setTimeMs((prev) => {
+        let next = prev + delta;
+        if (skipPauses) {
+          const upcoming = events.find((e) => e.t * durationMs > next);
+          const gap = upcoming ? upcoming.t * durationMs - next : 0;
+          if (gap > PAUSE_MS) next = upcoming!.t * durationMs - 800;
+        }
+        if (next >= durationMs) {
+          setPlaying(false);
+          return durationMs;
+        }
+        return next;
+      });
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [playing, speed, durationMs, skipPauses, events]);
+
+  // Drive the recorded page's scroll position from the cursor track.
+  useEffect(() => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    try {
+      const doc = win.document.documentElement;
+      const max = Math.max(0, doc.scrollHeight - win.innerHeight);
+      win.scrollTo({ top: pose.scroll * max, behavior: "auto" });
+    } catch {
+      /* preview not ready */
+    }
+  }, [pose.scroll]);
+
+  // Ripple whenever playback crosses a keyframe marked as a click.
+  useEffect(() => {
+    const hit = track.find((k) => k.click && Math.abs(k.t - progress) < 0.018);
+    if (!hit || lastFlashAt.current === hit.t) return;
+    lastFlashAt.current = hit.t;
+    setClickFlash(true);
+    const t = window.setTimeout(() => setClickFlash(false), 420);
+    return () => window.clearTimeout(t);
+  }, [progress, track]);
+
+  // Autoplay Next Recording — roll into the following row when this one ends.
+  useEffect(() => {
+    if (!autoplay || playing || timeMs < durationMs) return;
+    goToSession(1);
+  }, [autoplay, playing, timeMs, durationMs, goToSession]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        // Replay from the top when the session has already run out.
+        setTimeMs((t) => (t >= durationMs ? 0 : t));
+        setPlaying((v) => !v);
+      }
+      if (e.code === "ArrowLeft") seek(timeMs - 5_000);
+      if (e.code === "ArrowRight") seek(timeMs + 5_000);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [seek, timeMs, durationMs]);
+
+  const trail = useMemo(() => {
+    if (!showTrail) return [];
+    return Array.from({ length: TRAIL_LENGTH }, (_, i) => {
+      const t = progress - (i + 1) * TRAIL_STEP;
+      return t <= 0 ? null : { ...sampleTrack(track, t), key: i };
+    }).filter(Boolean) as (ReturnType<typeof sampleTrack> & { key: number })[];
+  }, [progress, showTrail, track]);
+
+  const activeEvent = useMemo(() => {
+    const passed = events.filter((e) => e.t <= progress);
+    return passed[passed.length - 1] ?? null;
+  }, [events, progress]);
+
+  const pageIndex = Math.max(
+    0,
+    pages.filter((page) => page.startsAt <= progress).length - 1
+  );
+  const currentPage = pages[pageIndex] ?? pages[0];
+
+  return (
+    <TooltipProvider delayDuration={250}>
+      <div className="flex h-screen w-screen flex-col overflow-hidden bg-panel text-panel-foreground">
+        <div className="flex min-h-0 min-w-0 flex-1">
+          <div className="group/stage relative min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
+            <div className="relative h-full w-full overflow-hidden">
+              <iframe
+                ref={iframeRef}
+                title="Recorded session"
+                src={EDITOR_PREVIEW_SRC}
+                className="pointer-events-none absolute inset-0 h-full w-full border-0"
+              />
+
+              {/* Cursor, trail and click ripple — the replay layer. */}
+              <div className="pointer-events-none absolute inset-0">
+                {trail.map((point) => (
+                  <span
+                    key={point.key}
+                    className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground"
+                    style={{
+                      left: `${point.x * 100}%`,
+                      top: `${point.y * 100}%`,
+                      opacity: 0.35 - point.key * 0.03,
+                    }}
+                    aria-hidden
+                  />
+                ))}
+                {showClicks && clickFlash ? (
+                  <>
+                    <span
+                      className="absolute size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-foreground/50"
+                      style={{ left: `${pose.x * 100}%`, top: `${pose.y * 100}%` }}
+                      aria-hidden
+                    />
+                    <span
+                      className="absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/15"
+                      style={{ left: `${pose.x * 100}%`, top: `${pose.y * 100}%` }}
+                      aria-hidden
+                    />
+                  </>
+                ) : null}
+                <span
+                  className="absolute size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground ring-2 ring-background transition-[left,top] duration-75 ease-linear"
+                  style={{ left: `${pose.x * 100}%`, top: `${pose.y * 100}%` }}
+                  aria-hidden
+                />
+              </div>
+
+              {/* What the cursor is doing right now, plus the click legend. */}
+              <div className="pointer-events-none absolute bottom-3 left-3 flex h-7 items-center gap-1.5 rounded-md border border-panel-border bg-panel/90 px-3 text-[11px] font-medium text-panel-foreground backdrop-blur">
+                <MousePointerClick className="size-3.5 text-muted-foreground" aria-hidden />
+                {pose.label}
+              </div>
+              {showClicks ? (
+                <div className="pointer-events-none absolute bottom-3 right-3 space-y-1.5 rounded-md border border-panel-border bg-panel/90 px-3 py-2 text-[11px] text-muted-foreground backdrop-blur">
+                  <p className="flex items-center gap-2">
+                    <span
+                      className="size-2.5 rounded-full border border-foreground"
+                      aria-hidden
+                    />
+                    Left click
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span className="size-2.5 rounded-full bg-foreground" aria-hidden />
+                    Right click
+                  </p>
+                </div>
+              ) : null}
+
+              {/* Fold the detail panel away to hand the stage the full window. */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    aria-label={panelOpen ? "Hide session details" : "Show session details"}
+                    onClick={() => setPanelOpen((v) => !v)}
+                    className="absolute right-0 top-3 size-8 rounded-l-md rounded-r-none border border-r-0 border-panel-border"
+                  >
+                    <ChevronsRight
+                      className={cn("size-4 transition-transform", !panelOpen && "rotate-180")}
+                      aria-hidden
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  {panelOpen ? "Hide session details" : "Show session details"}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+
+            {/* Stage tools — quiet until the pointer is over the stage. */}
+            <div className="absolute right-7 top-1/2 flex -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-panel-border bg-panel opacity-0 shadow-sm transition-opacity focus-within:opacity-100 group-hover/stage:opacity-100">
+              <StageTool icon={Share2} label="Share recording" />
+              <StageTool icon={Download} label="Download recording" />
+              <StageTool icon={Save} label="Save to a view" />
+              <StageTool icon={ImageIcon} label="Capture screenshot" />
+            </div>
+          </div>
+
+          {panelOpen ? (
+            <RecordingSidePanel
+              session={session}
+              visitor={visitor}
+              log={log}
+              durationMs={durationMs}
+              activeEventId={activeEvent?.id ?? null}
+              playing={playing}
+              autoplay={autoplay}
+              onAutoplayChange={setAutoplay}
+              onSeek={(ms) => {
+                setPlaying(false);
+                seek(ms);
+              }}
+              onTogglePlay={() => {
+                if (timeMs >= durationMs) setTimeMs(0);
+                setPlaying((v) => !v);
+              }}
+            />
+          ) : null}
+        </div>
+
+        <div className="shrink-0 border-t border-panel-border bg-panel">
+            <RecordingTimeline
+              timeMs={timeMs}
+              durationMs={durationMs}
+              events={events}
+              pages={pages}
+              onSeek={(ms) => {
+                setPlaying(false);
+                seek(ms);
+              }}
+            />
+
+            <div className="flex h-14 items-center gap-2 px-4">
+              <img
+                src={mascotAsset(DEFAULT_MASCOT_ID, colorMode)}
+                alt="Wingify"
+                className="mr-1 h-6 w-auto shrink-0"
+              />
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    aria-label="Previous recording"
+                    disabled={sessionIndex <= 0}
+                    onClick={() => goToSession(-1)}
+                  >
+                    <ChevronLeft className="size-4" aria-hidden />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Previous recording</TooltipContent>
+              </Tooltip>
+
+              <Button
+                type="button"
+                variant="inverted"
+                size="icon"
+                className="size-9 shrink-0 rounded-full"
+                aria-label={playing ? "Pause" : "Play"}
+                onClick={() => {
+                  if (timeMs >= durationMs) setTimeMs(0);
+                  setPlaying((v) => !v);
+                }}
+              >
+                {playing ? (
+                  <Pause className="size-4 fill-current" aria-hidden />
+                ) : (
+                  <Play className="size-4 fill-current" aria-hidden />
+                )}
+              </Button>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    aria-label="Next recording"
+                    disabled={sessionIndex < 0 || sessionIndex >= SESSION_ROWS.length - 1}
+                    onClick={() => goToSession(1)}
+                  >
+                    <ChevronRight className="size-4" aria-hidden />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Next recording</TooltipContent>
+              </Tooltip>
+
+              <Popover open={speedOpen} onOpenChange={setSpeedOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-14 shrink-0 justify-center tabular-nums"
+                  >
+                    {speed}×
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="top"
+                  align="center"
+                  sideOffset={8}
+                  className="w-14 overflow-hidden rounded-lg p-1"
+                >
+                  {[...SPEEDS].reverse().map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        setSpeed(value);
+                        setSpeedOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full justify-center rounded-md px-2 py-1.5 text-sm tabular-nums text-foreground transition-colors hover:bg-muted",
+                        value === speed && "bg-muted font-medium"
+                      )}
+                    >
+                      {value}×
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+
+              <Popover open={pagesOpen} onOpenChange={setPagesOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="min-w-[8rem] max-w-[34rem] flex-1 justify-start gap-2 font-normal"
+                  >
+                    <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="shrink-0">
+                      Page {pageIndex + 1} of {pages.length}:
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-left text-muted-foreground">
+                      {currentPage.url}
+                    </span>
+                    <ChevronDown className="ml-auto size-3.5 shrink-0 opacity-60" aria-hidden />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="top"
+                  align="start"
+                  sideOffset={8}
+                  className="w-[--radix-popover-trigger-width] overflow-hidden rounded-lg p-0"
+                >
+                  <Command>
+                    <CommandInput placeholder="Search pages..." />
+                    <CommandList>
+                      <CommandEmpty>No page found.</CommandEmpty>
+                      <CommandGroup>
+                        {pages.map((page, i) => (
+                          <CommandItem
+                            key={page.id}
+                            value={`Page ${i + 1} ${page.url}`}
+                            onSelect={() => {
+                              seek(page.startsAt * durationMs);
+                              setPagesOpen(false);
+                            }}
+                            // Keep the roomier two-line row the bar had
+                            // before search: neutral highlight, not the
+                            // Command default accent.
+                            className="flex-col items-start gap-0.5 rounded-md px-3 py-2 data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+                          >
+                            <span className="flex w-full items-center gap-2">
+                              <span className="text-xs font-medium text-foreground">
+                                Page {i + 1}
+                              </span>
+                              {i === pageIndex ? (
+                                <Check
+                                  className="ml-auto size-3.5 text-foreground"
+                                  aria-label="Currently playing"
+                                />
+                              ) : null}
+                            </span>
+                            <span className="w-full truncate text-[11px] text-muted-foreground">
+                              {page.url}
+                            </span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              <span className="hidden shrink-0 flex-col justify-center gap-0.5 rounded-md bg-secondary px-3 py-1.5 text-[11px] font-medium leading-none text-secondary-foreground lg:flex">
+                <span className="flex items-center gap-1.5">
+                  <UserRound className="size-3.5 opacity-70" aria-hidden />
+                  Session
+                </span>
+                <span className="pl-5 tabular-nums">
+                  {sessionIndex < 0 ? 1 : sessionIndex + 1} of{" "}
+                  {SESSION_ROWS.length}
+                </span>
+              </span>
+
+              <div className="hidden shrink-0 grid-cols-2 gap-x-4 gap-y-1.5 lg:grid">
+                <PlayerToggle
+                  label="Show clicks"
+                  checked={showClicks}
+                  onChange={setShowClicks}
+                />
+                <PlayerToggle
+                  label="Skip Pauses"
+                  checked={skipPauses}
+                  onChange={setSkipPauses}
+                />
+                <PlayerToggle
+                  label="Show Mouse Trail"
+                  checked={showTrail}
+                  onChange={setShowTrail}
+                />
+                <PlayerToggle
+                  label="Autoplay Next Recording"
+                  checked={autoplay}
+                  onChange={setAutoplay}
+                />
+              </div>
+
+              <div className="ml-auto hidden shrink-0 items-center gap-0.5 pr-1 lg:flex">
+                {[
+                  { icon: Monitor, label: visitor.device },
+                  { icon: Globe, label: visitor.browser },
+                  { icon: AppWindow, label: visitor.os },
+                ].map((item) => (
+                  <Tooltip key={item.label}>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="flex size-8 items-center justify-center text-muted-foreground"
+                        tabIndex={0}
+                      >
+                        <item.icon className="size-4" aria-label={item.label} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{item.label}</TooltipContent>
+                  </Tooltip>
+                ))}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="flex h-5 items-center rounded-[4px] border border-panel-border px-1.5 text-[10px] font-semibold leading-none text-muted-foreground"
+                      tabIndex={0}
+                    >
+                      {visitor.countryCode}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{visitor.country}</TooltipContent>
+                </Tooltip>
+              </div>
+
+              <div className="ml-auto flex shrink-0 items-center gap-0.5 lg:ml-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      aria-label={expanded ? "Exit full screen" : "Full screen"}
+                      onClick={() => {
+                        setExpanded((v) => !v);
+                        if (!document.fullscreenElement) {
+                          document.documentElement.requestFullscreen?.().catch(() => {});
+                        } else {
+                          document.exitFullscreen?.().catch(() => {});
+                        }
+                      }}
+                    >
+                      {expanded ? (
+                        <Minimize2 className="size-4" aria-hidden />
+                      ) : (
+                        <Maximize2 className="size-4" aria-hidden />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {expanded ? "Exit full screen" : "Full screen"}
+                  </TooltipContent>
+                </Tooltip>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label="More options"
+                >
+                  <MoreVertical className="size-4" aria-hidden />
+                </Button>
+              </div>
+            </div>
+          </div>
+      </div>
+    </TooltipProvider>
+  );
+}

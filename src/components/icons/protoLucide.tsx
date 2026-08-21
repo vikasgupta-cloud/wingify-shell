@@ -134,6 +134,7 @@ export const PieChart = (props: any) => <AppIcon name="PieChart" {...props} />;
 export const Pin = (props: any) => <AppIcon name="Pin" {...props} />;
 export const PinOff = (props: any) => <AppIcon name="PinOff" {...props} />;
 export const Play = (props: any) => <AppIcon name="Play" {...props} />;
+export const Pause = (props: any) => <AppIcon name="Pause" {...props} />;
 export const Plug = (props: any) => <AppIcon name="Plug" {...props} />;
 export const Plus = (props: any) => <AppIcon name="Plus" {...props} />;
 export const PlusCircle = (props: any) => <AppIcon name="PlusCircle" {...props} />;

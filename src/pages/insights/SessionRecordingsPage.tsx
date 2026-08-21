@@ -42,6 +42,7 @@ import {
   RECORDING_STATS,
   RECORDING_VIEWS,
   SESSION_ROWS,
+  openSessionPlayer,
   type RecordingView,
 } from "@/data/sessionRecordings";
 
@@ -57,7 +58,7 @@ function FilterSegment({
   return (
     <button
       type="button"
-      className="flex min-w-0 flex-1 items-center justify-between gap-2 border-r border-border bg-background px-3 py-2 text-left last:border-r-0 hover:bg-accent/40"
+      className="flex min-w-0 flex-1 items-center justify-between gap-2 border-r border-border bg-background px-3 py-2 text-left last:border-r-0 hover:bg-muted"
     >
       <span className="min-w-0">
         <span className="block truncate text-sm leading-snug text-foreground">
@@ -98,17 +99,14 @@ function ViewsRail({
     <aside className="flex w-[300px] shrink-0 flex-col self-start rounded-lg border border-border bg-background">
       <Tabs defaultValue="views" className="flex min-h-0 flex-1 flex-col">
         <div className="border-b border-border px-4">
-          <TabsList className="h-auto w-full justify-start gap-5 rounded-none bg-transparent p-0">
-            <TabsTrigger
-              value="views"
-              className="rounded-none border-b-2 border-transparent px-0 pb-2.5 pt-3 text-sm shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+          <TabsList
+            variant="underline"
+            className="h-auto w-full justify-start gap-5 border-b-0"
+          >
+            <TabsTrigger value="views" className="px-0 pb-2.5 pt-3">
               Views
             </TabsTrigger>
-            <TabsTrigger
-              value="timeline"
-              className="rounded-none border-b-2 border-transparent px-0 pb-2.5 pt-3 text-sm shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+            <TabsTrigger value="timeline" className="px-0 pb-2.5 pt-3">
               Timeline
             </TabsTrigger>
           </TabsList>
@@ -155,7 +153,7 @@ function ViewsRail({
                       "flex w-full items-center justify-between gap-3 rounded-md px-3 py-2.5 text-left transition-colors",
                       active
                         ? "bg-secondary text-foreground"
-                        : "text-foreground hover:bg-accent"
+                        : "text-foreground hover:bg-muted"
                     )}
                   >
                     <span className="min-w-0 flex-1">
@@ -386,7 +384,7 @@ export default function SessionRecordingsPage() {
                     {pageRows.map((row) => (
                       <tr
                         key={row.id}
-                        className="border-b border-border last:border-b-0 hover:bg-accent/30"
+                        className="border-b border-border last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)))]"
                       >
                         <td className="px-3 py-3 align-middle">
                           <Checkbox
@@ -441,15 +439,17 @@ export default function SessionRecordingsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-7"
+                              className="size-7 text-highlight-fg hover:bg-highlight-bg hover:text-highlight-fg"
                               aria-label="AI summary"
                             >
                               <Sparkles className="size-3.5" aria-hidden />
                             </Button>
                             <Button
+                              variant="inverted"
                               size="icon"
                               className="size-7"
                               aria-label="Play recording"
+                              onClick={() => openSessionPlayer(row.id)}
                             >
                               <Play className="size-3.5 fill-current" aria-hidden />
                             </Button>

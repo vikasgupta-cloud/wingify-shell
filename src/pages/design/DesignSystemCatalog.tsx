@@ -8,6 +8,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import StatusBadge from "@/components/ui/StatusBadge";
+import BadgeMatrix from "./BadgeMatrix";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -221,10 +222,11 @@ export default function DesignSystemCatalog() {
       </Block>
 
       <Block
-        title="Badges, tags, status"
-        description="Neutral badges stay grayscale. Status and vitals use semantic tokens."
+        title="Badges"
+        description="Pill badges: eight tones, light or solid fill, three sizes, and layouts from text-only through avatar. Status stays on semantic tokens."
       >
-        <div className="flex flex-wrap gap-2">
+        <BadgeMatrix />
+        <div className="mt-6 flex flex-wrap gap-2">
           <Badge>Primary</Badge>
           <Badge variant="secondary">Secondary</Badge>
           <Badge variant="outline">Outline</Badge>

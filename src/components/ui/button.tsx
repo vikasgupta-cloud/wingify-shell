@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
  * 5. ghost / shadow        — no fill, no border
  * 6. link                  — --link
  * 7. destructive           — outline; inverted fill; shadow text
- * 8. ai                    — AI CTA fill
+ * 8. ai / aiOutline        — AI CTA fill / AI outline
  */
 const buttonVariants = cva(
   "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:border-transparent disabled:bg-cta-disabled disabled:text-cta-disabled-foreground disabled:opacity-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -50,9 +50,11 @@ const buttonVariants = cva(
           "border border-destructive bg-destructive font-cta text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
         destructiveShadow:
           "border border-transparent bg-transparent font-cta text-destructive hover:bg-danger-bg active:bg-danger-bg",
-        // 7. AI CTA
+        // 7. AI CTA — fill / outline
         ai:
           "border border-transparent bg-cta-ai font-cta text-cta-ai-foreground hover:bg-cta-ai-hover active:bg-cta-ai-hover",
+        aiOutline:
+          "border border-cta-ai bg-background font-cta text-cta-ai hover:bg-highlight-bg hover:text-cta-ai active:bg-highlight-bg",
       },
       size: {
         default: "h-9 px-4 py-2",

@@ -24,6 +24,7 @@ import DesignSystemPage from "../pages/design/DesignSystemPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
 import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
+import SessionRecordingPlayerPage from "../pages/insights/SessionRecordingPlayerPage";
 import SurveysPage from "../pages/pulse/SurveysPage";
 import FeatureFlagsPage from "../pages/feature-management/FeatureFlagsPage";
 import FlagRolloutPage from "../pages/feature-management/FlagRolloutPage";
@@ -170,6 +171,10 @@ export const router = createBrowserRouter([
       {
         path: "/insights/heatmaps/viewer",
         element: <HeatmapViewerPage />,
+      },
+      {
+        path: "/insights/session-recordings/player",
+        element: <SessionRecordingPlayerPage />,
       },
       ...detailRoutes,
       ...profileModeRoutes,
