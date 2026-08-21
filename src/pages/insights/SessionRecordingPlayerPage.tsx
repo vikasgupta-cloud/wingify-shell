@@ -471,7 +471,7 @@ export default function SessionRecordingPlayerPage() {
               </div>
 
               <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border sm:block"
+                className="mx-1 hidden w-px shrink-0 self-stretch bg-panel-border sm:block"
                 aria-hidden
               />
 
@@ -580,7 +580,7 @@ export default function SessionRecordingPlayerPage() {
               </div>
 
               <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border md:block"
+                className="mx-1 hidden w-px shrink-0 self-stretch bg-panel-border md:block"
                 aria-hidden
               />
 
@@ -648,7 +648,7 @@ export default function SessionRecordingPlayerPage() {
               </div>
 
               <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
+                className="mx-1 hidden w-px shrink-0 self-stretch bg-panel-border lg:block"
                 aria-hidden
               />
 
@@ -676,7 +676,7 @@ export default function SessionRecordingPlayerPage() {
               </div>
 
               <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
+                className="mx-1 hidden w-px shrink-0 self-stretch bg-panel-border lg:block"
                 aria-hidden
               />
 
@@ -706,12 +706,12 @@ export default function SessionRecordingPlayerPage() {
               </div>
 
               <div
-                className="mx-1 hidden h-7 w-px shrink-0 bg-panel-border lg:block"
+                className="mx-1 hidden w-px shrink-0 self-stretch bg-panel-border lg:block"
                 aria-hidden
               />
 
               <div className="ml-auto flex h-full shrink-0 items-center gap-2 px-1 lg:ml-0">
-                <div className="hidden items-center gap-1 rounded-full bg-muted p-1 lg:flex">
+                <div className="hidden items-center gap-1 rounded-[8px] bg-muted p-1 lg:flex">
                   {[
                     { icon: Monitor, label: visitor.device },
                     { icon: Globe, label: visitor.browser },
@@ -720,7 +720,7 @@ export default function SessionRecordingPlayerPage() {
                     <Tooltip key={item.label}>
                       <TooltipTrigger asChild>
                         <span
-                          className="flex size-8 cursor-default items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                          className="flex size-8 cursor-default items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
                           tabIndex={0}
                         >
                           <item.icon className="size-4" aria-label={item.label} />
@@ -732,7 +732,7 @@ export default function SessionRecordingPlayerPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span
-                        className="flex size-8 cursor-default items-center justify-center overflow-hidden rounded-full text-base leading-none transition-colors hover:bg-foreground/10"
+                        className="flex size-8 cursor-default items-center justify-center overflow-hidden rounded-[8px] text-base leading-none transition-colors hover:bg-foreground/10"
                         tabIndex={0}
                       >
                         {countryFlagEmoji(visitor.countryCode)}
@@ -742,14 +742,14 @@ export default function SessionRecordingPlayerPage() {
                   </Tooltip>
                 </div>
 
-                <div className="flex items-center gap-1 rounded-full bg-muted p-1">
+                <div className="flex items-center gap-1 rounded-[8px] bg-muted p-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8 rounded-full text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                        className="size-8 rounded-[8px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
                         aria-label={expanded ? "Exit full screen" : "Full screen"}
                         onClick={() => {
                           setExpanded((v) => !v);
@@ -777,7 +777,7 @@ export default function SessionRecordingPlayerPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8 rounded-full text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                        className="size-8 rounded-[8px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
                         aria-label="More options"
                       >
                         <MoreVertical className="size-4" aria-hidden />
