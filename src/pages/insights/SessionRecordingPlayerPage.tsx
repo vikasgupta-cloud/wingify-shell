@@ -475,70 +475,68 @@ export default function SessionRecordingPlayerPage() {
                 aria-hidden
               />
 
-              <div className="flex h-full shrink-0 items-center px-1">
-                <div className="group/transport flex items-center rounded-full bg-muted px-0.5">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                        aria-label="Previous page"
-                        disabled={pageIndex <= 0}
-                        onClick={() => {
-                          const prev = pages[pageIndex - 1];
-                          if (!prev) return;
-                          setPlaying(false);
-                          seek(prev.startsAt * durationMs);
-                        }}
-                      >
-                        <SkipBackIcon className="size-4 transition-transform group-hover/transport:scale-105" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Previous page</TooltipContent>
-                  </Tooltip>
+              <div className="flex h-full shrink-0 items-center gap-1.5 px-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-9 shrink-0 rounded-full bg-muted text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                      aria-label="Previous page"
+                      disabled={pageIndex <= 0}
+                      onClick={() => {
+                        const prev = pages[pageIndex - 1];
+                        if (!prev) return;
+                        setPlaying(false);
+                        seek(prev.startsAt * durationMs);
+                      }}
+                    >
+                      <SkipBackIcon className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Previous page</TooltipContent>
+                </Tooltip>
 
-                  <Button
-                    type="button"
-                    variant="inverted"
-                    size="icon"
-                    className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground hover:shadow-md active:scale-95"
-                    aria-label={playing ? "Pause" : "Play"}
-                    onClick={() => {
-                      if (timeMs >= durationMs) setTimeMs(0);
-                      setPlaying((v) => !v);
-                    }}
-                  >
-                    {playing ? (
-                      <Pause className="size-4 fill-current" aria-hidden />
-                    ) : (
-                      <Play className="size-4 fill-current" aria-hidden />
-                    )}
-                  </Button>
+                <Button
+                  type="button"
+                  variant="inverted"
+                  size="icon"
+                  className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground hover:shadow-md active:scale-95"
+                  aria-label={playing ? "Pause" : "Play"}
+                  onClick={() => {
+                    if (timeMs >= durationMs) setTimeMs(0);
+                    setPlaying((v) => !v);
+                  }}
+                >
+                  {playing ? (
+                    <Pause className="size-4 fill-current" aria-hidden />
+                  ) : (
+                    <Play className="size-4 fill-current" aria-hidden />
+                  )}
+                </Button>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0 rounded-full text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                        aria-label="Next page"
-                        disabled={pageIndex >= pages.length - 1}
-                        onClick={() => {
-                          const next = pages[pageIndex + 1];
-                          if (!next) return;
-                          setPlaying(false);
-                          seek(next.startsAt * durationMs);
-                        }}
-                      >
-                        <SkipForwardIcon className="size-4 transition-transform group-hover/transport:scale-105" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Next page</TooltipContent>
-                  </Tooltip>
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-9 shrink-0 rounded-full bg-muted text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                      aria-label="Next page"
+                      disabled={pageIndex >= pages.length - 1}
+                      onClick={() => {
+                        const next = pages[pageIndex + 1];
+                        if (!next) return;
+                        setPlaying(false);
+                        seek(next.startsAt * durationMs);
+                      }}
+                    >
+                      <SkipForwardIcon className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Next page</TooltipContent>
+                </Tooltip>
               </div>
 
               <div className="flex h-full shrink-0 items-center px-1">
@@ -662,7 +660,7 @@ export default function SessionRecordingPlayerPage() {
                       aria-pressed={panelOpen}
                       aria-label={panelOpen ? "Hide session details" : "Show session details"}
                       onClick={() => setPanelOpen((v) => !v)}
-                      className="h-8 gap-1.5 rounded-full px-3 text-[11px] font-medium"
+                      className="h-8 gap-1.5 rounded-[8px] px-3 text-[11px] font-medium"
                     >
                       <UserRound className="size-3.5 text-muted-foreground" aria-hidden />
                       Session {sessionIndex < 0 ? 1 : sessionIndex + 1} of{" "}
