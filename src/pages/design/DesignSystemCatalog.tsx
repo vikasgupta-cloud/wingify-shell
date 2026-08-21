@@ -104,12 +104,12 @@ export default function DesignSystemCatalog() {
     <div className="space-y-8">
       <Block
         title="Buttons"
-        description="Default (stroke), inverted fill, secondary fill, shadow, danger, and link."
+        description="Primary CTA (filled), outline secondary, secondary fill, shadow, danger, and link."
       >
         <div className="flex flex-wrap gap-2">
-          <Button type="button">Default Button</Button>
-          <Button type="button" variant="inverted">
-            Default Inverted Button
+          <Button type="button">Primary CTA</Button>
+          <Button type="button" variant="outline">
+            Secondary CTA
           </Button>
           <Button type="button" variant="secondary">
             Secondary Button

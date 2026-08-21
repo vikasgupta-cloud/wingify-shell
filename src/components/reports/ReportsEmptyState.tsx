@@ -18,9 +18,9 @@ export function ReportsEmptyIllustration({ className }: { className?: string }) 
         width="224"
         height="132"
         rx="12"
-        stroke="hsl(var(--border))"
+        stroke="var(--border)"
         strokeWidth="1.5"
-        fill="hsl(var(--background))"
+        fill="var(--background)"
       />
       <rect
         x="28"
@@ -28,22 +28,22 @@ export function ReportsEmptyIllustration({ className }: { className?: string }) 
         width="224"
         height="28"
         rx="12"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
-      <rect x="28" y="40" width="224" height="12" fill="hsl(var(--muted))" />
-      <circle cx="48" cy="38" r="4" fill="hsl(var(--muted-foreground) / 0.35)" />
-      <circle cx="62" cy="38" r="4" fill="hsl(var(--muted-foreground) / 0.25)" />
-      <circle cx="76" cy="38" r="4" fill="hsl(var(--muted-foreground) / 0.18)" />
+      <rect x="28" y="40" width="224" height="12" fill="var(--muted)" />
+      <circle cx="48" cy="38" r="4" fill="rgb(from var(--muted-foreground) r g b / 0.35)" />
+      <circle cx="62" cy="38" r="4" fill="rgb(from var(--muted-foreground) r g b / 0.25)" />
+      <circle cx="76" cy="38" r="4" fill="rgb(from var(--muted-foreground) r g b / 0.18)" />
 
       <path
         d="M56 128 V96 M88 128 V84 M120 128 V104 M152 128 V72 M184 128 V90 M216 128 V78"
-        stroke="hsl(var(--border))"
+        stroke="var(--border)"
         strokeWidth="10"
         strokeLinecap="round"
       />
       <path
         d="M52 118 C84 108, 108 92, 140 86 C172 80, 196 70, 224 62"
-        stroke="hsl(var(--muted-foreground))"
+        stroke="var(--muted-foreground)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeOpacity="0.45"
@@ -52,7 +52,7 @@ export function ReportsEmptyIllustration({ className }: { className?: string }) 
         cx="224"
         cy="62"
         r="4"
-        fill="hsl(var(--foreground))"
+        fill="var(--foreground)"
         fillOpacity="0.35"
       />
 
@@ -62,7 +62,7 @@ export function ReportsEmptyIllustration({ className }: { className?: string }) 
         width="88"
         height="10"
         rx="5"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
       <rect
         x="114"
@@ -70,7 +70,7 @@ export function ReportsEmptyIllustration({ className }: { className?: string }) 
         width="52"
         height="6"
         rx="3"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
         fillOpacity="0.7"
       />
     </svg>

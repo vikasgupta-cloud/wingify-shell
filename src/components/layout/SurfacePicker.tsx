@@ -21,8 +21,8 @@ function SurfaceThumb({
 }) {
   const chromeEqualsBody = fills.chrome === fills.body;
   const cardFloats = fills.card !== fills.body;
-  const hairline = "hsl(var(--foreground) / 0.08)";
-  const railRule = chromeEqualsBody ? hairline : "hsl(var(--foreground) / 0.06)";
+  const hairline = "rgb(from var(--foreground) r g b / 0.08)";
+  const railRule = chromeEqualsBody ? hairline : "rgb(from var(--foreground) r g b / 0.06)";
 
   return (
     <span
@@ -45,19 +45,19 @@ function SurfaceThumb({
       >
         <span
           className="mb-0.5 size-1.5 rounded-[2px]"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.22)" }}
+          style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.22)" }}
         />
         <span
           className="h-[2px] w-full rounded-full"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.14)" }}
+          style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.14)" }}
         />
         <span
           className="h-[2px] w-[85%] rounded-full"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+          style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.1)" }}
         />
         <span
           className="h-[2px] w-[70%] rounded-full"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+          style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.1)" }}
         />
       </span>
 
@@ -69,16 +69,16 @@ function SurfaceThumb({
             backgroundColor: fills.chrome,
             boxShadow: chromeEqualsBody
               ? `inset 0 -1px 0 ${hairline}`
-              : `inset 0 -1px 0 hsl(var(--foreground) / 0.05)`,
+              : `inset 0 -1px 0 rgb(from var(--foreground) r g b / 0.05)`,
           }}
         >
           <span
             className="h-[2px] w-3 rounded-full"
-            style={{ backgroundColor: "hsl(var(--foreground) / 0.14)" }}
+            style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.14)" }}
           />
           <span
             className="h-[2px] w-2 rounded-full"
-            style={{ backgroundColor: "hsl(var(--foreground) / 0.08)" }}
+            style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.08)" }}
           />
         </span>
 
@@ -89,25 +89,25 @@ function SurfaceThumb({
             style={{
               backgroundColor: fills.card,
               boxShadow: cardFloats
-                ? `inset 0 0 0 1px ${hairline}, 0 1px 2px hsl(var(--foreground) / 0.06)`
+                ? `inset 0 0 0 1px ${hairline}, 0 1px 2px rgb(from var(--foreground) r g b / 0.06)`
                 : `inset 0 0 0 1px ${hairline}`,
             }}
           >
             <span
               className="h-[2px] w-[48%] rounded-full"
-              style={{ backgroundColor: "hsl(var(--foreground) / 0.18)" }}
+              style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.18)" }}
             />
             <span
               className="h-[2px] w-[78%] rounded-full"
-              style={{ backgroundColor: "hsl(var(--foreground) / 0.08)" }}
+              style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.08)" }}
             />
             <span
               className="h-[2px] w-[62%] rounded-full"
-              style={{ backgroundColor: "hsl(var(--foreground) / 0.08)" }}
+              style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.08)" }}
             />
             <span
               className="mt-auto h-[28%] w-full rounded-[2px]"
-              style={{ backgroundColor: "hsl(var(--foreground) / 0.05)" }}
+              style={{ backgroundColor: "rgb(from var(--foreground) r g b / 0.05)" }}
             />
           </span>
         </span>

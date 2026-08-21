@@ -801,7 +801,7 @@ export function EditorCanvas({
 
                 {wandzOpen && (
                   <div
-                    className="relative rounded-xl border border-border bg-background p-3 pt-4 shadow-[0_12px_40px_-12px_hsl(var(--foreground)/0.28)]"
+                    className="relative rounded-xl border border-border bg-background p-3 pt-4 shadow-[0_12px_40px_-12px_rgb(from var(--foreground) r g b / 0.28)]"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Button

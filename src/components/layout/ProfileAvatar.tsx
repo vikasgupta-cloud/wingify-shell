@@ -34,7 +34,7 @@ export default function ProfileAvatar({
               "bg-muted",
               "text-foreground",
               "ring-1 ring-inset ring-border",
-              "shadow-[inset_0_1px_0_hsl(var(--background)/0.85),0_1px_2px_hsl(var(--foreground)/0.06)]",
+              "shadow-[inset_0_1px_0_rgb(from var(--background) r g b / 0.85),0_1px_2px_rgb(from var(--foreground) r g b / 0.06)]",
             ],
         className
       )}

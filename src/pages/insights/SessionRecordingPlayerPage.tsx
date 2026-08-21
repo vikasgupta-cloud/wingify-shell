@@ -500,9 +500,8 @@ export default function SessionRecordingPlayerPage() {
 
                 <Button
                   type="button"
-                  variant="inverted"
                   size="icon"
-                  className="size-9 shrink-0 rounded-full border-foreground bg-foreground text-background shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:bg-foreground hover:shadow-md active:scale-95"
+                  className="size-9 shrink-0 rounded-full shadow-sm transition-[transform,background-color,box-shadow] hover:scale-105 hover:shadow-md active:scale-95"
                   aria-label={playing ? "Pause" : "Play"}
                   onClick={() => {
                     if (timeMs >= durationMs) setTimeMs(0);

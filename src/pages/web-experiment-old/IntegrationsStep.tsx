@@ -44,12 +44,12 @@ const BRAND_CHIP: Record<
   (typeof SHOW)[number],
   { bg: string; fg: string }
 > = {
-  ga4: { bg: "hsl(var(--vwo-cherry-500))", fg: "hsl(var(--vwo-neutral-0))" },
+  ga4: { bg: "var(--vwo-cherry-500)", fg: "var(--vwo-neutral-0)" },
   snowflake: {
-    bg: "hsl(var(--vwo-ocean-500))",
-    fg: "hsl(var(--vwo-neutral-0))",
+    bg: "var(--vwo-ocean-500)",
+    fg: "var(--vwo-neutral-0)",
   },
-  segment: { bg: "hsl(var(--vwo-green-700))", fg: "hsl(var(--vwo-neutral-0))" },
+  segment: { bg: "var(--vwo-green-700)", fg: "var(--vwo-neutral-0)" },
 };
 
 /** Inline text links (not link CTAs) shown on a few connected-app rows. */

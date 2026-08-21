@@ -905,9 +905,9 @@ export default function FormGallery() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button">Default Button</Button>
-              <Button type="button" variant="inverted">
-                Default Inverted Button
+              <Button type="button">Primary CTA</Button>
+              <Button type="button" variant="outline">
+                Secondary CTA
               </Button>
               <Button type="button" variant="secondary">
                 Secondary Button

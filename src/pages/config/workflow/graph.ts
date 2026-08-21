@@ -107,8 +107,8 @@ export function buildGraph(
     },
   ];
 
-  const stroke = "hsl(var(--foreground) / 0.6)";
-  const marker = { type: MarkerType.ArrowClosed, color: "hsl(var(--foreground) / 0.6)" };
+  const stroke = "rgb(from var(--foreground) r g b / 0.6)";
+  const marker = { type: MarkerType.ArrowClosed, color: "rgb(from var(--foreground) r g b / 0.6)" };
 
   const edges: Edge[] = [
     {

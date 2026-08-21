@@ -148,7 +148,7 @@ function AlertsToggle({
       <Switch
         checked={checked}
         onCheckedChange={onCheckedChange}
-        className="data-[state=checked]:bg-[hsl(var(--report-brand))]"
+        className="data-[state=checked]:bg-[var(--report-brand)]"
         aria-label="Alerts"
       />
       <span className="text-sm font-medium text-foreground">Alerts</span>
@@ -219,7 +219,7 @@ function GuardrailsStatus({ campaign }: { campaign: Campaign }) {
 
   return (
     <div className="flex items-center gap-4 rounded-lg border border-border bg-muted/30 px-4 py-3.5">
-      <span className="inline-flex shrink-0 items-center rounded-full bg-[hsl(var(--report-ctrl-bg))] px-2.5 py-0.5 text-xs font-semibold text-report-brand-fg">
+      <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--report-ctrl-bg)] px-2.5 py-0.5 text-xs font-semibold text-report-brand-fg">
         M5005
       </span>
       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
@@ -317,7 +317,7 @@ export default function VitalsTab({ campaign }: { campaign: Campaign }) {
                 </span>
                 <span
                   className={cn(
-                    "absolute inset-x-2 bottom-0 h-0.5 origin-center rounded-full bg-[hsl(var(--report-brand))] transition-transform",
+                    "absolute inset-x-2 bottom-0 h-0.5 origin-center rounded-full bg-[var(--report-brand)] transition-transform",
                     selected ? "scale-x-100" : "scale-x-0"
                   )}
                 />

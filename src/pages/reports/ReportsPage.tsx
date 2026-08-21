@@ -816,23 +816,23 @@ function BehaviourIllustration({ className }: { className?: string }) {
         width="208"
         height="128"
         rx="12"
-        stroke="hsl(var(--border))"
+        stroke="var(--border)"
         strokeWidth="1.5"
-        fill="hsl(var(--background))"
+        fill="var(--background)"
       />
-      <rect x="36" y="20" width="208" height="26" rx="12" fill="hsl(var(--muted))" />
-      <rect x="36" y="34" width="208" height="12" fill="hsl(var(--muted))" />
-      <circle cx="54" cy="33" r="3.5" fill="hsl(var(--muted-foreground) / 0.35)" />
-      <circle cx="66" cy="33" r="3.5" fill="hsl(var(--muted-foreground) / 0.25)" />
-      <circle cx="78" cy="33" r="3.5" fill="hsl(var(--muted-foreground) / 0.18)" />
+      <rect x="36" y="20" width="208" height="26" rx="12" fill="var(--muted)" />
+      <rect x="36" y="34" width="208" height="12" fill="var(--muted)" />
+      <circle cx="54" cy="33" r="3.5" fill="rgb(from var(--muted-foreground) r g b / 0.35)" />
+      <circle cx="66" cy="33" r="3.5" fill="rgb(from var(--muted-foreground) r g b / 0.25)" />
+      <circle cx="78" cy="33" r="3.5" fill="rgb(from var(--muted-foreground) r g b / 0.18)" />
       <rect
         x="96"
         y="27"
         width="100"
         height="12"
         rx="6"
-        fill="hsl(var(--background))"
-        stroke="hsl(var(--border))"
+        fill="var(--background)"
+        stroke="var(--border)"
         strokeWidth="1"
       />
 
@@ -843,7 +843,7 @@ function BehaviourIllustration({ className }: { className?: string }) {
         width="72"
         height="10"
         rx="3"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
       <rect
         x="52"
@@ -851,8 +851,8 @@ function BehaviourIllustration({ className }: { className?: string }) {
         width="176"
         height="48"
         rx="6"
-        fill="hsl(var(--muted) / 0.55)"
-        stroke="hsl(var(--border))"
+        fill="rgb(from var(--muted) r g b / 0.55)"
+        stroke="var(--border)"
         strokeWidth="1"
       />
       <rect
@@ -861,7 +861,7 @@ function BehaviourIllustration({ className }: { className?: string }) {
         width="48"
         height="8"
         rx="3"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
       <rect
         x="108"
@@ -869,35 +869,35 @@ function BehaviourIllustration({ className }: { className?: string }) {
         width="64"
         height="8"
         rx="3"
-        fill="hsl(var(--muted) / 0.7)"
+        fill="rgb(from var(--muted) r g b / 0.7)"
       />
 
       {/* Heatmap blobs */}
-      <circle cx="88" cy="92" r="18" fill="hsl(var(--foreground) / 0.06)" />
-      <circle cx="88" cy="92" r="11" fill="hsl(var(--foreground) / 0.1)" />
-      <circle cx="88" cy="92" r="5" fill="hsl(var(--foreground) / 0.18)" />
-      <circle cx="148" cy="98" r="14" fill="hsl(var(--foreground) / 0.05)" />
-      <circle cx="148" cy="98" r="7" fill="hsl(var(--foreground) / 0.1)" />
-      <circle cx="196" cy="86" r="10" fill="hsl(var(--foreground) / 0.05)" />
-      <circle cx="196" cy="86" r="4" fill="hsl(var(--foreground) / 0.12)" />
+      <circle cx="88" cy="92" r="18" fill="rgb(from var(--foreground) r g b / 0.06)" />
+      <circle cx="88" cy="92" r="11" fill="rgb(from var(--foreground) r g b / 0.1)" />
+      <circle cx="88" cy="92" r="5" fill="rgb(from var(--foreground) r g b / 0.18)" />
+      <circle cx="148" cy="98" r="14" fill="rgb(from var(--foreground) r g b / 0.05)" />
+      <circle cx="148" cy="98" r="7" fill="rgb(from var(--foreground) r g b / 0.1)" />
+      <circle cx="196" cy="86" r="10" fill="rgb(from var(--foreground) r g b / 0.05)" />
+      <circle cx="196" cy="86" r="4" fill="rgb(from var(--foreground) r g b / 0.12)" />
 
       {/* Click path */}
       <path
         d="M74 108 C98 100, 120 94, 148 98 C170 101, 184 92, 196 86"
-        stroke="hsl(var(--muted-foreground))"
+        stroke="var(--muted-foreground)"
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeDasharray="3 4"
         strokeOpacity="0.55"
       />
-      <circle cx="74" cy="108" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.45" />
-      <circle cx="148" cy="98" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.4" />
-      <circle cx="196" cy="86" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.35" />
+      <circle cx="74" cy="108" r="3.5" fill="var(--foreground)" fillOpacity="0.45" />
+      <circle cx="148" cy="98" r="3.5" fill="var(--foreground)" fillOpacity="0.4" />
+      <circle cx="196" cy="86" r="3.5" fill="var(--foreground)" fillOpacity="0.35" />
 
       {/* Cursor */}
       <path
         d="M202 90 L208 108 L211 102 L217 110 L220 108 L214 99 L221 97 Z"
-        fill="hsl(var(--foreground))"
+        fill="var(--foreground)"
         fillOpacity="0.55"
       />
 
@@ -908,7 +908,7 @@ function BehaviourIllustration({ className }: { className?: string }) {
         width="84"
         height="8"
         rx="4"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
       <rect
         x="114"
@@ -916,7 +916,7 @@ function BehaviourIllustration({ className }: { className?: string }) {
         width="52"
         height="5"
         rx="2.5"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
         fillOpacity="0.7"
       />
     </svg>
@@ -954,9 +954,9 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="208"
         height="136"
         rx="12"
-        stroke="hsl(var(--border))"
+        stroke="var(--border)"
         strokeWidth="1.5"
-        fill="hsl(var(--background))"
+        fill="var(--background)"
       />
 
       {/* Live badge */}
@@ -966,16 +966,16 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="52"
         height="18"
         rx="9"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
-      <circle cx="64" cy="41" r="3.5" fill="hsl(var(--foreground))" fillOpacity="0.55" />
+      <circle cx="64" cy="41" r="3.5" fill="var(--foreground)" fillOpacity="0.55" />
       <rect
         x="72"
         y="37"
         width="22"
         height="8"
         rx="2"
-        fill="hsl(var(--muted-foreground) / 0.35)"
+        fill="rgb(from var(--muted-foreground) r g b / 0.35)"
       />
 
       {/* Pulse rings */}
@@ -983,7 +983,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         cx="214"
         cy="41"
         r="10"
-        stroke="hsl(var(--muted-foreground))"
+        stroke="var(--muted-foreground)"
         strokeOpacity="0.2"
         strokeWidth="1.25"
       />
@@ -991,11 +991,11 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         cx="214"
         cy="41"
         r="6"
-        stroke="hsl(var(--muted-foreground))"
+        stroke="var(--muted-foreground)"
         strokeOpacity="0.35"
         strokeWidth="1.25"
       />
-      <circle cx="214" cy="41" r="2.5" fill="hsl(var(--foreground))" fillOpacity="0.45" />
+      <circle cx="214" cy="41" r="2.5" fill="var(--foreground)" fillOpacity="0.45" />
 
       {/* Hit rows */}
       <rect
@@ -1004,18 +1004,18 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="176"
         height="22"
         rx="6"
-        fill="hsl(var(--muted) / 0.55)"
-        stroke="hsl(var(--border))"
+        fill="rgb(from var(--muted) r g b / 0.55)"
+        stroke="var(--border)"
         strokeWidth="1"
       />
-      <circle cx="66" cy="73" r="5" fill="hsl(var(--foreground))" fillOpacity="0.2" />
+      <circle cx="66" cy="73" r="5" fill="var(--foreground)" fillOpacity="0.2" />
       <rect
         x="78"
         y="68"
         width="72"
         height="6"
         rx="2"
-        fill="hsl(var(--muted-foreground) / 0.28)"
+        fill="rgb(from var(--muted-foreground) r g b / 0.28)"
       />
       <rect
         x="78"
@@ -1023,7 +1023,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="44"
         height="4"
         rx="2"
-        fill="hsl(var(--muted-foreground) / 0.16)"
+        fill="rgb(from var(--muted-foreground) r g b / 0.16)"
       />
       <rect
         x="188"
@@ -1031,7 +1031,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="28"
         height="8"
         rx="4"
-        fill="hsl(var(--foreground) / 0.12)"
+        fill="rgb(from var(--foreground) r g b / 0.12)"
       />
 
       <rect
@@ -1040,18 +1040,18 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="176"
         height="22"
         rx="6"
-        fill="hsl(var(--muted) / 0.4)"
-        stroke="hsl(var(--border))"
+        fill="rgb(from var(--muted) r g b / 0.4)"
+        stroke="var(--border)"
         strokeWidth="1"
       />
-      <circle cx="66" cy="103" r="5" fill="hsl(var(--foreground))" fillOpacity="0.14" />
+      <circle cx="66" cy="103" r="5" fill="var(--foreground)" fillOpacity="0.14" />
       <rect
         x="78"
         y="98"
         width="64"
         height="6"
         rx="2"
-        fill="hsl(var(--muted-foreground) / 0.22)"
+        fill="rgb(from var(--muted-foreground) r g b / 0.22)"
       />
       <rect
         x="78"
@@ -1059,7 +1059,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="36"
         height="4"
         rx="2"
-        fill="hsl(var(--muted-foreground) / 0.12)"
+        fill="rgb(from var(--muted-foreground) r g b / 0.12)"
       />
       <rect
         x="196"
@@ -1067,7 +1067,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="20"
         height="8"
         rx="4"
-        fill="hsl(var(--foreground) / 0.08)"
+        fill="rgb(from var(--foreground) r g b / 0.08)"
       />
 
       <rect
@@ -1076,18 +1076,18 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="176"
         height="22"
         rx="6"
-        fill="hsl(var(--muted) / 0.28)"
-        stroke="hsl(var(--border))"
+        fill="rgb(from var(--muted) r g b / 0.28)"
+        stroke="var(--border)"
         strokeWidth="1"
       />
-      <circle cx="66" cy="133" r="5" fill="hsl(var(--foreground))" fillOpacity="0.1" />
+      <circle cx="66" cy="133" r="5" fill="var(--foreground)" fillOpacity="0.1" />
       <rect
         x="78"
         y="128"
         width="56"
         height="6"
         rx="2"
-        fill="hsl(var(--muted-foreground) / 0.16)"
+        fill="rgb(from var(--muted-foreground) r g b / 0.16)"
       />
       <rect
         x="78"
@@ -1095,7 +1095,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="28"
         height="4"
         rx="2"
-        fill="hsl(var(--muted-foreground) / 0.1)"
+        fill="rgb(from var(--muted-foreground) r g b / 0.1)"
       />
       <rect
         x="200"
@@ -1103,7 +1103,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="16"
         height="8"
         rx="4"
-        fill="hsl(var(--foreground) / 0.06)"
+        fill="rgb(from var(--foreground) r g b / 0.06)"
       />
 
       {/* Caption bars */}
@@ -1113,7 +1113,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="84"
         height="8"
         rx="4"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
       <rect
         x="114"
@@ -1121,7 +1121,7 @@ function LiveHitsIllustration({ className }: { className?: string }) {
         width="52"
         height="5"
         rx="2.5"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
         fillOpacity="0.7"
       />
     </svg>

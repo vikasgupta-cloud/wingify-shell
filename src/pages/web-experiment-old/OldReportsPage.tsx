@@ -242,14 +242,14 @@ export default function OldReportsPage() {
               <path
                 d={linePath(controlSeries, 640, 200)}
                 fill="none"
-                stroke="hsl(var(--foreground))"
+                stroke="var(--foreground)"
                 strokeWidth="2"
                 vectorEffect="non-scaling-stroke"
               />
               <path
                 d={linePath(v1Series, 640, 200)}
                 fill="none"
-                stroke="hsl(var(--muted-foreground))"
+                stroke="var(--muted-foreground)"
                 strokeWidth="2"
                 vectorEffect="non-scaling-stroke"
                 opacity="0.7"

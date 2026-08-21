@@ -951,7 +951,7 @@ export function EditorBottomDock({
 
   const barClass = (layoutVertical: boolean, inert: boolean, showLabels: boolean) =>
     cn(
-      "relative flex rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_hsl(var(--foreground)/0.28),0_0_0_1px_hsl(var(--foreground)/0.04)]",
+      "relative flex rounded-xl border border-border bg-background p-1 shadow-[0_8px_28px_-6px_rgb(from var(--foreground) r g b / 0.28),0_0_0_1px_rgb(from var(--foreground) r g b / 0.04)]",
       layoutVertical
         ? cn(
             "max-h-[calc(100%-2.5rem)] flex-col items-stretch overflow-y-auto",

@@ -394,7 +394,6 @@ export default function RecordingSidePanel({
             </p>
             <Button
               type="button"
-              variant="inverted"
               size="sm"
               className="h-6 gap-1.5 px-2.5 text-[11px]"
               onClick={onTogglePlay}
@@ -490,7 +489,7 @@ export default function RecordingSidePanel({
               How about creating a new one?
             </p>
           </div>
-          <Button type="button" variant="inverted" size="sm">
+          <Button type="button" variant="default" size="sm">
             Create an Observation
           </Button>
         </TabsContent>

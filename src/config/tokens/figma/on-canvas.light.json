@@ -1,0 +1,275 @@
+{
+  "hover": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.8980392217636108,
+        0.8784313797950745,
+        0.8392156958580017
+      ],
+      "alpha": 1,
+      "hex": "#E5E0D6"
+    },
+    "$description": "Deprecated alias of level-1. Rebind components to level-1, then delete.",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:4:200",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--hover)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:a7452a87f98ad0bd93ce207e8828da18ab86db8f/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-1",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "active": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.8588235378265381,
+        0.8392156958580017,
+        0.7960784435272217
+      ],
+      "alpha": 1,
+      "hex": "#DBD6CB"
+    },
+    "$description": "Deprecated alias of level-2. Rebind components to level-2, then delete.",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:4:201",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--active)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:2a3cf7f997ec950f7493bfbffe420e5ee8bff800/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-2",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "selected": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.8588235378265381,
+        0.8392156958580017,
+        0.7960784435272217
+      ],
+      "alpha": 1,
+      "hex": "#DBD6CB"
+    },
+    "$description": "Deprecated alias of level-2. Rebind components to level-2, then delete.",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:4:202",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--selected)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:2a3cf7f997ec950f7493bfbffe420e5ee8bff800/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-2",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "selected-hover": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.6980392336845398,
+        0.6784313917160034,
+        0.6313725709915161
+      ],
+      "alpha": 1,
+      "hex": "#B2ADA1"
+    },
+    "$description": "Deprecated alias of level-3. Rebind components to level-3, then delete.",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:4:203",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--selected-hover)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:38cfedd16964eceb8a027367cea0f8570a09d6ed/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-3",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "disabled": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.8588235378265381,
+        0.8392156958580017,
+        0.7960784435272217
+      ],
+      "alpha": 1,
+      "hex": "#DBD6CB"
+    },
+    "$description": "Deprecated alias of level-2. Rebind components to level-2, then delete.",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:4:204",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--disabled)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:2a3cf7f997ec950f7493bfbffe420e5ee8bff800/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-2",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "sunken": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.8980392217636108,
+        0.8784313797950745,
+        0.8392156958580017
+      ],
+      "alpha": 1,
+      "hex": "#E5E0D6"
+    },
+    "$description": "Deprecated alias of level-1. Rebind components to level-1, then delete.",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:4:205",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--sunken)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:a7452a87f98ad0bd93ce207e8828da18ab86db8f/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-1",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "level-1": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.8980392217636108,
+        0.8784313797950745,
+        0.8392156958580017
+      ],
+      "alpha": 1,
+      "hex": "#E5E0D6"
+    },
+    "$description": "L1 ghost hover / tertiary rest · L2 ghost active, tertiary hover, row selected · L3 tertiary active",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:220:8",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--level-1)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:a7452a87f98ad0bd93ce207e8828da18ab86db8f/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-1",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "level-2": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.8588235378265381,
+        0.8392156958580017,
+        0.7960784435272217
+      ],
+      "alpha": 1,
+      "hex": "#DBD6CB"
+    },
+    "$description": "L1 ghost hover / tertiary rest · L2 ghost active, tertiary hover, row selected · L3 tertiary active",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:220:9",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--level-2)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:2a3cf7f997ec950f7493bfbffe420e5ee8bff800/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-2",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "level-3": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "srgb",
+      "components": [
+        0.6980392336845398,
+        0.6784313917160034,
+        0.6313725709915161
+      ],
+      "alpha": 1,
+      "hex": "#B2ADA1"
+    },
+    "$description": "L1 ghost hover / tertiary rest · L2 ghost active, tertiary hover, row selected · L3 tertiary active",
+    "$extensions": {
+      "com.figma.variableId": "VariableID:220:10",
+      "com.figma.scopes": [
+        "FRAME_FILL",
+        "SHAPE_FILL"
+      ],
+      "com.figma.codeSyntax": {
+        "WEB": "var(--level-3)"
+      },
+      "com.figma.aliasData": {
+        "targetVariableId": "VariableID:38cfedd16964eceb8a027367cea0f8570a09d6ed/-1:-1",
+        "targetVariableName": "semantic/context/on-canvas/level-3",
+        "targetVariableSetId": "VariableCollectionId:ba8345d30dc04689c81937833cf44a0664effc57/-1:-1",
+        "targetVariableSetName": "2 · Semantic"
+      }
+    }
+  },
+  "$extensions": {
+    "com.figma.modeName": "On canvas"
+  }
+}

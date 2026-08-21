@@ -251,7 +251,7 @@ const STICKY_HEADER_BG = "bg-background";
 function stickyGroupCellClass(showEdgeShadow: boolean) {
   return cn(
     "sticky left-0 z-30 w-[180px] min-w-[180px] max-w-[180px] overflow-hidden border-r border-border bg-background",
-    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_var(--border)]"
   );
 }
 
@@ -259,14 +259,14 @@ function stickyGroupHeaderClass(showEdgeShadow: boolean) {
   return cn(
     "sticky left-0 z-30 w-[180px] min-w-[180px] max-w-[180px] overflow-hidden border-r border-border",
     STICKY_HEADER_BG,
-    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_var(--border)]"
   );
 }
 
 function stickyNestedCellClass(showEdgeShadow: boolean) {
   return cn(
-    "sticky left-[180px] z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
-    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+    "sticky left-[180px] z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]",
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_var(--border)]"
   );
 }
 
@@ -274,14 +274,14 @@ function stickyNestedHeaderClass(showEdgeShadow: boolean) {
   return cn(
     "sticky left-[180px] z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border",
     STICKY_HEADER_BG,
-    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_var(--border)]"
   );
 }
 
 function stickyVariationsCellClass(showEdgeShadow: boolean) {
   return cn(
-    "sticky left-0 z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
-    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+    "sticky left-0 z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border bg-background group-hover:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]",
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_var(--border)]"
   );
 }
 
@@ -289,14 +289,14 @@ function stickyVariationsHeaderClass(showEdgeShadow: boolean) {
   return cn(
     "sticky left-0 z-30 w-[220px] min-w-[220px] max-w-[220px] overflow-hidden border-r border-border",
     STICKY_HEADER_BG,
-    showEdgeShadow && "shadow-[6px_0_12px_-8px_hsl(var(--border))]"
+    showEdgeShadow && "shadow-[6px_0_12px_-8px_var(--border)]"
   );
 }
 
 function stickyActionsCellClass(showEdgeShadow: boolean) {
   return cn(
-    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] overflow-hidden border-l border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
-    showEdgeShadow && "shadow-[-6px_0_12px_-8px_hsl(var(--border))]"
+    "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] overflow-hidden border-l border-border bg-background group-hover:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]",
+    showEdgeShadow && "shadow-[-6px_0_12px_-8px_var(--border)]"
   );
 }
 
@@ -304,7 +304,7 @@ function stickyActionsHeaderClass(showEdgeShadow: boolean) {
   return cn(
     "sticky right-0 z-30 w-10 min-w-[40px] max-w-[40px] overflow-hidden border-l border-border",
     STICKY_HEADER_BG,
-    showEdgeShadow && "shadow-[-6px_0_12px_-8px_hsl(var(--border))]"
+    showEdgeShadow && "shadow-[-6px_0_12px_-8px_var(--border)]"
   );
 }
 
@@ -380,7 +380,7 @@ function GraphBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }
         "flex h-5 min-w-[28px] shrink-0 items-center justify-center rounded-full border px-2 text-xs font-medium",
         tone === "ctrl" && "border-border bg-muted text-foreground",
         tone === "v1" && "border-border bg-secondary text-foreground",
-        tone === "v2" && "border-foreground/30 bg-background text-foreground",
+        tone === "v2" && "border-border bg-muted text-foreground",
         tone === "total" && "border-border bg-muted/50 text-foreground"
       )}
     >
@@ -3053,7 +3053,7 @@ function ResultsMetricCell({
 }) {
   const metricCell = cn(
     resultsMetricColChrome,
-    "overflow-hidden bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]"
+    "overflow-hidden bg-background group-hover:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]"
   );
   const rowH = RESULTS_ROW_H[rowDensity];
   const numericCell = cn(
@@ -3230,7 +3230,7 @@ function RowActionsCell({
       className={cn(
         stickyActionsCellClass(edgeShadows.right),
         RESULTS_ROW_H[rowDensity],
-        "flex items-center justify-center border-b border-border bg-background group-hover:bg-[color-mix(in_srgb,hsl(var(--muted))_50%,hsl(var(--background)))]",
+        "flex items-center justify-center border-b border-border bg-background group-hover:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]",
         className
       )}
     >
@@ -4424,7 +4424,7 @@ function DensitySeriesLegend({
       <Checkbox
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(v === true)}
-        className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+        className="size-5"
       />
       <span
         className={cn(
@@ -4623,7 +4623,7 @@ function ExpectedConversionRateChart({
             className="inline-block h-3 w-5 shrink-0 rounded-sm"
             style={{
               background:
-                "repeating-linear-gradient(-45deg, hsl(var(--border)), hsl(var(--border)) 1px, transparent 1px, transparent 3px)",
+                "repeating-linear-gradient(-45deg, var(--border), var(--border) 1px, transparent 1px, transparent 3px)",
             }}
             aria-hidden
           />
@@ -4898,7 +4898,7 @@ function LegendItem({
       <Checkbox
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(v === true)}
-        className="h-5 w-5 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+        className="size-5"
       />
       <span className="flex items-center gap-1.5">
         <GraphBadge tone={tone}>{label}</GraphBadge>
@@ -4990,7 +4990,7 @@ function GraphPanel({
             <Checkbox
               checked={showRanges}
               onCheckedChange={(v) => setShowRanges(v === true)}
-              className="h-4 w-4 rounded-[2px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+              className="size-4 rounded-[2px]"
             />
             <span className="flex items-center gap-1 text-sm text-foreground">
               Show ranges
@@ -5541,7 +5541,7 @@ function CompareCheckItem({
         <Checkbox
           checked={checked}
           onCheckedChange={() => onToggle()}
-          className="h-4 w-4 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+          className="size-4"
         />
       </span>
       <span className="min-w-0 flex-1 truncate">{name}</span>

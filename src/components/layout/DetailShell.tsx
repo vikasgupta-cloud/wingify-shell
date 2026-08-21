@@ -276,7 +276,7 @@ function SaveButton({ entityId }: { entityId?: string }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="outline"
+            variant="default"
             size="icon"
             disabled={!dirty}
             aria-label="Save"

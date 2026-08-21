@@ -20,13 +20,13 @@ const EXCLUDED_GAP = 40;
 
 // Neutralise react-flow's default (blue) accents so everything reads grayscale.
 const canvasVars = {
-  "--xy-edge-stroke-default": "hsl(var(--foreground) / 0.6)",
-  "--xy-edge-stroke-selected-default": "hsl(var(--foreground))",
-  "--xy-controls-button-background-color-default": "hsl(var(--background))",
-  "--xy-controls-button-background-color-hover-default": "hsl(var(--accent))",
-  "--xy-controls-button-color-default": "hsl(var(--foreground))",
-  "--xy-controls-button-color-hover-default": "hsl(var(--foreground))",
-  "--xy-controls-button-border-color-default": "hsl(var(--border))",
+  "--xy-edge-stroke-default": "rgb(from var(--foreground) r g b / 0.6)",
+  "--xy-edge-stroke-selected-default": "var(--foreground)",
+  "--xy-controls-button-background-color-default": "var(--background)",
+  "--xy-controls-button-background-color-hover-default": "var(--accent)",
+  "--xy-controls-button-color-default": "var(--foreground)",
+  "--xy-controls-button-color-hover-default": "var(--foreground)",
+  "--xy-controls-button-border-color-default": "var(--border)",
 } as React.CSSProperties;
 
 export default function WorkflowMode({ id }: { id: string }) {
@@ -128,7 +128,7 @@ export default function WorkflowMode({ id }: { id: string }) {
               variant={BackgroundVariant.Dots}
               gap={20}
               size={1.6}
-              color="hsl(var(--muted-foreground) / 0.35)"
+              color="rgb(from var(--muted-foreground) r g b / 0.35)"
             />
             <Controls
               position="bottom-right"

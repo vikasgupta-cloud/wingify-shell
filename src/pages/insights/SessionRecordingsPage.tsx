@@ -123,7 +123,7 @@ function ViewsRail({
             placeholder="Search by name or URL"
             className="h-9"
           />
-          <Button variant="outline" size="sm" className="h-9 w-full justify-center gap-2">
+          <Button variant="default" size="sm" className="h-9 w-full justify-center gap-2">
             <Plus className="size-4" aria-hidden />
             Create view
           </Button>
@@ -385,7 +385,7 @@ export default function SessionRecordingsPage() {
                     {pageRows.map((row) => (
                       <tr
                         key={row.id}
-                        className="border-b border-border last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)))]"
+                        className="border-b border-border last:border-b-0 hover:bg-[var(--table-row-hover,_var(--muted))]"
                       >
                         <td className="px-3 py-3 align-middle">
                           <Checkbox
@@ -446,7 +446,6 @@ export default function SessionRecordingsPage() {
                               <Sparkles className="size-3.5" aria-hidden />
                             </Button>
                             <Button
-                              variant="inverted"
                               size="icon"
                               className="size-7"
                               aria-label="Play recording"

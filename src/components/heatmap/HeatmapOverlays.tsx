@@ -39,19 +39,19 @@ import {
  * same whether it came from clicks, hovers, or friction. Index = heat tier.
  */
 const HEAT_RAMP: Record<HeatTier, string> = {
-  0: "hsl(var(--report-link) / 0.85) 0%, hsl(var(--report-link) / 0.4) 40%, transparent 72%",
-  1: "hsl(var(--report-green-mid) / 0.9) 0%, hsl(var(--report-link) / 0.55) 45%, transparent 76%",
-  2: "hsl(var(--report-red) / 0.95) 0%, hsl(var(--warning-solid) / 0.85) 22%, hsl(var(--report-green-mid) / 0.6) 46%, hsl(var(--report-link) / 0.4) 66%, transparent 82%",
+  0: "rgb(from var(--report-link) r g b / 0.85) 0%, rgb(from var(--report-link) r g b / 0.4) 40%, transparent 72%",
+  1: "rgb(from var(--report-green-mid) r g b / 0.9) 0%, rgb(from var(--report-link) r g b / 0.55) 45%, transparent 76%",
+  2: "rgb(from var(--report-red) r g b / 0.95) 0%, rgb(from var(--warning-solid) r g b / 0.85) 22%, rgb(from var(--report-green-mid) r g b / 0.6) 46%, rgb(from var(--report-link) r g b / 0.4) 66%, transparent 82%",
 };
 
 /** Same ramp as a vertical bar — used by the scrollmap and zonal legends. */
 const LEGEND_GRADIENT =
-  "linear-gradient(to top, hsl(var(--report-link)), hsl(var(--report-green-mid)), hsl(var(--report-green)), hsl(var(--warning-solid)), hsl(var(--report-red)))";
+  "linear-gradient(to top, var(--report-link), var(--report-green-mid), var(--report-green), var(--warning-solid), var(--report-red))";
 
 const ZONE_FILL: Record<HeatTier, string> = {
-  0: "hsl(var(--report-link) / 0.32)",
-  1: "hsl(var(--warning-solid) / 0.38)",
-  2: "hsl(var(--report-red) / 0.55)",
+  0: "rgb(from var(--report-link) r g b / 0.32)",
+  1: "rgb(from var(--warning-solid) r g b / 0.38)",
+  2: "rgb(from var(--report-red) r g b / 0.55)",
 };
 
 function rectStyle([left, top, width, height]: Rect) {
@@ -223,7 +223,7 @@ export function ScrollmapOverlay() {
               style={{
                 top: `${top}%`,
                 height: `${band.to - top}%`,
-                background: `hsl(var(${band.token}) / ${band.alpha})`,
+                background: `rgb(from var(${band.token}) r g b / ${band.alpha})`,
               }}
             />
           );
@@ -396,7 +396,7 @@ export function EditZonesLayer() {
           style={{
             ...rectStyle(rect),
             backgroundImage:
-              "repeating-linear-gradient(45deg, hsl(var(--foreground) / 0.16) 0 8px, transparent 8px 16px)",
+              "repeating-linear-gradient(45deg, rgb(from var(--foreground) r g b / 0.16) 0 8px, transparent 8px 16px)",
           }}
         >
           <span className="rounded-md bg-foreground/70 px-2 py-0.5 text-2xl font-semibold tabular-nums text-background">

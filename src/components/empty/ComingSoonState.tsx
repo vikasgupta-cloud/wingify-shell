@@ -20,7 +20,7 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
         width="228"
         height="132"
         rx="14"
-        fill="hsl(var(--muted) / 0.5)"
+        fill="rgb(from var(--muted) r g b / 0.5)"
       />
       <rect
         x="32"
@@ -28,17 +28,17 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
         width="256"
         height="132"
         rx="14"
-        fill="hsl(var(--background))"
-        stroke="hsl(var(--border))"
+        fill="var(--background)"
+        stroke="var(--border)"
         strokeWidth="1.5"
       />
       <path
         d="M32 58a14 14 0 0 1 14-14h228a14 14 0 0 1 14 14v14H32V58Z"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
-      <circle cx="52" cy="58" r="4" fill="hsl(var(--muted-foreground) / 0.35)" />
-      <circle cx="66" cy="58" r="4" fill="hsl(var(--muted-foreground) / 0.25)" />
-      <circle cx="80" cy="58" r="4" fill="hsl(var(--muted-foreground) / 0.18)" />
+      <circle cx="52" cy="58" r="4" fill="rgb(from var(--muted-foreground) r g b / 0.35)" />
+      <circle cx="66" cy="58" r="4" fill="rgb(from var(--muted-foreground) r g b / 0.25)" />
+      <circle cx="80" cy="58" r="4" fill="rgb(from var(--muted-foreground) r g b / 0.18)" />
 
       {/* Skeleton content blocks */}
       <rect
@@ -47,7 +47,7 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
         width="96"
         height="10"
         rx="5"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
       <rect
         x="52"
@@ -55,7 +55,7 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
         width="168"
         height="8"
         rx="4"
-        fill="hsl(var(--muted) / 0.75)"
+        fill="rgb(from var(--muted) r g b / 0.75)"
       />
       <rect
         x="52"
@@ -63,7 +63,7 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
         width="132"
         height="8"
         rx="4"
-        fill="hsl(var(--muted) / 0.55)"
+        fill="rgb(from var(--muted) r g b / 0.55)"
       />
       <rect
         x="52"
@@ -71,7 +71,7 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
         width="72"
         height="12"
         rx="6"
-        fill="hsl(var(--muted))"
+        fill="var(--muted)"
       />
 
       {/* Dashed "under construction" frame on the right */}
@@ -81,13 +81,13 @@ export function ComingSoonIllustration({ className }: { className?: string }) {
         width="60"
         height="68"
         rx="10"
-        stroke="hsl(var(--border))"
+        stroke="var(--border)"
         strokeWidth="1.5"
         strokeDasharray="5 5"
       />
       <path
         d="M228 138 v-14 M242 138 v-24 M256 138 v-18"
-        stroke="hsl(var(--muted-foreground) / 0.45)"
+        stroke="rgb(from var(--muted-foreground) r g b / 0.45)"
         strokeWidth="6"
         strokeLinecap="round"
       />

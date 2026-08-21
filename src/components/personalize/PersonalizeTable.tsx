@@ -98,9 +98,9 @@ const ROW_ICON_BUTTON =
 // bleed through the pinned region. (An alpha hover like bg-muted/50 would let the
 // content scrolling underneath show through the pinned cells.)
 const STICKY_CHECKBOX_BODY =
-  "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-[hsl(var(--table-row-hover,_var(--muted)))] group-data-[selected=true]:bg-muted";
+  "sticky left-0 z-10 w-[44px] bg-background group-hover:bg-[var(--table-row-hover,_var(--muted))] group-data-[selected=true]:bg-muted";
 const STICKY_NAME_BODY =
-  "sticky left-[44px] z-10 bg-background group-hover:bg-[hsl(var(--table-row-hover,_var(--muted)))] group-data-[selected=true]:bg-muted";
+  "sticky left-[44px] z-10 bg-background group-hover:bg-[var(--table-row-hover,_var(--muted))] group-data-[selected=true]:bg-muted";
 const STICKY_CHECKBOX_HEAD = "sticky left-0 z-10 w-[44px] bg-listing-header";
 const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-listing-header";
 // The pinned name column's right edge. It CANNOT be a box-shadow on the <td>/<th>:
@@ -112,7 +112,7 @@ const STICKY_NAME_HEAD = "sticky left-[44px] z-10 bg-listing-header";
 // Arbitrary *property* (not shadow-[…]) so Tailwind's ring-color processing doesn't
 // mangle the multi-shadow value.
 const NAME_EDGE_OVERLAY =
-  "pointer-events-none absolute inset-y-0 right-0 w-px [box-shadow:1px_0_0_0_hsl(var(--border)),6px_0_10px_-2px_rgba(0,0,0,0.18)]";
+  "pointer-events-none absolute inset-y-0 right-0 w-px [box-shadow:1px_0_0_0_var(--border),6px_0_10px_-2px_rgba(0,0,0,0.18)]";
 
 // Vertical padding for body cells by the global row-density preference.
 const DENSITY_PAD: Record<RowDensity, string> = {
@@ -267,7 +267,7 @@ const PAGER_BUTTON =
 // The compact 14px select box — shadcn Checkbox restyled to the original neutral look
 // (light border, foreground fill, 10px check/minus) rather than the default variant.
 const SELECT_BOX =
-  "h-4 w-4 rounded-[3px] border-input bg-background shadow-none data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background [&_svg]:size-2.5";
+  "h-4 w-4 rounded-[3px] border-[1px] border-solid border-[var(--semantic-border-strong)] bg-background shadow-none data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background [&_svg]:size-2.5";
 
 function SelectCheckbox({
   checked,
@@ -480,7 +480,7 @@ export default function PersonalizeTable() {
       data-selected={isQuickView || undefined}
       aria-current={isQuickView ? "true" : undefined}
       className={cn(
-        "group border-b border-border transition-colors duration-150 last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)))]",
+        "group border-b border-border transition-colors duration-150 last:border-b-0 hover:bg-[var(--table-row-hover,_var(--muted))]",
         isQuickView && "bg-muted"
       )}
     >

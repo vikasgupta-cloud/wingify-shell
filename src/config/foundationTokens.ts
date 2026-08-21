@@ -1,6 +1,8 @@
 /**
  * Wingify foundation tokens — spacing, radius, type, shadows, overlays.
- * CSS lives in src/styles/foundations.css. Keep the two in sync.
+ * CSS primitives live in src/styles/foundations.css; Figma component radius/space
+ * from src/config/tokens/figma/ are generated into src/styles/tokens.generated.css
+ * and override the aliases below at runtime.
  */
 
 export const SPACE_PRIMITIVES = [
@@ -229,31 +231,31 @@ export const OVERLAY_CORE = [
     name: "stroke-core",
     token: "--overlay-stroke-core",
     note: "Primary stroke for selection outlines",
-    swatch: "hsl(var(--vwo-neutral-950))",
+    swatch: "var(--vwo-neutral-950)",
   },
   {
     name: "stroke-halo",
     token: "--overlay-stroke-halo",
     note: "White halo behind selection strokes",
-    swatch: "hsl(var(--vwo-neutral-0))",
+    swatch: "var(--vwo-neutral-0)",
   },
   {
     name: "label-bg",
     token: "--overlay-label-bg",
     note: "Background for floating labels",
-    swatch: "hsl(var(--vwo-yellow-50))",
+    swatch: "var(--vwo-yellow-50)",
   },
   {
     name: "label-fg",
     token: "--overlay-label-fg",
     note: "Text color on floating labels",
-    swatch: "hsl(var(--vwo-neutral-950))",
+    swatch: "var(--vwo-neutral-950)",
   },
   {
     name: "handle",
     token: "--overlay-handle",
     note: "Drag handles and resize grips",
-    swatch: "hsl(var(--vwo-yellow-50))",
+    swatch: "var(--vwo-yellow-50)",
   },
 ] as const;
 

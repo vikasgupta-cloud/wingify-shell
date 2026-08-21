@@ -95,7 +95,7 @@ function resolveRoleColor(varName: string): string {
   const probe = document.createElement("span");
   probe.style.cssText =
     "position:absolute;left:-9999px;top:0;pointer-events:none;visibility:hidden";
-  probe.style.color = `hsl(var(${varName}))`;
+  probe.style.color = `var(${varName})`;
   document.body.appendChild(probe);
   const resolved = getComputedStyle(probe).color;
   document.body.removeChild(probe);

@@ -76,7 +76,7 @@ export default function DesignSystemFoundations() {
                       key={step}
                       className="h-12 min-w-0 flex-1"
                       style={{
-                        backgroundColor: `hsl(var(${primitiveVar(palette.name, step)}))`,
+                        backgroundColor: `var(${primitiveVar(palette.name, step)})`,
                       }}
                       title={`${palette.name}/${step}`}
                     />
@@ -88,7 +88,7 @@ export default function DesignSystemFoundations() {
               <p className="type-label text-muted-foreground">Midnight</p>
               <div
                 className="h-12 w-24 rounded-md border border-border"
-                style={{ backgroundColor: "hsl(var(--vwo-midnight-base))" }}
+                style={{ backgroundColor: "var(--vwo-midnight-base)" }}
                 title="midnight/base"
               />
             </div>
@@ -290,26 +290,26 @@ export default function DesignSystemFoundations() {
           <div
             data-mode="dark"
             className="grid gap-6 rounded-lg p-8 sm:grid-cols-3"
-            style={{ backgroundColor: "hsl(var(--vwo-neutral-950))" }}
+            style={{ backgroundColor: "var(--vwo-neutral-950)" }}
           >
             {SHADOW_LEVELS.map((level) => (
               <div
                 key={level}
                 className="rounded-lg px-5 py-8"
                 style={{
-                  backgroundColor: "hsl(var(--vwo-neutral-900))",
+                  backgroundColor: "var(--vwo-neutral-900)",
                   boxShadow: `var(--shadow-${level})`,
                 }}
               >
                 <p
                   className="text-sm font-medium"
-                  style={{ color: "hsl(var(--vwo-neutral-50))" }}
+                  style={{ color: "var(--vwo-neutral-50)" }}
                 >
                   shadow/dark/{level}
                 </p>
                 <p
                   className="mt-1 text-xs"
-                  style={{ color: "hsl(var(--vwo-neutral-300))" }}
+                  style={{ color: "var(--vwo-neutral-300)" }}
                 >
                   --shadow-{level}
                 </p>
@@ -346,7 +346,7 @@ export default function DesignSystemFoundations() {
               <div
                 key={step}
                 className="h-16 min-w-0 flex-1"
-                style={{ backgroundColor: `hsl(var(--thermal-${step}))` }}
+                style={{ backgroundColor: `var(--thermal-${step})` }}
                 title={`thermal/${step}`}
               />
             ))}
@@ -362,7 +362,7 @@ export default function DesignSystemFoundations() {
           <h3 className="type-heading-sm text-foreground">Scrim</h3>
           <div
             className="relative overflow-hidden rounded-lg border border-border px-6 py-10"
-            style={{ backgroundColor: "hsl(var(--vwo-neutral-200))" }}
+            style={{ backgroundColor: "var(--vwo-neutral-200)" }}
           >
             <p className="relative z-0 type-heading-sm text-foreground">
               Content behind the scrim

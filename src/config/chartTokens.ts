@@ -7,13 +7,13 @@
  * the browser session). Prefer Tailwind (`bg-chart-1`, …) in markup; use
  * these exports for JS (series arrays, SVG fills, scales).
  *
- * Note: `hsl(var(--…))` strings work anywhere the DOM/SVG resolves CSS —
+ * Note: `var(--…)` strings work anywhere the DOM/SVG resolves CSS —
  * they will NOT work on a raw <canvas>; read the computed style first there.
  */
 
-const chartVar = (name: string) => `hsl(var(--chart-${name}))`;
+const chartVar = (name: string) => `var(--chart-${name})`;
 const chartVarAlpha = (name: string, alpha: number) =>
-  `hsl(var(--chart-${name}) / ${alpha})`;
+  `rgb(from var(--chart-${name}) r g b / ${alpha})`;
 
 const CATEGORICAL_COUNT = 20;
 

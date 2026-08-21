@@ -101,7 +101,7 @@ export function EditorScenarioFloat({
               aria-expanded={expanded || menuOpen}
               className={cn(
                 "group flex items-center overflow-hidden border border-border bg-background text-foreground outline-none",
-                "rounded-t-md border-b-0 shadow-[0_-4px_16px_-8px_hsl(var(--foreground)/0.18)]",
+                "rounded-t-md border-b-0 shadow-[0_-4px_16px_-8px_rgb(from var(--foreground) r g b / 0.18)]",
                 "transition-[width,height,padding,gap] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
                 "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 expanded

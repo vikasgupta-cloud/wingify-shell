@@ -109,11 +109,11 @@
   --shadow-lg: 0 14px 34px rgb(27 25 19 / 0.16), 0 2px 8px rgb(27 25 19 / 0.09);
 
   /* Overlay tokens are unthemed — visual editor / recordings ignore app theme. */
-  --overlay-stroke-core: hsl(var(--vwo-neutral-950));
-  --overlay-stroke-halo: hsl(var(--vwo-neutral-0));
-  --overlay-label-bg: hsl(var(--vwo-yellow-50));
-  --overlay-label-fg: hsl(var(--vwo-neutral-950));
-  --overlay-handle: hsl(var(--vwo-yellow-50));
+  --overlay-stroke-core: var(--vwo-neutral-950);
+  --overlay-stroke-halo: var(--vwo-neutral-0);
+  --overlay-label-bg: var(--vwo-yellow-50);
+  --overlay-label-fg: var(--vwo-neutral-950);
+  --overlay-handle: var(--vwo-yellow-50);
   --overlay-scrim: rgb(27 25 19 / 0.62);
 
   --thermal-1: var(--vwo-berry-800);
@@ -308,67 +308,67 @@
 }
 
 [data-badge][data-tone][data-fill="light"] {
-  background-color: hsl(var(--badge-neutral-light-bg));
-  color: hsl(var(--badge-neutral-light-fg));
+  background-color: var(--badge-neutral-light-bg);
+  color: var(--badge-neutral-light-fg);
 }
 [data-badge][data-tone="cherry"][data-fill="light"] {
-  background-color: hsl(var(--badge-cherry-light-bg));
-  color: hsl(var(--badge-cherry-light-fg));
+  background-color: var(--badge-cherry-light-bg);
+  color: var(--badge-cherry-light-fg);
 }
 [data-badge][data-tone="amber"][data-fill="light"] {
-  background-color: hsl(var(--badge-amber-light-bg));
-  color: hsl(var(--badge-amber-light-fg));
+  background-color: var(--badge-amber-light-bg);
+  color: var(--badge-amber-light-fg);
 }
 [data-badge][data-tone="yellow"][data-fill="light"] {
-  background-color: hsl(var(--badge-yellow-light-bg));
-  color: hsl(var(--badge-yellow-light-fg));
+  background-color: var(--badge-yellow-light-bg);
+  color: var(--badge-yellow-light-fg);
 }
 [data-badge][data-tone="green"][data-fill="light"] {
-  background-color: hsl(var(--badge-green-light-bg));
-  color: hsl(var(--badge-green-light-fg));
+  background-color: var(--badge-green-light-bg);
+  color: var(--badge-green-light-fg);
 }
 [data-badge][data-tone="ocean"][data-fill="light"] {
-  background-color: hsl(var(--badge-ocean-light-bg));
-  color: hsl(var(--badge-ocean-light-fg));
+  background-color: var(--badge-ocean-light-bg);
+  color: var(--badge-ocean-light-fg);
 }
 [data-badge][data-tone="berry"][data-fill="light"] {
-  background-color: hsl(var(--badge-berry-light-bg));
-  color: hsl(var(--badge-berry-light-fg));
+  background-color: var(--badge-berry-light-bg);
+  color: var(--badge-berry-light-fg);
 }
 [data-badge][data-tone="maroon"][data-fill="light"] {
-  background-color: hsl(var(--badge-maroon-light-bg));
-  color: hsl(var(--badge-maroon-light-fg));
+  background-color: var(--badge-maroon-light-bg);
+  color: var(--badge-maroon-light-fg);
 }
 
 [data-badge][data-tone][data-fill="solid"] {
-  background-color: hsl(var(--badge-neutral-solid-bg));
-  color: hsl(var(--badge-neutral-solid-fg));
+  background-color: var(--badge-neutral-solid-bg);
+  color: var(--badge-neutral-solid-fg);
 }
 [data-badge][data-tone="cherry"][data-fill="solid"] {
-  background-color: hsl(var(--badge-cherry-solid-bg));
-  color: hsl(var(--badge-cherry-solid-fg));
+  background-color: var(--badge-cherry-solid-bg);
+  color: var(--badge-cherry-solid-fg);
 }
 [data-badge][data-tone="amber"][data-fill="solid"] {
-  background-color: hsl(var(--badge-amber-solid-bg));
-  color: hsl(var(--badge-amber-solid-fg));
+  background-color: var(--badge-amber-solid-bg);
+  color: var(--badge-amber-solid-fg);
 }
 [data-badge][data-tone="yellow"][data-fill="solid"] {
-  background-color: hsl(var(--badge-yellow-solid-bg));
-  color: hsl(var(--badge-yellow-solid-fg));
+  background-color: var(--badge-yellow-solid-bg);
+  color: var(--badge-yellow-solid-fg);
 }
 [data-badge][data-tone="green"][data-fill="solid"] {
-  background-color: hsl(var(--badge-green-solid-bg));
-  color: hsl(var(--badge-green-solid-fg));
+  background-color: var(--badge-green-solid-bg);
+  color: var(--badge-green-solid-fg);
 }
 [data-badge][data-tone="ocean"][data-fill="solid"] {
-  background-color: hsl(var(--badge-ocean-solid-bg));
-  color: hsl(var(--badge-ocean-solid-fg));
+  background-color: var(--badge-ocean-solid-bg);
+  color: var(--badge-ocean-solid-fg);
 }
 [data-badge][data-tone="berry"][data-fill="solid"] {
-  background-color: hsl(var(--badge-berry-solid-bg));
-  color: hsl(var(--badge-berry-solid-fg));
+  background-color: var(--badge-berry-solid-bg);
+  color: var(--badge-berry-solid-fg);
 }
 [data-badge][data-tone="maroon"][data-fill="solid"] {
-  background-color: hsl(var(--badge-maroon-solid-bg));
-  color: hsl(var(--badge-maroon-solid-fg));
+  background-color: var(--badge-maroon-solid-bg);
+  color: var(--badge-maroon-solid-fg);
 }

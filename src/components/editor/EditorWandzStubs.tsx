@@ -422,7 +422,7 @@ export function EditorWandzStubs({
       <div
         role="dialog"
         aria-label="Wandz"
-        className="w-[300px] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_12px_40px_-12px_hsl(var(--foreground)/0.35)]"
+        className="w-[300px] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_12px_40px_-12px_rgb(from var(--foreground) r g b / 0.35)]"
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
       >

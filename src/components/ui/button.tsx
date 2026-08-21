@@ -6,13 +6,13 @@ import { cn } from "@/lib/utils"
 
 /**
  * CTA hierarchy:
- * 1. default / outline     — surface fill, foreground stroke
- * 2. inverted              — foreground fill
+ * 1. default (Primary CTA) — semantic action primary fill (Create, Send, Save)
+ * 2. outline               — semantic action secondary stroke (secondary CTA)
  * 3. secondary             — muted fill
  * 4. tertiary              — tokenized soft fill
  * 5. ghost / shadow        — no fill, no border
  * 6. link                  — --link
- * 7. destructive           — outline; inverted fill; shadow text
+ * 7. destructive           — outline; filled; shadow text
  * 8. ai / aiOutline        — AI CTA fill / AI outline
  */
 const buttonVariants = cva(
@@ -20,37 +20,30 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // 1. Default — surface fill, foreground stroke
+        // Primary CTA — semantic/action/primary-*
         default:
-          "border border-foreground bg-background font-cta text-foreground hover:bg-muted active:bg-muted",
-        // Default inverted — foreground fill
-        inverted:
-          "border border-foreground bg-foreground font-cta text-background hover:bg-foreground/90 active:bg-foreground/80",
-        // 2. Secondary — muted fill, no stroke
+          "border border-[var(--semantic-action-primary-bg)] bg-[var(--semantic-action-primary-bg)] font-cta text-[var(--semantic-action-primary-text)] hover:border-[var(--semantic-action-primary-bg-hover)] hover:bg-[var(--semantic-action-primary-bg-hover)] active:border-[var(--semantic-action-primary-bg-active)] active:bg-[var(--semantic-action-primary-bg-active)]",
+        // Muted fill
         secondary:
           "border border-transparent bg-secondary font-cta text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-hover",
-        // 3. Tertiary — tokenized soft fill
+        // Soft fill
         tertiary:
           "border border-cta-tertiary-border bg-cta-tertiary font-cta text-cta-tertiary-foreground hover:bg-cta-tertiary-hover active:bg-cta-tertiary-hover",
-        // Back-compat: same as default outline
+        // Secondary CTA — semantic/action/secondary-*
         outline:
-          "border border-foreground bg-background font-cta text-foreground hover:bg-muted active:bg-muted",
-        // 4. Ghost / shadow — no fill, no border
+          "border border-[var(--semantic-action-secondary-border)] bg-background font-cta text-[var(--semantic-action-secondary-text)] hover:bg-muted active:bg-muted",
         ghost:
           "border border-transparent bg-transparent text-foreground hover:bg-muted hover:text-foreground active:bg-muted",
         shadow:
           "border border-transparent bg-transparent text-foreground hover:bg-muted hover:text-foreground active:bg-muted",
-        // 5. Link — --link (ocean) CTA
         link:
           "h-auto border-transparent bg-transparent px-0 font-cta text-link underline-offset-4 hover:bg-transparent hover:text-link-hover hover:underline active:bg-transparent disabled:bg-transparent",
-        // 6. Destructive — outline / inverted fill / text-only
         destructive:
           "border border-destructive bg-background font-cta text-destructive hover:bg-danger-bg active:bg-danger-bg",
         destructiveInverted:
           "border border-destructive bg-destructive font-cta text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
         destructiveShadow:
           "border border-transparent bg-transparent font-cta text-destructive hover:bg-danger-bg active:bg-danger-bg",
-        // 7. AI CTA — fill / outline
         ai:
           "border border-transparent bg-cta-ai font-cta text-cta-ai-foreground hover:bg-cta-ai-hover active:bg-cta-ai-hover",
         aiOutline:

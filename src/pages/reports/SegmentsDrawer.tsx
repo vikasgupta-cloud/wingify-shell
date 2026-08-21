@@ -231,7 +231,7 @@ function SegmentRow({
         checked={checked}
         onCheckedChange={() => onToggle()}
         onFocus={onFocus}
-        className="h-4 w-4 shrink-0 rounded-[4px] border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+        className="size-4 shrink-0"
       />
       <button
         type="button"

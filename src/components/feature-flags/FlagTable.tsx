@@ -301,7 +301,7 @@ export default function FlagTable() {
                 <tr
                   key={f.id}
                   className={cn(
-                    "group border-b border-border last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)/0.4))]",
+                    "group border-b border-border last:border-b-0 hover:bg-[rgb(from var(--table-row-hover,_var(--muted) r g b / 0.4))]",
                     i % 2 === 1 && "bg-muted/20"
                   )}
                 >

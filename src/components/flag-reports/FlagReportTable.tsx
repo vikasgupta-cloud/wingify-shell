@@ -278,7 +278,7 @@ export default function FlagReportTable({ kind }: { kind: FlagReportKind }) {
                 pageRows.map((row) => (
                   <tr
                     key={row.id}
-                    className="group border-b border-border last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)/0.4))]"
+                    className="group border-b border-border last:border-b-0 hover:bg-[rgb(from var(--table-row-hover,_var(--muted) r g b / 0.4))]"
                   >
                     <td
                       className={cn(
