@@ -3,9 +3,7 @@
 
 import { useEffect, useRef } from "react";
 import { Search } from "@/components/icons/protoLucide";
-import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/layout/PageHeader";
 import WandzPanel from "@/components/wandz/WandzPanel";
 import PersonalizeViewBar from "@/components/personalize/PersonalizeViewBar";
 import PersonalizeFilterBar from "@/components/personalize/PersonalizeFilterBar";
@@ -15,7 +13,6 @@ import PersonalizeGanttControls from "@/components/personalize/PersonalizeGanttC
 import PersonalizeTable from "@/components/personalize/PersonalizeTable";
 import PersonalizeKanbanBoard from "@/components/personalize/PersonalizeKanbanBoard";
 import PersonalizeGanttChart from "@/components/personalize/PersonalizeGanttChart";
-import { iconForPath, pageLabel } from "@/lib/nav";
 import { usePersonalizeTableStore } from "@/store/personalizeTable";
 import {
   PERSONALIZE_OVERVIEW_ID,
@@ -26,7 +23,6 @@ import { useWandzStore } from "@/store/wandz";
 
 export default function PersonalizePage() {
   const { search, setSearch } = usePersonalizeTableStore();
-  const { pathname } = useLocation();
   const { layout, filters, groupBy } = useActivePersonalizeViewState();
   const isOverview = usePersonalizeViewsStore(
     (s) => s.activeViewId === PERSONALIZE_OVERVIEW_ID
@@ -43,8 +39,7 @@ export default function PersonalizePage() {
 
   return (
     <>
-      <PageHeader title={pageLabel(pathname)} icon={iconForPath(pathname)} />
-      <div className="px-12 pb-12 pt-8">
+      <div className="px-12 pb-12 pt-10">
         <PersonalizeViewBar />
         {isOverview ? (
           <div className="flex min-h-[360px] flex-col items-center justify-center rounded-lg border border-border bg-background text-center">

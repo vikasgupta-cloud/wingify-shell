@@ -1,4 +1,4 @@
-// Right sheet for a Data 360 event — tabs vary by kind (Standard / My Event / Computed).
+// Right sheet for a Data360 event — tabs vary by kind (Standard / My Event / Computed).
 
 import { useMemo, useState } from "react";
 import {

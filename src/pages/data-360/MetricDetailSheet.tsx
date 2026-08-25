@@ -1,4 +1,4 @@
-// Right sheet for a Data 360 metric — Definition / Metadata / Campaigns / Funnels.
+// Right sheet for a Data360 metric — Definition / Metadata / Campaigns / Funnels.
 
 import { useState } from "react";
 import {

@@ -1,4 +1,4 @@
-// Data 360 → Segments — table layout (search + filters); action icon opens detail sheet.
+// Data360 → Segments — table layout (search + filters); action icon opens detail sheet.
 // No views/overview/column config. Create stays on the shell TopBar (direct button).
 
 import { useMemo, useState } from "react";
@@ -13,12 +13,9 @@ import {
 } from "@/components/icons/protoLucide";
 import * as Popover from "@radix-ui/react-popover";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/layout/PageHeader";
-import { iconForPath, pageLabel } from "@/lib/nav";
 import { SEGMENTS, type DataSegment, type SegmentKind } from "@/data/segments";
 import SegmentDetailSheet from "./SegmentDetailSheet";
 import { cn } from "@/lib/utils";
@@ -136,7 +133,6 @@ function MultiFilterChip({
 }
 
 export default function SegmentsPage() {
-  const { pathname } = useLocation();
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<
     Partial<Record<FilterKey, string[]>>
@@ -193,13 +189,7 @@ export default function SegmentsPage() {
 
   return (
     <>
-      <PageHeader
-        title={pageLabel(pathname)}
-        icon={iconForPath(pathname)}
-        description="Slice visitor data to understand behavior and create high-impact audience groups."
-      />
-
-      <div className="px-12 pb-12 pt-8">
+      <div className="px-12 pb-12 pt-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="flex w-72 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />

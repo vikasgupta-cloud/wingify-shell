@@ -121,7 +121,8 @@
   --brand-yellow: var(--yellow-accent);
   --brand-midnight: var(--vwo-midnight-base);
 
-  /* Listing headers (tables / kanban / gantt) — design controller can override. */
+  /* Listing headers (tables / kanban / gantt) — design controller can override.
+   * Compat steps 25/75 live in tokens.generated.css (picker defaults use 75). */
   --listing-header-bg: var(--background);
   --listing-header-fg: var(--foreground);
 
@@ -720,12 +721,12 @@ body {
  * Non-table headers (kanban / gantt) should use bg-listing-header + text-listing-header-foreground.
  */
 table > thead > tr:has(> th) {
-  background-color: var(--listing-header-bg) !important;
-  color: var(--listing-header-fg) !important;
+  background-color: var(--listing-header-bg, var(--muted)) !important;
+  color: var(--listing-header-fg, var(--foreground)) !important;
 }
 table > thead > tr:has(> th) > th {
-  background-color: var(--listing-header-bg) !important;
-  color: var(--listing-header-fg) !important;
+  background-color: var(--listing-header-bg, var(--muted)) !important;
+  color: var(--listing-header-fg, var(--foreground)) !important;
 }
 table > thead > tr:has(> th) > th button,
 table > thead > tr:has(> th) > th [class*="text-muted"],

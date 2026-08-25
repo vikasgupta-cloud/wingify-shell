@@ -1,4 +1,4 @@
-// Dummy segments for Data 360 → Segments (Standard + My Segment).
+// Dummy segments for Data360 → Segments (Standard + My Segment).
 // Standard rows reuse the shared catalog in src/config/segments.ts.
 
 import {

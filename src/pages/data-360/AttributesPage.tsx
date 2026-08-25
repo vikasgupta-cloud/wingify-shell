@@ -1,4 +1,4 @@
-// Data 360 → Attributes — table layout (search + filters); action icon opens detail sheet.
+// Data360 → Attributes — table layout (search + filters); action icon opens detail sheet.
 // No views/overview/column config. Create stays on the shell TopBar.
 
 import { useMemo, useState } from "react";
@@ -13,12 +13,9 @@ import {
 import * as Popover from "@radix-ui/react-popover";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { Check } from "@/components/icons/protoLucide";
-import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/layout/PageHeader";
-import { iconForPath, pageLabel } from "@/lib/nav";
 import {
   ATTRIBUTES,
   type Attribute,
@@ -142,7 +139,6 @@ function MultiFilterChip({
 }
 
 export default function AttributesPage() {
-  const { pathname } = useLocation();
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<
     Partial<Record<FilterKey, string[]>>
@@ -202,13 +198,7 @@ export default function AttributesPage() {
 
   return (
     <>
-      <PageHeader
-        title={pageLabel(pathname)}
-        icon={iconForPath(pathname)}
-        description="Define visitor's characteristics as per your need to visualize their unique identity."
-      />
-
-      <div className="px-12 pb-12 pt-8">
+      <div className="px-12 pb-12 pt-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="flex w-72 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />

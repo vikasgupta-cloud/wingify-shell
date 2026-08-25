@@ -1,4 +1,4 @@
-// Dummy metrics for Data 360 → Metrics (Standard + My Metric).
+// Dummy metrics for Data360 → Metrics (Standard + My Metric).
 // Separate from src/data/metrics.ts (config/report picker catalog).
 
 import type { CampaignStatus } from "@/data/campaigns";

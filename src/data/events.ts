@@ -1,4 +1,4 @@
-// Dummy events for Data 360 → Events (Standard, My Event, Computed Event).
+// Dummy events for Data360 → Events (Standard, My Event, Computed Event).
 
 export type EventKind = "Standard" | "My Event" | "Computed Event";
 export type EventDataType = "Text" | "Number" | "Boolean" | "Date";

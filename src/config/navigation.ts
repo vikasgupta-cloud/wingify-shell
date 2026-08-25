@@ -7,6 +7,7 @@ import {
   Flag,
   ShoppingCart,
   BarChart3,
+  LineChart,
   HeartPulse,
   Megaphone,
   Database,
@@ -157,6 +158,7 @@ export const NAV: NavItem[] = [
     ]},
     { heading: "Optimize", items: [{ label: "Merchandising", path: "/commerce/merchandising" }]},
   ]},
+  { label: "Analytics", path: "/analytics", icon: LineChart, group: 2, pinnable: true },
   { label: "Insights", path: "/insights", icon: BarChart3, group: 2, pinnable: true, sections: [
     { heading: "Overview", items: [{ label: "Dashboard", path: "/insights/dashboard", hideCreate: true }]},
     { heading: "Reports", items: [
@@ -179,7 +181,7 @@ export const NAV: NavItem[] = [
     { heading: "Administration", items: [{ label: "Settings", path: "/pulse/settings", hideCreate: true }]},
   ]},
   { label: "Engage", path: "/engage", icon: Megaphone, group: 2, pinnable: true },
-  { label: "Data 360", path: "/data-360", icon: Database, group: 2, pinnable: true, sections: [
+  { label: "Data360", path: "/data-360", icon: Database, group: 2, pinnable: true, sections: [
     { heading: "Customer Data", items: [
       { label: "Profiles", path: "/data-360/profiles" },
       { label: "Attributes", path: "/data-360/attributes" },
@@ -411,6 +413,29 @@ if (profileItem) {
 }
 
 export const PINNABLE_PATHS = NAV.filter((i) => i.pinnable).map((i) => i.path);
+
+/**
+ * Products shown in the TopBar breadcrumb switcher (Wandz + group-2 products).
+ * Order is intentional — matches the product switcher list, not rail grouping.
+ */
+export const PRODUCT_SWITCHER_PATHS = [
+  "/wandz",
+  "/web-experiment",
+  "/personalize",
+  "/feature-management",
+  "/commerce",
+  "/analytics",
+  "/insights",
+  "/pulse",
+  "/engage",
+  "/data-360",
+] as const;
+
+export function productSwitcherItems(): NavItem[] {
+  return PRODUCT_SWITCHER_PATHS.map(
+    (path) => NAV.find((item) => item.path === path)
+  ).filter((item): item is NavItem => item !== undefined);
+}
 
 /** Theme-QA campaign flow — hidden from the rail; open via design controller. */
 export const WEB_EXPERIMENT_OLD_PATH = "/web-experiment-old";

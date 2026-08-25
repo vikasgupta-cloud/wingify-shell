@@ -31,7 +31,7 @@ export default function HeaderColorPicker({
           <p className="text-xs text-muted-foreground">
             {active
               ? `${active.label} · ${active.hex} — tables, kanban & gantt`
-              : "All tables app-wide (Data 360, Web Exp, Flags…) — header row only"}
+              : "All tables app-wide (Data360, Web Exp, Flags…) — header row only"}
           </p>
         </div>
         {headerTokenId ? (

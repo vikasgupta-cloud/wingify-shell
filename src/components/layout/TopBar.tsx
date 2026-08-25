@@ -1,8 +1,7 @@
-import { ChevronDown, PanelLeft, Plus } from "@/components/icons/protoLucide";
+import { ChevronDown, Plus } from "@/components/icons/protoLucide";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useUIStore } from "../../store/ui";
 import { useRowsStore } from "../../store/rows";
 import { useRecommendationRowsStore } from "../../store/recommendationRows";
 import { showsCreate, pageLabel } from "../../lib/nav";
@@ -13,7 +12,6 @@ import {
 } from "../../config/createMenu";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import BreadcrumbNav from "./BreadcrumbNav";
-import { cn } from "../../lib/utils";
 
 function CreateItem({ option, onSelect }: { option: CreateOption; onSelect: () => void }) {
   const Icon = option.icon;
@@ -63,8 +61,6 @@ function CreateSection({
 }
 
 export default function TopBar() {
-  const toggleDock = useUIStore((s) => s.toggleDock);
-  const isDocked = useUIStore((s) => s.isDocked);
   const navigate = useNavigate();
   const createCampaign = useRowsStore((s) => s.createCampaign);
   const createRecommendation = useRecommendationRowsStore((s) => s.create);
@@ -97,23 +93,6 @@ export default function TopBar() {
   return (
     <header data-slot="top-bar" className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-panel/95 px-4 text-panel-foreground backdrop-blur-sm">
       <div className="flex min-w-0 items-center gap-2">
-        <button
-          type="button"
-          aria-label={
-            isDocked ? "Collapse navigation" : "Expand navigation"
-          }
-          aria-pressed={isDocked}
-          onClick={toggleDock}
-          className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-md outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none",
-            isDocked
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground"
-          )}
-        >
-          <PanelLeft className="h-4 w-4" />
-        </button>
-        <span className="text-sm text-muted-foreground">/</span>
         <WorkspaceSwitcher />
         <span className="text-sm text-muted-foreground">/</span>
         <BreadcrumbNav />

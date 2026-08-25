@@ -31,12 +31,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import StatusBadge from "@/components/ui/StatusBadge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   HEATMAP_ALL_DATA,
@@ -344,37 +338,7 @@ export default function HeatmapsPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      {/* Page header */}
-      <div className="flex flex-wrap items-center gap-3 px-12 pb-4 pt-8">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-background">
-          <Flame className="size-4 text-foreground" aria-hidden />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h1 className="font-title w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
-                    Heatmaps
-                  </h1>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" align="start">
-                  Generate a visual report of click behavior on a webpage.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Help"
-            >
-              <CircleHelp className="size-4" aria-hidden />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-start gap-6 px-12 pb-10 pt-2">
+      <div className="flex items-start gap-6 px-12 pb-10 pt-10">
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           {/* Filter bar */}
           <div className="flex overflow-hidden rounded-md border border-border bg-background">

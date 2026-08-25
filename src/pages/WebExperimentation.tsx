@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { Search } from "@/components/icons/protoLucide";
-import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import CampaignTable from "../components/table/CampaignTable";
 import ColumnConfig from "../components/table/ColumnConfig";
@@ -12,8 +11,6 @@ import GanttChart from "../components/gantt/GanttChart";
 import GanttControls from "../components/gantt/GanttControls";
 import QuickViewPanel from "../components/quickview/QuickViewPanel";
 import WandzPanel from "../components/wandz/WandzPanel";
-import PageHeader from "../components/layout/PageHeader";
-import { iconForPath, pageLabel } from "../lib/nav";
 import { useTableStore } from "../store/table";
 import { OVERVIEW_ID, useActiveViewState, useViewsStore } from "../store/views";
 import { useQuickViewStore } from "../store/quickView";
@@ -21,7 +18,6 @@ import { useWandzStore } from "../store/wandz";
 
 export default function WebExperimentation() {
   const { search, setSearch } = useTableStore();
-  const { pathname } = useLocation();
   const { layout, filters, groupBy } = useActiveViewState();
   const isOverview = useViewsStore((s) => s.activeViewId === OVERVIEW_ID);
   const openId = useQuickViewStore((s) => s.openId);
@@ -41,14 +37,7 @@ export default function WebExperimentation() {
 
   return (
     <>
-      <PageHeader title={pageLabel(pathname)} icon={iconForPath(pathname)} />
-      {/*
-        Header → toolbar gap is exactly 32px (pt-8). ViewBar sits first in this
-        region: when it renders nothing (no saved views and not dirty) it returns
-        null, so the toolbar sits at the 32px gap; when it renders tabs and/or
-        Discard/Save view, it occupies the region and the spacing grows naturally.
-      */}
-      <div className="px-12 pb-12 pt-8">
+      <div className="px-12 pb-12 pt-10">
         <ViewBar />
         {isOverview ? (
           // Overview is a fixed lead tab, not a view: no toolbar, no data grid.

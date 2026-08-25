@@ -2,15 +2,12 @@
 // Create comes from the shell TopBar.
 
 import { Search } from "@/components/icons/protoLucide";
-import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/layout/PageHeader";
 import FlagViewBar from "@/components/feature-flags/FlagViewBar";
 import FlagFilterBar from "@/components/feature-flags/FlagFilterBar";
 import FlagColumnConfig from "@/components/feature-flags/FlagColumnConfig";
 import FlagTable from "@/components/feature-flags/FlagTable";
 import FlagCardList from "@/components/feature-flags/FlagCardList";
-import { iconForPath, pageLabel } from "@/lib/nav";
 import { useFlagTableStore } from "@/store/flagTable";
 import {
   FLAG_OVERVIEW_ID,
@@ -19,7 +16,6 @@ import {
 } from "@/store/flagViews";
 
 export default function FeatureFlagsPage() {
-  const { pathname } = useLocation();
   const { search, setSearch } = useFlagTableStore();
   const { layout } = useActiveFlagViewState();
   const isOverview = useFlagViewsStore(
@@ -28,13 +24,7 @@ export default function FeatureFlagsPage() {
 
   return (
     <>
-      <PageHeader
-        title={pageLabel(pathname)}
-        icon={iconForPath(pathname)}
-        description="Create a Feature Flag."
-      />
-
-      <div className="px-12 pb-12 pt-8">
+      <div className="px-12 pb-12 pt-10">
         <FlagViewBar />
         {isOverview ? (
           <div className="flex min-h-[360px] flex-col items-center justify-center rounded-lg border border-border bg-background text-center">

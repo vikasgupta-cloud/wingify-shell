@@ -1,4 +1,4 @@
-// Right sheet for a Data 360 segment — Definition + Metadata tabs.
+// Right sheet for a Data360 segment — Definition + Metadata tabs.
 
 import { EllipsisVertical } from "@/components/icons/protoLucide";
 import { Badge } from "@/components/ui/badge";

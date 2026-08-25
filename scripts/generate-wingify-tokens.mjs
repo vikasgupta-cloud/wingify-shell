@@ -147,6 +147,28 @@ const onCanvas = readJson("on-canvas.light.json");
 const onSurface = readJson("on-surface.light.json");
 
 const primitiveColors = collectColors(primitives);
+
+// Figma primitives omit steps 25/75; listing header / canvas pickers still use them
+// (see src/config/tokens.json + DEFAULT_HEADER_TOKEN_ID = neutral.75).
+const tokensJson = JSON.parse(
+  fs.readFileSync(path.join(root, "src/config/tokens.json"), "utf8")
+);
+const neutralScale = tokensJson?.scales?.neutral ?? {};
+for (const step of ["25", "75"]) {
+  const hex = neutralScale[step];
+  const name = `--neutral-${step}`;
+  if (hex && !primitiveColors.some(([n]) => n === name)) {
+    primitiveColors.push([name, normalizeHex(hex), null]);
+  }
+}
+primitiveColors.sort((a, b) => {
+  const an = a[0].match(/^--neutral-(\d+)$/);
+  const bn = b[0].match(/^--neutral-(\d+)$/);
+  if (an && bn) return Number(an[1]) - Number(bn[1]);
+  if (an) return -1;
+  if (bn) return 1;
+  return 0;
+});
 const overlayColors = collectColors(overlays);
 const primitiveDims = collectDims(primitives).filter(([n]) =>
   /--(radius|space|size)-/.test(n)

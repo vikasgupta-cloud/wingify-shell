@@ -1,4 +1,4 @@
-// Dummy visitor attributes for Data 360 → Attributes (Standard + My Attribute / custom).
+// Dummy visitor attributes for Data360 → Attributes (Standard + My Attribute / custom).
 
 export type AttributeKind = "Standard" | "My Attribute";
 export type AttributeDataType = "Text" | "Number" | "Boolean" | "Date";

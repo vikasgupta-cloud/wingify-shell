@@ -10,7 +10,9 @@
 /* 1 · Primitives + overlays + component dimensions */
 :root {
   --neutral-0: #FFFFFF;
+  --neutral-25: #F8F7F3;
   --neutral-50: #F6F3ED;
+  --neutral-75: #EFECE4;
   --neutral-100: #E5E0D6;
   --neutral-200: #DBD6CB;
   --neutral-300: #B2ADA1;
@@ -482,7 +484,9 @@
 /* Legacy --vwo-* = absolute copies from light/dark semantic packs */
 :root {
   --vwo-neutral-0: var(--neutral-0);
+  --vwo-neutral-25: var(--neutral-25);
   --vwo-neutral-50: var(--neutral-50);
+  --vwo-neutral-75: var(--neutral-75);
   --vwo-neutral-100: var(--neutral-100);
   --vwo-neutral-200: var(--neutral-200);
   --vwo-neutral-300: var(--neutral-300);

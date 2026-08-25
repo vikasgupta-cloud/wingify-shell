@@ -2,15 +2,12 @@
 // Create comes from the shell TopBar (no page-level Create button).
 
 import { Search } from "@/components/icons/protoLucide";
-import { useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/layout/PageHeader";
 import SurveyViewBar from "@/components/surveys/SurveyViewBar";
 import SurveyFilterBar from "@/components/surveys/SurveyFilterBar";
 import SurveyColumnConfig from "@/components/surveys/SurveyColumnConfig";
 import SurveyTable from "@/components/surveys/SurveyTable";
 import SurveyCardList from "@/components/surveys/SurveyCardList";
-import { iconForPath, pageLabel } from "@/lib/nav";
 import { useSurveyTableStore } from "@/store/surveyTable";
 import {
   SURVEY_OVERVIEW_ID,
@@ -19,7 +16,6 @@ import {
 } from "@/store/surveyViews";
 
 export default function SurveysPage() {
-  const { pathname } = useLocation();
   const { search, setSearch } = useSurveyTableStore();
   const { layout } = useActiveSurveyViewState();
   const isOverview = useSurveyViewsStore(
@@ -28,13 +24,7 @@ export default function SurveysPage() {
 
   return (
     <>
-      <PageHeader
-        title={pageLabel(pathname)}
-        icon={iconForPath(pathname)}
-        description="Get feedback from visitors with surveys using custom triggers."
-      />
-
-      <div className="px-12 pb-12 pt-8">
+      <div className="px-12 pb-12 pt-10">
         <SurveyViewBar />
         {isOverview ? (
           <div className="flex min-h-[360px] flex-col items-center justify-center rounded-lg border border-border bg-background text-center">

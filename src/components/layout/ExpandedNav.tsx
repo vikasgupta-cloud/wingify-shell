@@ -2,7 +2,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { ChevronDown, MoreHorizontal, Pin, PinOff } from "@/components/icons/protoLucide";
+import {
+  ChevronDown,
+  MoreHorizontal,
+  PanelLeft,
+  Pin,
+  PinOff,
+} from "@/components/icons/protoLucide";
 import { LOGOUT_PATH, visibleNav, type NavItem } from "../../config/navigation";
 import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { canUnpinPath, useUIStore } from "../../store/ui";
@@ -63,6 +69,7 @@ export default function ExpandedNav({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isDocked = useUIStore((s) => s.isDocked);
+  const toggleDock = useUIStore((s) => s.toggleDock);
   const pinnedPaths = useUIStore((s) => s.pinnedPaths);
   const pin = useUIStore((s) => s.pin);
   const unpin = useUIStore((s) => s.unpin);
@@ -603,6 +610,60 @@ export default function ExpandedNav({
             {separator}
             <div className="flex shrink-0 flex-col gap-0.5 px-3">
               {group3.map((i) => renderItem(i))}
+              {/* Expand/collapse under profile: icon-only, right-aligned with chevrons when open. */}
+              {!forceCollapsed && (
+                <div
+                  className={cn(
+                    "mt-0.5 flex items-center gap-0.5 rounded-lg transition-[background-color,width] duration-200",
+                    // Match nav rows: collapsed clamps to the 40px icon slot.
+                    expanded ? "w-full pr-1.5" : "w-10 justify-start"
+                  )}
+                >
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        type="button"
+                        aria-label={
+                          isDocked
+                            ? "Collapse navigation"
+                            : "Expand navigation"
+                        }
+                        aria-pressed={isDocked}
+                        onClick={toggleDock}
+                        className={cn(
+                          "flex h-10 shrink-0 items-center outline-none transition-colors",
+                          expanded
+                            ? // Same trailing chrome slot as section chevrons.
+                              "ml-auto rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            : "w-10 justify-start overflow-hidden text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {expanded ? (
+                          <PanelLeft className="h-4 w-4" strokeWidth={1.75} />
+                        ) : (
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                            <PanelLeft
+                              className="h-5 w-5"
+                              strokeWidth={1.75}
+                            />
+                          </span>
+                        )}
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        side={expanded ? "top" : "right"}
+                        sideOffset={expanded ? 4 : 8}
+                        className={tooltipContentClass}
+                      >
+                        {isDocked
+                          ? "Collapse navigation"
+                          : "Expand navigation"}
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </div>
+              )}
             </div>
           </div>
         </nav>

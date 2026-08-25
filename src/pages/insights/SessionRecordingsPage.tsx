@@ -17,7 +17,6 @@ import {
   Settings,
   Share2,
   Sparkles,
-  Video,
 } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +29,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import StatusBadge from "@/components/ui/StatusBadge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   ACTIVE_REPORT,
@@ -230,28 +223,8 @@ export default function SessionRecordingsPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      {/* Page header — title + blurb left; stats + configuration right */}
-      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 px-12 pb-4 pt-8">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-background">
-            <Video className="size-4 text-foreground" aria-hidden />
-          </div>
-          <div className="min-w-0">
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h1 className="font-title w-fit cursor-default text-2xl font-semibold tracking-tight text-foreground">
-                    Session Recordings
-                  </h1>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" align="start">
-                  Record and playback visitor sessions on your website.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
-
+      {/* Stats + configuration (page title header removed) */}
+      <div className="flex flex-wrap items-center justify-end gap-x-8 gap-y-4 px-12 pb-4 pt-10">
         <div className="flex flex-wrap items-center gap-5">
           <div className="flex flex-wrap items-center gap-3">
             {RECORDING_STATS.map((stat, i) => (
