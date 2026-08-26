@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Search } from "@/components/icons/protoLucide";
 import {
   findProfileMode,
+  sectionLandPath,
   type DrillInNavItem,
   type NavLeaf,
   type ProfileMode,
@@ -78,8 +79,9 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
   );
 
   useEffect(() => {
-    const active = activeSectionPath(pathname, mode.nav);
-    if (active) setOpenPath(active);
+    // Accordion: open only the section that owns the current path; close when
+    // landing on a leaf with no children (e.g. Campaigns, Workspaces).
+    setOpenPath(activeSectionPath(pathname, mode.nav));
   }, [pathname, mode.nav]);
 
   useEffect(() => {
@@ -155,7 +157,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
             onClick={() => {
               const next = open ? null : item.path;
               setOpenPath(next);
-              if (!open && item.items?.[0]) navigate(item.items[0].path);
+              if (!open) navigate(sectionLandPath(item));
             }}
             className={cn(
               "flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left text-sm text-foreground outline-none",

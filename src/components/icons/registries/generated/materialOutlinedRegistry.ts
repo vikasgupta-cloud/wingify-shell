@@ -82,6 +82,7 @@ import NorthWestOutlined from "@mui/icons-material/NorthWestOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import OpenWithOutlined from "@mui/icons-material/OpenWithOutlined";
 import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
+import PauseOutlined from "@mui/icons-material/PauseOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PercentOutlined from "@mui/icons-material/PercentOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
@@ -94,6 +95,7 @@ import RefreshOutlined from "@mui/icons-material/RefreshOutlined";
 import RemoveOutlined from "@mui/icons-material/RemoveOutlined";
 import ReplayOutlined from "@mui/icons-material/ReplayOutlined";
 import ReplyOutlined from "@mui/icons-material/ReplyOutlined";
+import RocketOutlined from "@mui/icons-material/RocketOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
 import ScaleOutlined from "@mui/icons-material/ScaleOutlined";
 import ScienceOutlined from "@mui/icons-material/ScienceOutlined";
@@ -261,6 +263,7 @@ export const MATERIAL_OUTLINED_COMPONENTS = {
   "PanelLeftOpen": HelpOutlined,
   "PanelRight": ViewSidebarOutlined,
   "Paperclip": HelpOutlined,
+  "Pause": PauseOutlined,
   "Pencil": EditOutlined,
   "PenLine": HelpOutlined,
   "Percent": PercentOutlined,
@@ -277,6 +280,7 @@ export const MATERIAL_OUTLINED_COMPONENTS = {
   "Redo2": RedoOutlined,
   "RefreshCw": RefreshOutlined,
   "Reply": ReplyOutlined,
+  "Rocket": RocketOutlined,
   "RotateCcw": ReplayOutlined,
   "Rows2": HelpOutlined,
   "Rows3": ViewStreamOutlined,
@@ -293,9 +297,11 @@ export const MATERIAL_OUTLINED_COMPONENTS = {
   "Smartphone": SmartphoneOutlined,
   "Sparkles": AutoAwesomeOutlined,
   "Square": CropSquareOutlined,
+  "SquareStack": HelpOutlined,
   "Star": StarOutlined,
   "Strikethrough": FormatStrikethroughOutlined,
   "Sun": LightModeOutlined,
+  "SwatchBook": HelpOutlined,
   "Tablet": TabletOutlined,
   "Target": TrackChangesOutlined,
   "ThumbsUp": ThumbUpOutlined,
@@ -314,4 +320,5 @@ export const MATERIAL_OUTLINED_COMPONENTS = {
   "WandSparkles": AutoAwesomeOutlined,
   "Wrench": HelpOutlined,
   "X": CloseOutlined,
+  "Zap": HelpOutlined,
 } as const;

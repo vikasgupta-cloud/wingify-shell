@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { findProfileMode } from "../../config/navigation";
-import { pageLabel } from "../../lib/nav";
 import { cn } from "../../lib/utils";
+import DrillInBreadcrumb from "./DrillInBreadcrumb";
 import DrillInNav from "./DrillInNav";
 import ExpandedNav from "./ExpandedNav";
+import UpgradeNav from "./UpgradeNav";
 import WingifyLogoButton from "./WingifyLogoButton";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
@@ -82,20 +83,14 @@ export default function DrillInShell() {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <DrillInNav mode={mode} />
+      {mode.id === "upgrade" ? <UpgradeNav /> : <DrillInNav mode={mode} />}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
           <WingifyLogoButton />
           <WorkspaceSwitcher />
           <span className="text-sm text-muted-foreground">/</span>
-          <span className="truncate text-sm font-medium text-foreground">
-            {mode.label}
-          </span>
-          <span className="text-sm text-muted-foreground">/</span>
-          <span className="truncate text-sm text-muted-foreground">
-            {pageLabel(pathname)}
-          </span>
+          <DrillInBreadcrumb mode={mode} pathname={pathname} />
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-canvas">

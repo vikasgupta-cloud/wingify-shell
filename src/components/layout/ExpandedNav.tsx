@@ -106,7 +106,9 @@ export default function ExpandedNav({
   const moreNestedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (expanded && activeItem?.sections) setOpenPath(activeItem.path);
+    if (!expanded) return;
+    // Accordion: open the active product's sub-nav; close when on a direct item.
+    setOpenPath(activeItem?.sections ? activeItem.path : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeItem?.path, expanded]);
 
@@ -474,28 +476,37 @@ export default function ExpandedNav({
                       {section.items.map((leaf) => {
                         const LeafIcon = leaf.icon;
                         return (
-                          <NavLink
-                            key={leaf.path}
-                            to={leaf.path}
-                            tabIndex={open ? undefined : -1}
-                            className={({ isActive: leafActive }) =>
-                              cn(
-                                "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                                leafActive &&
-                                  "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                              )
-                            }
-                          >
-                            {LeafIcon && (
-                              <LeafIcon
-                                className="h-4 w-4 shrink-0 text-foreground"
-                                strokeWidth={1.75}
-                              />
-                            )}
-                            <span className="min-w-0 flex-1 truncate">
-                              {leaf.label}
-                            </span>
-                          </NavLink>
+                          <div key={leaf.path}>
+                            {item.path === "/profile" &&
+                              isLogoutSection &&
+                              leaf.path === LOGOUT_PATH && (
+                                <div
+                                  className="my-2 h-px bg-panel-border"
+                                  aria-hidden="true"
+                                />
+                              )}
+                            <NavLink
+                              to={leaf.path}
+                              tabIndex={open ? undefined : -1}
+                              className={({ isActive: leafActive }) =>
+                                cn(
+                                  "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                                  leafActive &&
+                                    "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                                )
+                              }
+                            >
+                              {LeafIcon && (
+                                <LeafIcon
+                                  className="h-4 w-4 shrink-0 text-foreground"
+                                  strokeWidth={1.75}
+                                />
+                              )}
+                              <span className="min-w-0 flex-1 truncate">
+                                {leaf.label}
+                              </span>
+                            </NavLink>
+                          </div>
                         );
                       })}
                     </div>

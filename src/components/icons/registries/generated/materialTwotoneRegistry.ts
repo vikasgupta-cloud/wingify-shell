@@ -83,6 +83,7 @@ import NorthWestTwoTone from "@mui/icons-material/NorthWestTwoTone";
 import OpenInNewTwoTone from "@mui/icons-material/OpenInNewTwoTone";
 import OpenWithTwoTone from "@mui/icons-material/OpenWithTwoTone";
 import PaletteTwoTone from "@mui/icons-material/PaletteTwoTone";
+import PauseTwoTone from "@mui/icons-material/PauseTwoTone";
 import PeopleTwoTone from "@mui/icons-material/PeopleTwoTone";
 import PercentTwoTone from "@mui/icons-material/PercentTwoTone";
 import PersonTwoTone from "@mui/icons-material/PersonTwoTone";
@@ -95,6 +96,7 @@ import RefreshTwoTone from "@mui/icons-material/RefreshTwoTone";
 import RemoveTwoTone from "@mui/icons-material/RemoveTwoTone";
 import ReplayTwoTone from "@mui/icons-material/ReplayTwoTone";
 import ReplyTwoTone from "@mui/icons-material/ReplyTwoTone";
+import RocketTwoTone from "@mui/icons-material/RocketTwoTone";
 import SaveTwoTone from "@mui/icons-material/SaveTwoTone";
 import ScaleTwoTone from "@mui/icons-material/ScaleTwoTone";
 import ScienceTwoTone from "@mui/icons-material/ScienceTwoTone";
@@ -262,6 +264,7 @@ export const MATERIAL_TWOTONE_COMPONENTS = {
   "PanelLeftOpen": HelpOutlined,
   "PanelRight": ViewSidebarTwoTone,
   "Paperclip": HelpOutlined,
+  "Pause": PauseTwoTone,
   "Pencil": EditTwoTone,
   "PenLine": HelpOutlined,
   "Percent": PercentTwoTone,
@@ -278,6 +281,7 @@ export const MATERIAL_TWOTONE_COMPONENTS = {
   "Redo2": RedoTwoTone,
   "RefreshCw": RefreshTwoTone,
   "Reply": ReplyTwoTone,
+  "Rocket": RocketTwoTone,
   "RotateCcw": ReplayTwoTone,
   "Rows2": HelpOutlined,
   "Rows3": ViewStreamTwoTone,
@@ -294,9 +298,11 @@ export const MATERIAL_TWOTONE_COMPONENTS = {
   "Smartphone": SmartphoneTwoTone,
   "Sparkles": AutoAwesomeTwoTone,
   "Square": CropSquareTwoTone,
+  "SquareStack": HelpOutlined,
   "Star": StarTwoTone,
   "Strikethrough": FormatStrikethroughTwoTone,
   "Sun": LightModeTwoTone,
+  "SwatchBook": HelpOutlined,
   "Tablet": TabletTwoTone,
   "Target": TrackChangesTwoTone,
   "ThumbsUp": ThumbUpTwoTone,
@@ -315,4 +321,5 @@ export const MATERIAL_TWOTONE_COMPONENTS = {
   "WandSparkles": AutoAwesomeTwoTone,
   "Wrench": HelpOutlined,
   "X": CloseTwoTone,
+  "Zap": HelpOutlined,
 } as const;

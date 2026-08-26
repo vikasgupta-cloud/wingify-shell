@@ -82,6 +82,7 @@ import NorthWest from "@mui/icons-material/NorthWest";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 import OpenWith from "@mui/icons-material/OpenWith";
 import Palette from "@mui/icons-material/Palette";
+import Pause from "@mui/icons-material/Pause";
 import People from "@mui/icons-material/People";
 import Percent from "@mui/icons-material/Percent";
 import Person from "@mui/icons-material/Person";
@@ -94,6 +95,7 @@ import Refresh from "@mui/icons-material/Refresh";
 import Remove from "@mui/icons-material/Remove";
 import Replay from "@mui/icons-material/Replay";
 import Reply from "@mui/icons-material/Reply";
+import Rocket from "@mui/icons-material/Rocket";
 import Save from "@mui/icons-material/Save";
 import Scale from "@mui/icons-material/Scale";
 import Science from "@mui/icons-material/Science";
@@ -261,6 +263,7 @@ export const MATERIAL_FILLED_COMPONENTS = {
   "PanelLeftOpen": HelpOutlined,
   "PanelRight": ViewSidebar,
   "Paperclip": HelpOutlined,
+  "Pause": Pause,
   "Pencil": Edit,
   "PenLine": HelpOutlined,
   "Percent": Percent,
@@ -277,6 +280,7 @@ export const MATERIAL_FILLED_COMPONENTS = {
   "Redo2": Redo,
   "RefreshCw": Refresh,
   "Reply": Reply,
+  "Rocket": Rocket,
   "RotateCcw": Replay,
   "Rows2": HelpOutlined,
   "Rows3": ViewStream,
@@ -293,9 +297,11 @@ export const MATERIAL_FILLED_COMPONENTS = {
   "Smartphone": Smartphone,
   "Sparkles": AutoAwesome,
   "Square": CropSquare,
+  "SquareStack": HelpOutlined,
   "Star": Star,
   "Strikethrough": FormatStrikethrough,
   "Sun": LightMode,
+  "SwatchBook": HelpOutlined,
   "Tablet": Tablet,
   "Target": TrackChanges,
   "ThumbsUp": ThumbUp,
@@ -314,4 +320,5 @@ export const MATERIAL_FILLED_COMPONENTS = {
   "WandSparkles": AutoAwesome,
   "Wrench": HelpOutlined,
   "X": Close,
+  "Zap": HelpOutlined,
 } as const;

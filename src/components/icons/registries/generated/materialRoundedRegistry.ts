@@ -83,6 +83,7 @@ import NorthWestRounded from "@mui/icons-material/NorthWestRounded";
 import OpenInNewRounded from "@mui/icons-material/OpenInNewRounded";
 import OpenWithRounded from "@mui/icons-material/OpenWithRounded";
 import PaletteRounded from "@mui/icons-material/PaletteRounded";
+import PauseRounded from "@mui/icons-material/PauseRounded";
 import PeopleRounded from "@mui/icons-material/PeopleRounded";
 import PercentRounded from "@mui/icons-material/PercentRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
@@ -95,6 +96,7 @@ import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import RemoveRounded from "@mui/icons-material/RemoveRounded";
 import ReplayRounded from "@mui/icons-material/ReplayRounded";
 import ReplyRounded from "@mui/icons-material/ReplyRounded";
+import RocketRounded from "@mui/icons-material/RocketRounded";
 import SaveRounded from "@mui/icons-material/SaveRounded";
 import ScaleRounded from "@mui/icons-material/ScaleRounded";
 import ScienceRounded from "@mui/icons-material/ScienceRounded";
@@ -262,6 +264,7 @@ export const MATERIAL_ROUNDED_COMPONENTS = {
   "PanelLeftOpen": HelpOutlined,
   "PanelRight": ViewSidebarRounded,
   "Paperclip": HelpOutlined,
+  "Pause": PauseRounded,
   "Pencil": EditRounded,
   "PenLine": HelpOutlined,
   "Percent": PercentRounded,
@@ -278,6 +281,7 @@ export const MATERIAL_ROUNDED_COMPONENTS = {
   "Redo2": RedoRounded,
   "RefreshCw": RefreshRounded,
   "Reply": ReplyRounded,
+  "Rocket": RocketRounded,
   "RotateCcw": ReplayRounded,
   "Rows2": HelpOutlined,
   "Rows3": ViewStreamRounded,
@@ -294,9 +298,11 @@ export const MATERIAL_ROUNDED_COMPONENTS = {
   "Smartphone": SmartphoneRounded,
   "Sparkles": AutoAwesomeRounded,
   "Square": CropSquareRounded,
+  "SquareStack": HelpOutlined,
   "Star": StarRounded,
   "Strikethrough": FormatStrikethroughRounded,
   "Sun": LightModeRounded,
+  "SwatchBook": HelpOutlined,
   "Tablet": TabletRounded,
   "Target": TrackChangesRounded,
   "ThumbsUp": ThumbUpRounded,
@@ -315,4 +321,5 @@ export const MATERIAL_ROUNDED_COMPONENTS = {
   "WandSparkles": AutoAwesomeRounded,
   "Wrench": HelpOutlined,
   "X": CloseRounded,
+  "Zap": HelpOutlined,
 } as const;

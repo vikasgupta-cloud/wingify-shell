@@ -29,7 +29,9 @@ import {
   CodeXml,
   Blocks,
   LogOut,
+  Zap,
 } from "@/components/icons/protoLucide";
+import { UPGRADE_ADDONS_PATH, UPGRADE_SECTIONS } from "./upgradeNav";
 export type NavLeaf = {
   label: string;
   path: string;
@@ -65,6 +67,11 @@ export type DrillInNavItem = {
   hideCreate?: boolean;
   /** Nested leaves; when present the row is an accordion (unless alwaysOpen). */
   items?: NavLeaf[];
+  /**
+   * When true with `items`, the section root path itself is a landable page
+   * (breadcrumb / sidebar land on `path` instead of the first child).
+   */
+  landRoot?: boolean;
   /** Static section heading + children — no chevron (Websites and Apps list). */
   alwaysOpen?: boolean;
   /** Optional count pill on the right (e.g. Assets Hub). */
@@ -190,9 +197,9 @@ export const NAV: NavItem[] = [
       { label: "Metrics", path: "/data-360/metrics" },
       { label: "Funnels", path: "/data-360/funnels" },
       { label: "Data Studio", path: "/data-360/data-studio" },
+      { label: "Triggers", path: "/data-360/triggers" },
+      { label: "Audit", path: "/data-360/audit", hideCreate: true },
     ]},
-    { heading: "Automation", items: [{ label: "Triggers", path: "/data-360/triggers" }]},
-    { heading: "Administration", items: [{ label: "Audit", path: "/data-360/audit", hideCreate: true }]},
   ]},
   { label: "Activity", path: "/activity-timeline", icon: Activity, group: 3, flyoutOnly: true, hideCreate: true },
   { label: "Help", path: "/helpdesk", icon: LifeBuoy, group: 3, flyoutOnly: true, hideCreate: true },
@@ -324,6 +331,26 @@ export const ASSETS_HUB_NAV: DrillInNavItem[] = [
   },
 ];
 
+/** Upgrade catalog — section headings + product leaves (rich UI in UpgradeNav). */
+export const UPGRADE_NAV: DrillInNavItem[] = [
+  ...UPGRADE_SECTIONS.map((section) => ({
+    label: section.heading,
+    path: section.items[0]?.path ?? "/upgrade",
+    alwaysOpen: true as const,
+    items: section.items.map((item) => ({
+      label: item.label,
+      path: item.path,
+      icon: item.icon,
+      hideCreate: true as const,
+    })),
+  })),
+  {
+    label: "Explore add-ons",
+    path: UPGRADE_ADDONS_PATH,
+    hideCreate: true,
+  },
+];
+
 /** Drill-in shells reachable from the Profile (JD) flyout. */
 export const PROFILE_MODES: ProfileMode[] = [
   { id: "settings", label: "Settings", path: "/settings", nav: SETTINGS_NAV },
@@ -359,6 +386,7 @@ export const PROFILE_MODES: ProfileMode[] = [
     path: "/assets-hub",
     nav: ASSETS_HUB_NAV,
   },
+  { id: "upgrade", label: "Upgrade", path: "/upgrade", nav: UPGRADE_NAV },
 ];
 
 /** Signed-in user shown on the avatar row and in the profile menu header. */
@@ -378,6 +406,7 @@ const MODE_ICONS: Record<string, LucideIcon> = {
   pages: FileText,
   "assets-hub": Images,
   settings: Settings,
+  upgrade: Zap,
 };
 
 const modeLeaf = (id: string): NavLeaf => {
@@ -401,7 +430,10 @@ const profileFlyoutSections: NavSection[] = [
   { items: [modeLeaf("pages"), modeLeaf("assets-hub")] },
   { items: [modeLeaf("settings")] },
   {
-    items: [{ label: "Logout", path: LOGOUT_PATH, hideCreate: true, icon: LogOut }],
+    items: [
+      modeLeaf("upgrade"),
+      { label: "Logout", path: LOGOUT_PATH, hideCreate: true, icon: LogOut },
+    ],
   },
 ];
 
@@ -452,16 +484,55 @@ export function findProfileMode(pathname: string): ProfileMode | undefined {
   ).sort((a, b) => b.path.length - a.path.length)[0];
 }
 
+/**
+ * Where to land when jumping to a drill-in section from the breadcrumb / sidebar.
+ * Root page when the section has no children or `landRoot`; otherwise first child.
+ */
+export function sectionLandPath(item: DrillInNavItem): string {
+  if (!item.items?.length || item.landRoot) return item.path;
+  return item.items[0].path;
+}
+
 export function firstModePath(mode: ProfileMode): string {
   const first = mode.nav[0];
-  return first?.items?.[0]?.path ?? first?.path ?? mode.path;
+  return first ? sectionLandPath(first) : mode.path;
 }
 
 export function modeLeaves(mode: ProfileMode): NavLeaf[] {
-  return mode.nav.flatMap((item) =>
-    item.items?.length
-      ? item.items
-      : [{ label: item.label, path: item.path, hideCreate: true }]
+  return mode.nav.flatMap((item) => {
+    if (!item.items?.length) {
+      return [{ label: item.label, path: item.path, hideCreate: item.hideCreate }];
+    }
+    const leaves = [...item.items];
+    if (item.landRoot) {
+      leaves.unshift({
+        label: item.label,
+        path: item.path,
+        hideCreate: item.hideCreate ?? true,
+      });
+    }
+    return leaves;
+  });
+}
+
+/** Active top-level drill-in section for a pathname (longest matching path). */
+export function findDrillInSection(
+  pathname: string,
+  mode: ProfileMode
+): DrillInNavItem | undefined {
+  return mode.nav
+    .filter((s) => pathname === s.path || pathname.startsWith(s.path + "/"))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+}
+
+/** Active leaf under a section, when the section has nested items. */
+export function findDrillInLeaf(
+  pathname: string,
+  section: DrillInNavItem
+): NavLeaf | undefined {
+  if (!section.items?.length) return undefined;
+  return section.items.find(
+    (l) => pathname === l.path || pathname.startsWith(l.path + "/")
   );
 }
 

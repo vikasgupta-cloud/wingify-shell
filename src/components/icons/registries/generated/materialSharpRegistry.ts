@@ -83,6 +83,7 @@ import NorthWestSharp from "@mui/icons-material/NorthWestSharp";
 import OpenInNewSharp from "@mui/icons-material/OpenInNewSharp";
 import OpenWithSharp from "@mui/icons-material/OpenWithSharp";
 import PaletteSharp from "@mui/icons-material/PaletteSharp";
+import PauseSharp from "@mui/icons-material/PauseSharp";
 import PeopleSharp from "@mui/icons-material/PeopleSharp";
 import PercentSharp from "@mui/icons-material/PercentSharp";
 import PersonSharp from "@mui/icons-material/PersonSharp";
@@ -95,6 +96,7 @@ import RefreshSharp from "@mui/icons-material/RefreshSharp";
 import RemoveSharp from "@mui/icons-material/RemoveSharp";
 import ReplaySharp from "@mui/icons-material/ReplaySharp";
 import ReplySharp from "@mui/icons-material/ReplySharp";
+import RocketSharp from "@mui/icons-material/RocketSharp";
 import SaveSharp from "@mui/icons-material/SaveSharp";
 import ScaleSharp from "@mui/icons-material/ScaleSharp";
 import ScienceSharp from "@mui/icons-material/ScienceSharp";
@@ -262,6 +264,7 @@ export const MATERIAL_SHARP_COMPONENTS = {
   "PanelLeftOpen": HelpOutlined,
   "PanelRight": ViewSidebarSharp,
   "Paperclip": HelpOutlined,
+  "Pause": PauseSharp,
   "Pencil": EditSharp,
   "PenLine": HelpOutlined,
   "Percent": PercentSharp,
@@ -278,6 +281,7 @@ export const MATERIAL_SHARP_COMPONENTS = {
   "Redo2": RedoSharp,
   "RefreshCw": RefreshSharp,
   "Reply": ReplySharp,
+  "Rocket": RocketSharp,
   "RotateCcw": ReplaySharp,
   "Rows2": HelpOutlined,
   "Rows3": ViewStreamSharp,
@@ -294,9 +298,11 @@ export const MATERIAL_SHARP_COMPONENTS = {
   "Smartphone": SmartphoneSharp,
   "Sparkles": AutoAwesomeSharp,
   "Square": CropSquareSharp,
+  "SquareStack": HelpOutlined,
   "Star": StarSharp,
   "Strikethrough": FormatStrikethroughSharp,
   "Sun": LightModeSharp,
+  "SwatchBook": HelpOutlined,
   "Tablet": TabletSharp,
   "Target": TrackChangesSharp,
   "ThumbsUp": ThumbUpSharp,
@@ -315,4 +321,5 @@ export const MATERIAL_SHARP_COMPONENTS = {
   "WandSparkles": AutoAwesomeSharp,
   "Wrench": HelpOutlined,
   "X": CloseSharp,
+  "Zap": HelpOutlined,
 } as const;
