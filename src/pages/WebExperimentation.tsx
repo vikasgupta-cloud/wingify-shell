@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Search } from "@/components/icons/protoLucide";
+import { Lock, Search, Sparkles } from "@/components/icons/protoLucide";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CampaignTable from "../components/table/CampaignTable";
 import ColumnConfig from "../components/table/ColumnConfig";
@@ -64,6 +65,16 @@ export default function WebExperimentation() {
           {/* Right cluster, aligned to the table's right edge. Layout is fixed per
               view, so there is no layout switcher — just the layout's own config. */}
           <div className="ml-auto flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+            >
+              <Sparkles className="size-3.5 text-highlight-fg" aria-hidden />
+              Summarize
+              <Lock className="size-3 text-muted-foreground" aria-hidden />
+            </Button>
             {layout === "table" && <ColumnConfig />}
             {layout === "kanban" && <BoardColumnConfig />}
             {layout === "gantt" && <GanttControls />}

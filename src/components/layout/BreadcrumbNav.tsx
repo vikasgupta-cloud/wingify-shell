@@ -7,6 +7,7 @@ import {
 } from "../../config/navigation";
 import { firstChildPath, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
+import PageGuideCluster from "./PageGuideCluster";
 
 const PRODUCTS = productSwitcherItems();
 
@@ -90,8 +91,9 @@ export default function BreadcrumbNav() {
   // Direct item: product switcher (or plain label for non-products).
   if (!item.sections || !leaf) {
     return (
-      <div className="flex min-w-0 items-center text-sm">
+      <div className="flex min-w-0 items-center gap-1 text-sm">
         <ProductSwitcher item={item} />
+        <PageGuideCluster guide={item.pageGuide} />
       </div>
     );
   }
@@ -133,6 +135,7 @@ export default function BreadcrumbNav() {
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
+      <PageGuideCluster guide={leaf.pageGuide} />
     </div>
   );
 }

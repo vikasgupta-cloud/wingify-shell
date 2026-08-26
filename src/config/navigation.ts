@@ -39,6 +39,17 @@ import {
   Puzzle,
 } from "@/components/icons/protoLucide";
 import { UPGRADE_ADDONS_PATH, UPGRADE_SECTIONS } from "./upgradeNav";
+
+/** Page-orientation helpers shown after the last breadcrumb (replaces title-adjacent chrome). */
+export type PageGuide = {
+  /** Play-tutorial control. */
+  tutorial?: { label?: string };
+  /** Click-open help popover. */
+  help?: { title: string; body: string; href?: string };
+  /** Hover tooltip copy. */
+  info?: string;
+};
+
 export type NavLeaf = {
   label: string;
   path: string;
@@ -55,6 +66,7 @@ export type NavLeaf = {
   badge?: "premium";
   /** Show external-link affordance; still routes in-app unless opened via the icon. */
   external?: boolean;
+  pageGuide?: PageGuide;
 };
 export type NavSection = { heading?: string; items: NavLeaf[] };
 export type NavItem = {
@@ -69,6 +81,7 @@ export type NavItem = {
   flyoutOnly?: boolean;
   hideCreate?: boolean;
   sections?: NavSection[];
+  pageGuide?: PageGuide;
 };
 
 /** Sidebar row inside a Profile-mode drill-in (Settings, Profile, …). */
@@ -235,7 +248,20 @@ export const NAV: NavItem[] = [
     ]},
     { heading: "Behavior", items: [
       { label: "Heatmaps", path: "/insights/heatmaps", hideCreate: true },
-      { label: "Session Recordings", path: "/insights/session-recordings", hideCreate: true },
+      {
+        label: "Session Recordings",
+        path: "/insights/session-recordings",
+        hideCreate: true,
+        pageGuide: {
+          tutorial: { label: "Play tutorial" },
+          help: {
+            title: "Insight | Recordings",
+            body: "View the recordings of your visitors' interactions on your webpage, such as scrolls, clicks, and mouse movements.",
+            href: "#",
+          },
+          info: "Record and playback visitor sessions on your website. Learn more",
+        },
+      },
       { label: "Mobile Recordings", path: "/insights/mobile-recordings", hideCreate: true },
     ]},
     { heading: "Feedback", items: [{ label: "Forms", path: "/insights/forms" }]},
