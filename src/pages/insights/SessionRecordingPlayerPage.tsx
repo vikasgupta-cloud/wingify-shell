@@ -327,7 +327,7 @@ export default function SessionRecordingPlayerPage() {
         >
           <div
             className={cn(
-              "group/stage relative min-h-0 min-w-0 flex-1 overflow-hidden border border-panel-border bg-background shadow-sm",
+              "group/stage relative min-h-0 min-w-0 flex-1 overflow-hidden border border-border bg-background shadow-sm",
               panelSeparator || !panelOpen
                 ? "rounded-lg"
                 : "rounded-l-lg rounded-r-none border-r-0"
@@ -377,12 +377,12 @@ export default function SessionRecordingPlayerPage() {
               </div>
 
               {/* What the cursor is doing right now, plus the click legend. */}
-              <div className="pointer-events-none absolute bottom-3 left-3 flex h-7 items-center gap-1.5 rounded-md border border-panel-border bg-panel/90 px-3 text-[11px] font-medium text-panel-foreground backdrop-blur">
+              <div className="pointer-events-none absolute bottom-3 left-3 flex h-7 items-center gap-1.5 rounded-md border border-border bg-panel/90 px-3 text-[11px] font-medium text-panel-foreground backdrop-blur">
                 <MousePointerClick className="size-3.5 text-muted-foreground" aria-hidden />
                 {pose.label}
               </div>
               {showClicks ? (
-                <div className="pointer-events-none absolute bottom-3 right-3 space-y-1.5 rounded-md border border-panel-border bg-panel/90 px-3 py-2 text-[11px] text-muted-foreground backdrop-blur">
+                <div className="pointer-events-none absolute bottom-3 right-3 space-y-1.5 rounded-md border border-border bg-panel/90 px-3 py-2 text-[11px] text-muted-foreground backdrop-blur">
                   <p className="flex items-center gap-2">
                     <span
                       className="size-2.5 rounded-full border border-foreground"
@@ -406,7 +406,7 @@ export default function SessionRecordingPlayerPage() {
                     size="icon"
                     aria-label={panelOpen ? "Hide session details" : "Show session details"}
                     onClick={() => setPanelOpen((v) => !v)}
-                    className="absolute right-0 top-3 size-8 rounded-l-md rounded-r-none border border-r-0 border-panel-border"
+                    className="absolute right-0 top-3 size-8 rounded-l-md rounded-r-none border border-r-0 border-border"
                   >
                     <ChevronsRight
                       className={cn("size-4 transition-transform", !panelOpen && "rotate-180")}
@@ -446,7 +446,7 @@ export default function SessionRecordingPlayerPage() {
 
         <div
           className={cn(
-            "mx-3 mb-3 shrink-0 overflow-hidden rounded-lg border border-panel-border bg-panel text-panel-foreground shadow-sm",
+            "mx-3 mb-3 shrink-0 overflow-hidden rounded-lg border border-border bg-panel text-panel-foreground shadow-sm",
             panelSeparator ? "mt-3" : "mt-0"
           )}
         >
@@ -461,7 +461,7 @@ export default function SessionRecordingPlayerPage() {
               }}
             />
 
-            <div className="flex h-14 items-center border-t border-panel-border px-3">
+            <div className="flex h-14 items-center border-t border-subtle px-3">
               <div className="flex h-full shrink-0 items-center px-2">
                 <img
                   src={mascotAsset(DEFAULT_MASCOT_ID, colorMode)}

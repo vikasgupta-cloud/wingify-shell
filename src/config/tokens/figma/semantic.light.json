@@ -26,7 +26,7 @@
             "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
             "targetVariableName": "color/neutral/50",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -55,7 +55,7 @@
             "targetVariableId": "VariableID:b937c82279b61ab4be230831bc8404c9cf8c36bc/-1:-1",
             "targetVariableName": "color/neutral/0",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -84,7 +84,7 @@
             "targetVariableId": "VariableID:b937c82279b61ab4be230831bc8404c9cf8c36bc/-1:-1",
             "targetVariableName": "color/neutral/0",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -113,7 +113,7 @@
             "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
             "targetVariableName": "color/neutral/50",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -142,7 +142,7 @@
             "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
             "targetVariableName": "color/neutral/100",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -171,7 +171,7 @@
             "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
             "targetVariableName": "color/neutral/100",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -200,7 +200,7 @@
             "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
             "targetVariableName": "color/neutral/100",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -229,7 +229,7 @@
             "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
             "targetVariableName": "color/neutral/200",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -258,7 +258,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -287,7 +287,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -316,7 +316,7 @@
             "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
             "targetVariableName": "color/neutral/100",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       }
@@ -348,7 +348,7 @@
               "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
               "targetVariableName": "color/neutral/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -377,7 +377,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -406,7 +406,7 @@
               "targetVariableId": "VariableID:bdc281e151409ac738f74b4445adcb515df2fd8d/-1:-1",
               "targetVariableName": "color/neutral/300",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -435,7 +435,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -464,7 +464,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -493,7 +493,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -523,7 +523,7 @@
               "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
               "targetVariableName": "color/neutral/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -553,7 +553,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -583,7 +583,7 @@
               "targetVariableId": "VariableID:bdc281e151409ac738f74b4445adcb515df2fd8d/-1:-1",
               "targetVariableName": "color/neutral/300",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -614,7 +614,7 @@
               "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
               "targetVariableName": "color/neutral/50",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -643,7 +643,7 @@
               "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
               "targetVariableName": "color/neutral/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -672,7 +672,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -701,7 +701,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -730,7 +730,7 @@
               "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
               "targetVariableName": "color/neutral/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -759,7 +759,7 @@
               "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
               "targetVariableName": "color/neutral/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -789,7 +789,7 @@
               "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
               "targetVariableName": "color/neutral/50",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -819,7 +819,7 @@
               "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
               "targetVariableName": "color/neutral/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -849,7 +849,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -880,7 +880,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -908,7 +908,7 @@
             "targetVariableId": "VariableID:80b158c00793a717ebec68507c8b4e7011d94385/-1:-1",
             "targetVariableName": "color/neutral/600",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -936,7 +936,7 @@
             "targetVariableId": "VariableID:ac03195749a7345b2282edc0bee13c583eb12211/-1:-1",
             "targetVariableName": "color/neutral/500",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -964,7 +964,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -992,7 +992,7 @@
             "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
             "targetVariableName": "color/neutral/50",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1020,7 +1020,7 @@
             "targetVariableId": "VariableID:0e0e81d9768e8aec25dae96e73a04fe6f689262e/-1:-1",
             "targetVariableName": "color/ocean/600",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1048,41 +1048,13 @@
             "targetVariableId": "VariableID:fb3fc01260087378ed8f3adbd988912f9693609e/-1:-1",
             "targetVariableName": "color/ocean/700",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       }
     },
     "border": {
       "subtle": {
-        "$type": "color",
-        "$value": {
-          "colorSpace": "srgb",
-          "components": [
-            0.8980392217636108,
-            0.8784313797950745,
-            0.8392156958580017
-          ],
-          "alpha": 1,
-          "hex": "#E5E0D6"
-        },
-        "$extensions": {
-          "com.figma.variableId": "VariableID:4:140",
-          "com.figma.scopes": [
-            "STROKE"
-          ],
-          "com.figma.codeSyntax": {
-            "WEB": "var(--semantic-border-subtle)"
-          },
-          "com.figma.aliasData": {
-            "targetVariableId": "VariableID:4:5",
-            "targetVariableName": "color/neutral/100",
-            "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
-          }
-        }
-      },
-      "strong": {
         "$type": "color",
         "$value": {
           "colorSpace": "srgb",
@@ -1095,6 +1067,90 @@
           "hex": "#DBD6CB"
         },
         "$extensions": {
+          "com.figma.variableId": "VariableID:4:140",
+          "com.figma.scopes": [
+            "STROKE"
+          ],
+          "com.figma.codeSyntax": {
+            "WEB": "var(--semantic-border-subtle)"
+          },
+          "com.figma.aliasData": {
+            "targetVariableId": "VariableID:4:6",
+            "targetVariableName": "color/neutral/200",
+            "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
+            "targetVariableSetName": "1 · Primitives"
+          }
+        }
+      },
+      "default": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.6980392336845398,
+            0.6784313917160034,
+            0.6313725709915161
+          ],
+          "alpha": 1,
+          "hex": "#B2ADA1"
+        },
+        "$extensions": {
+          "com.figma.variableId": "VariableID:4:140a",
+          "com.figma.scopes": [
+            "STROKE"
+          ],
+          "com.figma.codeSyntax": {
+            "WEB": "var(--semantic-border-default)"
+          },
+          "com.figma.aliasData": {
+            "targetVariableId": "VariableID:4:7",
+            "targetVariableName": "color/neutral/300",
+            "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
+            "targetVariableSetName": "1 · Primitives"
+          }
+        }
+      },
+      "hover": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.4745098054409027,
+            0.4588235318660736,
+            0.41960784792900085
+          ],
+          "alpha": 1,
+          "hex": "#79756B"
+        },
+        "$extensions": {
+          "com.figma.variableId": "VariableID:4:140b",
+          "com.figma.scopes": [
+            "STROKE"
+          ],
+          "com.figma.codeSyntax": {
+            "WEB": "var(--semantic-border-hover)"
+          },
+          "com.figma.aliasData": {
+            "targetVariableId": "VariableID:4:9",
+            "targetVariableName": "color/neutral/500",
+            "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
+            "targetVariableSetName": "1 · Primitives"
+          }
+        }
+      },
+      "strong": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.4745098054409027,
+            0.4588235318660736,
+            0.41960784792900085
+          ],
+          "alpha": 1,
+          "hex": "#79756B"
+        },
+        "$extensions": {
           "com.figma.variableId": "VariableID:4:141",
           "com.figma.scopes": [
             "STROKE"
@@ -1103,10 +1159,10 @@
             "WEB": "var(--semantic-border-strong)"
           },
           "com.figma.aliasData": {
-            "targetVariableId": "VariableID:4:6",
-            "targetVariableName": "color/neutral/200",
+            "targetVariableId": "VariableID:4:9",
+            "targetVariableName": "color/neutral/500",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1131,10 +1187,10 @@
             "WEB": "var(--semantic-border-focus)"
           },
           "com.figma.aliasData": {
-            "targetVariableId": "VariableID:7263cef6ed5c325e440d94a3475d0a6afb8b1c32/-1:-1",
+            "targetVariableId": "VariableID:4:13",
             "targetVariableName": "color/neutral/900",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1159,10 +1215,66 @@
             "WEB": "var(--semantic-border-tooltip)"
           },
           "com.figma.aliasData": {
-            "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
+            "targetVariableId": "VariableID:4:14",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
+          }
+        }
+      },
+      "disabled": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.8588235378265381,
+            0.8392156958580017,
+            0.7960784435272217
+          ],
+          "alpha": 1,
+          "hex": "#DBD6CB"
+        },
+        "$extensions": {
+          "com.figma.variableId": "VariableID:4:140c",
+          "com.figma.scopes": [
+            "STROKE"
+          ],
+          "com.figma.codeSyntax": {
+            "WEB": "var(--semantic-border-disabled)"
+          },
+          "com.figma.aliasData": {
+            "targetVariableId": "VariableID:4:6",
+            "targetVariableName": "color/neutral/200",
+            "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
+            "targetVariableSetName": "1 · Primitives"
+          }
+        }
+      },
+      "error": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.8705882430076599,
+            0.1764705926179886,
+            0.007843137718737125
+          ],
+          "alpha": 1,
+          "hex": "#DE2D02"
+        },
+        "$extensions": {
+          "com.figma.variableId": "VariableID:4:140d",
+          "com.figma.scopes": [
+            "STROKE"
+          ],
+          "com.figma.codeSyntax": {
+            "WEB": "var(--semantic-border-error)"
+          },
+          "com.figma.aliasData": {
+            "targetVariableId": "VariableID:4:18",
+            "targetVariableName": "color/cherry/500",
+            "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       }
@@ -1193,7 +1305,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1222,7 +1334,7 @@
             "targetVariableId": "VariableID:1583f39b67b8dd158b7758eb3c723caf617e98d3/-1:-1",
             "targetVariableName": "color/neutral/800",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1251,7 +1363,7 @@
             "targetVariableId": "VariableID:ebef57e66ee1c4d7a5658d2a7a52dbefd9c9cc75/-1:-1",
             "targetVariableName": "color/neutral/700",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1279,7 +1391,7 @@
             "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
             "targetVariableName": "color/neutral/50",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1307,7 +1419,7 @@
             "targetVariableId": "VariableID:ac03195749a7345b2282edc0bee13c583eb12211/-1:-1",
             "targetVariableName": "color/neutral/500",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1335,7 +1447,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1363,7 +1475,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1392,7 +1504,7 @@
             "targetVariableId": "VariableID:527f83bc04822103bbf1c7cf1c157d82a9399890/-1:-1",
             "targetVariableName": "color/cherry/600",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1421,7 +1533,7 @@
             "targetVariableId": "VariableID:6a76c57a64bb34f2f48d1d99941ff9474a27ab5c/-1:-1",
             "targetVariableName": "color/cherry/700",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1449,7 +1561,7 @@
             "targetVariableId": "VariableID:b937c82279b61ab4be230831bc8404c9cf8c36bc/-1:-1",
             "targetVariableName": "color/neutral/0",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1478,7 +1590,7 @@
             "targetVariableId": "VariableID:7949308388b58bc45791fae923edf3aa0038f2f8/-1:-1",
             "targetVariableName": "color/berry/600",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1507,7 +1619,7 @@
             "targetVariableId": "VariableID:3df9b41adde1755f02fb1f28ddc2cb3f45f6a06d/-1:-1",
             "targetVariableName": "color/berry/700",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1535,7 +1647,7 @@
             "targetVariableId": "VariableID:b937c82279b61ab4be230831bc8404c9cf8c36bc/-1:-1",
             "targetVariableName": "color/neutral/0",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1564,7 +1676,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1592,7 +1704,7 @@
             "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
             "targetVariableName": "color/neutral/50",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1621,7 +1733,7 @@
             "targetVariableId": "VariableID:b937c82279b61ab4be230831bc8404c9cf8c36bc/-1:-1",
             "targetVariableName": "color/neutral/0",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1647,7 +1759,7 @@
             "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
             "targetVariableName": "color/neutral/100",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1673,7 +1785,7 @@
             "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
             "targetVariableName": "color/neutral/200",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1699,7 +1811,7 @@
             "targetVariableId": "VariableID:bdc281e151409ac738f74b4445adcb515df2fd8d/-1:-1",
             "targetVariableName": "color/neutral/300",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1725,7 +1837,7 @@
             "targetVariableId": "VariableID:6c376fdf3cb9fa9a4f3595fe111d1e36043dc4d2/-1:-1",
             "targetVariableName": "color/cherry/900",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1751,7 +1863,7 @@
             "targetVariableId": "VariableID:3d55b2079f49bb3968bf05e41039b5857c87aa11/-1:-1",
             "targetVariableName": "color/berry/900",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1777,7 +1889,7 @@
             "targetVariableId": "VariableID:b937c82279b61ab4be230831bc8404c9cf8c36bc/-1:-1",
             "targetVariableName": "color/neutral/0",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1812,7 +1924,7 @@
             "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
             "targetVariableName": "color/neutral/200",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       }
@@ -1843,7 +1955,7 @@
             "targetVariableId": "VariableID:7e3e0d5e33940923dd28dd5ae5b867c7a0280812/-1:-1",
             "targetVariableName": "color/yellow/accent",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1871,7 +1983,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1899,7 +2011,7 @@
             "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
             "targetVariableName": "color/neutral/950",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1928,7 +2040,7 @@
             "targetVariableId": "VariableID:0b96daa80b5ceb23ccacca2ae51b5d09211d4503/-1:-1",
             "targetVariableName": "color/yellow/accent-hover",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1957,7 +2069,7 @@
             "targetVariableId": "VariableID:ca33f3790e1988797a77839c24d202d0867ffd2b/-1:-1",
             "targetVariableName": "color/yellow/deep",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -1986,7 +2098,7 @@
             "targetVariableId": "VariableID:e9a454fcba2cc7adebe753086e57465e3d5fd16c/-1:-1",
             "targetVariableName": "color/yellow/tint",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -2015,7 +2127,7 @@
             "targetVariableId": "VariableID:e9a454fcba2cc7adebe753086e57465e3d5fd16c/-1:-1",
             "targetVariableName": "color/yellow/tint",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       }
@@ -2047,7 +2159,7 @@
               "targetVariableId": "VariableID:43323b25a7be756d3767bded70b2b42f9d33385a/-1:-1",
               "targetVariableName": "color/cherry/500",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2076,7 +2188,7 @@
               "targetVariableId": "VariableID:a3cf46c7f33eb4753f5c8bd6fc416ee9c93c6f04/-1:-1",
               "targetVariableName": "color/cherry/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2104,7 +2216,7 @@
               "targetVariableId": "VariableID:6a76c57a64bb34f2f48d1d99941ff9474a27ab5c/-1:-1",
               "targetVariableName": "color/cherry/700",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2132,7 +2244,7 @@
               "targetVariableId": "VariableID:c269b5043c7f6c76609d7d8d1645862b82cf401a/-1:-1",
               "targetVariableName": "color/cherry/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -2163,7 +2275,7 @@
               "targetVariableId": "VariableID:69af07273fc768273e4a7852099f395652e312cd/-1:-1",
               "targetVariableName": "color/amber/500",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2192,7 +2304,7 @@
               "targetVariableId": "VariableID:b050af2da30d7f83c0745a60d8815692a60c5a2a/-1:-1",
               "targetVariableName": "color/amber/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2220,7 +2332,7 @@
               "targetVariableId": "VariableID:635a988dae4f2169f82b66fd5303e01b654d5489/-1:-1",
               "targetVariableName": "color/amber/700",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2248,7 +2360,7 @@
               "targetVariableId": "VariableID:d4183c39a97e9da812f3f6cc1884fcd91dc37827/-1:-1",
               "targetVariableName": "color/amber/300",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -2279,7 +2391,7 @@
               "targetVariableId": "VariableID:8b8380dcda7d2be31d228674214d1349d7214588/-1:-1",
               "targetVariableName": "color/green/500",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2308,7 +2420,7 @@
               "targetVariableId": "VariableID:f3a373b488f9dcc4584d6c32d79262e9df12f33a/-1:-1",
               "targetVariableName": "color/green/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2336,7 +2448,7 @@
               "targetVariableId": "VariableID:0bd6ac8b69cb8f46dde93d87de1afb82b8550ab7/-1:-1",
               "targetVariableName": "color/green/700",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2364,7 +2476,7 @@
               "targetVariableId": "VariableID:2f1ffdd6b08976a6b4a4b20fee3cfbfddc83a7e5/-1:-1",
               "targetVariableName": "color/green/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -2395,7 +2507,7 @@
               "targetVariableId": "VariableID:6d52cb9ed741797af4fa5a7465d50991d7578734/-1:-1",
               "targetVariableName": "color/ocean/500",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2424,7 +2536,7 @@
               "targetVariableId": "VariableID:ccb7ba7f4b2aa6ae388fc15fbad697d6caf8cc9c/-1:-1",
               "targetVariableName": "color/ocean/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2452,7 +2564,7 @@
               "targetVariableId": "VariableID:fb3fc01260087378ed8f3adbd988912f9693609e/-1:-1",
               "targetVariableName": "color/ocean/700",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2480,7 +2592,7 @@
               "targetVariableId": "VariableID:95336a78a755daee386f4040c87d5b652959ced5/-1:-1",
               "targetVariableName": "color/ocean/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -2511,7 +2623,7 @@
               "targetVariableId": "VariableID:26a845d432e4a8ab8ee5edf56230a10ed78b0ce0/-1:-1",
               "targetVariableName": "color/berry/500",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2540,7 +2652,7 @@
               "targetVariableId": "VariableID:94618ff1b019b8927946186bb6a727a1077c6814/-1:-1",
               "targetVariableName": "color/berry/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2568,7 +2680,7 @@
               "targetVariableId": "VariableID:3df9b41adde1755f02fb1f28ddc2cb3f45f6a06d/-1:-1",
               "targetVariableName": "color/berry/700",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2596,7 +2708,7 @@
               "targetVariableId": "VariableID:6a5e769c1614ead5db3dd233364dc9000bfa6715/-1:-1",
               "targetVariableName": "color/berry/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -2626,7 +2738,7 @@
               "targetVariableId": "VariableID:b937c82279b61ab4be230831bc8404c9cf8c36bc/-1:-1",
               "targetVariableName": "color/neutral/0",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -2644,7 +2756,7 @@
             "alpha": 1,
             "hex": "#1B1913"
           },
-          "$description": "Neutral strong background \u2014 inverts between modes",
+          "$description": "Neutral strong background — inverts between modes",
           "$extensions": {
             "com.figma.variableId": "VariableID:64:2",
             "com.figma.scopes": [
@@ -2655,7 +2767,7 @@
               "targetVariableId": "VariableID:cf409401d51259c6f66c993f47bcd3b4bef8f515/-1:-1",
               "targetVariableName": "color/neutral/950",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2671,7 +2783,7 @@
             "alpha": 1,
             "hex": "#F6F3ED"
           },
-          "$description": "Neutral strong text \u2014 inverts between modes (only status that does)",
+          "$description": "Neutral strong text — inverts between modes (only status that does)",
           "$extensions": {
             "com.figma.variableId": "VariableID:64:3",
             "com.figma.scopes": [
@@ -2681,7 +2793,7 @@
               "targetVariableId": "VariableID:6ffeccb264e5a3adcd94a6eab4ef8ba7179c6dea/-1:-1",
               "targetVariableName": "color/neutral/50",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2708,7 +2820,7 @@
               "targetVariableId": "VariableID:82c96b55398d7c03fd5aae9da7946ca67f3bf722/-1:-1",
               "targetVariableName": "color/neutral/100",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2734,7 +2846,7 @@
               "targetVariableId": "VariableID:80b158c00793a717ebec68507c8b4e7011d94385/-1:-1",
               "targetVariableName": "color/neutral/600",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         },
@@ -2760,7 +2872,7 @@
               "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
               "targetVariableName": "color/neutral/200",
               "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-              "targetVariableSetName": "1 \u00b7 Primitives"
+              "targetVariableSetName": "1 · Primitives"
             }
           }
         }
@@ -2792,7 +2904,7 @@
             "targetVariableId": "VariableID:2436a1389f386fc838b4145649b046ef43791c55/-1:-1",
             "targetVariableName": "color/neutral/200",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -2820,7 +2932,7 @@
             "targetVariableId": "VariableID:bdc281e151409ac738f74b4445adcb515df2fd8d/-1:-1",
             "targetVariableName": "color/neutral/300",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       }
@@ -2852,7 +2964,7 @@
             "targetVariableId": "VariableID:8774b4ed10ba6c2254046cd44bdcd2942fc737a7/-1:-1",
             "targetVariableName": "color/chart/light-1",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -2882,7 +2994,7 @@
             "targetVariableId": "VariableID:138b0309c169e537e8de97d809225006a474611e/-1:-1",
             "targetVariableName": "color/chart/light-2",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -2912,7 +3024,7 @@
             "targetVariableId": "VariableID:da4e635576b9ec7bdd7cffdc4b7bd3553ea61d70/-1:-1",
             "targetVariableName": "color/chart/light-3",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -2942,7 +3054,7 @@
             "targetVariableId": "VariableID:7d01a925af4f0aabaeb0a2df92e85be86a49f6d1/-1:-1",
             "targetVariableName": "color/chart/light-4",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -2972,7 +3084,7 @@
             "targetVariableId": "VariableID:3e19a6104aebc29f8a4a8257f64697af178a7c1a/-1:-1",
             "targetVariableName": "color/chart/light-5",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -3002,7 +3114,7 @@
             "targetVariableId": "VariableID:bbf91966c090a5bf2029f01e770a47631b1f9872/-1:-1",
             "targetVariableName": "color/chart/light-6",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -3032,7 +3144,7 @@
             "targetVariableId": "VariableID:a2728f413eb8a8ddcd31f5c58e3b3ab6966e891b/-1:-1",
             "targetVariableName": "color/chart/light-7",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       },
@@ -3062,7 +3174,7 @@
             "targetVariableId": "VariableID:ba09e4e5f3723e48d11e62ae87e29679088a1406/-1:-1",
             "targetVariableName": "color/chart/light-8",
             "targetVariableSetId": "VariableCollectionId:e7c91d089d4703850d66d9db8a966c08245ee9b7/-1:-1",
-            "targetVariableSetName": "1 \u00b7 Primitives"
+            "targetVariableSetName": "1 · Primitives"
           }
         }
       }

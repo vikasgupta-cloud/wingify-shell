@@ -345,3 +345,14 @@ export const SEMANTIC_COLOR_GROUPS = [
     ],
   },
 ] as const;
+
+export const SEMANTIC_BORDER_TOKENS = [
+  { name: "subtle", token: "semantic-border-subtle" },
+  { name: "default", token: "semantic-border-default" },
+  { name: "hover", token: "semantic-border-hover" },
+  { name: "strong", token: "semantic-border-strong" },
+  { name: "focus", token: "semantic-border-focus" },
+  { name: "tooltip", token: "semantic-border-tooltip" },
+  { name: "disabled", token: "semantic-border-disabled" },
+  { name: "error", token: "semantic-border-error" },
+] as const;

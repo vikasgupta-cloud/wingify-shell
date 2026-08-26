@@ -4,6 +4,7 @@ import {
   PRIMITIVE_PALETTES,
   RADIUS_ALIASES,
   RADIUS_PRIMITIVES,
+  SEMANTIC_BORDER_TOKENS,
   SEMANTIC_COLOR_GROUPS,
   SHADOW_LEVELS,
   SPACE_ALIASES,
@@ -105,6 +106,29 @@ export default function DesignSystemFoundations() {
             </div>
           </div>
         ))}
+
+        <div className="space-y-4">
+          <h3 className="type-heading-sm text-foreground">semantic / border</h3>
+          <p className="type-body-sm text-muted-foreground">
+            Light and dark resolve through mode. Swatches show the live value.
+          </p>
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+            {SEMANTIC_BORDER_TOKENS.map((item) => (
+              <div key={item.token} className="min-w-0">
+                <div
+                  className="h-16 rounded-lg border border-subtle"
+                  style={{ backgroundColor: `var(--${item.token})` }}
+                />
+                <p className="mt-2 truncate text-sm font-medium text-foreground">
+                  {item.name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  --{item.token}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="space-y-10">

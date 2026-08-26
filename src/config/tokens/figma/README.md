@@ -23,5 +23,5 @@ Writes `src/styles/tokens.generated.css` (imported from `src/index.css`).
 1. Emit every Figma token (primitives + semantic light/dark).
 2. Color CSS values are **hex** (`#RRGGBB` / `#RRGGBBAA`), matching Figma — not HSL channels.
 3. App/shadcn roles (`--background`, `--border`, `--muted`, …) resolve **only** to `var(--semantic-*)` (or a primitive when the pack names one).
-4. Do **not** invent hairline values — use `--semantic-border-subtle` / `--semantic-border-strong` / `--semantic-border-focus`.
+4. Do **not** invent hairline values — use `--semantic-border-*` (`subtle`, `default`, `hover`, `strong`, `focus`, `tooltip`, `disabled`, `error`).
 5. Light/dark is a swap of `--semantic-*` under `[data-mode]`, not a second inventing of app roles.

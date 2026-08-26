@@ -17,6 +17,7 @@ import {
   Flame,
   FlaskConical,
   Lightbulb,
+  MessageSquare,
   Mic,
   Monitor,
   PenLine,
@@ -197,27 +198,33 @@ export function WandzHero() {
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col items-center text-center">
-        <div className="flex items-center gap-2.5">
-          <Sparkles className="size-6 text-foreground" aria-hidden />
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            Meet Wandz
-          </h2>
-        </div>
-        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+    <section className="mx-auto w-full max-w-3xl">
+      <header className="flex flex-col items-center text-center">
+        <h2 className="relative font-heading text-[1.875rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2rem]">
+          <Sparkles
+            className="pointer-events-none absolute right-full top-[0.2em] mr-2.5 size-[0.9em] text-foreground"
+            aria-hidden
+          />
+          Meet Wandz
+        </h2>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
           Ask about campaigns, recordings, heatmaps, and test ideas. All in one
           conversation.
         </p>
-      </div>
+      </header>
 
-      <div className="mx-auto w-full max-w-3xl space-y-5">
-        <div className="rounded-xl border border-border bg-background">
+      <div className="mt-8 space-y-4">
+        <div
+          className={cn(
+            "rounded-2xl border border-border bg-background transition-[box-shadow,border-color] duration-200",
+            "focus-within:border-[var(--semantic-border-focus)] focus-within:ring-2 focus-within:ring-[var(--semantic-border-focus)]/15"
+          )}
+        >
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={3}
-            className="min-h-[88px] resize-none border-0 bg-transparent px-4 pt-4 text-sm shadow-none focus-visible:ring-0"
+            className="min-h-[96px] resize-none border-0 bg-transparent px-5 pt-5 text-[15px] leading-relaxed shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-0"
             placeholder="Ask Wandz…"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -226,31 +233,31 @@ export function WandzHero() {
               }
             }}
           />
-          <div className="flex items-center justify-between gap-3 px-3 pb-3">
+          <div className="flex items-center justify-between gap-3 px-3.5 pb-3.5 pt-1">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="size-8 text-muted-foreground"
+              className="size-8 text-muted-foreground hover:text-foreground"
               aria-label="Add attachment"
             >
               <Plus className="size-4" />
             </Button>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <Button
                 type="button"
-                variant="secondary"
+                variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 rounded-full px-3 text-xs font-medium"
+                className="h-8 gap-1 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
                 Thinking
-                <ChevronDown className="size-3.5 opacity-70" />
+                <ChevronDown className="size-3.5 opacity-60" />
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-8 text-muted-foreground"
+                className="size-8 text-muted-foreground hover:text-foreground"
                 aria-label="Voice input"
               >
                 <Mic className="size-4" />
@@ -258,7 +265,7 @@ export function WandzHero() {
               <Button
                 type="button"
                 size="icon"
-                className="size-8"
+                className="size-8 transition-transform duration-150 hover:scale-[1.03] active:scale-[0.97]"
                 aria-label="Send to Wandz"
                 onClick={() => ask(prompt)}
               >
@@ -268,7 +275,7 @@ export function WandzHero() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-2.5">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           {WANDZ_CTAS.map((cta) => {
             const Icon = WANDZ_CTA_ICONS[cta.id];
             return (
@@ -277,32 +284,36 @@ export function WandzHero() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-auto gap-2 rounded-lg bg-background px-3.5 py-2 text-sm font-normal shadow-none"
+                className="rounded-full"
                 onClick={() => ask(cta.prompt)}
               >
-                <Icon className="size-3.5 text-muted-foreground" aria-hidden />
+                <Icon aria-hidden />
                 {cta.label}
               </Button>
             );
           })}
         </div>
 
-        <div className="space-y-2 pt-1">
-          <p className="text-xs font-medium text-muted-foreground">
+        <div className="flex flex-col items-center pt-5">
+          <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
             Your recent chats
           </p>
-          <ul className="space-y-2">
+          <ul className="mt-3 w-full max-w-md space-y-1.5">
             {WANDZ_RECENT_CHATS.map((chat) => (
               <li key={chat.id}>
                 <button
                   type="button"
                   onClick={() => ask(chat.prompt)}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted"
+                  className="group flex w-full items-center gap-2.5 rounded-lg border border-subtle bg-transparent px-2.5 py-1.5 text-left transition-[background-color,border-color] duration-150 hover:bg-muted"
                 >
-                  <p className="min-w-0 truncate text-sm font-medium text-foreground">
+                  <MessageSquare
+                    className="size-3.5 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
                     {chat.title}
-                  </p>
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
                     {chat.ago}
                   </span>
                 </button>
@@ -311,7 +322,7 @@ export function WandzHero() {
           </ul>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

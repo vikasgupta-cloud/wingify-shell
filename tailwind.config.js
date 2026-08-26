@@ -165,7 +165,16 @@ export default {
           DEFAULT: "rgb(from var(--accent) r g b / <alpha-value>)",
           foreground: "rgb(from var(--accent-foreground) r g b / <alpha-value>)",
         },
-        border: "rgb(from var(--border) r g b / <alpha-value>)",
+        border: {
+          DEFAULT: "rgb(from var(--border) r g b / <alpha-value>)",
+          subtle: "rgb(from var(--border-subtle) r g b / <alpha-value>)",
+          hover: "rgb(from var(--border-hover) r g b / <alpha-value>)",
+          strong: "rgb(from var(--border-strong) r g b / <alpha-value>)",
+          focus: "rgb(from var(--border-focus) r g b / <alpha-value>)",
+          tooltip: "rgb(from var(--border-tooltip) r g b / <alpha-value>)",
+          disabled: "rgb(from var(--border-disabled) r g b / <alpha-value>)",
+          error: "rgb(from var(--border-error) r g b / <alpha-value>)",
+        },
         input: "rgb(from var(--input) r g b / <alpha-value>)",
         ring: "rgb(from var(--ring) r g b / <alpha-value>)",
         rail: {
