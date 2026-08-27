@@ -1,10 +1,11 @@
+import { useMemo } from "react";
 import { create } from "zustand";
 import {
   RECOMMENDATIONS,
   makeRecommendation,
   type Recommendation,
+  type RecommendationStatus,
 } from "../data/recommendations";
-import type { CampaignStatus } from "../data/campaigns";
 
 type RecommendationRowsState = {
   extras: Recommendation[];
@@ -15,9 +16,30 @@ type RecommendationRowsState = {
   update: (id: string, patch: Partial<Recommendation>) => void;
   archive: (ids: string[]) => void;
   remove: (ids: string[]) => void;
-  setStatus: (id: string, status: CampaignStatus) => void;
+  setStatus: (id: string, status: RecommendationStatus) => void;
   removeTag: (id: string, tag: string) => void;
 };
+
+function listRecommendations(
+  s: Pick<
+    RecommendationRowsState,
+    "extras" | "overrides" | "archivedIds" | "deletedIds"
+  >
+): Recommendation[] {
+  const hidden = new Set([...s.archivedIds, ...s.deletedIds]);
+  const byId = new Map<string, Recommendation>();
+
+  for (const row of RECOMMENDATIONS) {
+    if (hidden.has(row.id)) continue;
+    byId.set(row.id, { ...row, ...s.overrides[row.id] });
+  }
+  for (const row of s.extras) {
+    if (hidden.has(row.id)) continue;
+    byId.set(row.id, { ...row, ...s.overrides[row.id] });
+  }
+
+  return [...byId.values()];
+}
 
 export const useRecommendationRowsStore = create<RecommendationRowsState>(
   (set, get) => ({
@@ -65,31 +87,13 @@ export const useRecommendationRowsStore = create<RecommendationRowsState>(
   })
 );
 
-function listRecommendations(
-  s: Pick<
-    RecommendationRowsState,
-    "extras" | "overrides" | "archivedIds" | "deletedIds"
-  >
-): Recommendation[] {
-  const hidden = new Set([...s.archivedIds, ...s.deletedIds]);
-  const byId = new Map<string, Recommendation>();
-
-  for (const row of RECOMMENDATIONS) {
-    if (hidden.has(row.id)) continue;
-    byId.set(row.id, { ...row, ...s.overrides[row.id] });
-  }
-  for (const row of s.extras) {
-    if (hidden.has(row.id)) continue;
-    byId.set(row.id, { ...row, ...s.overrides[row.id] });
-  }
-
-  return [...byId.values()];
-}
-
 export function useVisibleRecommendations(): Recommendation[] {
   const extras = useRecommendationRowsStore((s) => s.extras);
   const overrides = useRecommendationRowsStore((s) => s.overrides);
   const archivedIds = useRecommendationRowsStore((s) => s.archivedIds);
   const deletedIds = useRecommendationRowsStore((s) => s.deletedIds);
-  return listRecommendations({ extras, overrides, archivedIds, deletedIds });
+  return useMemo(
+    () => listRecommendations({ extras, overrides, archivedIds, deletedIds }),
+    [extras, overrides, archivedIds, deletedIds]
+  );
 }

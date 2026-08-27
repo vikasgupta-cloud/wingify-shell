@@ -1,27 +1,32 @@
-// Dummy Commerce → Recommendation list data (Figma Reco columns, Wingify shell).
-
-import type { CampaignStatus } from "./campaigns";
+// Dummy Commerce → Strategies (Recommendations) list data.
 
 export type RecommendationLocation =
+  | "No location"
   | "Home page"
   | "Product page"
-  | "Cart pop-up"
+  | "Landing page"
   | "Category page"
+  | "Cart pop-up"
   | "Checkout";
+
+export type RecommendationStatus =
+  | "Draft"
+  | "Deployed"
+  | "Deployed (Draft Waiting…)";
 
 export type Recommendation = {
   id: string;
   name: string;
   location: RecommendationLocation;
-  revenueShare: number; // percent, e.g. 3.7
-  ctr: number; // percent
-  rpvUplift: number; // multiplier, e.g. 2.3 → "x2.3"
+  revenueShare: number | null;
+  ctr: number | null;
+  rpvUplift: number | null;
   tags: string[];
   creator: string;
   creatorInitials: string;
-  createdOn: string; // ISO
-  lastEdit: string; // ISO
-  status: CampaignStatus;
+  createdOn: string;
+  lastEdit: string | null;
+  status: RecommendationStatus;
 };
 
 export const recommendationLandingPath = (r: { id: string }): string =>
@@ -31,48 +36,63 @@ export const recommendationReportsPath = (r: { id: string }): string =>
   `/commerce/recommendation/c/${r.id}/reports`;
 
 const LOCATIONS: RecommendationLocation[] = [
+  "No location",
   "Home page",
   "Product page",
-  "Cart pop-up",
+  "Landing page",
   "Category page",
+  "Cart pop-up",
   "Checkout",
 ];
 
 const CREATORS: { name: string; initials: string }[] = [
-  { name: "Maya M", initials: "MM" },
-  { name: "Alex R", initials: "AR" },
-  { name: "Priya N", initials: "PN" },
-  { name: "Jordan K", initials: "JK" },
-  { name: "Sofia A", initials: "SA" },
+  { name: "Alysen Acton", initials: "A" },
+  { name: "Vincent Morel", initials: "V" },
+  { name: "Tanguy Bernard", initials: "T" },
+  { name: "Julie Martin", initials: "J" },
+  { name: "Priya Nair", initials: "P" },
 ];
 
-const TAG_POOL = ["TAG 1", "TAG 2", "SUMMER", "CART", "HOME", "PDP"];
+const TAG_POOL = [
+  "Demo Reporting",
+  "PLP",
+  "Products Category",
+  "Test elias",
+  "Test elias 2",
+];
 
-const STATUSES: CampaignStatus[] = [
-  "Running",
+const STATUSES: RecommendationStatus[] = [
   "Draft",
-  "Paused",
-  "In QA",
-  "Ready to launch",
+  "Deployed",
+  "Deployed (Draft Waiting…)",
+];
+
+const NAMES = [
+  "Alysen Acton - Training - 8/10",
+  "New recommendation",
+  "Tanguy test",
+  "Top 10 produits par revenus sur 30 jours",
+  "Home bestsellers carousel",
+  "PDP frequently bought together",
+  "Cart cross-sell — accessories",
+  "Category page trending now",
+  "Checkout last-chance offer",
+  "PLP similar items rail",
 ];
 
 function iso(y: number, m: number, d: number, h = 10, min = 0): string {
   return new Date(Date.UTC(y, m - 1, d, h, min, 0)).toISOString();
 }
 
-function initialsFrom(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
-}
-
-/** Seed ~46 rows so pagination matches the Figma density. */
+/** Seed rows for Strategies list density + pagination. */
 export const RECOMMENDATIONS: Recommendation[] = Array.from(
-  { length: 46 },
+  { length: 82 },
   (_, i) => {
     const n = i + 1;
     const creator = CREATORS[i % CREATORS.length];
-    const tagCount = (i % 3) + 1;
+    const status = STATUSES[i % STATUSES.length];
+    const deployed = status === "Deployed";
+    const tagCount = i % 4 === 0 ? 0 : (i % 3) + 1;
     const tags = Array.from(
       { length: tagCount },
       (_, t) => TAG_POOL[(i + t) % TAG_POOL.length]
@@ -81,39 +101,43 @@ export const RECOMMENDATIONS: Recommendation[] = Array.from(
     const month = 1 + (i % 8);
     return {
       id: String(9000 + n),
-      name:
-        i % 5 === 2
-          ? `Reco strategy ${n} — long campaign name for truncation`
-          : `This is my super very long campaign name`,
+      name: NAMES[i % NAMES.length] + (i >= NAMES.length ? ` ${n}` : ""),
       location: LOCATIONS[i % LOCATIONS.length],
-      revenueShare: Number((1.2 + (i % 17) * 0.35).toFixed(1)),
-      ctr: Number((4.1 + (i % 21) * 0.55).toFixed(1)),
-      rpvUplift: Number((1.1 + (i % 9) * 0.2).toFixed(1)),
+      revenueShare: deployed ? Number((0.4 + (i % 17) * 0.15).toFixed(1)) : null,
+      ctr: deployed ? Number((12.1 + (i % 21) * 1.1).toFixed(1)) : null,
+      rpvUplift: deployed ? Number((0.2 + (i % 9) * 0.15).toFixed(2)) : null,
       tags: [...new Set(tags)],
       creator: creator.name,
       creatorInitials: creator.initials,
-      createdOn: iso(2026, month, day, 9, (i * 7) % 60),
-      lastEdit: iso(2026, month, Math.min(28, day + 2), 14, (i * 11) % 60),
-      status: STATUSES[i % STATUSES.length],
+      createdOn: iso(2026, month, day, 9 + (i % 12), (i * 7) % 60),
+      lastEdit:
+        i % 3 === 0
+          ? null
+          : iso(2026, month, Math.min(28, day + 2), 14, (i * 11) % 60),
+      status,
     };
   }
 );
 
-export function makeRecommendation(partial?: Partial<Recommendation>): Recommendation {
-  const id = partial?.id ?? String(Date.now());
-  const creator = partial?.creator ?? "You";
+let nextId = 9500;
+
+export function makeRecommendation(
+  partial?: Partial<Recommendation>
+): Recommendation {
+  const id = String(nextId++);
+  const creator = CREATORS[0];
   return {
     id,
-    name: partial?.name ?? "Untitled recommendation",
-    location: partial?.location ?? "Home page",
-    revenueShare: partial?.revenueShare ?? 0,
-    ctr: partial?.ctr ?? 0,
-    rpvUplift: partial?.rpvUplift ?? 1,
+    name: partial?.name ?? "New recommendation",
+    location: partial?.location ?? "No location",
+    revenueShare: partial?.revenueShare ?? null,
+    ctr: partial?.ctr ?? null,
+    rpvUplift: partial?.rpvUplift ?? null,
     tags: partial?.tags ?? [],
-    creator,
-    creatorInitials: partial?.creatorInitials ?? initialsFrom(creator),
+    creator: partial?.creator ?? creator.name,
+    creatorInitials: partial?.creatorInitials ?? creator.initials,
     createdOn: partial?.createdOn ?? new Date().toISOString(),
-    lastEdit: partial?.lastEdit ?? new Date().toISOString(),
+    lastEdit: partial?.lastEdit ?? null,
     status: partial?.status ?? "Draft",
   };
 }

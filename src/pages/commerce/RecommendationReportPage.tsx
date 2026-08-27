@@ -28,9 +28,19 @@ export default function RecommendationReportPage() {
   }
 
   const metrics = [
-    { label: "% of revenue", value: `${row.revenueShare.toFixed(1)}%` },
-    { label: "CTR", value: `${row.ctr.toFixed(1)}%` },
-    { label: "RPV uplift", value: `x${row.rpvUplift.toFixed(1)}` },
+    {
+      label: "% of revenue",
+      value:
+        row.revenueShare == null ? "–" : `${row.revenueShare.toFixed(1)}%`,
+    },
+    {
+      label: "CTR",
+      value: row.ctr == null ? "–" : `${row.ctr.toFixed(1)}%`,
+    },
+    {
+      label: "RPV uplift",
+      value: row.rpvUplift == null ? "–" : `x${row.rpvUplift.toFixed(1)}`,
+    },
   ];
 
   return (

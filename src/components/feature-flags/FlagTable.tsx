@@ -77,8 +77,9 @@ export default function FlagTable() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  // Bail out when already empty so an unstable `sorted` ref can't loop.
   useEffect(() => {
-    setSelected(new Set());
+    setSelected((prev) => (prev.size === 0 ? prev : new Set()));
   }, [sorted]);
 
   const columns = visibleColumns

@@ -4,6 +4,8 @@ import {
   PROFILE_MODES,
   findProfileMode,
   firstModePath,
+  flattenNavLeaves,
+  leafLandPath,
   type NavItem,
   type NavLeaf,
 } from "../config/navigation";
@@ -46,7 +48,7 @@ export function firstChildPath(item: NavItem): string {
     return first ? firstModePath(first) : item.path;
   }
   const first = item.sections?.[0]?.items[0];
-  return first ? first.path : item.path;
+  return first ? leafLandPath(first) : item.path;
 }
 
 export type Breadcrumb = {
@@ -60,10 +62,12 @@ export type Breadcrumb = {
 export function resolveBreadcrumb(pathname: string): Breadcrumb {
   const item = findItemByPath(pathname);
   if (!item || !item.sections) return { item, siblings: [] };
-  const siblings = item.sections.flatMap((s) => s.items);
-  const leaf = siblings.find(
-    (l) => pathname === l.path || pathname.startsWith(l.path + "/")
-  );
+  const siblings = flattenNavLeaves(item.sections);
+  const leaf = [...siblings]
+    .sort((a, b) => b.path.length - a.path.length)
+    .find(
+      (l) => pathname === l.path || pathname.startsWith(l.path + "/")
+    );
   return { item, leaf, siblings };
 }
 

@@ -30,6 +30,14 @@ import {
   Blocks,
   LogOut,
   Zap,
+  BookOpen,
+  Shirt,
+  Crosshair,
+  LayoutGrid,
+  Award,
+  Search,
+  Puzzle,
+  Crown,
 } from "@/components/icons/protoLucide";
 import { UPGRADE_ADDONS_PATH, UPGRADE_SECTIONS } from "./upgradeNav";
 export type NavLeaf = {
@@ -38,10 +46,16 @@ export type NavLeaf = {
   hideCreate?: boolean;
   /** Optional glyph for drill-in section children (e.g. website rows). */
   icon?: LucideIcon;
+  /** Nested accordion children in product sub-nav (e.g. Commerce Recommendations). */
+  items?: NavLeaf[];
   /** Muted action row (e.g. Add new) — still navigates to a stub page. */
   action?: boolean;
   /** Optional count pill on the right (e.g. Assets Hub). */
   count?: number;
+  /** Premium marker (e.g. Commerce Search crown). */
+  badge?: "premium";
+  /** Show external-link affordance; still routes in-app unless opened via the icon. */
+  external?: boolean;
 };
 export type NavSection = { heading?: string; items: NavLeaf[] };
 export type NavItem = {
@@ -159,11 +173,59 @@ export const NAV: NavItem[] = [
     { heading: "Maintain", items: [{ label: "Tech Debt", path: "/feature-management/tech-debt", hideCreate: true }]},
   ]},
   { label: "Commerce", path: "/commerce", icon: ShoppingCart, group: 2, pinnable: true, sections: [
-    { heading: "Discover", items: [
-      { label: "Search", path: "/commerce/search" },
-      { label: "Recommendation", path: "/commerce/recommendation" },
+    { items: [
+      { label: "Catalog", path: "/commerce/catalog", icon: BookOpen, hideCreate: true },
     ]},
-    { heading: "Optimize", items: [{ label: "Merchandising", path: "/commerce/merchandising" }]},
+    { items: [
+      {
+        label: "Recommendations",
+        path: "/commerce/recommendations",
+        icon: Shirt,
+        items: [
+          { label: "Strategies", path: "/commerce/recommendation", icon: Crosshair, hideCreate: true },
+          { label: "Locations", path: "/commerce/recommendation/locations", icon: LayoutGrid, hideCreate: true },
+          { label: "Reporting", path: "/commerce/recommendation/reporting", icon: BarChart3, hideCreate: true },
+        ],
+      },
+      {
+        label: "Merchandising",
+        path: "/commerce/merchandising",
+        icon: Award,
+        items: [
+          { label: "Strategies", path: "/commerce/merchandising/strategies", icon: Crosshair, hideCreate: true },
+          { label: "Reporting", path: "/commerce/merchandising/reporting", icon: BarChart3, hideCreate: true },
+        ],
+      },
+      { label: "Search", path: "/commerce/search", icon: Search, badge: "premium" },
+    ]},
+    { items: [
+      {
+        label: "Visuals",
+        path: "/commerce/visuals",
+        icon: Puzzle,
+        hideCreate: true,
+        items: [
+          {
+            label: "Product widgets",
+            path: "/commerce/visuals/product-widgets",
+            icon: Puzzle,
+            hideCreate: true,
+            external: true,
+          },
+          {
+            label: "Templates",
+            path: "/commerce/visuals/templates",
+            icon: LayoutGrid,
+            hideCreate: true,
+          },
+        ],
+      },
+    ]},
+    { items: [
+      { label: "Usage dashboard", path: "/commerce/usage-dashboard", icon: BarChart3, hideCreate: true },
+      { label: "Health monitor", path: "/commerce/health-monitor", icon: Activity, hideCreate: true },
+      { label: "Settings", path: "/commerce/settings", icon: Settings, hideCreate: true },
+    ]},
   ]},
   { label: "Analytics", path: "/analytics", icon: LineChart, group: 2, pinnable: true },
   { label: "Insights", path: "/insights", icon: BarChart3, group: 2, pinnable: true, sections: [
@@ -475,6 +537,25 @@ export const WEB_EXPERIMENT_OLD_PATH = "/web-experiment-old";
 /** NAV without prototype-only items (e.g. Web experimentation Old). */
 export function visibleNav(): NavItem[] {
   return NAV.filter((item) => item.path !== WEB_EXPERIMENT_OLD_PATH);
+}
+
+/** End leaves only (skip accordion parents that have children). */
+export function flattenNavLeaves(sections: NavSection[]): NavLeaf[] {
+  const out: NavLeaf[] = [];
+  const walk = (leaves: NavLeaf[]) => {
+    for (const leaf of leaves) {
+      if (leaf.items?.length) walk(leaf.items);
+      else out.push(leaf);
+    }
+  };
+  for (const section of sections) walk(section.items);
+  return out;
+}
+
+/** Land path for a leaf: first nested child when present, else own path. */
+export function leafLandPath(leaf: NavLeaf): string {
+  if (leaf.items?.length) return leafLandPath(leaf.items[0]);
+  return leaf.path;
 }
 
 export function findProfileMode(pathname: string): ProfileMode | undefined {

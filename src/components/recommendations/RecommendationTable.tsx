@@ -1,6 +1,6 @@
-// Recommendations table — WE pagination / chrome; Figma columns; row actions navigate.
+// Strategies list table — sticky checkbox+name (Catalog-style widths), status pills, pager.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
@@ -8,8 +8,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   ChevronsUpDown,
   EllipsisVertical,
   Pencil,
@@ -18,13 +16,6 @@ import {
 } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   RECOMMENDATION_COLUMNS,
   type RecommendationColumnDef,
@@ -44,9 +35,7 @@ import {
 } from "./useRecommendationPipeline";
 
 const CHECKBOX_COL_WIDTH = 44;
-const PAGE_SIZES = [10, 25, 50];
-const PAGER_BUTTON =
-  "h-7 w-7 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40";
+const NAME_STICKY_WIDTH = 280;
 
 const DENSITY_PAD = {
   compact: "py-2",
@@ -54,31 +43,70 @@ const DENSITY_PAD = {
   comfortable: "py-4",
 } as const;
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
 const NULL_DASH = <span className="text-sm text-muted-foreground">–</span>;
 
-function formatDateTime(iso: string) {
+/** Opaque sticky fills — alpha backgrounds let scrolling cells bleed through. */
+const STICKY_BODY =
+  "bg-background group-hover:bg-[var(--table-row-hover,_var(--muted))]";
+const STICKY_HEAD = "bg-listing-header";
+/** Edge divider+shadow on a 1px overlay — cell box-shadow is suppressed by border-collapse. */
+const NAME_EDGE_OVERLAY =
+  "pointer-events-none absolute inset-y-0 right-0 w-px [box-shadow:1px_0_0_0_var(--border),6px_0_10px_-2px_rgba(0,0,0,0.12)]";
+
+function formatDateTime(iso: string | null) {
+  if (!iso) return null;
   const d = new Date(iso);
-  const date = `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-  const hours = d.getUTCHours();
+  const date = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+  const hours = String(d.getUTCHours()).padStart(2, "0");
   const mins = String(d.getUTCMinutes()).padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const h12 = hours % 12 || 12;
-  return `${date} ${h12}:${mins} ${ampm}`;
+  return `${date} ${hours}:${mins}`;
+}
+
+function StatusPill({ status }: { status: Recommendation["status"] }) {
+  const deployed = status.startsWith("Deployed");
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-medium",
+        deployed
+          ? "bg-status-running-bg text-status-running-fg"
+          : "border border-border bg-background text-foreground"
+      )}
+      title={status}
+    >
+      {status}
+    </span>
+  );
+}
+
+function stickyCheckboxStyle(isHead: boolean): CSSProperties {
+  return {
+    position: "sticky",
+    left: 0,
+    width: CHECKBOX_COL_WIDTH,
+    minWidth: CHECKBOX_COL_WIDTH,
+    maxWidth: CHECKBOX_COL_WIDTH,
+    zIndex: isHead ? 21 : 11,
+  };
+}
+
+function stickyNameStyle(
+  width: number,
+  isHead: boolean
+): CSSProperties {
+  return {
+    position: "sticky",
+    left: CHECKBOX_COL_WIDTH,
+    width,
+    minWidth: width,
+    maxWidth: width,
+    zIndex: isHead ? 20 : 10,
+  };
+}
+
+function columnStyle(col: RecommendationColumnDef, width: number): CSSProperties {
+  if (col.id === "name") return stickyNameStyle(width, false);
+  return { width, minWidth: width };
 }
 
 function pageWindow(current: number, total: number): number[] {
@@ -102,7 +130,6 @@ export default function RecommendationTable() {
     rowDensity,
     search,
     setPage,
-    setPageSize,
     setSort,
   } = useRecommendationTableStore();
   const remove = useRecommendationRowsStore((s) => s.remove);
@@ -112,7 +139,7 @@ export default function RecommendationTable() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setSelected(new Set());
+    setSelected((prev) => (prev.size === 0 ? prev : new Set()));
   }, [sorted]);
 
   const columns = visibleColumns
@@ -120,7 +147,9 @@ export default function RecommendationTable() {
     .filter((c): c is RecommendationColumnDef => c !== undefined);
 
   const effWidth = (col: RecommendationColumnDef) =>
-    columnWidths[col.id] ?? col.width;
+    col.id === "name"
+      ? Math.max(columnWidths[col.id] ?? col.width, NAME_STICKY_WIDTH)
+      : (columnWidths[col.id] ?? col.width);
   const tableWidth =
     CHECKBOX_COL_WIDTH + columns.reduce((sum, col) => sum + effWidth(col), 0);
 
@@ -131,9 +160,7 @@ export default function RecommendationTable() {
   const pageRows = grouped
     ? sorted
     : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const rangeStart = totalResults === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const rangeEnd = Math.min(currentPage * pageSize, totalResults);
-  const showControls = !grouped && totalResults > pageSize;
+  const pageNumbers = pageWindow(currentPage, totalPages);
 
   const selectedVisible = pageRows.filter((r) => selected.has(r.id)).length;
   const allSelected =
@@ -192,11 +219,17 @@ export default function RecommendationTable() {
     switch (col.id as RecommendationColumnId) {
       case "name":
         return (
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate font-medium text-foreground group-hover:underline">
+          <div className="relative flex min-w-0 items-center">
+            <span className="truncate pr-1 font-medium text-foreground group-hover:underline group-hover:pr-28">
               {r.name}
             </span>
-            <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+            <div
+              className={cn(
+                "absolute inset-y-0 right-0 flex items-center gap-0.5 pl-2",
+                "bg-background opacity-0 transition-opacity group-hover:opacity-100",
+                "group-hover:bg-[var(--table-row-hover,_var(--muted))]"
+              )}
+            >
               <Button
                 type="button"
                 variant="ghost"
@@ -265,6 +298,8 @@ export default function RecommendationTable() {
             </div>
           </div>
         );
+      case "status":
+        return <StatusPill status={r.status} />;
       case "location":
         return (
           <span className="inline-flex rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground">
@@ -272,11 +307,13 @@ export default function RecommendationTable() {
           </span>
         );
       case "revenueShare":
-        return `${r.revenueShare.toFixed(1)}%`;
+        return r.revenueShare == null
+          ? NULL_DASH
+          : `${r.revenueShare.toFixed(1)}%`;
       case "ctr":
-        return `${r.ctr.toFixed(1)}%`;
+        return r.ctr == null ? NULL_DASH : `${r.ctr.toFixed(1)}%`;
       case "rpvUplift":
-        return `x${r.rpvUplift.toFixed(1)}`;
+        return r.rpvUplift == null ? NULL_DASH : `x${r.rpvUplift.toFixed(2)}`;
       case "tags":
         return r.tags.length === 0 ? (
           NULL_DASH
@@ -318,12 +355,16 @@ export default function RecommendationTable() {
             {formatDateTime(r.createdOn)}
           </span>
         );
-      case "lastEdit":
-        return (
-          <span className="tabular-nums text-foreground">
-            {formatDateTime(r.lastEdit)}
-          </span>
+      case "lastEdit": {
+        const formatted = formatDateTime(r.lastEdit);
+        return formatted ? (
+          <span className="tabular-nums text-foreground">{formatted}</span>
+        ) : (
+          NULL_DASH
         );
+      }
+      case "id":
+        return <span className="tabular-nums text-foreground">{r.id}</span>;
       default:
         return NULL_DASH;
     }
@@ -331,254 +372,214 @@ export default function RecommendationTable() {
 
   const hasSelection = selected.size > 0;
 
-  const renderRow = (r: Recommendation, i: number) => (
+  const renderRow = (r: Recommendation, _i?: number) => (
     <tr
       key={r.id}
-      className={cn(
-        "group border-b border-border last:border-b-0 hover:bg-[hsl(var(--table-row-hover,_var(--muted)/0.4))]",
-        i % 2 === 1 && "bg-muted/20"
-      )}
+      className="group border-b border-border last:border-b-0 hover:bg-[var(--table-row-hover,_var(--muted))]"
     >
-      <td className={cn("px-3 align-middle", DENSITY_PAD[rowDensity])}>
+      <td
+        className={cn(
+          "px-3 align-middle",
+          DENSITY_PAD[rowDensity],
+          STICKY_BODY
+        )}
+        style={stickyCheckboxStyle(false)}
+      >
         <Checkbox
           checked={selected.has(r.id)}
           onCheckedChange={() => toggleRow(r.id)}
           aria-label={`Select ${r.name}`}
         />
       </td>
-      {columns.map((col) => (
-        <td
-          key={col.id}
-          className={cn(
-            "px-3 align-middle text-sm text-foreground",
-            DENSITY_PAD[rowDensity],
-            col.align === "right" && "text-right",
-            col.align === "center" && "text-center"
-          )}
-        >
-          {renderCell(r, col)}
-        </td>
-      ))}
-      <td aria-hidden />
+      {columns.map((col) => {
+        const width = effWidth(col);
+        return (
+          <td
+            key={col.id}
+            className={cn(
+              "px-3 align-middle text-sm text-foreground",
+              DENSITY_PAD[rowDensity],
+              col.align === "right" && "text-right",
+              col.align === "center" && "text-center",
+              col.id === "name" && cn(STICKY_BODY, "relative overflow-hidden")
+            )}
+            style={columnStyle(col, width)}
+          >
+            {renderCell(r, col)}
+            {col.id === "name" && (
+              <span className={NAME_EDGE_OVERLAY} aria-hidden />
+            )}
+          </td>
+        );
+      })}
     </tr>
   );
 
   return (
     <div>
-      <div className="overflow-hidden rounded-lg border border-border bg-background">
-        <div className="overflow-x-auto">
-          <table
-            className="w-full table-fixed border-collapse text-sm"
-            style={{ minWidth: tableWidth }}
-          >
-            <colgroup>
-              <col style={{ width: CHECKBOX_COL_WIDTH }} />
-              {columns.map((col) => (
-                <col key={col.id} style={{ width: effWidth(col) }} />
-              ))}
-              <col />
-            </colgroup>
-            <thead>
-              {hasSelection ? (
-                <tr className="border-b border-border bg-muted/50">
-                  <td colSpan={columns.length + 2} className="px-3 py-2">
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={headerState}
-                        onCheckedChange={toggleAll}
-                        aria-label="Select all"
-                      />
-                      <span className="text-sm font-medium">
-                        {selected.size} selected
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          remove([...selected]);
-                          clearSelection();
-                        }}
-                        className="h-auto gap-1.5 px-2.5 py-1"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Delete
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearSelection}
-                        className="ml-auto h-auto px-0 py-0 text-muted-foreground"
-                      >
-                        Clear selection
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                <tr className="border-b border-border bg-listing-header text-listing-header-foreground">
-                  <th className="px-3 py-2.5">
+      <div className="overflow-x-auto">
+        <table
+          className="w-max border-collapse text-sm"
+          style={{ minWidth: Math.max(tableWidth, 960) }}
+        >
+          <thead>
+            {hasSelection ? (
+              <tr className="border-b border-border bg-muted/50">
+                <td colSpan={columns.length + 1} className="px-3 py-2">
+                  <div className="flex items-center gap-3">
                     <Checkbox
                       checked={headerState}
                       onCheckedChange={toggleAll}
                       aria-label="Select all"
                     />
-                  </th>
-                  {columns.map((col) => (
+                    <span className="text-sm font-medium">
+                      {selected.size} selected
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        remove([...selected]);
+                        clearSelection();
+                      }}
+                      className="h-auto gap-1.5 px-2.5 py-1"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearSelection}
+                      className="ml-auto h-auto px-0 py-0 text-muted-foreground"
+                    >
+                      Clear selection
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              <tr className="border-b border-border bg-listing-header text-listing-header-foreground">
+                <th
+                  className={cn("px-3 py-2.5", STICKY_HEAD)}
+                  style={stickyCheckboxStyle(true)}
+                >
+                  <Checkbox
+                    checked={headerState}
+                    onCheckedChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                </th>
+                {columns.map((col) => {
+                  const width = effWidth(col);
+                  return (
                     <th
                       key={col.id}
                       className={cn(
                         "whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium text-listing-header-foreground",
                         col.align === "right" && "text-right",
-                        col.sortable && "cursor-pointer select-none"
+                        col.sortable && "cursor-pointer select-none",
+                        col.id === "name" && cn(STICKY_HEAD, "relative")
                       )}
+                      style={
+                        col.id === "name"
+                          ? stickyNameStyle(width, true)
+                          : { width, minWidth: width }
+                      }
                       onClick={() => toggleSort(col)}
                     >
                       <span className="inline-flex items-center gap-1">
                         {col.label}
                         {col.sortable && sortIcon(col)}
                       </span>
+                      {col.id === "name" && (
+                        <span className={NAME_EDGE_OVERLAY} aria-hidden />
+                      )}
                     </th>
-                  ))}
-                  <th aria-hidden />
-                </tr>
-              )}
-            </thead>
-            <tbody>
-              {sorted.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={columns.length + 2}
-                    className="px-3 py-16 text-center text-muted-foreground"
-                  >
-                    {search.trim()
-                      ? "No recommendations match your search."
-                      : "Nothing here yet."}
-                  </td>
-                </tr>
-              ) : grouped && groups ? (
-                groups.map((group) => {
-                  const isCollapsed = collapsed.has(group.key);
-                  return (
-                    <GroupSection
-                      key={group.key}
-                      group={group}
-                      isCollapsed={isCollapsed}
-                      onToggle={() =>
-                        setCollapsed((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(group.key)) next.delete(group.key);
-                          else next.add(group.key);
-                          return next;
-                        })
-                      }
-                      colSpan={columns.length + 2}
-                      renderRow={renderRow}
-                    />
                   );
-                })
-              ) : (
-                pageRows.map(renderRow)
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </tr>
+            )}
+          </thead>
+          <tbody>
+            {sorted.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length + 1}
+                  className="px-3 py-16 text-center text-muted-foreground"
+                >
+                  {search.trim()
+                    ? "No recommendations match your search."
+                    : "Nothing here yet."}
+                </td>
+              </tr>
+            ) : grouped && groups ? (
+              groups.map((group) => {
+                const isCollapsed = collapsed.has(group.key);
+                return (
+                  <GroupSection
+                    key={group.key}
+                    group={group}
+                    isCollapsed={isCollapsed}
+                    onToggle={() =>
+                      setCollapsed((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(group.key)) next.delete(group.key);
+                        else next.add(group.key);
+                        return next;
+                      })
+                    }
+                    colSpan={columns.length + 1}
+                    renderRow={renderRow}
+                  />
+                );
+              })
+            ) : (
+              pageRows.map(renderRow)
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {totalResults > 0 && (
-        <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-          <span className="tabular-nums">
-            {showControls
-              ? `${rangeStart}–${rangeEnd} of ${totalResults}`
-              : `${totalResults} recommendation${totalResults === 1 ? "" : "s"}`}
-          </span>
-
-          {showControls && (
-            <div className="flex items-center gap-2">
-              <Select
-                value={String(pageSize)}
-                onValueChange={(v) => setPageSize(Number(v))}
-              >
-                <SelectTrigger
-                  aria-label="Rows per page"
-                  className="h-auto w-auto gap-1 bg-background px-2 py-1 text-sm text-foreground shadow-none hover:bg-muted focus:ring-0"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAGE_SIZES.map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size} / page
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {totalPages > 1 && (
-                <div className="flex items-center gap-0.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="First page"
-                    disabled={currentPage === 1}
-                    onClick={() => setPage(1)}
-                    className={PAGER_BUTTON}
-                  >
-                    <ChevronsLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Previous page"
-                    disabled={currentPage === 1}
-                    onClick={() => setPage(currentPage - 1)}
-                    className={PAGER_BUTTON}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  {pageWindow(currentPage, totalPages).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setPage(p)}
-                      className={cn(
-                        "min-w-[28px] rounded-md px-2 py-1 text-sm tabular-nums transition-colors",
-                        p === currentPage
-                          ? "bg-secondary font-medium text-secondary-foreground"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                      )}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Next page"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setPage(currentPage + 1)}
-                    className={PAGER_BUTTON}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Last page"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setPage(totalPages)}
-                    className={PAGER_BUTTON}
-                  >
-                    <ChevronsRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+      {!grouped && totalResults > 0 && (
+        <div className="flex items-center justify-end gap-1 border-t border-border px-2 py-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1 px-2 text-muted-foreground"
+            disabled={currentPage <= 1}
+            onClick={() => setPage(currentPage - 1)}
+          >
+            <ChevronLeft className="size-3.5" />
+            Prev
+          </Button>
+          {pageNumbers.map((n) => (
+            <Button
+              key={n}
+              type="button"
+              variant={n === currentPage ? "default" : "ghost"}
+              size="sm"
+              className="size-8 p-0 tabular-nums"
+              onClick={() => setPage(n)}
+              aria-current={n === currentPage ? "page" : undefined}
+            >
+              {n}
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1 px-2 text-muted-foreground"
+            disabled={currentPage >= totalPages}
+            onClick={() => setPage(currentPage + 1)}
+          >
+            Next
+            <ChevronRight className="size-3.5" />
+          </Button>
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { create } from "zustand";
 import { FEATURE_FLAGS, type FeatureFlag } from "../data/featureFlags";
 
@@ -14,8 +15,11 @@ export const useFlagRowsStore = create<FlagRowsState>((set) => ({
     })),
 }));
 
+/** Stable list reference unless deletions change — avoids table selection loops. */
 export function useVisibleFeatureFlags(): FeatureFlag[] {
   const deletedIds = useFlagRowsStore((s) => s.deletedIds);
-  const deleted = new Set(deletedIds);
-  return FEATURE_FLAGS.filter((f) => !deleted.has(f.id));
+  return useMemo(() => {
+    const deleted = new Set(deletedIds);
+    return FEATURE_FLAGS.filter((f) => !deleted.has(f.id));
+  }, [deletedIds]);
 }

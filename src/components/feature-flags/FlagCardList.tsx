@@ -47,7 +47,7 @@ export default function FlagCardList() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setSelected(new Set());
+    setSelected((prev) => (prev.size === 0 ? prev : new Set()));
   }, [sorted]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));

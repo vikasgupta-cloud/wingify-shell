@@ -4,6 +4,7 @@ import {
   NAV,
   PROFILE_MODES,
   firstModePath,
+  flattenNavLeaves,
   modeLeaves,
 } from "../config/navigation";
 import { firstChildPath, isProfileModePath } from "../lib/nav";
@@ -38,6 +39,7 @@ import MetricsPage from "../pages/data-360/MetricsPage";
 import DashboardPage from "../pages/home/DashboardPage";
 import PersonalizePage from "../pages/personalize/PersonalizePage";
 import PersonalizeComingSoonPage from "../pages/personalize/PersonalizeComingSoonPage";
+import CatalogPage from "../pages/commerce/CatalogPage";
 import RecommendationPage from "../pages/commerce/RecommendationPage";
 import RecommendationDetailPage from "../pages/commerce/RecommendationDetailPage";
 import RecommendationReportPage from "../pages/commerce/RecommendationReportPage";
@@ -59,6 +61,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/data-360/events": EventsPage,
   "/data-360/segments": SegmentsPage,
   "/data-360/metrics": MetricsPage,
+  "/commerce/catalog": CatalogPage,
   "/commerce/recommendation": RecommendationPage,
 };
 
@@ -69,14 +72,20 @@ const pageRoutes: RouteObject[] = [];
 const detailRoutes: RouteObject[] = [];
 
 const addDetailRoute = (leafPath: string) => {
-  // Web Exp → ConfigPage; Personalize → Coming soon; Recommendation → edit form.
+  // Recommendation editor has its own chrome (screenshot layout) — not DetailShell.
+  if (leafPath === "/commerce/recommendation") {
+    detailRoutes.push({
+      path: `${leafPath}/c/:entityId`,
+      element: <RecommendationDetailPage />,
+    });
+    return;
+  }
+  // Web Exp → ConfigPage; Personalize → Coming soon.
   const body =
     leafPath === "/web-experiment" ? (
       <ConfigPage />
     ) : leafPath === "/personalize" ? (
       <PersonalizeComingSoonPage />
-    ) : leafPath === "/commerce/recommendation" ? (
-      <RecommendationDetailPage />
     ) : undefined;
   detailRoutes.push({
     path: `${leafPath}/c/:entityId`,
@@ -94,7 +103,7 @@ for (const item of NAV) {
   if (item.path === "/profile") continue;
 
   if (item.sections) {
-    const leaves = item.sections.flatMap((section) => section.items);
+    const leaves = flattenNavLeaves(item.sections);
     const appLeaves = leaves.filter((leaf) => !isProfileModePath(leaf.path));
     pageRoutes.push({
       path: item.path,

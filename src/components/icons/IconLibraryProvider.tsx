@@ -41,8 +41,8 @@ export function IconLibraryProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
-
+    // Keep current glyphs visible while the next pack loads — clearing
+    // ready caused blank rails when a render loop interrupted the load.
     loadIconRegistry(libraryId, variant).then((next) => {
       if (cancelled) return;
       setRegistry(next);

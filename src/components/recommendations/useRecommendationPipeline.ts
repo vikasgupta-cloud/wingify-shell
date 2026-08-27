@@ -15,6 +15,8 @@ function sortValue(
   switch (column) {
     case "name":
       return r.name.toLowerCase();
+    case "status":
+      return r.status;
     case "location":
       return r.location;
     case "revenueShare":
@@ -29,6 +31,8 @@ function sortValue(
       return r.createdOn;
     case "lastEdit":
       return r.lastEdit;
+    case "id":
+      return r.id;
     default:
       return null;
   }

@@ -4,12 +4,19 @@ import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   ChevronDown,
+  Crown,
+  ExternalLink,
   MoreHorizontal,
   PanelLeft,
   Pin,
   PinOff,
 } from "@/components/icons/protoLucide";
-import { LOGOUT_PATH, visibleNav, type NavItem } from "../../config/navigation";
+import {
+  LOGOUT_PATH,
+  leafLandPath,
+  visibleNav,
+  type NavItem,
+} from "../../config/navigation";
 import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
 import { canUnpinPath, useUIStore } from "../../store/ui";
 import { useMascotPreviewStore } from "../../store/mascotPreview";
@@ -89,6 +96,7 @@ export default function ExpandedNav({
   const [openPath, setOpenPath] = useState<string | null>(() =>
     activeItem?.sections ? activeItem.path : null
   );
+  const [openSubPath, setOpenSubPath] = useState<string | null>(null);
 
   // Hover flyouts (collapsed only).
   const [flyout, setFlyout] = useState<{ path: string; top: number } | null>(
@@ -109,8 +117,27 @@ export default function ExpandedNav({
     if (!expanded) return;
     // Accordion: open the active product's sub-nav; close when on a direct item.
     setOpenPath(activeItem?.sections ? activeItem.path : null);
+    if (activeItem?.sections) {
+      let match: string | null = null;
+      for (const section of activeItem.sections) {
+        for (const leaf of section.items) {
+          if (
+            leaf.items?.length &&
+            leaf.items.some(
+              (c) =>
+                pathname === c.path || pathname.startsWith(c.path + "/")
+            )
+          ) {
+            match = leaf.path;
+          }
+        }
+      }
+      setOpenSubPath(match);
+    } else {
+      setOpenSubPath(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeItem?.path, expanded]);
+  }, [activeItem?.path, expanded, pathname]);
 
   useEffect(() => {
     if (expanded) {
@@ -475,38 +502,189 @@ export default function ExpandedNav({
                       ) : null}
                       {section.items.map((leaf) => {
                         const LeafIcon = leaf.icon;
-                        return (
-                          <div key={leaf.path}>
-                            {item.path === "/profile" &&
-                              isLogoutSection &&
-                              leaf.path === LOGOUT_PATH && (
+                        const hasChildren = !!leaf.items?.length;
+                        const subOpen = openSubPath === leaf.path;
+
+                        if (item.path === "/profile") {
+                          return (
+                            <div key={leaf.path}>
+                              {isLogoutSection && leaf.path === LOGOUT_PATH && (
                                 <div
                                   className="my-2 h-px bg-panel-border"
                                   aria-hidden="true"
                                 />
                               )}
-                            <NavLink
-                              to={leaf.path}
-                              tabIndex={open ? undefined : -1}
-                              className={({ isActive: leafActive }) =>
-                                cn(
-                                  "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                                  leafActive &&
-                                    "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                                )
-                              }
-                            >
-                              {LeafIcon && (
-                                <LeafIcon
-                                  className="h-4 w-4 shrink-0 text-foreground"
-                                  strokeWidth={1.75}
-                                />
+                              <NavLink
+                                to={leaf.path}
+                                tabIndex={open ? undefined : -1}
+                                className={({ isActive: leafActive }) =>
+                                  cn(
+                                    "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                                    leafActive &&
+                                      "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                                  )
+                                }
+                              >
+                                {LeafIcon && (
+                                  <LeafIcon
+                                    className="h-4 w-4 shrink-0 text-foreground"
+                                    strokeWidth={1.75}
+                                  />
+                                )}
+                                <span className="min-w-0 flex-1 truncate">
+                                  {leaf.label}
+                                </span>
+                              </NavLink>
+                            </div>
+                          );
+                        }
+
+                        if (hasChildren) {
+                          const childActive = leaf.items!.some(
+                            (c) =>
+                              pathname === c.path ||
+                              pathname.startsWith(c.path + "/")
+                          );
+                          return (
+                            <div key={leaf.path}>
+                              <div className="flex items-center gap-1 rounded-md pr-0.5 hover:bg-muted">
+                                <button
+                                  type="button"
+                                  tabIndex={open ? undefined : -1}
+                                  onClick={() => {
+                                    setOpenSubPath(subOpen ? null : leaf.path);
+                                    if (!subOpen) navigate(leafLandPath(leaf));
+                                  }}
+                                  className={cn(
+                                    "flex min-w-0 flex-1 items-center gap-3 px-2.5 py-2 text-left text-sm text-foreground outline-none",
+                                    childActive && "font-medium"
+                                  )}
+                                >
+                                  {LeafIcon && (
+                                    <LeafIcon
+                                      className="h-4 w-4 shrink-0 text-foreground"
+                                      strokeWidth={1.75}
+                                    />
+                                  )}
+                                  <span className="min-w-0 flex-1 truncate">
+                                    {leaf.label}
+                                  </span>
+                                  {leaf.badge === "premium" && (
+                                    <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-muted">
+                                      <Crown className="size-3" aria-hidden />
+                                    </span>
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
+                                  tabIndex={open ? undefined : -1}
+                                  aria-label={
+                                    subOpen
+                                      ? `Collapse ${leaf.label}`
+                                      : `Expand ${leaf.label}`
+                                  }
+                                  onClick={() =>
+                                    setOpenSubPath(subOpen ? null : leaf.path)
+                                  }
+                                  className="shrink-0 rounded-sm p-1 text-muted-foreground hover:text-foreground"
+                                >
+                                  <ChevronDown
+                                    className={cn(
+                                      "h-4 w-4 transition-transform duration-150",
+                                      subOpen && "rotate-180"
+                                    )}
+                                  />
+                                </button>
+                              </div>
+                              {subOpen && (
+                                <div className="ml-[18px] mt-0.5 flex flex-col gap-0.5 border-l border-panel-border pb-1 pl-2.5">
+                                  {leaf.items!.map((child) => {
+                                    const ChildIcon = child.icon;
+                                    if (child.external) {
+                                      return (
+                                        <a
+                                          key={child.path}
+                                          href={child.path}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          tabIndex={open ? undefined : -1}
+                                          className="flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-foreground hover:bg-muted"
+                                        >
+                                          {ChildIcon && (
+                                            <ChildIcon
+                                              className="h-4 w-4 shrink-0"
+                                              strokeWidth={1.75}
+                                            />
+                                          )}
+                                          <span className="min-w-0 flex-1 truncate">
+                                            {child.label}
+                                          </span>
+                                          <ExternalLink
+                                            className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                            aria-hidden
+                                          />
+                                        </a>
+                                      );
+                                    }
+                                    return (
+                                      <NavLink
+                                        key={child.path}
+                                        to={child.path}
+                                        tabIndex={open ? undefined : -1}
+                                        className={({ isActive: childIsActive }) =>
+                                          cn(
+                                            "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-foreground hover:bg-muted",
+                                            childIsActive &&
+                                              "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                                          )
+                                        }
+                                      >
+                                        {ChildIcon && (
+                                          <ChildIcon
+                                            className="h-4 w-4 shrink-0"
+                                            strokeWidth={1.75}
+                                          />
+                                        )}
+                                        <span className="min-w-0 flex-1 truncate">
+                                          {child.label}
+                                        </span>
+                                      </NavLink>
+                                    );
+                                  })}
+                                </div>
                               )}
-                              <span className="min-w-0 flex-1 truncate">
-                                {leaf.label}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <NavLink
+                            key={leaf.path}
+                            to={leaf.path}
+                            tabIndex={open ? undefined : -1}
+                            className={({ isActive: leafActive }) =>
+                              cn(
+                                "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                                leafActive &&
+                                  "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                              )
+                            }
+                          >
+                            {LeafIcon && (
+                              <LeafIcon
+                                className="h-4 w-4 shrink-0 text-foreground"
+                                strokeWidth={1.75}
+                              />
+                            )}
+                            <span className="min-w-0 flex-1 truncate">
+                              {leaf.label}
+                            </span>
+                            {leaf.badge === "premium" && (
+                              <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-muted">
+                                <Crown className="size-3" aria-hidden />
                               </span>
-                            </NavLink>
-                          </div>
+                            )}
+                          </NavLink>
                         );
                       })}
                     </div>
