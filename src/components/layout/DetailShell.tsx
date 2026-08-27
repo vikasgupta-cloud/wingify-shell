@@ -64,7 +64,6 @@ import {
   useVisiblePersonalizations,
 } from "../../store/personalizeRows";
 import {
-  useRecommendationRowsStore,
   useVisibleRecommendations,
 } from "../../store/recommendationRows";
 import {
