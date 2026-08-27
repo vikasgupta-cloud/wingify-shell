@@ -2,10 +2,9 @@
  * Chart tokens — data-viz palette for graphs.
  *
  * Colors resolve through the `--chart-*` CSS variables in `src/index.css`
- * (VWO primitives only). Theme / CTA / button colours never override these.
- * Categorical series pick a random order from chart-1…chart-20 (stable for
- * the browser session). Prefer Tailwind (`bg-chart-1`, …) in markup; use
- * these exports for JS (series arrays, SVG fills, scales).
+ * (VWO chart light/dark 1–8). Theme / CTA / button colours never override these.
+ * Prefer Tailwind (`bg-chart-1`, …) in markup; use these exports for JS
+ * (series arrays, SVG fills, scales).
  *
  * Note: `var(--…)` strings work anywhere the DOM/SVG resolves CSS —
  * they will NOT work on a raw <canvas>; read the computed style first there.
@@ -15,15 +14,115 @@ const chartVar = (name: string) => `var(--chart-${name})`;
 const chartVarAlpha = (name: string, alpha: number) =>
   `rgb(from var(--chart-${name}) r g b / ${alpha})`;
 
-const CATEGORICAL_COUNT = 20;
+/** Unique semantic chart slots (Figma chart light/dark 1–8). */
+export const CHART_SERIES_COUNT = 8;
+
+/**
+ * Aesthetic categorical order (1-based `--chart-N` indices).
+ * Finalized series draw order from design review.
+ *
+ * 7 purple → 8 orchid → 6 blue → 5 teal → 4 forest → 3 lime → 2 mustard → 1 brown
+ */
+export const CHART_AESTHETIC_ORDER = [7, 8, 6, 5, 4, 3, 2, 1] as const;
+
+/** Hue ring in token number order (brown → … → orchid). */
+const CHART_HUE_RING = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+function balancedHueWalk(tokens: readonly number[]): number[] {
+  const n = tokens.length;
+  if (n === 0) return [];
+  if (n === 1) return [tokens[0]!];
+  const coprimeSteps = [3, 5, 7, 1].filter((s) => s < n && n % s !== 0);
+  const steps = coprimeSteps.length > 0 ? coprimeSteps : [1];
+  const start = Math.floor(Math.random() * n);
+  const step = steps[Math.floor(Math.random() * steps.length)]!;
+  const next = Array.from(
+    { length: n },
+    (_, i) => tokens[(start + i * step) % n]!
+  );
+  if (Math.random() < 0.5) next.reverse();
+  return next;
+}
+
+function sameOrder(a: readonly number[], b: readonly number[]): boolean {
+  return a.length === b.length && a.every((n, i) => n === b[i]);
+}
+
+/**
+ * Random series order that keeps tonal balance: walk the hue ring with a
+ * spaced step so neighbors stay distinct. Same eight tokens every time.
+ * Pass `locked` indices to pin those positions to `previous` values.
+ */
+export function randomBalancedChartOrder(
+  previous?: readonly number[],
+  locked?: ReadonlySet<number>
+): number[] {
+  const locks = locked ?? new Set<number>();
+  const base = previous ?? [...CHART_AESTHETIC_ORDER];
+
+  if (locks.size === 0) {
+    for (let attempt = 0; attempt < 32; attempt++) {
+      const next = balancedHueWalk(CHART_HUE_RING);
+      if (!sameOrder(next, base)) return next;
+    }
+    return [...CHART_AESTHETIC_ORDER];
+  }
+
+  // Prefer a full balanced walk that already matches locked slots.
+  for (let attempt = 0; attempt < 80; attempt++) {
+    const candidate = balancedHueWalk(CHART_HUE_RING);
+    const respectsLocks = [...locks].every((i) => candidate[i] === base[i]);
+    if (respectsLocks && !sameOrder(candidate, base)) return candidate;
+  }
+
+  // Fallback: keep locked tokens, rebalance only the free pool into open slots.
+  const next = [...base];
+  const openSlots = Array.from({ length: CHART_SERIES_COUNT }, (_, i) => i).filter(
+    (i) => !locks.has(i)
+  );
+  const lockedTokens = new Set([...locks].map((i) => base[i]!));
+  const freeTokens = CHART_HUE_RING.filter((t) => !lockedTokens.has(t));
+  const walked = balancedHueWalk(freeTokens);
+  openSlots.forEach((slot, i) => {
+    next[slot] = walked[i] ?? next[slot]!;
+  });
+  if (!sameOrder(next, base)) return next;
+
+  // Last resort: rotate the free pool by one while preserving locks.
+  if (openSlots.length > 1 && walked.length > 1) {
+    const rotated = [...walked.slice(1), walked[0]!];
+    openSlots.forEach((slot, i) => {
+      next[slot] = rotated[i]!;
+    });
+  }
+  return next;
+}
+
+/** Resolve `--chart-N` for series index using a 1-based order. */
+export function chartSeriesAt(
+  order: readonly number[],
+  index: number
+): string {
+  const n = order.length || CHART_SERIES_COUNT;
+  const i = ((index % n) + n) % n;
+  return chartVar(`${order[i]}`);
+}
+
+/** Alpha fill for `chartSeriesAt`. */
+export function chartSeriesAlphaAt(
+  order: readonly number[],
+  index: number,
+  alpha: number
+): string {
+  const n = order.length || CHART_SERIES_COUNT;
+  const i = ((index % n) + n) % n;
+  return chartVarAlpha(`${order[i]}`, alpha);
+}
 
 /** Keys theme/CTA used to inline — applyBrand always clears them. */
 export const CHART_CSS_VARS_NEVER_INLINE: readonly string[] = [
-  ...Array.from({ length: CATEGORICAL_COUNT }, (_, i) => `--chart-${i + 1}`),
-  ...Array.from(
-    { length: CATEGORICAL_COUNT },
-    (_, i) => `--chart-${i + 1}-fg`
-  ),
+  ...Array.from({ length: 20 }, (_, i) => `--chart-${i + 1}`),
+  ...Array.from({ length: 20 }, (_, i) => `--chart-${i + 1}-fg`),
   "--chart-info",
   "--chart-info-bg",
   "--chart-highlight",
@@ -38,54 +137,21 @@ export const CHART_CSS_VARS_NEVER_INLINE: readonly string[] = [
   "--chart-seq-7",
 ];
 
-function mulberry32(seed: number) {
-  return () => {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function readSessionSeed(): number {
-  if (typeof sessionStorage === "undefined") {
-    return Date.now() >>> 0;
-  }
-  try {
-    const raw = sessionStorage.getItem("wingify-chart-series-seed");
-    if (raw) {
-      const n = Number(raw);
-      if (Number.isFinite(n)) return n >>> 0;
-    }
-    const next = (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
-    sessionStorage.setItem("wingify-chart-series-seed", String(next));
-    return next;
-  } catch {
-    return Date.now() >>> 0;
-  }
-}
-
-/** Fisher–Yates shuffle of 0…n-1, session-stable. */
-function shuffledSlots(n: number): number[] {
-  const arr = Array.from({ length: n }, (_, i) => i);
-  const rand = mulberry32(readSessionSeed());
-  for (let i = n - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-const SERIES_ORDER = shuffledSlots(CATEGORICAL_COUNT);
+/** 0-based slot indices in aesthetic draw order. */
+const SERIES_ORDER = CHART_AESTHETIC_ORDER.map((n) => n - 1);
 
 /**
- * Categorical series rotation — all 20 chart tokens, shuffled so charts
- * do not start on a theme/CTA hue.
+ * Categorical series — semantic chart-1…chart-8 in token number order.
+ * Prefer `chartSeries(i)` for plotted series (uses aesthetic order).
  */
 export const CHART_CATEGORICAL: readonly string[] = Array.from(
-  { length: CATEGORICAL_COUNT },
+  { length: CHART_SERIES_COUNT },
   (_, i) => chartVar(`${i + 1}`)
 );
+
+/** Aesthetic draw order as CSS vars — use when rendering a full-palette chart. */
+export const CHART_CATEGORICAL_AESTHETIC: readonly string[] =
+  CHART_AESTHETIC_ORDER.map((n) => chartVar(`${n}`));
 
 /** Single-hue sequential ramp from CSS (not theme/CTA). */
 export const CHART_SEQUENTIAL: readonly string[] = Array.from(
@@ -127,11 +193,11 @@ export const CHART = {
 
 function slot(index: number): number {
   const i =
-    ((index % CATEGORICAL_COUNT) + CATEGORICAL_COUNT) % CATEGORICAL_COUNT;
+    ((index % CHART_SERIES_COUNT) + CHART_SERIES_COUNT) % CHART_SERIES_COUNT;
   return SERIES_ORDER[i]!;
 }
 
-/** Categorical series color by index — random chart-palette order. */
+/** Categorical series color by index — aesthetic chart-palette order. */
 export function chartSeries(index: number): string {
   return CHART_CATEGORICAL[slot(index)]!;
 }

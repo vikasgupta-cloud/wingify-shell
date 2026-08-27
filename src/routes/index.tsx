@@ -209,7 +209,22 @@ export const router = createBrowserRouter([
           { path: "/", element: <Navigate to="/home/dashboard" replace /> },
           { path: "/design/charts", element: <AnalyticsChartsPage /> },
           { path: "/design/forms", element: <FormGalleryPage /> },
-          { path: "/design-system", element: <DesignSystemPage /> },
+          {
+            path: "/design-system",
+            element: <Navigate to="/design-system/overview" replace />,
+          },
+          {
+            path: "/design-system/charts/:category",
+            element: <DesignSystemPage />,
+          },
+          {
+            path: "/design-system/charts",
+            element: <Navigate to="/design-system/charts/all" replace />,
+          },
+          {
+            path: "/design-system/:section",
+            element: <DesignSystemPage />,
+          },
           ...pageRoutes,
           { path: "*", element: <PlaceholderPage /> },
         ],

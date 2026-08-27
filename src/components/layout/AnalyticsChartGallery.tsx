@@ -3,21 +3,57 @@ import { cn } from "@/lib/utils";
 import {
   ANALYTICS_CHART_CATEGORIES,
   ANALYTICS_CHARTS,
-  type AnalyticsChartCategory,
+  type AnalyticsChartFilter,
   type AnalyticsChartId,
 } from "../../config/analyticsCharts";
 import {
   CHART,
-  chartSeries,
-  chartSeriesAlpha,
+  CHART_AESTHETIC_ORDER,
+  CHART_SERIES_COUNT,
+  chartSeriesAt,
+  chartSeriesAlphaAt,
   chartSequential,
+  randomBalancedChartOrder,
 } from "../../config/chartTokens";
+import { CHART_PALETTE_SUGGESTIONS } from "../../config/chartPaletteSuggestions";
+import { Button } from "@/components/ui/button";
+import {
+  GripVertical,
+  Lock,
+  LockOpen,
+  RefreshCw,
+  RotateCcw,
+} from "@/components/icons/protoLucide";
 
 const PREVIEW_W = 280;
 const PREVIEW_H = 140;
 
-function ChartPreview({ id }: { id: AnalyticsChartId }) {
+function withAlpha(color: string, alpha: number): string {
+  return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`;
+}
+
+function ChartPreview({
+  id,
+  order,
+  paletteColors,
+}: {
+  id: AnalyticsChartId;
+  order: readonly number[];
+  /** Optional proposal colors (not tokens) — overrides chart series for preview. */
+  paletteColors?: readonly string[] | null;
+}) {
   const axis = CHART.axisLine;
+  const chartSeries = (i: number) =>
+    paletteColors && paletteColors.length > 0
+      ? paletteColors[((i % paletteColors.length) + paletteColors.length) % paletteColors.length]!
+      : chartSeriesAt(order, i);
+  const chartSeriesAlpha = (i: number, alpha: number) =>
+    paletteColors && paletteColors.length > 0
+      ? withAlpha(
+          paletteColors[((i % paletteColors.length) + paletteColors.length) % paletteColors.length]!,
+          alpha
+        )
+      : chartSeriesAlphaAt(order, i, alpha);
   const s0 = chartSeries(0);
   const s1 = chartSeries(1);
   const s2 = chartSeries(2);
@@ -27,6 +63,41 @@ function ChartPreview({ id }: { id: AnalyticsChartId }) {
   const f2 = chartSeriesAlpha(2, 0.22);
 
   switch (id) {
+    case "palette": {
+      const heights = [92, 64, 108, 78, 54, 96, 70, 118];
+      const count = paletteColors?.length ?? CHART_SERIES_COUNT;
+      return (
+        <svg viewBox={`0 0 ${PREVIEW_W} ${PREVIEW_H}`} className="h-full w-full" aria-hidden>
+          {Array.from({ length: count }, (_, i) => {
+            const h = heights[i % heights.length]!;
+            const x = 22 + i * 32;
+            return (
+              <g key={i}>
+                <rect
+                  x={x}
+                  y={124 - h}
+                  width="22"
+                  height={h}
+                  rx="3"
+                  fill={chartSeries(i)}
+                />
+                <text
+                  x={x + 11}
+                  y={136}
+                  textAnchor="middle"
+                  fill={CHART.label}
+                  fontSize="7"
+                  fontFamily="ui-sans-serif, system-ui, sans-serif"
+                >
+                  {paletteColors ? i + 1 : order[i]}
+                </text>
+              </g>
+            );
+          })}
+          <line x1="16" y1="124" x2="268" y2="124" stroke={axis} strokeWidth="1" />
+        </svg>
+      );
+    }
     case "line":
       return (
         <svg viewBox={`0 0 ${PREVIEW_W} ${PREVIEW_H}`} className="h-full w-full" aria-hidden>
@@ -526,21 +597,259 @@ function ChartPreview({ id }: { id: AnalyticsChartId }) {
 export default function AnalyticsChartGallery({
   className,
   compact = false,
+  category: categoryProp,
+  onCategoryChange,
 }: {
   className?: string;
   compact?: boolean;
+  /** Controlled filter; omit for internal state (standalone gallery pages). */
+  category?: AnalyticsChartFilter;
+  onCategoryChange?: (category: AnalyticsChartFilter) => void;
 }) {
-  const [category, setCategory] = useState<AnalyticsChartCategory | "All">(
-    "All"
+  const [internalCategory, setInternalCategory] =
+    useState<AnalyticsChartFilter>("All");
+  const [order, setOrder] = useState<number[]>(() => [...CHART_AESTHETIC_ORDER]);
+  const [locked, setLocked] = useState<Set<number>>(() => new Set());
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [suggestionId, setSuggestionId] = useState<string | null>(null);
+  const category = categoryProp ?? internalCategory;
+  const setCategory = onCategoryChange ?? setInternalCategory;
+
+  const activeSuggestion = CHART_PALETTE_SUGGESTIONS.find(
+    (s) => s.id === suggestionId
   );
+  const paletteColors = activeSuggestion?.colors ?? null;
+  const usingSuggestion = Boolean(paletteColors);
+  const isDefaultOrder =
+    order.length === CHART_AESTHETIC_ORDER.length &&
+    order.every((token, i) => token === CHART_AESTHETIC_ORDER[i]);
+  const canReset = !usingSuggestion && (!isDefaultOrder || locked.size > 0);
+
+  const resetSeriesOrder = () => {
+    setOrder([...CHART_AESTHETIC_ORDER]);
+    setLocked(new Set());
+    endDrag();
+  };
 
   const charts = useMemo(() => {
     if (category === "All") return ANALYTICS_CHARTS;
     return ANALYTICS_CHARTS.filter((c) => c.category === category);
   }, [category]);
 
+  const toggleLock = (index: number) => {
+    setLocked((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const endDrag = () => {
+    setDragIndex(null);
+    setDropIndex(null);
+  };
+
+  const reorderSlots = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0) return;
+    setOrder((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved!);
+      return next;
+    });
+    setLocked((prev) => {
+      const flags = Array.from({ length: CHART_SERIES_COUNT }, (_, i) =>
+        prev.has(i)
+      );
+      const [movedFlag] = flags.splice(from, 1);
+      flags.splice(to, 0, movedFlag!);
+      return new Set(flags.flatMap((on, i) => (on ? [i] : [])));
+    });
+  };
+
   return (
     <div className={cn("space-y-6", className)}>
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            Series order
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {canReset && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5"
+                onClick={resetSeriesOrder}
+              >
+                <RotateCcw className="size-3.5" aria-hidden />
+                Reset
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5"
+              disabled={usingSuggestion || locked.size >= CHART_SERIES_COUNT}
+              onClick={() => setOrder(randomBalancedChartOrder(order, locked))}
+            >
+              <RefreshCw className="size-3.5" aria-hidden />
+              Randomize
+            </Button>
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {usingSuggestion
+            ? `Previewing “${activeSuggestion?.name}” — proposals only, not in tokens.`
+            : "Drag to rearrange. Lock a chip to pin its color through Randomize."}
+        </p>
+        {!usingSuggestion && (
+        <div className="flex flex-wrap gap-1.5">
+          {order.map((token, i) => {
+            const isLocked = locked.has(i);
+            const isDragging = dragIndex === i;
+            const isDropTarget = dragIndex !== null && dropIndex === i;
+            return (
+              <div
+                key={`slot-${i}`}
+                draggable
+                onDragStart={(e) => {
+                  setDragIndex(i);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", String(i));
+                }}
+                onDragOver={(e) => {
+                  if (dragIndex === null) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (dropIndex !== i) setDropIndex(i);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (dragIndex !== null) reorderSlots(dragIndex, i);
+                  endDrag();
+                }}
+                onDragEnd={endDrag}
+                className={cn(
+                  "relative inline-flex cursor-grab items-center gap-1 rounded-md border bg-background py-1 pl-1 pr-1 active:cursor-grabbing",
+                  isLocked
+                    ? "border-foreground/25 bg-muted"
+                    : "border-border",
+                  isDragging && "opacity-45",
+                  isDropTarget && "ring-1 ring-foreground"
+                )}
+              >
+                <GripVertical
+                  className="size-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+                <span
+                  className="size-2.5 shrink-0 rounded-sm"
+                  style={{ backgroundColor: chartSeriesAt(order, i) }}
+                  aria-hidden
+                />
+                <span className="text-[11px] tabular-nums text-foreground">
+                  {i + 1}. chart-{token}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLock(i);
+                  }}
+                  aria-pressed={isLocked}
+                  aria-label={
+                    isLocked
+                      ? `Unlock position ${i + 1}, chart-${token}`
+                      : `Lock position ${i + 1}, chart-${token}`
+                  }
+                  className="inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {isLocked ? (
+                    <Lock className="size-3 text-[var(--neutral-700)]" aria-hidden />
+                  ) : (
+                    <LockOpen className="size-3" aria-hidden />
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        )}
+      </div>
+
+      <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-xs font-medium text-foreground">
+              Suggested palettes
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Theme-matched alternatives — preview only, not written to tokens.
+            </p>
+          </div>
+          {usingSuggestion && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7"
+              onClick={() => setSuggestionId(null)}
+            >
+              Use chart tokens
+            </Button>
+          )}
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {CHART_PALETTE_SUGGESTIONS.map((suggestion) => {
+            const active = suggestion.id === suggestionId;
+            return (
+              <button
+                key={suggestion.id}
+                type="button"
+                onClick={() =>
+                  setSuggestionId(active ? null : suggestion.id)
+                }
+                className={cn(
+                  "rounded-md border p-2.5 text-left transition-colors",
+                  active
+                    ? "border-foreground/30 bg-background"
+                    : "border-border bg-background hover:bg-muted/60"
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-foreground">
+                    {suggestion.name}
+                  </p>
+                  {active && (
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      Previewing
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                  {suggestion.note}
+                </p>
+                <div className="mt-2 flex overflow-hidden rounded-md border border-border">
+                  {suggestion.colors.map((color) => (
+                    <span
+                      key={color}
+                      className="h-5 min-w-0 flex-1"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
@@ -586,7 +895,11 @@ export default function AnalyticsChartGallery({
           >
             <div className="border-b border-border bg-muted/30 px-4 py-4">
               <div className={cn(compact ? "h-[88px]" : "h-[140px]")}>
-                <ChartPreview id={chart.id} />
+                <ChartPreview
+                  id={chart.id}
+                  order={order}
+                  paletteColors={paletteColors}
+                />
               </div>
             </div>
             <div className="space-y-1.5 px-4 py-3.5">

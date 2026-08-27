@@ -109,7 +109,7 @@ export function computeWingifyThemeVars(
 
     "--cta-tertiary-bg": s.tertiaryBg,
     "--cta-tertiary-fg": s.text,
-    "--cta-tertiary-border": s.border,
+    "--cta-tertiary-border": "var(--neutral-200)",
     "--cta-tertiary-hover": s.tertiaryHover,
     "--cta-ai-bg": s.aiBg,
     "--cta-ai-fg": s.aiFg,

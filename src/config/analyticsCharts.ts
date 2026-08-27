@@ -13,7 +13,27 @@ export const ANALYTICS_CHART_CATEGORIES = [
 export type AnalyticsChartCategory =
   (typeof ANALYTICS_CHART_CATEGORIES)[number];
 
+export type AnalyticsChartFilter = AnalyticsChartCategory | "All";
+
+/** URL slug for a chart filter tab (`All` → `all`, `Trends` → `trends`). */
+export function chartFilterSlug(filter: AnalyticsChartFilter): string {
+  return filter === "All" ? "all" : filter.toLowerCase();
+}
+
+/** Parse a chart filter slug; returns null when unknown. */
+export function parseChartFilterSlug(
+  slug: string | undefined
+): AnalyticsChartFilter | null {
+  if (!slug) return null;
+  if (slug === "all") return "All";
+  const match = ANALYTICS_CHART_CATEGORIES.find(
+    (cat) => cat.toLowerCase() === slug.toLowerCase()
+  );
+  return match ?? null;
+}
+
 export type AnalyticsChartId =
+  | "palette"
   | "line"
   | "multi-line"
   | "area"
@@ -47,6 +67,14 @@ export type AnalyticsChartDef = {
 };
 
 export const ANALYTICS_CHARTS: AnalyticsChartDef[] = [
+  {
+    id: "palette",
+    label: "Full palette",
+    category: "Comparison",
+    description:
+      "All eight chart series tokens in finalized aesthetic draw order.",
+    tools: ["Both"],
+  },
   {
     id: "line",
     label: "Line",

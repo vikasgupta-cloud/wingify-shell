@@ -375,6 +375,8 @@
   --cta-ai-fg: var(--semantic-action-ai-text);
   --cta-ai-hover: var(--semantic-action-ai-bg-hover);
   --cta-disabled-bg: var(--semantic-bg-disabled);
+  /* CTA borders stay on pre-lighten neutrals (not semantic-border-*). */
+  --cta-tertiary-border: var(--neutral-700);
   --cta-disabled-fg: var(--semantic-text-disabled);
   --rail: var(--semantic-bg-canvas);
   --rail-foreground: var(--semantic-text-primary);

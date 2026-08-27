@@ -395,7 +395,7 @@ const APP_ROLE_BRIDGE = {
 
   "--cta-tertiary-bg": "var(--semantic-action-tertiary-bg)",
   "--cta-tertiary-fg": "var(--semantic-text-primary)",
-  "--cta-tertiary-border": "var(--semantic-border-subtle)",
+  "--cta-tertiary-border": "var(--neutral-200)",
   "--cta-tertiary-hover": "var(--semantic-action-tertiary-bg-hover)",
   "--cta-ai-bg": "var(--semantic-action-ai-bg)",
   "--cta-ai-fg": "var(--semantic-action-ai-text)",

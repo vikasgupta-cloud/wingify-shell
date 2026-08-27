@@ -45,7 +45,13 @@ export type PageGuide = {
   /** Play-tutorial control. */
   tutorial?: { label?: string };
   /** Click-open help popover. */
-  help?: { title: string; body: string; href?: string };
+  help?: {
+    title: string;
+    body: string;
+    href?: string;
+    /** Optional tutorial video card inside the popover. */
+    video?: { title: string; duration: string; poster: string };
+  };
   /** Hover tooltip copy. */
   info?: string;
 };
@@ -258,6 +264,11 @@ export const NAV: NavItem[] = [
             title: "Insight | Recordings",
             body: "View the recordings of your visitors' interactions on your webpage, such as scrolls, clicks, and mouse movements.",
             href: "#",
+            video: {
+              title: "Session Recordings | Dashboard",
+              duration: "4 mins",
+              poster: "/editor-preview/images/hero.jpg",
+            },
           },
           info: "Record and playback visitor sessions on your website. Learn more",
         },
