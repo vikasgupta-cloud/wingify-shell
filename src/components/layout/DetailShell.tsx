@@ -445,9 +445,6 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const persArchive = usePersonalizeRowsStore((s) => s.archive);
   const persRemove = usePersonalizeRowsStore((s) => s.remove);
   const persSetStatus = usePersonalizeRowsStore((s) => s.setStatus);
-  const recoArchive = useRecommendationRowsStore((s) => s.archive);
-  const recoRemove = useRecommendationRowsStore((s) => s.remove);
-  const recoSetStatus = useRecommendationRowsStore((s) => s.setStatus);
   const [activeFilter, setActiveFilter] = useState("All");
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [entitySearch, setEntitySearch] = useState("");
@@ -459,7 +456,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           id: r.id,
           name: r.name,
           status: r.status,
-          lastUpdated: r.lastEdit,
+          lastUpdated: r.lastEdit ?? "",
         }))
       : webCampaigns;
   const statusList = isPersonalize
@@ -747,37 +744,25 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           {!isPersonalize && !isRecommendation && (
             <SaveButton entityId={entityId} />
           )}
-          {campaign && (
+          {!isRecommendation && campaign && (
             <StatusMenu
-              campaign={campaign}
+              campaign={campaign as { id: string; status: CampaignStatus }}
               triggerVariant="button"
-              onSetStatus={
-                isPersonalize
-                  ? persSetStatus
-                  : isRecommendation
-                    ? recoSetStatus
-                    : undefined
-              }
+              onSetStatus={isPersonalize ? persSetStatus : undefined}
             />
           )}
-          {campaign && (
+          {!isRecommendation && campaign && (
             <KebabMenu
-              campaign={campaign}
+              campaign={
+                campaign as {
+                  id: string;
+                  status: CampaignStatus;
+                  name: string;
+                }
+              }
               listPath={basePath}
-              onArchive={
-                isPersonalize
-                  ? persArchive
-                  : isRecommendation
-                    ? recoArchive
-                    : webArchive
-              }
-              onRemove={
-                isPersonalize
-                  ? persRemove
-                  : isRecommendation
-                    ? recoRemove
-                    : webRemove
-              }
+              onArchive={isPersonalize ? persArchive : webArchive}
+              onRemove={isPersonalize ? persRemove : webRemove}
             />
           )}
         </div>

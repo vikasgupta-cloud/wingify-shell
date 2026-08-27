@@ -37,7 +37,6 @@ import {
   Award,
   Search,
   Puzzle,
-  Crown,
 } from "@/components/icons/protoLucide";
 import { UPGRADE_ADDONS_PATH, UPGRADE_SECTIONS } from "./upgradeNav";
 export type NavLeaf = {
