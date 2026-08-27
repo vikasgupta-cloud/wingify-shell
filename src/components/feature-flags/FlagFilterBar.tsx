@@ -17,9 +17,15 @@ import {
   useActiveFlagViewState,
   useFlagViewsStore,
 } from "../../store/flagViews";
+import { cn } from "../../lib/utils";
 
 const DASHED_BUTTON =
   "h-auto gap-1.5 border-dashed border-input px-2.5 py-1.5 text-sm text-foreground shadow-none hover:border-foreground hover:bg-transparent [&_svg]:size-3.5";
+const ACTIVE_FILTER_CHIP =
+  "inline-flex animate-scale-in items-center gap-1 rounded-md border border-border bg-[color-mix(in_srgb,var(--canvas)_94%,var(--foreground)_6%)] px-2.5 py-1.5 text-sm text-foreground duration-150";
+const ACTIVE_FILTER_CHIP_MUTED = "text-muted-foreground";
+const ACTIVE_FILTER_CHIP_CLOSE =
+  "rounded-sm text-muted-foreground transition-colors hover:text-foreground";
 
 const OP_LABELS: Record<Exclude<FlagFilterOp, "is">, string> = {
   isAnyOf: "is any of",
@@ -170,12 +176,18 @@ function FilterChip({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <div className="inline-flex animate-scale-in items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground duration-150">
+      <div
+        className={cn(
+          ACTIVE_FILTER_CHIP,
+          open &&
+            "bg-[color-mix(in_srgb,var(--canvas)_90%,var(--foreground)_10%)]"
+        )}
+      >
         <Popover.Trigger asChild>
           <button type="button" className="inline-flex items-center gap-1.5 outline-none">
             <span className="font-medium">{fieldLabel}</span>
-            <span className="text-muted-foreground">{opLabel(filter.op)}</span>
-            <span className="max-w-[180px] truncate">{summary}</span>
+            <span className={ACTIVE_FILTER_CHIP_MUTED}>{opLabel(filter.op)}</span>
+            <span className="max-w-[180px] truncate font-medium">{summary}</span>
           </button>
         </Popover.Trigger>
         <button
@@ -185,7 +197,7 @@ function FilterChip({
             e.stopPropagation();
             onRemove();
           }}
-          className="rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+          className={ACTIVE_FILTER_CHIP_CLOSE}
         >
           <X className="h-3.5 w-3.5" />
         </button>

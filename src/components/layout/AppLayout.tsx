@@ -8,7 +8,7 @@ export default function AppLayout() {
   // Flex (not grid) so the content column follows the sidebar's animated width
   // instead of relying on grid-template-columns interpolation.
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-full bg-background text-foreground">
       <ExpandedNav />
       {/* bg-panel matches --background by default; under a surface preset it
           fills the notch behind the body's rounded corners with nav chrome. */}

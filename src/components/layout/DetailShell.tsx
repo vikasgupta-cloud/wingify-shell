@@ -538,7 +538,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   }, [navOpen]);
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
+    <div className="flex h-full flex-col bg-background text-foreground">
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <WingifyLogoButton />

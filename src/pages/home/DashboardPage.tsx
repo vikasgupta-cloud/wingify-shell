@@ -1,9 +1,3 @@
-// Home → Dashboard — static overview cards + Wandz hero (wired to existing chat).
-// Card grid layout matches product screenshots. Create stays hidden via nav.
-
-import { useLocation } from "react-router-dom";
-import PageHeader from "@/components/layout/PageHeader";
-import { iconForPath, pageLabel } from "@/lib/nav";
 import {
   ActiveTestsCard,
   FormsCard,
@@ -19,18 +13,12 @@ import {
   UntestedHypothesesCard,
   WandzHero,
 } from "./dashboard/cards";
+import TrialExpiredBanner from "@/components/home/TrialExpiredBanner";
 
 export default function DashboardPage() {
-  const { pathname } = useLocation();
-
   return (
-    <div className="pb-16">
-      <PageHeader
-        title={pageLabel(pathname)}
-        icon={iconForPath(pathname)}
-      />
-
-      <div className="mt-14 space-y-8 px-12">
+    <div className="space-y-8 px-12 pb-16 pt-10">
+        <TrialExpiredBanner />
         <WandzHero />
 
         {/* Metric + Funnel stacked full width */}
@@ -68,7 +56,6 @@ export default function DashboardPage() {
           <FormsCard />
           <SurveysCard />
         </div>
-      </div>
     </div>
   );
 }

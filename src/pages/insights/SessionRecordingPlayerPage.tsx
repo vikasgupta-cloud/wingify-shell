@@ -318,7 +318,7 @@ export default function SessionRecordingPlayerPage() {
 
   return (
     <TooltipProvider delayDuration={250}>
-      <div className="flex h-screen w-screen flex-col overflow-hidden bg-canvas text-foreground">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-canvas text-foreground">
         <div
           className={cn(
             "flex min-h-0 min-w-0 flex-1 p-3 pb-0",

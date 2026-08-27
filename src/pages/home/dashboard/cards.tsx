@@ -304,7 +304,7 @@ export function WandzHero() {
                 <button
                   type="button"
                   onClick={() => ask(chat.prompt)}
-                  className="group flex w-full items-center gap-2.5 rounded-lg border border-subtle bg-transparent px-2.5 py-1.5 text-left transition-[background-color,border-color] duration-150 hover:bg-muted"
+                  className="group flex w-full items-center gap-2.5 rounded-lg border border-subtle bg-transparent px-2.5 py-1.5 text-left transition-[background-color,border-color] duration-150 hover:border-border-hover hover:bg-background"
                 >
                   <MessageSquare
                     className="size-3.5 shrink-0 text-muted-foreground"

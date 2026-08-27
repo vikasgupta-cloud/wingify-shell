@@ -82,7 +82,7 @@ export default function DrillInShell() {
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-full bg-background text-foreground">
       {mode.id === "upgrade" ? <UpgradeNav /> : <DrillInNav mode={mode} />}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">

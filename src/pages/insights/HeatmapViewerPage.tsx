@@ -336,7 +336,7 @@ export default function HeatmapViewerPage() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="relative h-screen w-screen overflow-hidden bg-background">
+      <div className="relative h-full w-full overflow-hidden bg-background">
         <iframe
           title="Website preview"
           // External URLs can't be framed, so anything the user typed falls

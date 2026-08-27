@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ChevronDown, Plus } from "@/components/icons/protoLucide";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -10,6 +11,10 @@ import {
   getCreateOptions,
   type CreateOption,
 } from "../../config/createMenu";
+import {
+  useIsCancellationRevokeWorkspace,
+  useIsTrialOverWorkspace,
+} from "@/store/workspace";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import BreadcrumbNav from "./BreadcrumbNav";
 
@@ -60,6 +65,54 @@ function CreateSection({
   );
 }
 
+/** First-level TopBar only — trial expired notice + Upgrade CTA (screenshot). */
+function TrialOverNotice({ onUpgrade }: { onUpgrade: () => void }) {
+  return (
+    <div
+      role="status"
+      className="flex max-w-full items-center gap-1.5 rounded-md border border-danger-fg/35 bg-danger-bg px-2.5 py-1 text-xs font-medium text-danger-fg"
+    >
+      <span className="truncate">Your trial is over</span>
+      <span className="shrink-0 text-danger-fg/50" aria-hidden>
+        |
+      </span>
+      <button
+        type="button"
+        onClick={onUpgrade}
+        className="shrink-0 underline underline-offset-2 outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-danger-fg/40"
+      >
+        Upgrade
+      </button>
+    </div>
+  );
+}
+
+/** First-level TopBar only — cancellation notice + Revoke CTA (screenshot). */
+function CancellationRequestNotice({
+  onRevoke,
+}: {
+  onRevoke: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="flex max-w-full items-center gap-1.5 rounded-md border border-danger-fg/35 bg-danger-bg px-2.5 py-1 text-xs font-medium text-danger-fg"
+    >
+      <span className="truncate">Cancellation Request Received</span>
+      <span className="shrink-0 text-danger-fg/50" aria-hidden>
+        |
+      </span>
+      <button
+        type="button"
+        onClick={onRevoke}
+        className="shrink-0 underline underline-offset-2 outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-danger-fg/40"
+      >
+        Revoke
+      </button>
+    </div>
+  );
+}
+
 export default function TopBar() {
   const navigate = useNavigate();
   const createCampaign = useRowsStore((s) => s.createCampaign);
@@ -70,6 +123,13 @@ export default function TopBar() {
   const restOptions = createOptions.filter((o) => o.group !== "ai");
   // A single ungrouped fallback option reads better without a heading over it.
   const showHeadings = aiOptions.length > 0 && restOptions.length > 0;
+  const isCancellationWorkspace = useIsCancellationRevokeWorkspace();
+  const isTrialOverWorkspace = useIsTrialOverWorkspace();
+  const [revoked, setRevoked] = useState(false);
+
+  useEffect(() => {
+    setRevoked(false);
+  }, [isCancellationWorkspace]);
 
   const handleSelect = (option: CreateOption) => {
     // Route-backed options (e.g. Create with Copilot) navigate to their screen.
@@ -98,8 +158,14 @@ export default function TopBar() {
         <BreadcrumbNav />
       </div>
 
-      {/* Actions slot — global for now; swap per-page via an outlet/context later. */}
+      {/* Actions slot — first-level TopBar only (not DetailShell / DrillIn). */}
       <div className="flex shrink-0 items-center gap-2">
+        {isTrialOverWorkspace && (
+          <TrialOverNotice onUpgrade={() => navigate("/upgrade")} />
+        )}
+        {isCancellationWorkspace && !revoked && (
+          <CancellationRequestNotice onRevoke={() => setRevoked(true)} />
+        )}
         {showsCreate(pathname) &&
           (createOptions.length === 1 ? (
             // Single option (e.g. Attributes): Create fires directly — no dropdown.

@@ -1,8 +1,19 @@
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Building2, ChevronDown, Plus } from "@/components/icons/protoLucide";
+/** Workspace switcher — selection drives playground banner via workspace store. */
 
-// Visual only — workspace selection is not wired up.
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Building2, Check, ChevronDown } from "@/components/icons/protoLucide";
+import {
+  WORKSPACES,
+  useActiveWorkspace,
+  useWorkspaceStore,
+  type WorkspaceId,
+} from "@/store/workspace";
+import { cn } from "@/lib/utils";
+
 export default function WorkspaceSwitcher() {
+  const active = useActiveWorkspace();
+  const setWorkspaceId = useWorkspaceStore((s) => s.setWorkspaceId);
+
   return (
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
@@ -11,7 +22,7 @@ export default function WorkspaceSwitcher() {
           className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
         >
           <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span>Wingify Delhi #4532345</span>
+          <span className="max-w-[14rem] truncate">{active.triggerLabel}</span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </DropdownMenu.Trigger>
@@ -24,17 +35,21 @@ export default function WorkspaceSwitcher() {
           <DropdownMenu.Label className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Workspace(s)
           </DropdownMenu.Label>
-          <DropdownMenu.Item className="cursor-pointer rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent">
-            Wingify Delhi
-          </DropdownMenu.Item>
-          <DropdownMenu.Item className="cursor-pointer rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent">
-            VWO Bangalore team
-          </DropdownMenu.Item>
-          <DropdownMenu.Separator className="my-1.5 h-px bg-border" />
-          <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent">
-            <Plus className="h-4 w-4" />
-            Create workspace
-          </DropdownMenu.Item>
+          {WORKSPACES.map((ws) => (
+            <DropdownMenu.Item
+              key={ws.id}
+              onSelect={() => setWorkspaceId(ws.id as WorkspaceId)}
+              className={cn(
+                "flex cursor-pointer items-center justify-between gap-2 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
+                ws.id === active.id && "font-medium"
+              )}
+            >
+              <span>{ws.label}</span>
+              {ws.id === active.id && (
+                <Check className="size-3.5 shrink-0 text-foreground" aria-hidden />
+              )}
+            </DropdownMenu.Item>
+          ))}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
