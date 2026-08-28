@@ -11,9 +11,15 @@ import {
   parseChartFilterSlug,
   type AnalyticsChartFilter,
 } from "@/config/analyticsCharts";
+import {
+  DEFAULT_THEME_ID,
+  isThemeId,
+  type ThemeId,
+} from "@/config/themes";
 import DesignSystemCatalog from "./DesignSystemCatalog";
 import DesignSystemFoundations from "./DesignSystemFoundations";
 import EmailerGallery from "./emailers/EmailerGallery";
+import ThemeColorGallery, { themeColorPath } from "./ThemeColorGallery";
 
 const SECTIONS = [
   {
@@ -22,6 +28,11 @@ const SECTIONS = [
     title: "Design System",
     description:
       "Foundations, components, forms, and themed emailers for the product shell.",
+  },
+  {
+    id: "themes",
+    label: "Themes",
+    description: "Accent theme colors — each has its own route and applies live.",
   },
   {
     id: "foundations",
@@ -60,38 +71,57 @@ function isSectionId(value: string | undefined): value is SectionId {
 }
 
 function sectionPath(id: SectionId): string {
-  return id === "charts"
-    ? "/design-system/charts/all"
-    : `/design-system/${id}`;
+  if (id === "charts") return "/design-system/charts/all";
+  if (id === "themes") return themeColorPath(DEFAULT_THEME_ID);
+  return `/design-system/${id}`;
 }
 
 export default function DesignSystemPage() {
   const Icon = iconForPath("/design-system") ?? LayoutGrid;
   const navigate = useNavigate();
-  const { section: sectionParam, category: categoryParam } = useParams<{
+  const {
+    section: sectionParam,
+    category: categoryParam,
+    themeId: themeParam,
+  } = useParams<{
     section?: string;
     category?: string;
+    themeId?: string;
   }>();
 
-  // /design-system/charts/:category uses only `category`; other sections use `section`.
   const onCharts = categoryParam !== undefined || sectionParam === "charts";
+  const onThemes = themeParam !== undefined || sectionParam === "themes";
   const chartFilter = parseChartFilterSlug(categoryParam ?? "all");
 
   if (onCharts && chartFilter === null) {
     return <Navigate to="/design-system/charts/all" replace />;
   }
 
-  if (!onCharts && sectionParam && !isSectionId(sectionParam)) {
+  if (onThemes && themeParam && !isThemeId(themeParam)) {
+    return <Navigate to={themeColorPath(DEFAULT_THEME_ID)} replace />;
+  }
+
+  if (
+    !onCharts &&
+    !onThemes &&
+    sectionParam &&
+    !isSectionId(sectionParam)
+  ) {
     return <Navigate to="/design-system/overview" replace />;
   }
 
   const section: SectionId = onCharts
     ? "charts"
-    : isSectionId(sectionParam)
-      ? sectionParam
-      : "overview";
+    : onThemes
+      ? "themes"
+      : isSectionId(sectionParam)
+        ? sectionParam
+        : "overview";
   const active = SECTIONS.find((item) => item.id === section) ?? SECTIONS[0];
   const activeChartFilter: AnalyticsChartFilter = chartFilter ?? "All";
+  const activeThemeId: ThemeId = isThemeId(themeParam)
+    ? themeParam
+    : DEFAULT_THEME_ID;
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] min-h-0 overflow-hidden">
@@ -107,12 +137,14 @@ export default function DesignSystemPage() {
               className={({ isActive }) =>
                 cn(
                   "rounded-md px-2.5 py-2 text-left text-sm transition-colors",
-                  isActive || (item.id === "charts" && onCharts)
+                  isActive ||
+                    (item.id === "charts" && onCharts) ||
+                    (item.id === "themes" && onThemes)
                     ? "bg-accent font-medium text-accent-foreground"
                     : "text-foreground hover:bg-muted"
                 )
               }
-              end={item.id !== "charts"}
+              end={item.id !== "charts" && item.id !== "themes"}
             >
               {item.label}
             </NavLink>
@@ -147,6 +179,8 @@ export default function DesignSystemPage() {
                       {item.label}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
+                      {item.id === "themes" &&
+                        "Accent themes with a dedicated route each."}
                       {item.id === "foundations" &&
                         "Color, type, spacing, and radius."}
                       {item.id === "components" &&
@@ -162,6 +196,10 @@ export default function DesignSystemPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {section === "themes" && (
+            <ThemeColorGallery themeId={activeThemeId} />
           )}
 
           {section === "foundations" && <DesignSystemFoundations />}

@@ -11,15 +11,32 @@ export type ChartPaletteSuggestion = {
   id: string;
   name: string;
   note: string;
-  /** Eight series colors, aesthetic draw order (cool/warm spaced). */
-  colors: readonly [string, string, string, string, string, string, string, string];
+  /** Series colors in draw order (typically 8; brand pack may use 9). */
+  colors: readonly string[];
 };
 
 /**
- * Same earth→sea→violet story as chart light 1–8, but softer chroma and
- * slightly lifted midtones so they sit cleaner on Wingify paper neutrals.
+ * Exploration palettes for the charts gallery. First entry is the Wingify
+ * brand data-viz pack from brand guidelines (anchor + brights).
  */
 export const CHART_PALETTE_SUGGESTIONS: readonly ChartPaletteSuggestion[] = [
+  {
+    id: "brand-data-viz",
+    name: "Brand data viz",
+    note: "Wingify guidelines: anchor with plum, then brights for playfulness. Neutrals stay off-series for backgrounds.",
+    // Order mirrors brand usage — dark anchor first, then sky/orange/lime/pink/green/magenta/blue, teal close.
+    colors: [
+      "#6A1B3C", // plum anchor
+      "#B8D9FF", // sky
+      "#FF6038", // orange
+      "#EEFF6D", // lime
+      "#F87FD8", // pink
+      "#07C787", // emerald
+      "#CB37A4", // magenta
+      "#406BED", // royal blue
+      "#00574D", // deep teal
+    ],
+  },
   {
     id: "harvest-ink",
     name: "Harvest ink",

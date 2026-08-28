@@ -222,6 +222,14 @@ export const router = createBrowserRouter([
             element: <Navigate to="/design-system/charts/all" replace />,
           },
           {
+            path: "/design-system/themes/:themeId",
+            element: <DesignSystemPage />,
+          },
+          {
+            path: "/design-system/themes",
+            element: <Navigate to="/design-system/themes/wingify" replace />,
+          },
+          {
             path: "/design-system/:section",
             element: <DesignSystemPage />,
           },

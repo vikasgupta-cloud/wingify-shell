@@ -64,25 +64,31 @@ function ChartPreview({
 
   switch (id) {
     case "palette": {
-      const heights = [92, 64, 108, 78, 54, 96, 70, 118];
+      const heights = [92, 64, 108, 78, 54, 96, 70, 118, 84];
       const count = paletteColors?.length ?? CHART_SERIES_COUNT;
+      const gap = 4;
+      const inset = 16;
+      const barW = Math.max(
+        12,
+        Math.floor((PREVIEW_W - inset * 2 - gap * (count - 1)) / count)
+      );
       return (
         <svg viewBox={`0 0 ${PREVIEW_W} ${PREVIEW_H}`} className="h-full w-full" aria-hidden>
           {Array.from({ length: count }, (_, i) => {
             const h = heights[i % heights.length]!;
-            const x = 22 + i * 32;
+            const x = inset + i * (barW + gap);
             return (
               <g key={i}>
                 <rect
                   x={x}
                   y={124 - h}
-                  width="22"
+                  width={barW}
                   height={h}
                   rx="3"
                   fill={chartSeries(i)}
                 />
                 <text
-                  x={x + 11}
+                  x={x + barW / 2}
                   y={136}
                   textAnchor="middle"
                   fill={CHART.label}
@@ -94,7 +100,14 @@ function ChartPreview({
               </g>
             );
           })}
-          <line x1="16" y1="124" x2="268" y2="124" stroke={axis} strokeWidth="1" />
+          <line
+            x1={inset - 2}
+            y1="124"
+            x2={PREVIEW_W - inset + 2}
+            y2="124"
+            stroke={axis}
+            strokeWidth="1"
+          />
         </svg>
       );
     }
