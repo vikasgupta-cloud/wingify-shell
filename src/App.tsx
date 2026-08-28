@@ -6,6 +6,7 @@ import { applyBrand } from "./config/applyBrand";
 import { useFontStore } from "./store/fonts";
 import { useThemeStore } from "./store/theme";
 import { IconLibraryProvider } from "./components/icons/IconLibraryProvider";
+import BootSplash from "./components/layout/BootSplash";
 
 export default function App() {
   const themeId = useThemeStore((s) => s.themeId);
@@ -43,6 +44,7 @@ export default function App() {
 
   return (
     <IconLibraryProvider>
+      <BootSplash />
       <RouterProvider router={router} />
     </IconLibraryProvider>
   );

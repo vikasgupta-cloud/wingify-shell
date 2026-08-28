@@ -11,8 +11,104 @@
       rel="stylesheet"
     />
     <title>Wingify</title>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem("wingify-theme");
+          if (!raw) return;
+          var parsed = JSON.parse(raw);
+          var mode = parsed && parsed.state && parsed.state.colorMode;
+          if (mode === "dark") {
+            document.documentElement.setAttribute("data-boot-mode", "dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      html {
+        background: #f7f6f3;
+      }
+      html[data-boot-mode="dark"] {
+        background: #141412;
+      }
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f7f6f3;
+        transition:
+          opacity 0.32s ease,
+          visibility 0.32s ease;
+      }
+      html[data-boot-mode="dark"] #boot-splash {
+        background: #141412;
+      }
+      #boot-splash.boot-splash--exit {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #boot-splash .boot-logo-mark {
+        display: block;
+        height: 72px;
+        width: auto;
+        animation: boot-logo-idle 1.15s ease-in-out infinite;
+        transform-origin: 55% 60%;
+        will-change: transform;
+      }
+      html[data-boot-mode="dark"] #boot-splash .boot-logo-mark[data-logo="light"] {
+        display: none;
+      }
+      html:not([data-boot-mode="dark"]) #boot-splash .boot-logo-mark[data-logo="dark"] {
+        display: none;
+      }
+      @keyframes boot-logo-idle {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg) scale(1);
+        }
+        22% {
+          transform: translateY(-3px) rotate(-3deg) scale(1.04);
+        }
+        48% {
+          transform: translateY(1px) rotate(2deg) scale(1.02);
+        }
+        72% {
+          transform: translateY(-2px) rotate(-1.5deg) scale(1.05);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash .boot-logo-mark {
+          animation: none;
+        }
+        #boot-splash {
+          transition: none;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-splash" aria-hidden="true">
+      <img
+        class="boot-logo-mark"
+        data-logo="light"
+        src="/wingify-logo.svg"
+        alt=""
+        width="76"
+        height="76"
+      />
+      <img
+        class="boot-logo-mark"
+        data-logo="dark"
+        src="/wingify-logo-dark.svg"
+        alt=""
+        width="76"
+        height="76"
+      />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
