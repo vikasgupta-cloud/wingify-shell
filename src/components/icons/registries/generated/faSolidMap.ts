@@ -88,6 +88,7 @@ export const FA_SOLID_MAP = {
   "Globe": "FaGlobe",
   "GripVertical": "FaGripVertical",
   "Hash": "FaCircleQuestion",
+  "Headphones": "FaHeadphones",
   "HeartPulse": "FaHeartPulse",
   "HelpCircle": "FaCircleQuestion",
   "History": "FaClockRotateLeft",

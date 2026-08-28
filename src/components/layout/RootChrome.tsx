@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import FontController from "./FontController";
+import { GetStartedGate } from "./GetStartedGate";
 import PlaygroundBanner from "./PlaygroundBanner";
 
 /**
@@ -11,6 +12,7 @@ export default function RootChrome() {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <PlaygroundBanner />
+      <GetStartedGate />
       <div className="min-h-0 flex-1">
         <Outlet />
       </div>

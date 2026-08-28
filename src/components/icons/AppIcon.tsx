@@ -36,14 +36,13 @@ export default function AppIcon({
   }
 
   if (!ready) {
+    // Keep layout and colour while the active pack loads — never render blank.
     return (
-      <span
-        aria-hidden
-        className={cn("inline-block shrink-0", className)}
-        style={{
-          width: typeof size === "number" ? size : 16,
-          height: typeof size === "number" ? size : 16,
-        }}
+      <HelpCircle
+        {...props}
+        size={size}
+        className={cn("shrink-0", className)}
+        strokeWidth={1.75}
       />
     );
   }
@@ -52,7 +51,7 @@ export default function AppIcon({
     <HelpCircle
       {...props}
       size={size}
-      className={cn("shrink-0 opacity-40", className)}
+      className={cn("shrink-0", className)}
       strokeWidth={1.75}
     />
   );

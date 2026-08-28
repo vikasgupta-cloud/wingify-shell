@@ -88,6 +88,7 @@ export const SOLAR_OUTLINE_MAP = {
   "Globe": "QuestionCircleLinear",
   "GripVertical": "HamburgerMenuOutline",
   "Hash": "QuestionCircleLinear",
+  "Headphones": "HeadphonesRoundOutline",
   "HeartPulse": "HeartPulseOutline",
   "HelpCircle": "QuestionCircleOutline",
   "History": "HistoryOutline",

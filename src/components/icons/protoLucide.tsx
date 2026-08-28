@@ -86,6 +86,7 @@ export const Globe = (props: any) => <AppIcon name="Globe" {...props} />;
 export const GripVertical = (props: any) => <AppIcon name="GripVertical" {...props} />;
 export const Hash = (props: any) => <AppIcon name="Hash" {...props} />;
 export const HelpCircle = (props: any) => <AppIcon name="HelpCircle" {...props} />;
+export const Headphones = (props: any) => <AppIcon name="Headphones" {...props} />;
 export const History = (props: any) => <AppIcon name="History" {...props} />;
 export const Hourglass = (props: any) => <AppIcon name="Hourglass" {...props} />;
 export const Image = (props: any) => <AppIcon name="Image" {...props} />;

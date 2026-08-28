@@ -88,6 +88,7 @@ export const BOOTSTRAP_FILL_MAP = {
   "Globe": "Globe",
   "GripVertical": "GripVertical",
   "Hash": "Hash",
+  "Headphones": "Headphones",
   "HeartPulse": "HeartPulseFill",
   "HelpCircle": "QuestionCircleFill",
   "History": "ClockHistory",

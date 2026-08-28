@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   NAV,
   PROFILE_MODES,
+  WEB_EXPERIMENT_OLD_PATH,
   findProfileMode,
   firstModePath,
   flattenNavLeaves,
@@ -84,6 +85,53 @@ export function showsCreate(pathname: string): boolean {
   const { item, leaf } = resolveBreadcrumb(pathname);
   if (leaf) return !leaf.hideCreate;
   return !item?.hideCreate;
+}
+
+/** Feature Management report listings — Summarise here, not on Feature Flags. */
+const FEATURE_MANAGEMENT_SUMMARISE_PATHS = [
+  "/feature-management/flag-rollout",
+  "/feature-management/flag-testing",
+  "/feature-management/flag-personalize",
+  "/feature-management/flag-multivariate",
+] as const;
+
+/** Summarise never shows on these routes (even when Create does). */
+const SUMMARISE_EXCLUDED_PATHS = new Set([
+  "/insights/dashboard",
+  "/feature-management/feature-flags",
+  "/data-360/profiles",
+  "/data-360/attributes",
+  "/data-360/events",
+  "/data-360/segments",
+  "/data-360/metrics",
+  "/data-360/funnels",
+  "/data-360/data-studio",
+  "/data-360/triggers",
+]);
+
+/** Summarise on these listing routes without a Create button. */
+const SUMMARISE_EXTRA_PATHS = new Set([
+  ...FEATURE_MANAGEMENT_SUMMARISE_PATHS,
+  "/commerce/catalog",
+]);
+
+/** Summarise CTA — beside Create on create pages, plus selected report/catalog listings. */
+export function showsSummarise(pathname: string): boolean {
+  if (findProfileMode(pathname)) return false;
+  if (SUMMARISE_EXCLUDED_PATHS.has(pathname)) return false;
+  if (SUMMARISE_EXTRA_PATHS.has(pathname)) return true;
+  return showsCreate(pathname);
+}
+
+/** Pages that mount WandzPanel themselves (AppLayout uses a global dock elsewhere). */
+export function hasInlineWandzHost(pathname: string): boolean {
+  if (
+    pathname === "/web-experiment" ||
+    pathname.startsWith("/web-experiment/")
+  ) {
+    return !pathname.startsWith(WEB_EXPERIMENT_OLD_PATH);
+  }
+  return pathname === "/personalize" || pathname.startsWith("/personalize/");
 }
 
 /** Label for the current page: drill-in leaf, sub-nav leaf, direct item, or fallback. */

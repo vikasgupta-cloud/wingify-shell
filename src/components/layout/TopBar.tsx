@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, Plus } from "@/components/icons/protoLucide";
+import { ChevronDown, Plus, Sparkles } from "@/components/icons/protoLucide";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useRowsStore } from "../../store/rows";
 import { useRecommendationRowsStore } from "../../store/recommendationRows";
-import { showsCreate, pageLabel } from "../../lib/nav";
+import { showsCreate, showsSummarise, pageLabel } from "../../lib/nav";
+import { useWandzStore } from "@/store/wandz";
 import {
   CREATE_GROUP_LABELS,
   getCreateOptions,
@@ -13,10 +14,16 @@ import {
 } from "../../config/createMenu";
 import {
   useIsCancellationRevokeWorkspace,
+  useIsGetStartedWorkspace,
   useIsTrialOverWorkspace,
+  useWorkspaceStore,
 } from "@/store/workspace";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import BreadcrumbNav from "./BreadcrumbNav";
+import CancellationRequestNotice from "./CancellationRequestNotice";
+import TrialOverNotice from "./TrialOverNotice";
+import VerifyEmailNotice from "./VerifyEmailNotice";
+import { GET_STARTED_PATH } from "@/lib/getStartedGate";
 
 function CreateItem({ option, onSelect }: { option: CreateOption; onSelect: () => void }) {
   const Icon = option.icon;
@@ -65,54 +72,6 @@ function CreateSection({
   );
 }
 
-/** First-level TopBar only — trial expired notice + Upgrade CTA (screenshot). */
-function TrialOverNotice({ onUpgrade }: { onUpgrade: () => void }) {
-  return (
-    <div
-      role="status"
-      className="flex max-w-full items-center gap-1.5 rounded-md border border-danger-fg/35 bg-danger-bg px-2.5 py-1 text-xs font-medium text-danger-fg"
-    >
-      <span className="truncate">Your trial is over</span>
-      <span className="shrink-0 text-danger-fg/50" aria-hidden>
-        |
-      </span>
-      <button
-        type="button"
-        onClick={onUpgrade}
-        className="shrink-0 underline underline-offset-2 outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-danger-fg/40"
-      >
-        Upgrade
-      </button>
-    </div>
-  );
-}
-
-/** First-level TopBar only — cancellation notice + Revoke CTA (screenshot). */
-function CancellationRequestNotice({
-  onRevoke,
-}: {
-  onRevoke: () => void;
-}) {
-  return (
-    <div
-      role="status"
-      className="flex max-w-full items-center gap-1.5 rounded-md border border-danger-fg/35 bg-danger-bg px-2.5 py-1 text-xs font-medium text-danger-fg"
-    >
-      <span className="truncate">Cancellation Request Received</span>
-      <span className="shrink-0 text-danger-fg/50" aria-hidden>
-        |
-      </span>
-      <button
-        type="button"
-        onClick={onRevoke}
-        className="shrink-0 underline underline-offset-2 outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-danger-fg/40"
-      >
-        Revoke
-      </button>
-    </div>
-  );
-}
-
 export default function TopBar() {
   const navigate = useNavigate();
   const createCampaign = useRowsStore((s) => s.createCampaign);
@@ -125,6 +84,11 @@ export default function TopBar() {
   const showHeadings = aiOptions.length > 0 && restOptions.length > 0;
   const isCancellationWorkspace = useIsCancellationRevokeWorkspace();
   const isTrialOverWorkspace = useIsTrialOverWorkspace();
+  const isGetStartedWorkspace = useIsGetStartedWorkspace();
+  const getStartedEmailVerified = useWorkspaceStore(
+    (s) => s.getStartedProgress.emailVerified
+  );
+  const openWandzAndAsk = useWandzStore((s) => s.openWandzAndAsk);
   const [revoked, setRevoked] = useState(false);
 
   useEffect(() => {
@@ -150,6 +114,14 @@ export default function TopBar() {
     navigate(`${base}/c/${id}`);
   };
 
+  const handleSummarise = () => {
+    const label = pageLabel(pathname);
+    openWandzAndAsk(
+      { kind: "general" },
+      `Summarise this ${label} listing — highlight what's active, trends, and anything that needs attention.`
+    );
+  };
+
   return (
     <header data-slot="top-bar" className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-panel/95 px-4 text-panel-foreground backdrop-blur-sm">
       <div className="flex min-w-0 items-center gap-2">
@@ -163,8 +135,25 @@ export default function TopBar() {
         {isTrialOverWorkspace && (
           <TrialOverNotice onUpgrade={() => navigate("/upgrade")} />
         )}
+        {isGetStartedWorkspace && !getStartedEmailVerified && (
+          <VerifyEmailNotice onVerify={() => navigate(GET_STARTED_PATH)} />
+        )}
         {isCancellationWorkspace && !revoked && (
           <CancellationRequestNotice onRevoke={() => setRevoked(true)} />
+        )}
+        {showsSummarise(pathname) && (
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto gap-1.5 px-3 py-1.5 shadow-none"
+            onClick={handleSummarise}
+          >
+            <Sparkles
+              className="h-4 w-4 text-[var(--badge-berry-light-fg)]"
+              aria-hidden
+            />
+            Summarise
+          </Button>
         )}
         {showsCreate(pathname) &&
           (createOptions.length === 1 ? (

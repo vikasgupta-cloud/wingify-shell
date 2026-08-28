@@ -60,7 +60,7 @@
   --radius-badge: var(--radius-lg);
   --radius-avatar: var(--radius-full);
 
-  /* Type scale — display/heading use --font-title (Ergon); body/label use --font-body. */
+  /* Type scale — display/heading use --font-title; body/label use --font-body. */
   --type-display-2xl-size: 60px;
   --type-display-2xl-lh: 68px;
   --type-display-2xl-tracking: -0.022em;

@@ -88,6 +88,7 @@ export const ICONOIR_REGULAR_MAP = {
   "Globe": "Globe",
   "GripVertical": "Drag",
   "Hash": "HelpCircle",
+  "Headphones": "HelpCircle",
   "HeartPulse": "HelpCircle",
   "HelpCircle": "HelpCircle",
   "History": "ClockRotateRight",

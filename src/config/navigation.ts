@@ -12,7 +12,7 @@ import {
   Megaphone,
   Database,
   Activity,
-  LifeBuoy,
+  Headphones,
   UserCircle,
   Settings,
   Layers,
@@ -163,6 +163,7 @@ export const NAV: NavItem[] = [
   { label: "Home", path: "/home", icon: Home, group: 1, sections: [
     { items: [
       { label: "Dashboard", path: "/home/dashboard", hideCreate: true },
+      { label: "Get Started", path: "/home/get-started", hideCreate: true },
       { label: "ROI Dashboard", path: "/home/roi-dashboard", hideCreate: true },
       { label: "Account Overview", path: "/home/account-overview", hideCreate: true },
     ]},
@@ -300,7 +301,7 @@ export const NAV: NavItem[] = [
     ]},
   ]},
   { label: "Activity", path: "/activity-timeline", icon: Activity, group: 3, flyoutOnly: true, hideCreate: true },
-  { label: "Help", path: "/helpdesk", icon: LifeBuoy, group: 3, flyoutOnly: true, hideCreate: true },
+  { label: "Help", path: "/helpdesk", icon: Headphones, group: 3, flyoutOnly: true, hideCreate: true },
   // Settings lives in the Profile flyout (no rail gear). Avatar expands options; does not navigate.
   { label: "John Doe", path: "/profile", icon: UserCircle, group: 3, initials: "JD", flyoutOnly: true, sections: [
     // Filled after PROFILE_MODES is declared — see profileFlyoutSections below.

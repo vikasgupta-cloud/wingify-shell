@@ -37,6 +37,7 @@ import EventsPage from "../pages/data-360/EventsPage";
 import SegmentsPage from "../pages/data-360/SegmentsPage";
 import MetricsPage from "../pages/data-360/MetricsPage";
 import DashboardPage from "../pages/home/DashboardPage";
+import GetStartedPage from "../pages/home/GetStartedPage";
 import PersonalizePage from "../pages/personalize/PersonalizePage";
 import PersonalizeComingSoonPage from "../pages/personalize/PersonalizeComingSoonPage";
 import CatalogPage from "../pages/commerce/CatalogPage";
@@ -47,6 +48,7 @@ import RecommendationReportPage from "../pages/commerce/RecommendationReportPage
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
   "/home/dashboard": DashboardPage,
+  "/home/get-started": GetStartedPage,
   "/web-experiment": WebExperimentation,
   "/personalize": PersonalizePage,
   "/insights/session-recordings": SessionRecordingsPage,

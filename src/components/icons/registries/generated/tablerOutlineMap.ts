@@ -88,6 +88,7 @@ export const TABLER_OUTLINE_MAP = {
   "Globe": "IconGlobe",
   "GripVertical": "IconGripVertical",
   "Hash": "IconHash",
+  "Headphones": "IconHeadphones",
   "HeartPulse": "IconHeartRateMonitor",
   "HelpCircle": "IconHelp",
   "History": "IconHistory",

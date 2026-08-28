@@ -1,11 +1,14 @@
 import { NavLink, useLocation } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "@/components/icons/protoLucide";
+import { Badge } from "@/components/ui/badge";
+import { GET_STARTED_PROGRESS } from "@/data/getStarted";
 import {
   productSwitcherItems,
   type NavItem,
 } from "../../config/navigation";
 import { firstChildPath, resolveBreadcrumb } from "../../lib/nav";
+import { useIsGetStartedLocked } from "@/store/getStartedOnboarding";
 import { cn } from "../../lib/utils";
 import PageGuideCluster from "./PageGuideCluster";
 
@@ -16,9 +19,15 @@ function isSwitcherProduct(item: NavItem): boolean {
 }
 
 /** Product crumb — dropdown to jump between Wandz and the other products. */
-function ProductSwitcher({ item }: { item: NavItem }) {
+function ProductSwitcher({
+  item,
+  locked = false,
+}: {
+  item: NavItem;
+  locked?: boolean;
+}) {
   const Icon = item.icon;
-  const showSwitcher = isSwitcherProduct(item);
+  const showSwitcher = isSwitcherProduct(item) && !locked;
 
   if (!showSwitcher) {
     return (
@@ -85,6 +94,7 @@ function ProductSwitcher({ item }: { item: NavItem }) {
 export default function BreadcrumbNav() {
   const { pathname } = useLocation();
   const { item, leaf, siblings } = resolveBreadcrumb(pathname);
+  const navLocked = useIsGetStartedLocked();
 
   if (!item) return null;
 
@@ -92,7 +102,7 @@ export default function BreadcrumbNav() {
   if (!item.sections || !leaf) {
     return (
       <div className="flex min-w-0 items-center gap-1 text-sm">
-        <ProductSwitcher item={item} />
+        <ProductSwitcher item={item} locked={navLocked} />
         <PageGuideCluster guide={item.pageGuide} />
       </div>
     );
@@ -100,42 +110,53 @@ export default function BreadcrumbNav() {
 
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm">
-      <ProductSwitcher item={item} />
+      <ProductSwitcher item={item} locked={navLocked} />
       <span className="text-muted-foreground">/</span>
-      <DropdownMenu.Root modal={false}>
-        <DropdownMenu.Trigger asChild>
-          <button
-            type="button"
-            className="flex items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-          >
-            <span className="truncate">{leaf.label}</span>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content
-            align="start"
-            sideOffset={6}
-            className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
-          >
-            {siblings.map((sibling) => (
-              <DropdownMenu.Item key={sibling.path} asChild>
-                {/* Plain-string className: Radix Slot can't merge NavLink's function form */}
-                <NavLink
-                  to={sibling.path}
-                  className={cn(
-                    "block cursor-pointer rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
-                    sibling.path === leaf.path && "bg-accent font-medium"
-                  )}
-                >
-                  {sibling.label}
-                </NavLink>
-              </DropdownMenu.Item>
-            ))}
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
+      {navLocked ? (
+        <span className="truncate px-1.5 py-1 font-semibold text-foreground">
+          {leaf.label}
+        </span>
+      ) : (
+        <DropdownMenu.Root modal={false}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+            >
+              <span className="truncate">{leaf.label}</span>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="start"
+              sideOffset={6}
+              className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+            >
+              {siblings.map((sibling) => (
+                <DropdownMenu.Item key={sibling.path} asChild>
+                  {/* Plain-string className: Radix Slot can't merge NavLink's function form */}
+                  <NavLink
+                    to={sibling.path}
+                    className={cn(
+                      "block cursor-pointer rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
+                      sibling.path === leaf.path && "bg-accent font-medium"
+                    )}
+                  >
+                    {sibling.label}
+                  </NavLink>
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      )}
       <PageGuideCluster guide={leaf.pageGuide} />
+      {leaf.path === "/home/get-started" && (
+        <Badge tone="ocean" fill="light" size="sm">
+          {GET_STARTED_PROGRESS}% Completed
+        </Badge>
+      )}
     </div>
   );
 }

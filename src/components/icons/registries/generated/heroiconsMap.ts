@@ -88,6 +88,7 @@ export const HEROICONS_MAP = {
   "Globe": "QuestionMarkCircleIcon",
   "GripVertical": "Bars3Icon",
   "Hash": "QuestionMarkCircleIcon",
+  "Headphones": "LifebuoyIcon",
   "HeartPulse": "HeartIcon",
   "HelpCircle": "QuestionMarkCircleIcon",
   "History": "ClockIcon",

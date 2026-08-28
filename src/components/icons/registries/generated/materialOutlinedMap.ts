@@ -88,6 +88,7 @@ export const MATERIAL_OUTLINED_MAP = {
   "Globe": "HelpOutlined",
   "GripVertical": "DragIndicatorOutlined",
   "Hash": "HelpOutlined",
+  "Headphones": "HeadphonesOutlined",
   "HeartPulse": "MonitorHeartOutlined",
   "HelpCircle": "HelpOutlined",
   "History": "HistoryOutlined",

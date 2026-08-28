@@ -88,6 +88,7 @@ export const SOLAR_BOLD_MAP = {
   "Globe": "QuestionCircleLinear",
   "GripVertical": "HamburgerMenuBold",
   "Hash": "QuestionCircleLinear",
+  "Headphones": "HeadphonesRoundBold",
   "HeartPulse": "HeartPulseBold",
   "HelpCircle": "QuestionCircleBold",
   "History": "HistoryBold",

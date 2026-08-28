@@ -54,6 +54,7 @@ import FormatUnderlinedTwoTone from "@mui/icons-material/FormatUnderlinedTwoTone
 import FullscreenExitTwoTone from "@mui/icons-material/FullscreenExitTwoTone";
 import FullscreenTwoTone from "@mui/icons-material/FullscreenTwoTone";
 import GridViewTwoTone from "@mui/icons-material/GridViewTwoTone";
+import HeadphonesTwoTone from "@mui/icons-material/HeadphonesTwoTone";
 import HelpOutlined from "@mui/icons-material/HelpOutlined";
 import HistoryTwoTone from "@mui/icons-material/HistoryTwoTone";
 import HomeTwoTone from "@mui/icons-material/HomeTwoTone";
@@ -218,6 +219,7 @@ export const MATERIAL_TWOTONE_COMPONENTS = {
   "Globe": HelpOutlined,
   "GripVertical": DragIndicatorTwoTone,
   "Hash": HelpOutlined,
+  "Headphones": HeadphonesTwoTone,
   "HeartPulse": MonitorHeartTwoTone,
   "HelpCircle": HelpOutlined,
   "History": HistoryTwoTone,

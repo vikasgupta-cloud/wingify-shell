@@ -18,6 +18,11 @@ import {
   type NavItem,
 } from "../../config/navigation";
 import { findItemByPath, firstChildPath, RAIL_WIDTH } from "../../lib/nav";
+import { GET_STARTED_PATH, isGetStartedHomeLeaf } from "@/lib/getStartedGate";
+import {
+  useGetStartedNavLockTooltip,
+  useIsGetStartedLocked,
+} from "@/store/getStartedOnboarding";
 import { canUnpinPath, useUIStore } from "../../store/ui";
 import { useMascotPreviewStore } from "../../store/mascotPreview";
 import { mascotForPath } from "../../config/mascots";
@@ -45,6 +50,28 @@ const accordionTransition = `grid-template-rows ${WIDTH_MS}ms ${WIDTH_EASE}, opa
 
 const tooltipContentClass =
   "z-50 rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md";
+
+function withNavLockTooltip(
+  node: React.ReactElement,
+  tooltip: string | null,
+  enabled: boolean
+): React.ReactElement {
+  if (!enabled || !tooltip) return node;
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>{node}</Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          side="right"
+          sideOffset={8}
+          className={cn(tooltipContentClass, "max-w-[240px]")}
+        >
+          {tooltip}
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  );
+}
 
 function useClampedFlyoutTop(
   ref: React.RefObject<HTMLDivElement | null>,
@@ -85,6 +112,8 @@ export default function ExpandedNav({
   const scheduleMascotClear = useMascotPreviewStore((s) => s.scheduleClear);
   const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
   const nav = visibleNav();
+  const navLocked = useIsGetStartedLocked();
+  const lockTooltip = useGetStartedNavLockTooltip();
 
   const previewMascotFor = (item: NavItem) => {
     previewMascot(mascotForPath(item.path));
@@ -166,6 +195,7 @@ export default function ExpandedNav({
 
   const openFlyout = (item: NavItem, target: HTMLElement) => {
     if (expanded) return;
+    if (navLocked && item.path !== "/home") return;
     window.clearTimeout(closeTimer.current);
     closeMore();
     previewMascotFor(item);
@@ -256,6 +286,7 @@ export default function ExpandedNav({
     const tooltipOnly = !!item.flyoutOnly && !hasSections;
     const expandOnly = !!item.flyoutOnly && hasSections;
     const showUnpin = !inMore && item.pinnable && canUnpin(item.path);
+    const navDisabled = navLocked && item.path !== "/home";
 
     const iconEl = (
       <Icon
@@ -291,9 +322,11 @@ export default function ExpandedNav({
           isActive && expanded && !hasSections && "bg-accent hover:bg-accent",
           isActive &&
             !expanded &&
-            "bg-rail-active text-rail-active-foreground hover:bg-rail-active"
+            "bg-rail-active text-rail-active-foreground hover:bg-rail-active",
+          navDisabled && "cursor-not-allowed opacity-40 hover:bg-transparent"
         )}
         onMouseEnter={(e) => {
+          if (navDisabled) return;
           previewMascotFor(item);
           if (!expanded && !tooltipOnly) openFlyout(item, e.currentTarget);
         }}
@@ -302,6 +335,7 @@ export default function ExpandedNav({
           else scheduleMascotClear();
         }}
         onFocus={(e) => {
+          if (navDisabled) return;
           previewMascotFor(item);
           if (!expanded && !tooltipOnly) openFlyout(item, e.currentTarget);
         }}
@@ -314,8 +348,14 @@ export default function ExpandedNav({
           type="button"
           aria-label={item.label}
           onClick={() => {
+            if (navDisabled) return;
             if (tooltipOnly) return;
             if (expandOnly) {
+              if (expanded) setOpenPath(open ? null : item.path);
+              return;
+            }
+            if (navLocked && item.path === "/home") {
+              navigate(GET_STARTED_PATH);
               if (expanded) setOpenPath(open ? null : item.path);
               return;
             }
@@ -417,7 +457,9 @@ export default function ExpandedNav({
     // flyout are labelled there; direct items get a tooltip, and pinnable ones
     // carry an inline unpin next to the label (hidden at the pin minimum).
     let hoverRow = row;
-    if (!expanded && !inMore && !hasSections) {
+    if (navDisabled && lockTooltip) {
+      hoverRow = withNavLockTooltip(row, lockTooltip, true);
+    } else if (!expanded && !inMore && !hasSections) {
       hoverRow = item.pinnable ? (
         <HoverCard.Root openDelay={150} closeDelay={150}>
           <HoverCard.Trigger asChild>{row}</HoverCard.Trigger>
@@ -506,6 +548,7 @@ export default function ExpandedNav({
                         const subOpen = openSubPath === leaf.path;
 
                         if (item.path === "/profile") {
+                          const profileLeafDisabled = navLocked;
                           return (
                             <div key={leaf.path}>
                               {isLogoutSection && leaf.path === LOGOUT_PATH && (
@@ -514,27 +557,48 @@ export default function ExpandedNav({
                                   aria-hidden="true"
                                 />
                               )}
-                              <NavLink
-                                to={leaf.path}
-                                tabIndex={open ? undefined : -1}
-                                className={({ isActive: leafActive }) =>
-                                  cn(
-                                    "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                                    leafActive &&
-                                      "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                                  )
-                                }
-                              >
-                                {LeafIcon && (
-                                  <LeafIcon
-                                    className="h-4 w-4 shrink-0 text-foreground"
-                                    strokeWidth={1.75}
-                                  />
-                                )}
-                                <span className="min-w-0 flex-1 truncate">
-                                  {leaf.label}
-                                </span>
-                              </NavLink>
+                              {profileLeafDisabled ? (
+                                withNavLockTooltip(
+                                  <span
+                                    aria-disabled="true"
+                                    className="flex cursor-not-allowed items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground opacity-40"
+                                  >
+                                    {LeafIcon && (
+                                      <LeafIcon
+                                        className="h-4 w-4 shrink-0 text-foreground"
+                                        strokeWidth={1.75}
+                                      />
+                                    )}
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {leaf.label}
+                                    </span>
+                                  </span>,
+                                  lockTooltip,
+                                  true
+                                )
+                              ) : (
+                                <NavLink
+                                  to={leaf.path}
+                                  tabIndex={open ? undefined : -1}
+                                  className={({ isActive: leafActive }) =>
+                                    cn(
+                                      "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                                      leafActive &&
+                                        "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                                    )
+                                  }
+                                >
+                                  {LeafIcon && (
+                                    <LeafIcon
+                                      className="h-4 w-4 shrink-0 text-foreground"
+                                      strokeWidth={1.75}
+                                    />
+                                  )}
+                                  <span className="min-w-0 flex-1 truncate">
+                                    {leaf.label}
+                                  </span>
+                                </NavLink>
+                              )}
                             </div>
                           );
                         }
@@ -658,33 +722,62 @@ export default function ExpandedNav({
                         }
 
                         return (
-                          <NavLink
-                            key={leaf.path}
-                            to={leaf.path}
-                            tabIndex={open ? undefined : -1}
-                            className={({ isActive: leafActive }) =>
-                              cn(
-                                "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                                leafActive &&
-                                  "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                              )
+                          (() => {
+                            const leafDisabled =
+                              navLocked && !isGetStartedHomeLeaf(leaf.path);
+                            const leafContent = (
+                              <>
+                                {LeafIcon && (
+                                  <LeafIcon
+                                    className="h-4 w-4 shrink-0 text-foreground"
+                                    strokeWidth={1.75}
+                                  />
+                                )}
+                                <span className="min-w-0 flex-1 truncate">
+                                  {leaf.label}
+                                </span>
+                                {leaf.badge === "premium" && (
+                                  <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-muted">
+                                    <Crown className="size-3" aria-hidden />
+                                  </span>
+                                )}
+                              </>
+                            );
+
+                            if (leafDisabled) {
+                              return (
+                                <div key={leaf.path}>
+                                  {withNavLockTooltip(
+                                    <span
+                                      aria-disabled="true"
+                                      className="flex cursor-not-allowed items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground opacity-40"
+                                    >
+                                      {leafContent}
+                                    </span>,
+                                    lockTooltip,
+                                    true
+                                  )}
+                                </div>
+                              );
                             }
-                          >
-                            {LeafIcon && (
-                              <LeafIcon
-                                className="h-4 w-4 shrink-0 text-foreground"
-                                strokeWidth={1.75}
-                              />
-                            )}
-                            <span className="min-w-0 flex-1 truncate">
-                              {leaf.label}
-                            </span>
-                            {leaf.badge === "premium" && (
-                              <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-muted">
-                                <Crown className="size-3" aria-hidden />
-                              </span>
-                            )}
-                          </NavLink>
+
+                            return (
+                              <NavLink
+                                key={leaf.path}
+                                to={leaf.path}
+                                tabIndex={open ? undefined : -1}
+                                className={({ isActive: leafActive }) =>
+                                  cn(
+                                    "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                                    leafActive &&
+                                      "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                                  )
+                                }
+                              >
+                                {leafContent}
+                              </NavLink>
+                            );
+                          })()
                         );
                       })}
                     </div>

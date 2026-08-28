@@ -88,6 +88,7 @@ export const RADIX_MAP = {
   "Globe": "GlobeIcon",
   "GripVertical": "DragHandleDots2Icon",
   "Hash": "QuestionMarkCircledIcon",
+  "Headphones": "QuestionMarkCircledIcon",
   "HeartPulse": "HeartIcon",
   "HelpCircle": "QuestionMarkCircledIcon",
   "History": "ClockIcon",

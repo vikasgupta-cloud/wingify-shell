@@ -88,6 +88,7 @@ export const REMIX_LINE_MAP = {
   "Globe": "RiGlobeLine",
   "GripVertical": "RiDragMoveLine",
   "Hash": "RiQuestionLine",
+  "Headphones": "RiHeadphoneLine",
   "HeartPulse": "RiHeartPulseLine",
   "HelpCircle": "RiQuestionLine",
   "History": "RiHistoryLine",

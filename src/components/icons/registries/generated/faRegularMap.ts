@@ -88,6 +88,7 @@ export const FA_REGULAR_MAP = {
   "Globe": "FaGlobe",
   "GripVertical": "FaGripVertical",
   "Hash": "FaRegCircleQuestion",
+  "Headphones": "FaHeadphones",
   "HeartPulse": "FaHeartPulse",
   "HelpCircle": "FaRegCircleQuestion",
   "History": "FaClockRotateLeft",

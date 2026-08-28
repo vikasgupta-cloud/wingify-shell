@@ -8,7 +8,7 @@
 @layer base {
   :root {
     /* Typography roles — overwritten by applyFonts() from the font playground. */
-    --font-title: "Ergon", ui-sans-serif, system-ui, sans-serif;
+    --font-title: "DM Sans", ui-sans-serif, system-ui, sans-serif;
     --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
     --font-number: "DM Sans", ui-sans-serif, system-ui, sans-serif;
     --font-cta: "DM Sans", ui-sans-serif, system-ui, sans-serif;
@@ -707,7 +707,7 @@ body {
 }
 
 /*
- * DM Sans reads optically lighter than Ergon/Lyon at the same numeric weight.
+ * DM Sans reads optically lighter than Lyon at the same numeric weight.
  * When CTA text is DM Sans, bump one step: regular→medium, medium→semibold.
  * Lives in utilities so it beats Tailwind's font-* weight utilities.
  */

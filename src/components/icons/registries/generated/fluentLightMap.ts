@@ -88,6 +88,7 @@ export const FLUENT_LIGHT_MAP = {
   "Globe": "Globe24Regular",
   "GripVertical": "ReOrderDotsVertical24Regular",
   "Hash": "QuestionCircle24Regular",
+  "Headphones": "Headphones24Regular",
   "HeartPulse": "HeartPulse24Regular",
   "HelpCircle": "QuestionCircle24Regular",
   "History": "History24Regular",

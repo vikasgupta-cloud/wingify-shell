@@ -16,7 +16,29 @@ import {
   type NavLeaf,
 } from "../../config/navigation";
 import { canUnpinPath, useUIStore } from "../../store/ui";
+import { GET_STARTED_PATH } from "@/lib/getStartedGate";
+import {
+  useGetStartedNavLockTooltip,
+  useIsGetStartedLocked,
+} from "@/store/getStartedOnboarding";
 import { cn } from "../../lib/utils";
+
+const lockTooltipClass =
+  "z-50 max-w-[240px] rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md";
+
+function withLockTooltip(node: React.ReactNode, tooltip: string | null) {
+  if (!tooltip) return node;
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>{node}</Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content side="right" sideOffset={8} className={lockTooltipClass}>
+          {tooltip}
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  );
+}
 
 type SubNavPanelProps = {
   item: NavItem;
@@ -64,10 +86,14 @@ function LeafRow({
   leaf,
   onRequestClose,
   nested = false,
+  disabled = false,
+  lockTooltip = null,
 }: {
   leaf: NavLeaf;
   onRequestClose?: () => void;
   nested?: boolean;
+  disabled?: boolean;
+  lockTooltip?: string | null;
 }) {
   const Icon = leaf.icon;
   const content = (
@@ -99,6 +125,20 @@ function LeafRow({
     );
 
   if (leaf.external) {
+    if (disabled) {
+      return withLockTooltip(
+        <span
+          aria-disabled="true"
+          className={cn(
+            "flex cursor-not-allowed items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground opacity-40",
+            nested && "py-1.5"
+          )}
+        >
+          {content}
+        </span>,
+        lockTooltip
+      );
+    }
     return (
       <a
         href={leaf.path}
@@ -112,6 +152,21 @@ function LeafRow({
       >
         {content}
       </a>
+    );
+  }
+
+  if (disabled) {
+    return withLockTooltip(
+      <span
+        aria-disabled="true"
+        className={cn(
+          "flex cursor-not-allowed items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground opacity-40",
+          nested && "py-1.5"
+        )}
+      >
+        {content}
+      </span>,
+      lockTooltip
     );
   }
 
@@ -132,12 +187,16 @@ function AccordionLeaf({
   onToggle,
   onNavigate,
   onRequestClose,
+  navLocked = false,
+  lockTooltip = null,
 }: {
   leaf: NavLeaf;
   open: boolean;
   onToggle: () => void;
   onNavigate: () => void;
   onRequestClose?: () => void;
+  navLocked?: boolean;
+  lockTooltip?: string | null;
 }) {
   const Icon = leaf.icon;
   const { pathname } = useLocation();
@@ -189,6 +248,8 @@ function AccordionLeaf({
               leaf={child}
               nested
               onRequestClose={onRequestClose}
+              disabled={navLocked && child.path !== GET_STARTED_PATH}
+              lockTooltip={lockTooltip}
             />
           ))}
         </div>
@@ -207,6 +268,11 @@ export default function SubNavPanel({
   const unpin = useUIStore((s) => s.unpin);
   const pinnedPaths = useUIStore((s) => s.pinnedPaths);
   const canUnpin = (path: string) => canUnpinPath(pinnedPaths, path);
+  const navLocked = useIsGetStartedLocked();
+  const lockTooltip = useGetStartedNavLockTooltip();
+  const panelLocked = navLocked && item.path !== "/home";
+  const leafDisabled = (path: string) =>
+    panelLocked || (navLocked && path !== GET_STARTED_PATH);
   const [openPath, setOpenPath] = useState<string | null>(() =>
     item.sections ? activeAccordionPath(pathname, item.sections) : null
   );
@@ -262,37 +328,43 @@ export default function SubNavPanel({
           </Tooltip.Provider>
         )}
       </div>
-      <div className="flex flex-col px-3">
-        {item.sections.map((section, i) => (
-          <div key={section.heading ?? i} className="flex flex-col gap-0.5">
-            {i > 0 && (
-              <div className="my-3 h-px bg-panel-border" aria-hidden="true" />
-            )}
-            {section.items.map((leaf) =>
-              leaf.items?.length ? (
-                <AccordionLeaf
-                  key={leaf.path}
-                  leaf={leaf}
-                  open={openPath === leaf.path}
-                  onToggle={() =>
-                    setOpenPath((prev) =>
-                      prev === leaf.path ? null : leaf.path
-                    )
-                  }
-                  onNavigate={() => navigate(leafLandPath(leaf))}
-                  onRequestClose={onRequestClose}
-                />
-              ) : (
-                <LeafRow
-                  key={leaf.path}
-                  leaf={leaf}
-                  onRequestClose={onRequestClose}
-                />
-              )
-            )}
-          </div>
-        ))}
-      </div>
+      <Tooltip.Provider delayDuration={300}>
+        <div className="flex flex-col px-3">
+          {item.sections.map((section, i) => (
+            <div key={section.heading ?? i} className="flex flex-col gap-0.5">
+              {i > 0 && (
+                <div className="my-3 h-px bg-panel-border" aria-hidden="true" />
+              )}
+              {section.items.map((leaf) =>
+                leaf.items?.length ? (
+                  <AccordionLeaf
+                    key={leaf.path}
+                    leaf={leaf}
+                    open={openPath === leaf.path}
+                    onToggle={() =>
+                      setOpenPath((prev) =>
+                        prev === leaf.path ? null : leaf.path
+                      )
+                    }
+                    onNavigate={() => navigate(leafLandPath(leaf))}
+                    onRequestClose={onRequestClose}
+                    navLocked={navLocked}
+                    lockTooltip={lockTooltip}
+                  />
+                ) : (
+                  <LeafRow
+                    key={leaf.path}
+                    leaf={leaf}
+                    onRequestClose={onRequestClose}
+                    disabled={leafDisabled(leaf.path)}
+                    lockTooltip={lockTooltip}
+                  />
+                )
+              )}
+            </div>
+          ))}
+        </div>
+      </Tooltip.Provider>
     </nav>
   );
 }

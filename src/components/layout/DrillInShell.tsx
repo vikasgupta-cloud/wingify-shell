@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { findProfileMode } from "../../config/navigation";
 import { cn } from "../../lib/utils";
+import {
+  useIsCancellationRevokeWorkspace,
+  useIsTrialOverWorkspace,
+} from "@/store/workspace";
+import CancellationRequestNotice from "./CancellationRequestNotice";
+import TrialOverNotice from "./TrialOverNotice";
 import DrillInBreadcrumb from "./DrillInBreadcrumb";
 import DrillInNav from "./DrillInNav";
 import ExpandedNav from "./ExpandedNav";
@@ -13,14 +19,30 @@ import WorkspaceSwitcher from "./WorkspaceSwitcher";
 const EDGE_OPEN_DELAY_MS = 240;
 const OVERLAY_CLOSE_GRACE_MS = 250;
 
+/** Profile drill-ins that show workspace notices in the header. */
+const WORKSPACE_NOTICE_MODE_IDS = new Set([
+  "websites-and-apps",
+  "integrations",
+  "pages",
+  "assets-hub",
+  "settings",
+  "upgrade",
+]);
+
 /**
  * Linear-style drill-in surface for every Profile flyout destination (Settings,
  * Profile, Websites and Apps, …). Sidebar + back control + left-edge main-rail
  * reveal (same pattern as DetailShell / reports).
  */
 export default function DrillInShell() {
+  const navigate = useNavigate();
   const { pathname } = useLocation();
   const mode = findProfileMode(pathname);
+  const isCancellationWorkspace = useIsCancellationRevokeWorkspace();
+  const isTrialOverWorkspace = useIsTrialOverWorkspace();
+  const showWorkspaceNotice =
+    mode != null && WORKSPACE_NOTICE_MODE_IDS.has(mode.id);
+  const [revoked, setRevoked] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [navRendered, setNavRendered] = useState(false);
   const [navShown, setNavShown] = useState(false);
@@ -77,6 +99,10 @@ export default function DrillInShell() {
     return () => window.clearTimeout(unmountTimer);
   }, [navOpen]);
 
+  useEffect(() => {
+    setRevoked(false);
+  }, [isCancellationWorkspace]);
+
   if (!mode) {
     return <Navigate to="/home/dashboard" replace />;
   }
@@ -86,11 +112,21 @@ export default function DrillInShell() {
       {mode.id === "upgrade" ? <UpgradeNav /> : <DrillInNav mode={mode} />}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
-          <WingifyLogoButton />
-          <WorkspaceSwitcher />
-          <span className="text-sm text-muted-foreground">/</span>
-          <DrillInBreadcrumb mode={mode} pathname={pathname} />
+        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <WingifyLogoButton />
+            <WorkspaceSwitcher />
+            <span className="text-sm text-muted-foreground">/</span>
+            <DrillInBreadcrumb mode={mode} pathname={pathname} />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {isTrialOverWorkspace && showWorkspaceNotice && (
+              <TrialOverNotice onUpgrade={() => navigate("/upgrade")} />
+            )}
+            {isCancellationWorkspace && !revoked && showWorkspaceNotice && (
+              <CancellationRequestNotice onRevoke={() => setRevoked(true)} />
+            )}
+          </div>
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-canvas">

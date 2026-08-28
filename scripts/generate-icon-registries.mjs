@@ -23,6 +23,7 @@ const lucideToKebab = (name) =>
     .replace(/Icon$/, "")
     .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
     .replace(/([A-Z])([A-Z][a-z])/g, "$1-$2")
+    .replace(/([a-zA-Z])(\d+$)/g, "$1-$2")
     .toLowerCase();
 
 const PHOSPHOR = {
@@ -59,6 +60,7 @@ const PHOSPHOR = {
   Megaphone: "MegaphoneSimple",
   Database: "Database",
   LifeBuoy: "Lifebuoy",
+  Headphones: "Headphones",
   UserCircle: "UserCircle",
   FlaskConical: "Flask",
   Bot: "Robot",
@@ -251,6 +253,7 @@ const TABLER = {
   ShoppingCart: "ShoppingCart",
   UserCircle: "UserCircle",
   LifeBuoy: "Lifebuoy",
+  Headphones: "Headphones",
   AppWindow: "AppWindow",
   CodeXml: "Code",
   Blocks: "Blocks",
@@ -350,6 +353,7 @@ const MATERIAL = {
   ShoppingCart: "ShoppingCart",
   Database: "Storage",
   LifeBuoy: "Support",
+  Headphones: "Headphones",
   UserCircle: "AccountCircle",
   Contact: "Contacts",
   AppWindow: "WebAsset",
@@ -505,6 +509,7 @@ const FA = {
   Megaphone: "Bullhorn",
   HeartPulse: "HeartPulse",
   LifeBuoy: "LifeRing",
+  Headphones: "Headphones",
   UserCircle: "CircleUser",
   FlaskConical: "Flask",
   Bot: "Robot",

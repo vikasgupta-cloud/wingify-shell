@@ -88,6 +88,7 @@ export const MATERIAL_ROUNDED_MAP = {
   "Globe": "HelpOutlined",
   "GripVertical": "DragIndicatorRounded",
   "Hash": "HelpOutlined",
+  "Headphones": "HeadphonesRounded",
   "HeartPulse": "MonitorHeartRounded",
   "HelpCircle": "HelpOutlined",
   "History": "HistoryRounded",

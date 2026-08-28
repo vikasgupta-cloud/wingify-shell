@@ -88,6 +88,7 @@ export const REMIX_FILL_MAP = {
   "Globe": "RiGlobeFill",
   "GripVertical": "RiDragMoveFill",
   "Hash": "RiQuestionFill",
+  "Headphones": "RiHeadphoneFill",
   "HeartPulse": "RiHeartPulseFill",
   "HelpCircle": "RiQuestionFill",
   "History": "RiHistoryFill",

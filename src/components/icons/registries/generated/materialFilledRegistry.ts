@@ -54,6 +54,7 @@ import FormatUnderlined from "@mui/icons-material/FormatUnderlined";
 import Fullscreen from "@mui/icons-material/Fullscreen";
 import FullscreenExit from "@mui/icons-material/FullscreenExit";
 import GridView from "@mui/icons-material/GridView";
+import Headphones from "@mui/icons-material/Headphones";
 import HelpOutlined from "@mui/icons-material/HelpOutlined";
 import History from "@mui/icons-material/History";
 import Home from "@mui/icons-material/Home";
@@ -217,6 +218,7 @@ export const MATERIAL_FILLED_COMPONENTS = {
   "Globe": HelpOutlined,
   "GripVertical": DragIndicator,
   "Hash": HelpOutlined,
+  "Headphones": Headphones,
   "HeartPulse": MonitorHeart,
   "HelpCircle": HelpOutlined,
   "History": History,

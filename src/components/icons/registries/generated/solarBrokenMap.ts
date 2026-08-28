@@ -88,6 +88,7 @@ export const SOLAR_BROKEN_MAP = {
   "Globe": "QuestionCircleLinear",
   "GripVertical": "HamburgerMenuBroken",
   "Hash": "QuestionCircleLinear",
+  "Headphones": "HeadphonesRoundBroken",
   "HeartPulse": "HeartPulseBroken",
   "HelpCircle": "QuestionCircleBroken",
   "History": "HistoryBroken",

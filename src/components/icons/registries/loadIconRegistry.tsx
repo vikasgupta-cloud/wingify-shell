@@ -130,12 +130,17 @@ async function loadLucideRegistry(variant: string): Promise<IconRegistry> {
 
   await Promise.all(
     APP_ICON_NAMES.map(async (name) => {
-      const key = LUCIDE_ICON_MAP[name as keyof typeof LUCIDE_ICON_MAP];
-      const loader = dynamicIconImports[key as keyof typeof dynamicIconImports];
-      if (!loader) return;
-      const mod = await loader();
-      const Icon = mod.default as IconComponent;
-      registry[name] = wrapStroke(Icon, strokeWidth);
+      try {
+        const key = LUCIDE_ICON_MAP[name as keyof typeof LUCIDE_ICON_MAP];
+        const loader =
+          dynamicIconImports[key as keyof typeof dynamicIconImports];
+        if (!loader) return;
+        const mod = await loader();
+        const Icon = mod.default as IconComponent;
+        registry[name] = wrapStroke(Icon, strokeWidth);
+      } catch {
+        // One bad glyph must not blank the entire pack.
+      }
     })
   );
 
@@ -427,6 +432,14 @@ export function loadIconRegistry(
     default:
       promise = loadPhosphorRegistry("regular");
   }
+
+  promise = promise.catch((err) => {
+    console.error(
+      `[wingify icons] Failed to load ${libraryId}:${variant}`,
+      err
+    );
+    return {};
+  });
 
   cache.set(cacheKey, promise);
   return promise;

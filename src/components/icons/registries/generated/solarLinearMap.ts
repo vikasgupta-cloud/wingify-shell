@@ -88,6 +88,7 @@ export const SOLAR_LINEAR_MAP = {
   "Globe": "QuestionCircleLinear",
   "GripVertical": "HamburgerMenuLinear",
   "Hash": "QuestionCircleLinear",
+  "Headphones": "HeadphonesRoundLinear",
   "HeartPulse": "HeartPulseLinear",
   "HelpCircle": "QuestionCircleLinear",
   "History": "HistoryLinear",

@@ -88,6 +88,7 @@ export const BOOTSTRAP_OUTLINE_MAP = {
   "Globe": "Globe",
   "GripVertical": "GripVertical",
   "Hash": "Hash",
+  "Headphones": "Headphones",
   "HeartPulse": "HeartPulse",
   "HelpCircle": "QuestionCircle",
   "History": "ClockHistory",

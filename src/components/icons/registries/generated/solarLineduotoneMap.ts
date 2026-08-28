@@ -88,6 +88,7 @@ export const SOLAR_LINEDUOTONE_MAP = {
   "Globe": "QuestionCircleLinear",
   "GripVertical": "HamburgerMenuLineDuotone",
   "Hash": "QuestionCircleLinear",
+  "Headphones": "HeadphonesRoundLineDuotone",
   "HeartPulse": "HeartPulseLineDuotone",
   "HelpCircle": "QuestionCircleLineDuotone",
   "History": "HistoryLineDuotone",

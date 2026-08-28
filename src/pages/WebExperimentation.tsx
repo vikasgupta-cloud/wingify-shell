@@ -108,11 +108,11 @@ export default function WebExperimentation() {
             </div>
           )}
           {/* The stores close each other, so at most one panel ever renders. */}
-          {wandzOpen && <WandzPanel />}
         </div>
           </>
         )}
       </div>
+      {wandzOpen && <WandzPanel />}
     </>
   );
 }

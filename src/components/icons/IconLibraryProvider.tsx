@@ -43,11 +43,18 @@ export function IconLibraryProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     // Keep current glyphs visible while the next pack loads — clearing
     // ready caused blank rails when a render loop interrupted the load.
-    loadIconRegistry(libraryId, variant).then((next) => {
-      if (cancelled) return;
-      setRegistry(next);
-      setReady(true);
-    });
+    loadIconRegistry(libraryId, variant)
+      .then((next) => {
+        if (cancelled) return;
+        setRegistry(next);
+        setReady(true);
+      })
+      .catch((err) => {
+        console.error("[wingify icons] registry load failed", err);
+        if (cancelled) return;
+        setRegistry({});
+        setReady(true);
+      });
 
     return () => {
       cancelled = true;
@@ -87,11 +94,18 @@ export function IconVariantOverride({
 
   useEffect(() => {
     let cancelled = false;
-    loadIconRegistry(lib, variant).then((next) => {
-      if (cancelled) return;
-      setRegistry(next);
-      setReady(true);
-    });
+    loadIconRegistry(lib, variant)
+      .then((next) => {
+        if (cancelled) return;
+        setRegistry(next);
+        setReady(true);
+      })
+      .catch((err) => {
+        console.error("[wingify icons] override registry load failed", err);
+        if (cancelled) return;
+        setRegistry({});
+        setReady(true);
+      });
     return () => {
       cancelled = true;
     };

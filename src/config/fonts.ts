@@ -1,6 +1,6 @@
 /** Brand experiment fonts — assignable to typography roles. */
 
-export const FONT_IDS = ["ergon", "lyon", "dm-sans"] as const;
+export const FONT_IDS = ["lyon", "dm-sans"] as const;
 export type FontId = (typeof FONT_IDS)[number];
 
 export const FONT_ROLES = [
@@ -29,12 +29,6 @@ export type FontRoleOption = {
 };
 
 export const FONTS: FontOption[] = [
-  {
-    id: "ergon",
-    label: "Ergon",
-    stack: '"Ergon", ui-sans-serif, system-ui, sans-serif',
-    sample: "Ergon",
-  },
   {
     id: "lyon",
     label: "Lyon",
@@ -89,7 +83,7 @@ export const FONT_ROLE_OPTIONS: FontRoleOption[] = [
 ];
 
 export const DEFAULT_FONT_ASSIGNMENTS: Record<FontRole, FontId> = {
-  title: "ergon",
+  title: "dm-sans",
   body: "dm-sans",
   number: "dm-sans",
   cta: "dm-sans",
@@ -125,6 +119,7 @@ export function isFontRole(value: unknown): value is FontRole {
 }
 
 export function resolveFontId(value: unknown, fallback: FontId): FontId {
+  if (value === "ergon") return "dm-sans";
   return isFontId(value) ? value : fallback;
 }
 
@@ -146,7 +141,6 @@ export function fontStack(id: FontId): string {
 
 /** Digits-only face names (unicode-range) — first in every role stack. */
 const DIGIT_FACE: Record<FontId, string> = {
-  ergon: '"Wingify Digits Ergon"',
   lyon: '"Wingify Digits Lyon"',
   "dm-sans": '"Wingify Digits DM Sans"',
 };

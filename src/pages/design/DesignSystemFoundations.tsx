@@ -133,7 +133,7 @@ export default function DesignSystemFoundations() {
 
       <section className="space-y-10">
         <SectionHead kicker="Foundations · Typography" title="Typography">
-          Ergon for display and headings, DM Sans for body and labels, DM Mono
+          DM Sans for display, headings, body, and labels; DM Mono
           for numeric. Weights 400, 500, 600, 700.
         </SectionHead>
 

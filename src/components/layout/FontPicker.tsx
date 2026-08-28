@@ -9,7 +9,7 @@ import { useFontStore } from "../../store/fonts";
 import { cn } from "../../lib/utils";
 
 /**
- * Font playground — assign Ergon / Lyon / DM Sans to typography roles.
+ * Font playground — assign Lyon / DM Sans to typography roles.
  * Hosted by FontController (profile CTA or blank-space gesture).
  */
 export default function FontPicker({ className }: { className?: string }) {

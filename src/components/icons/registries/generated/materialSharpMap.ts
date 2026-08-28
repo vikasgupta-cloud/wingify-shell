@@ -88,6 +88,7 @@ export const MATERIAL_SHARP_MAP = {
   "Globe": "HelpOutlined",
   "GripVertical": "DragIndicatorSharp",
   "Hash": "HelpOutlined",
+  "Headphones": "HeadphonesSharp",
   "HeartPulse": "MonitorHeartSharp",
   "HelpCircle": "HelpOutlined",
   "History": "HistorySharp",

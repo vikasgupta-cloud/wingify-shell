@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { GET_STARTED_PATH } from "@/lib/getStartedGate";
+import { useIsGetStartedLocked } from "@/store/getStartedOnboarding";
 import {
   MASCOT_ASSETS,
   MASCOT_ASSETS_DARK,
@@ -159,6 +161,7 @@ export default function WingifyLogoButton({
 }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const navLocked = useIsGetStartedLocked();
   const colorMode = useThemeStore((s) => s.colorMode);
   const previewId = useMascotPreviewStore((s) => s.previewId);
   const routeId = mascotForPath(pathname);
@@ -174,8 +177,14 @@ export default function WingifyLogoButton({
   return (
     <button
       type="button"
-      aria-label={`Go to Home dashboard (${pose})`}
-      onClick={() => navigate("/home/dashboard")}
+      aria-label={
+        navLocked
+          ? `Go to Get Started (${pose})`
+          : `Go to Home dashboard (${pose})`
+      }
+      onClick={() =>
+        navigate(navLocked ? GET_STARTED_PATH : "/home/dashboard")
+      }
       onMouseEnter={() => setLogoHover(true)}
       onMouseLeave={() => setLogoHover(false)}
       onFocus={() => setLogoHover(true)}

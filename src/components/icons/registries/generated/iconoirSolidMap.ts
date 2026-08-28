@@ -88,6 +88,7 @@ export const ICONOIR_SOLID_MAP = {
   "Globe": "Globe",
   "GripVertical": "DragSolid",
   "Hash": "HelpCircle",
+  "Headphones": "HelpCircle",
   "HeartPulse": "HelpCircle",
   "HelpCircle": "HelpCircleSolid",
   "History": "ClockRotateRight",

@@ -88,6 +88,7 @@ export const TABLER_FILLED_MAP = {
   "Globe": "IconGlobeFilled",
   "GripVertical": "IconGripVertical",
   "Hash": "IconHash",
+  "Headphones": "IconHeadphonesFilled",
   "HeartPulse": "IconHeartRateMonitor",
   "HelpCircle": "IconHelpFilled",
   "History": "IconHistory",

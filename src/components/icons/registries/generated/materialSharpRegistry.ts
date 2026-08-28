@@ -54,6 +54,7 @@ import FormatUnderlinedSharp from "@mui/icons-material/FormatUnderlinedSharp";
 import FullscreenExitSharp from "@mui/icons-material/FullscreenExitSharp";
 import FullscreenSharp from "@mui/icons-material/FullscreenSharp";
 import GridViewSharp from "@mui/icons-material/GridViewSharp";
+import HeadphonesSharp from "@mui/icons-material/HeadphonesSharp";
 import HelpOutlined from "@mui/icons-material/HelpOutlined";
 import HistorySharp from "@mui/icons-material/HistorySharp";
 import HomeSharp from "@mui/icons-material/HomeSharp";
@@ -218,6 +219,7 @@ export const MATERIAL_SHARP_COMPONENTS = {
   "Globe": HelpOutlined,
   "GripVertical": DragIndicatorSharp,
   "Hash": HelpOutlined,
+  "Headphones": HeadphonesSharp,
   "HeartPulse": MonitorHeartSharp,
   "HelpCircle": HelpOutlined,
   "History": HistorySharp,

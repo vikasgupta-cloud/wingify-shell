@@ -88,6 +88,7 @@ export const PHOSPHOR_ICON_MAP = {
   "Globe": "Globe",
   "GripVertical": "DotsSixVertical",
   "Hash": "Hash",
+  "Headphones": "Headphones",
   "HeartPulse": "Heartbeat",
   "HelpCircle": "Question",
   "History": "ClockCounterClockwise",

@@ -88,6 +88,7 @@ export const FLUENT_FILLED_MAP = {
   "Globe": "Globe24Filled",
   "GripVertical": "ReOrderDotsVertical24Filled",
   "Hash": "QuestionCircle24Regular",
+  "Headphones": "Headphones24Filled",
   "HeartPulse": "HeartPulse24Filled",
   "HelpCircle": "QuestionCircle24Filled",
   "History": "History24Filled",

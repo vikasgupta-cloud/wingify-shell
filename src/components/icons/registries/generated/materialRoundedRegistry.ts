@@ -54,6 +54,7 @@ import FormatUnderlinedRounded from "@mui/icons-material/FormatUnderlinedRounded
 import FullscreenExitRounded from "@mui/icons-material/FullscreenExitRounded";
 import FullscreenRounded from "@mui/icons-material/FullscreenRounded";
 import GridViewRounded from "@mui/icons-material/GridViewRounded";
+import HeadphonesRounded from "@mui/icons-material/HeadphonesRounded";
 import HelpOutlined from "@mui/icons-material/HelpOutlined";
 import HistoryRounded from "@mui/icons-material/HistoryRounded";
 import HomeRounded from "@mui/icons-material/HomeRounded";
@@ -218,6 +219,7 @@ export const MATERIAL_ROUNDED_COMPONENTS = {
   "Globe": HelpOutlined,
   "GripVertical": DragIndicatorRounded,
   "Hash": HelpOutlined,
+  "Headphones": HeadphonesRounded,
   "HeartPulse": MonitorHeartRounded,
   "HelpCircle": HelpOutlined,
   "History": HistoryRounded,

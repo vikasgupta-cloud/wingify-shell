@@ -2,7 +2,7 @@
   "name": "Wingify",
   "note": "Source: wingify-theme.json. Fonts are stored for reference but not applied (colors only).",
   "fonts": {
-    "--font-display": "'Ergon','Bricolage Grotesque','DM Sans',ui-sans-serif,system-ui,sans-serif",
+    "--font-display": "'DM Sans',ui-sans-serif,system-ui,sans-serif",
     "--font-body": "'DM Sans',ui-sans-serif,system-ui,-apple-system,\"Segoe UI\",sans-serif",
     "--font-numeric": "'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace"
   },

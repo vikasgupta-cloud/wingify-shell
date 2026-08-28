@@ -1,7 +1,9 @@
 /** Workspace switcher — selection drives playground banner via workspace store. */
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useNavigate } from "react-router-dom";
 import { Building2, Check, ChevronDown } from "@/components/icons/protoLucide";
+import { GET_STARTED_PATH } from "@/lib/getStartedGate";
 import {
   WORKSPACES,
   useActiveWorkspace,
@@ -11,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function WorkspaceSwitcher() {
+  const navigate = useNavigate();
   const active = useActiveWorkspace();
   const setWorkspaceId = useWorkspaceStore((s) => s.setWorkspaceId);
 
@@ -38,7 +41,12 @@ export default function WorkspaceSwitcher() {
           {WORKSPACES.map((ws) => (
             <DropdownMenu.Item
               key={ws.id}
-              onSelect={() => setWorkspaceId(ws.id as WorkspaceId)}
+              onSelect={() => {
+                setWorkspaceId(ws.id as WorkspaceId);
+                if (ws.getStartedGate) {
+                  navigate(GET_STARTED_PATH);
+                }
+              }}
               className={cn(
                 "flex cursor-pointer items-center justify-between gap-2 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
                 ws.id === active.id && "font-medium"

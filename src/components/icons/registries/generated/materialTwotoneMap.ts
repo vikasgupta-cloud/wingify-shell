@@ -88,6 +88,7 @@ export const MATERIAL_TWOTONE_MAP = {
   "Globe": "HelpOutlined",
   "GripVertical": "DragIndicatorTwoTone",
   "Hash": "HelpOutlined",
+  "Headphones": "HeadphonesTwoTone",
   "HeartPulse": "MonitorHeartTwoTone",
   "HelpCircle": "HelpOutlined",
   "History": "HistoryTwoTone",

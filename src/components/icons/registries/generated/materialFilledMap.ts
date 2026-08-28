@@ -88,6 +88,7 @@ export const MATERIAL_FILLED_MAP = {
   "Globe": "HelpOutlined",
   "GripVertical": "DragIndicator",
   "Hash": "HelpOutlined",
+  "Headphones": "Headphones",
   "HeartPulse": "MonitorHeart",
   "HelpCircle": "HelpOutlined",
   "History": "History",
