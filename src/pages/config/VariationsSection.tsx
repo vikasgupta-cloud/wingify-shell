@@ -1,6 +1,6 @@
-// @summary Add settings gear icon UI in the Variations targeting block.
-// Segment settings is still a stub; Trigger settings now opens a small dropdown
-// (Once / Always) and the gear icon shows a tooltip reflecting the selection.
+// @summary Variations and Targets section. Traffic allocation viz (Flow /
+// Stacked / Donut) sits after the variations table and updates live from
+// trafficAllocation + variation splits. Targeting settings gear unchanged.
 import { useEffect, useState } from "react";
 import {
   Check,
@@ -56,6 +56,7 @@ import { TRIGGERS, FREQUENCIES } from "../../config/configOptions";
 import AskWandzButton from "./AskWandzButton";
 import SectionTitle from "./SectionTitle";
 import SegmentPicker from "./SegmentPicker";
+import TrafficAllocationViz from "./TrafficAllocationViz";
 
 // The header + card wrapper shared by all three sub-blocks.
 function SubBlock({
@@ -1230,6 +1231,9 @@ export default function VariationsSection({ id }: { id: string }) {
         >
           <VariationsTable campaignId={id} />
         </SubBlock>
+
+        {/* 4 — Live traffic allocation graph (style picker for comparison). */}
+        <TrafficAllocationViz campaignId={id} />
       </div>
     </section>
   );

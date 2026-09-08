@@ -12,7 +12,6 @@ import {
   PinOff,
 } from "@/components/icons/protoLucide";
 import {
-  LOGOUT_PATH,
   leafLandPath,
   visibleNav,
   type NavItem,
@@ -30,7 +29,6 @@ import { cn } from "../../lib/utils";
 import { IconVariantOverride } from "../icons/IconLibraryProvider";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
-import ColorModeToggle from "./ColorModeToggle";
 import WingifyLogoButton from "./WingifyLogoButton";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -90,7 +88,8 @@ function useClampedFlyoutTop(
  * Single sidebar for AppLayout: width morphs between rail and expanded.
  * Inner content stays EXPANDED_NAV_WIDTH so icons keep the same x-position;
  * the outer clips when collapsed. Collapsed mode uses hover flyouts; expanded
- * mode uses accordion sub-nav.
+ * mode uses accordion sub-nav. Profile (`flyoutOnly` + sections) always uses a
+ * floating ProfileMenuPanel — never the inline accordion.
  *
  * `forceCollapsed` pins it to the rail regardless of the docked setting — used
  * by the detail and drill-in shells, whose nav is an edge-reveal overlay.
@@ -145,10 +144,13 @@ export default function ExpandedNav({
   useEffect(() => {
     if (!expanded) return;
     // Accordion: open the active product's sub-nav; close when on a direct item.
-    setOpenPath(activeItem?.sections ? activeItem.path : null);
-    if (activeItem?.sections) {
+    // Profile is flyout-only — never pin it open as an inline accordion.
+    const accordionItem =
+      activeItem?.sections && !activeItem.flyoutOnly ? activeItem : null;
+    setOpenPath(accordionItem ? accordionItem.path : null);
+    if (accordionItem?.sections) {
       let match: string | null = null;
-      for (const section of activeItem.sections) {
+      for (const section of accordionItem.sections) {
         for (const leaf of section.items) {
           if (
             leaf.items?.length &&
@@ -194,7 +196,8 @@ export default function ExpandedNav({
   const cancelMoreClose = () => window.clearTimeout(moreCloseTimer.current);
 
   const openFlyout = (item: NavItem, target: HTMLElement) => {
-    if (expanded) return;
+    // Profile stays a floating panel in expanded mode; other flyouts are collapsed-only.
+    if (expanded && !(item.flyoutOnly && item.sections)) return;
     if (navLocked && item.path !== "/home") return;
     window.clearTimeout(closeTimer.current);
     closeMore();
@@ -230,6 +233,21 @@ export default function ExpandedNav({
       clearMascotPreview();
     };
   }, [setMascotPreview]);
+
+  // Expanded profile menu: click-outside dismisses the floating panel.
+  useEffect(() => {
+    if (!expanded || !flyout || flyout.path !== "/profile") return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (flyoutRef.current?.contains(target)) return;
+      const row = document.querySelector('[data-nav-item="/profile"]');
+      if (row?.contains(target)) return;
+      setFlyout(null);
+      clearMascotPreview();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [expanded, flyout, clearMascotPreview]);
 
   useClampedFlyoutTop(flyoutRef, flyout);
   useClampedFlyoutTop(moreFlyoutRef, moreFlyout);
@@ -315,6 +333,7 @@ export default function ExpandedNav({
 
     const row = (
       <div
+        data-nav-item={item.path}
         className={cn(
           "group flex items-center gap-0.5 rounded-lg transition-[background-color,color,width] duration-200 hover:bg-muted",
           // Collapsed rows clamp to the icon so the active pill can't bleed past the rail.
@@ -323,6 +342,9 @@ export default function ExpandedNav({
           isActive &&
             !expanded &&
             "bg-rail-active text-rail-active-foreground hover:bg-rail-active",
+          expandOnly &&
+            flyout?.path === item.path &&
+            "bg-muted hover:bg-muted",
           navDisabled && "cursor-not-allowed opacity-40 hover:bg-transparent"
         )}
         onMouseEnter={(e) => {
@@ -347,11 +369,24 @@ export default function ExpandedNav({
         <button
           type="button"
           aria-label={item.label}
-          onClick={() => {
+          aria-expanded={expandOnly ? flyout?.path === item.path : undefined}
+          onClick={(e) => {
             if (navDisabled) return;
             if (tooltipOnly) return;
             if (expandOnly) {
-              if (expanded) setOpenPath(open ? null : item.path);
+              // Floating profile menu in both rail and expanded — click toggles
+              // when expanded; collapsed still opens on hover.
+              if (!expanded) return;
+              const rowEl = (e.currentTarget as HTMLElement).closest(
+                "[data-nav-item]"
+              ) as HTMLElement | null;
+              if (!rowEl) return;
+              if (flyout?.path === item.path) {
+                setFlyout(null);
+                clearMascotPreview();
+              } else {
+                openFlyout(item, rowEl);
+              }
               return;
             }
             if (navLocked && item.path === "/home") {
@@ -428,7 +463,7 @@ export default function ExpandedNav({
           </Tooltip.Root>
         )}
 
-        {hasSections && (
+        {hasSections && !expandOnly && (
           <button
             type="button"
             aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
@@ -506,7 +541,7 @@ export default function ExpandedNav({
       <div key={item.path}>
         {hoverRow}
 
-        {hasSections && item.sections && (
+        {hasSections && item.sections && !expandOnly && (
           <div
             className="grid"
             style={{
@@ -519,9 +554,6 @@ export default function ExpandedNav({
             <div className="min-h-0 overflow-hidden">
               <div className="ml-[22px] mt-1.5 flex flex-col border-l border-panel-border pb-2 pl-3">
                 {item.sections.map((section, i) => {
-                  const isLogoutSection = section.items.some(
-                    (leaf) => leaf.path === LOGOUT_PATH
-                  );
                   return (
                     <div
                       key={section.heading ?? i}
@@ -533,75 +565,10 @@ export default function ExpandedNav({
                           aria-hidden="true"
                         />
                       )}
-                      {item.path === "/profile" && isLogoutSection ? (
-                        <>
-                          <ColorModeToggle className="px-0" />
-                          <div
-                            className="my-2 h-px bg-panel-border"
-                            aria-hidden="true"
-                          />
-                        </>
-                      ) : null}
                       {section.items.map((leaf) => {
                         const LeafIcon = leaf.icon;
                         const hasChildren = !!leaf.items?.length;
                         const subOpen = openSubPath === leaf.path;
-
-                        if (item.path === "/profile") {
-                          const profileLeafDisabled = navLocked;
-                          return (
-                            <div key={leaf.path}>
-                              {isLogoutSection && leaf.path === LOGOUT_PATH && (
-                                <div
-                                  className="my-2 h-px bg-panel-border"
-                                  aria-hidden="true"
-                                />
-                              )}
-                              {profileLeafDisabled ? (
-                                withNavLockTooltip(
-                                  <span
-                                    aria-disabled="true"
-                                    className="flex cursor-not-allowed items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground opacity-40"
-                                  >
-                                    {LeafIcon && (
-                                      <LeafIcon
-                                        className="h-4 w-4 shrink-0 text-foreground"
-                                        strokeWidth={1.75}
-                                      />
-                                    )}
-                                    <span className="min-w-0 flex-1 truncate">
-                                      {leaf.label}
-                                    </span>
-                                  </span>,
-                                  lockTooltip,
-                                  true
-                                )
-                              ) : (
-                                <NavLink
-                                  to={leaf.path}
-                                  tabIndex={open ? undefined : -1}
-                                  className={({ isActive: leafActive }) =>
-                                    cn(
-                                      "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-                                      leafActive &&
-                                        "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                                    )
-                                  }
-                                >
-                                  {LeafIcon && (
-                                    <LeafIcon
-                                      className="h-4 w-4 shrink-0 text-foreground"
-                                      strokeWidth={1.75}
-                                    />
-                                  )}
-                                  <span className="min-w-0 flex-1 truncate">
-                                    {leaf.label}
-                                  </span>
-                                </NavLink>
-                              )}
-                            </div>
-                          );
-                        }
 
                         if (hasChildren) {
                           const childActive = leaf.items!.some(
@@ -950,11 +917,14 @@ export default function ExpandedNav({
           </div>
         </nav>
 
-        {!expanded && flyout && flyoutItem?.sections && (
+        {flyout && flyoutItem?.sections && (
           <div
             ref={flyoutRef}
             className="fixed z-40 animate-scale-in pl-1.5 duration-150"
-            style={{ left: RAIL_WIDTH, top: flyout.top }}
+            style={{
+              left: expanded ? EXPANDED_NAV_WIDTH : RAIL_WIDTH,
+              top: flyout.top,
+            }}
             onMouseEnter={() => {
               cancelClose();
               if (flyoutItem) previewMascotFor(flyoutItem);

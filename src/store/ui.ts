@@ -63,7 +63,10 @@ export const useUIStore = create<UIState>()(
           ...current,
           ...p,
           pinnedPaths: clampPinned(
-            Array.isArray(p.pinnedPaths) ? p.pinnedPaths : current.pinnedPaths
+            (Array.isArray(p.pinnedPaths) ? p.pinnedPaths : current.pinnedPaths).map(
+              (path) =>
+                path === "/web-experiment" ? "/experimentation" : path
+            )
           ),
         };
       },

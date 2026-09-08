@@ -20,17 +20,34 @@ export const UTILITY_RAIL_WIDTH = 56;
 /** Width of the Profile-mode (Settings, …) drill-in sidebar in px. */
 export const SETTINGS_NAV_WIDTH = 260;
 
-/** The main-nav item whose path prefixes the given pathname. */
+/** The main-nav item whose path (or a section leaf path) owns the pathname. */
 export function findItemByPath(pathname: string): NavItem | undefined {
   const mode = findProfileMode(pathname);
   if (mode) {
     // All Profile-mode drill-ins highlight the JD avatar (Settings is flyout-only).
     return NAV.find((i) => i.path === "/profile");
   }
-  return NAV.find(
-    (item) =>
-      pathname === item.path || pathname.startsWith(item.path + "/")
-  );
+  // Prefer the longest matching path among the item and its leaves so a leaf
+  // like `/web-experiment` wins over a shorter parent when both could apply.
+  let best: NavItem | undefined;
+  let bestLen = -1;
+  for (const item of NAV) {
+    const candidates = [item.path];
+    if (item.sections) {
+      for (const leaf of flattenNavLeaves(item.sections)) {
+        candidates.push(leaf.path);
+      }
+    }
+    for (const path of candidates) {
+      if (pathname === path || pathname.startsWith(`${path}/`)) {
+        if (path.length > bestLen) {
+          best = item;
+          bestLen = path.length;
+        }
+      }
+    }
+  }
+  return best;
 }
 
 /**

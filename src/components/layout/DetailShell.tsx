@@ -544,56 +544,55 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           <WingifyLogoButton />
 
           <div className="flex min-w-0 items-center gap-2 text-sm">
-            <Link
-              to={mainNavCrumbPath(basePath)}
-              title={item?.label ?? basePath}
-              className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
-            >
-              {item?.icon && (
-                <item.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-              )}
-              <span className="hidden max-w-[10rem] truncate lg:inline">
-                {item?.label ?? basePath}
-              </span>
-            </Link>
-            {leaf && (
-              <>
-                <span className="shrink-0 text-muted-foreground">/</span>
-                <DropdownMenu.Root modal={false}>
-                  <DropdownMenu.Trigger asChild>
-                    <button
-                      type="button"
-                      title={leaf.label}
-                      className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
-                    >
-                      <span className="max-w-[10rem] truncate">{leaf.label}</span>
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-                    </button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      align="start"
-                      sideOffset={6}
-                      className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
-                    >
-                      {siblings.map((sibling) => (
-                        <DropdownMenu.Item key={sibling.path} asChild>
-                          {/* Plain-string className: Radix Slot can't merge NavLink's function form */}
-                          <NavLink
-                            to={sibling.path}
-                            className={cn(
-                              "block cursor-pointer rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
-                              sibling.path === leaf.path && "bg-accent font-medium"
-                            )}
-                          >
-                            {sibling.label}
-                          </NavLink>
-                        </DropdownMenu.Item>
-                      ))}
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
-              </>
+            {/* Deeper (campaign) crumb: leaf product name when present — e.g.
+                "Web Experimentation / Campaign", not "Experimentation / …". */}
+            {leaf ? (
+              <DropdownMenu.Root modal={false}>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    type="button"
+                    title={leaf.label}
+                    className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
+                  >
+                    <span className="max-w-[10rem] truncate">{leaf.label}</span>
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    align="start"
+                    sideOffset={6}
+                    className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+                  >
+                    {siblings.map((sibling) => (
+                      <DropdownMenu.Item key={sibling.path} asChild>
+                        <NavLink
+                          to={sibling.path}
+                          className={cn(
+                            "block cursor-pointer rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
+                            sibling.path === leaf.path && "bg-accent font-medium"
+                          )}
+                        >
+                          {sibling.label}
+                        </NavLink>
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            ) : (
+              <Link
+                to={mainNavCrumbPath(basePath)}
+                title={item?.label ?? basePath}
+                className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
+              >
+                {item?.icon && (
+                  <item.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                )}
+                <span className="hidden max-w-[10rem] truncate lg:inline">
+                  {item?.label ?? basePath}
+                </span>
+              </Link>
             )}
             <span className="shrink-0 text-muted-foreground">/</span>
             <Popover.Root

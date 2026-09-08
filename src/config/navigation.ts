@@ -176,7 +176,13 @@ export const NAV: NavItem[] = [
     ]},
     { heading: "Discover", items: [{ label: "What's New", path: "/wandz/whats-new" }]},
   ]},
-  { label: "Web Experimentation", path: "/web-experiment", icon: FlaskConical, group: 2, pinnable: true },
+  { label: "Experimentation", path: "/experimentation", icon: FlaskConical, group: 2, pinnable: true, sections: [
+    { items: [
+      { label: "Web Experimentation", path: "/web-experiment" },
+      { label: "Web Rollouts", path: "/web-rollouts", hideCreate: true },
+      { label: "Mobile App A/B", path: "/mobile-app-ab", hideCreate: true },
+    ]},
+  ]},
   { label: "Web experimentation (Old)", path: "/web-experiment-old", icon: FlaskConical, group: 2 },
   { label: "Personalize", path: "/personalize", icon: Target, group: 2, pinnable: true },
   { label: "Feature Management", path: "/feature-management", icon: Flag, group: 2, pinnable: true, sections: [
@@ -551,7 +557,7 @@ export const PINNABLE_PATHS = NAV.filter((i) => i.pinnable).map((i) => i.path);
  */
 export const PRODUCT_SWITCHER_PATHS = [
   "/wandz",
-  "/web-experiment",
+  "/experimentation",
   "/personalize",
   "/feature-management",
   "/commerce",
