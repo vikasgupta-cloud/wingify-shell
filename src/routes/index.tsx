@@ -107,6 +107,14 @@ for (const item of NAV) {
   if (item.sections) {
     const leaves = flattenNavLeaves(item.sections);
     const appLeaves = leaves.filter((leaf) => !isProfileModePath(leaf.path));
+    // RR requires absolute child paths to start with the parent path. Experimentation
+    // keeps legacy leaf URLs (/web-experiment, …) outside `/experimentation/*`, so
+    // those register as top-level routes; only true nested leaves stay as children.
+    const underParent = (path: string) =>
+      path === item.path || path.startsWith(`${item.path}/`);
+    const nestedLeaves = appLeaves.filter((leaf) => underParent(leaf.path));
+    const looseLeaves = appLeaves.filter((leaf) => !underParent(leaf.path));
+
     pageRoutes.push({
       path: item.path,
       children: [
@@ -119,13 +127,18 @@ for (const item of NAV) {
             />
           ),
         },
-        ...appLeaves.map((leaf) => ({
+        ...nestedLeaves.map((leaf) => ({
           path: leaf.path,
           element: leafElement(leaf.path),
         })),
       ],
     });
-    appLeaves.forEach((leaf) => addDetailRoute(leaf.path));
+    nestedLeaves.forEach((leaf) => addDetailRoute(leaf.path));
+
+    for (const leaf of looseLeaves) {
+      pageRoutes.push({ path: leaf.path, element: leafElement(leaf.path) });
+      addDetailRoute(leaf.path);
+    }
   } else {
     pageRoutes.push({ path: item.path, element: leafElement(item.path) });
     addDetailRoute(item.path);
