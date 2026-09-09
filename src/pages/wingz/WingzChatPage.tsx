@@ -792,7 +792,7 @@ export default function WingzChatPage() {
     <div className="flex h-full min-h-0">
       {/* Secondary Wingz sidebar — collapses in canvas mode but stays available. */}
       {sidebarOpen ? (
-        <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-panel">
+        <aside className="flex w-64 shrink-0 flex-col border-r border-panel-border bg-panel">
           <div className="flex items-center gap-2 px-3 py-3">
             <Button
               type="button"
@@ -896,7 +896,7 @@ export default function WingzChatPage() {
           </div>
         </aside>
       ) : (
-        <div className="flex w-12 shrink-0 flex-col items-center border-r border-border bg-panel py-3">
+        <div className="flex w-12 shrink-0 flex-col items-center border-r border-panel-border bg-panel py-3">
           <Button
             type="button"
             variant="outline"

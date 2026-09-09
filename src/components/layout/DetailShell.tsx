@@ -5,6 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import {
   Archive,
+  ArrowLeft,
   Check,
   ChevronDown,
   Copy,
@@ -430,10 +431,31 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <WingifyLogoButton />
 
-          <div className="flex min-w-0 items-center gap-2 text-sm">
-            {/* Deeper (campaign) crumb: leaf product name when present — e.g.
-                "Web Experimentation / Campaign", not "Experimentation / …". */}
-            {leaf ? (
+          <div className="flex min-w-0 items-center gap-0.5">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label="Back to list"
+                    asChild
+                  >
+                    <Link to={mainNavCrumbPath(basePath)}>
+                      <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Back to list</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <div className="flex min-w-0 items-center gap-2 text-sm">
+              {/* Deeper (campaign) crumb: leaf product name when present — e.g.
+                  "Web Experimentation / Campaign", not "Experimentation / …". */}
+              {leaf ? (
               <DropdownMenu.Root modal={false}>
                 <DropdownMenu.Trigger asChild>
                   <button
@@ -603,6 +625,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               </Popover.Portal>
             </Popover.Root>
 
+          </div>
           </div>
         </div>
 

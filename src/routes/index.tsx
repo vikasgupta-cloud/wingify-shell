@@ -222,7 +222,7 @@ export const router = createBrowserRouter([
       },
       ...detailRoutes,
       ...profileModeRoutes,
-      // Wingz — immersive chat shell (no persistent main rail; edge-reveal like campaigns).
+      // Wingz — full-page chat with the same persistent main rail as AppLayout.
       {
         path: "/wingz",
         element: <WingzChatShell />,
