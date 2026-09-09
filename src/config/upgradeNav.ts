@@ -116,9 +116,9 @@ export const UPGRADE_SECTIONS: UpgradeSection[] = [
     heading: "AI Driven Optimization",
     items: [
       {
-        label: "Wandz",
+        label: "Wingz",
         description: "AI-Driven Optimization",
-        path: "/upgrade/wandz",
+        path: "/upgrade/wingz",
         icon: Sparkles,
         badge: { label: "Core Plan", tone: "plan" },
       },

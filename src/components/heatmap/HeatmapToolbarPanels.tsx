@@ -49,7 +49,7 @@ import {
   FRICTION_TYPE_IDS,
   FRICTION_TYPE_LABELS,
   METRIC_PRESETS,
-  WANDZ_REPORT,
+  WINGZ_REPORT,
   type FrictionTypeId,
 } from "@/data/heatmapViewer";
 import { useHeatmapsStore } from "@/store/heatmaps";
@@ -700,8 +700,8 @@ export function SettingsPanel() {
   );
 }
 
-/** Wandz analysis report, docked right. */
-export function WandzReportPanel({ onClose }: { onClose: () => void }) {
+/** Wingz analysis report, docked right. */
+export function WingzReportPanel({ onClose }: { onClose: () => void }) {
   return (
     <aside className="absolute bottom-0 right-0 top-0 flex w-[720px] max-w-[calc(100vw-2rem)] flex-col border-l border-border bg-background shadow-xl">
       <header className="flex shrink-0 items-start justify-between gap-4 px-6 pt-5">
@@ -711,7 +711,7 @@ export function WandzReportPanel({ onClose }: { onClose: () => void }) {
           </h2>
           <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
             <Wand2 className="size-4" aria-hidden />
-            Wandz
+            Wingz
           </p>
         </div>
         <div className="flex items-center gap-0.5">
@@ -746,7 +746,7 @@ export function WandzReportPanel({ onClose }: { onClose: () => void }) {
             placeholder="For example: 'Focus on checkout errors' or 'Analyze Black Friday sessions only'"
           />
           <div className="mt-3 flex flex-wrap gap-2">
-            {WANDZ_REPORT.suggestions.map((chip) => (
+            {WINGZ_REPORT.suggestions.map((chip) => (
               <Button
                 key={chip}
                 type="button"
@@ -777,7 +777,7 @@ export function WandzReportPanel({ onClose }: { onClose: () => void }) {
         <section className="mt-3 rounded-lg bg-success-bg p-4">
           <p className="text-sm font-semibold text-foreground">Positives</p>
           <ul className="mt-3 space-y-3">
-            {WANDZ_REPORT.positives.map((item) => (
+            {WINGZ_REPORT.positives.map((item) => (
               <li key={item} className="flex gap-2.5 text-sm leading-5 text-foreground">
                 <Sparkles
                   className="mt-0.5 size-4 shrink-0 text-success-fg"
@@ -792,7 +792,7 @@ export function WandzReportPanel({ onClose }: { onClose: () => void }) {
         <section className="mt-4 rounded-lg bg-danger-bg p-4">
           <p className="text-sm font-semibold text-foreground">Negatives</p>
           <ul className="mt-3 space-y-3">
-            {WANDZ_REPORT.negatives.map((item) => (
+            {WINGZ_REPORT.negatives.map((item) => (
               <li key={item} className="flex gap-2.5 text-sm leading-5 text-foreground">
                 <Sparkles
                   className="mt-0.5 size-4 shrink-0 text-danger-fg"
@@ -805,10 +805,10 @@ export function WandzReportPanel({ onClose }: { onClose: () => void }) {
         </section>
 
         <h3 className="mt-6 text-sm font-medium text-foreground">
-          Observations ({WANDZ_REPORT.observations.length})
+          Observations ({WINGZ_REPORT.observations.length})
         </h3>
         <ul className="mt-3 space-y-2">
-          {WANDZ_REPORT.observations.map((item) => (
+          {WINGZ_REPORT.observations.map((item) => (
             <li
               key={item}
               className="flex gap-2.5 rounded-lg border border-border p-4 text-sm font-semibold leading-5 text-foreground"

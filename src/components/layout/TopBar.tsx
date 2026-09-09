@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRowsStore } from "../../store/rows";
 import { useRecommendationRowsStore } from "../../store/recommendationRows";
 import { showsCreate, showsSummarise, pageLabel } from "../../lib/nav";
-import { useWandzStore } from "@/store/wandz";
+import { useWingzStore } from "@/store/wingz";
 import {
   CREATE_GROUP_LABELS,
   getCreateOptions,
@@ -23,7 +23,9 @@ import BreadcrumbNav from "./BreadcrumbNav";
 import CancellationRequestNotice from "./CancellationRequestNotice";
 import TrialOverNotice from "./TrialOverNotice";
 import VerifyEmailNotice from "./VerifyEmailNotice";
+import WingifyLogoButton from "./WingifyLogoButton";
 import { GET_STARTED_PATH } from "@/lib/getStartedGate";
+import { cn } from "@/lib/utils";
 
 function CreateItem({ option, onSelect }: { option: CreateOption; onSelect: () => void }) {
   const Icon = option.icon;
@@ -72,7 +74,7 @@ function CreateSection({
   );
 }
 
-export default function TopBar() {
+export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
   const navigate = useNavigate();
   const createCampaign = useRowsStore((s) => s.createCampaign);
   const createRecommendation = useRecommendationRowsStore((s) => s.create);
@@ -88,7 +90,7 @@ export default function TopBar() {
   const getStartedEmailVerified = useWorkspaceStore(
     (s) => s.getStartedProgress.emailVerified
   );
-  const openWandzAndAsk = useWandzStore((s) => s.openWandzAndAsk);
+  const openWingzAndAsk = useWingzStore((s) => s.openWingzAndAsk);
   const [revoked, setRevoked] = useState(false);
 
   useEffect(() => {
@@ -116,15 +118,26 @@ export default function TopBar() {
 
   const handleSummarise = () => {
     const label = pageLabel(pathname);
-    openWandzAndAsk(
+    openWingzAndAsk(
       { kind: "general" },
       `Summarise this ${label} listing — highlight what's active, trends, and anything that needs attention.`
     );
   };
 
   return (
-    <header data-slot="top-bar" className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-panel/95 px-4 text-panel-foreground backdrop-blur-sm">
+    <header
+      data-slot="top-bar"
+      className={cn(
+        "relative z-10 flex h-14 shrink-0 items-center justify-between gap-4 px-4 text-panel-foreground",
+        // Immersive shells (no rail): solid bar. Use box-shadow hairline — border-b
+        // color utilities don't paint reliably on this white-on-white chrome.
+        showLogo
+          ? "bg-background shadow-[inset_0_-1px_0_0_var(--border-strong)]"
+          : "border-b border-border bg-panel/95 backdrop-blur-sm"
+      )}
+    >
       <div className="flex min-w-0 items-center gap-2">
+        {showLogo ? <WingifyLogoButton /> : null}
         <WorkspaceSwitcher />
         <span className="text-sm text-muted-foreground">/</span>
         <BreadcrumbNav />

@@ -1,4 +1,4 @@
-// Summary: Wandz stub flows — panel body for Edition empty state, or a compact
+// Summary: Wingz stub flows — panel body for Edition empty state, or a compact
 // floating card anchored to the selected element. Subflows stay inside the card.
 // Grayscale shell; Create variations / Generate content / attach are stubs.
 
@@ -32,8 +32,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-export type WandzScreen = "home" | "variations" | "content";
-export type WandzVariant = "panel" | "float";
+export type WingzScreen = "home" | "variations" | "content";
+export type WingzVariant = "panel" | "float";
 
 type AttachItem = {
   id: string;
@@ -99,7 +99,7 @@ function AttachMenu() {
   );
 }
 
-function WandzHome({
+function WingzHome({
   onOpenVariations,
   onOpenContent,
   compact,
@@ -387,22 +387,22 @@ function GenerateContentStub({ onBack }: { onBack: () => void }) {
   );
 }
 
-/** Wandz stubs for Edition empty state (panel) or selection-anchored float card. */
-export function EditorWandzStubs({
+/** Wingz stubs for Edition empty state (panel) or selection-anchored float card. */
+export function EditorWingzStubs({
   variant = "panel",
   onClose,
 }: {
-  variant?: WandzVariant;
+  variant?: WingzVariant;
   /** Close the floating card (float variant only). */
   onClose?: () => void;
 }) {
-  const [screen, setScreen] = useState<WandzScreen>("home");
+  const [screen, setScreen] = useState<WingzScreen>("home");
   const isFloat = variant === "float";
 
   const body = (
     <>
       {screen === "home" && (
-        <WandzHome
+        <WingzHome
           compact={isFloat}
           onOpenVariations={() => setScreen("variations")}
           onOpenContent={() => setScreen("content")}
@@ -421,7 +421,7 @@ export function EditorWandzStubs({
     return (
       <div
         role="dialog"
-        aria-label="Wandz"
+        aria-label="Wingz"
         className="w-[300px] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_12px_40px_-12px_rgb(from var(--foreground) r g b / 0.35)]"
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
@@ -432,7 +432,7 @@ export function EditorWandzStubs({
             variant="ghost"
             size="icon"
             className="size-7"
-            aria-label="Close Wandz"
+            aria-label="Close Wingz"
             onClick={onClose}
           >
             <X className="size-3.5" strokeWidth={1.75} />

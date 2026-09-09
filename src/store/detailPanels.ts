@@ -1,6 +1,4 @@
 import { create } from "zustand";
-import { useWandzStore } from "./wandz";
-import { useQuickViewStore } from "./quickView";
 
 export type DetailPanelId = "activity";
 
@@ -11,7 +9,7 @@ export const DETAIL_PANEL_META: Record<
   activity: { label: "Activity", title: "Activity Timeline" },
 };
 
-/** Rail order under Wandz. Insights live inside Wandz as a tab. */
+/** Rail order under Wingz. Insights live inside Wingz as a tab. */
 export const DETAIL_PANEL_RAIL_ORDER: DetailPanelId[] = ["activity"];
 
 type DetailPanelsState = {
@@ -23,16 +21,14 @@ type DetailPanelsState = {
 
 /**
  * Side panels opened from the detail utility rail (Activity).
- * Mutually exclusive with Wandz and Quick View. Session-only.
- * Panel width is shared via `useSidePanelWidthStore`.
+ * Session-only. Panel width is shared via `useSidePanelWidthStore` when docked.
+ * The Activity overview popover is an overlay and does not dismiss Wingz / Quick View.
  */
 export const useDetailPanelsStore = create<DetailPanelsState>((set, get) => ({
   openId: null,
 
   open: (id) => {
     if (DETAIL_PANEL_META[id].disabled) return;
-    useWandzStore.getState().closeWandz();
-    useQuickViewStore.getState().close();
     set({ openId: id });
   },
 

@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
-import { useWandzStore } from "../../store/wandz";
-import AskWandzButton from "./AskWandzButton";
+import { useWingzStore } from "../../store/wingz";
+import AskWingzButton from "./AskWingzButton";
 import MetricCard from "./MetricCard";
 import MetricPicker from "./MetricPicker";
 import SectionTitle from "./SectionTitle";
@@ -62,7 +62,7 @@ function EmptyState({ message, cta }: { message: string; cta?: ReactNode }) {
 
 export default function MetricsSection({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
-  const openWandz = useWandzStore((s) => s.openWandz);
+  const openWingz = useWingzStore((s) => s.openWingz);
 
   if (!config) return null;
 
@@ -74,9 +74,9 @@ export default function MetricsSection({ id }: { id: string }) {
       {/* Heading row. */}
       <div className="mb-6 flex items-center gap-1">
         <SectionTitle sectionId="metrics" className="text-lg" />
-        <AskWandzButton
+        <AskWingzButton
           onClick={() =>
-            openWandz({ kind: "section", campaignId: id, sectionLabel: "Metrics" })
+            openWingz({ kind: "section", campaignId: id, sectionLabel: "Metrics" })
           }
         />
       </div>

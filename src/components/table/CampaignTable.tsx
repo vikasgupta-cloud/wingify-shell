@@ -34,7 +34,7 @@ import { useTableStore, type RowDensity } from "../../store/table";
 import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { useQuickViewStore } from "../../store/quickView";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { cn } from "../../lib/utils";
 import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import { VitalsIcon } from "../ui/StatusBadge";
@@ -136,7 +136,7 @@ function NameCell({ campaign }: { campaign: Campaign }) {
   const TypeIcon = TYPE_ICONS[campaign.type];
   const quickViewOpen = useQuickViewStore((s) => s.openId === campaign.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
-  const openWandz = useWandzStore((s) => s.toggleWandz);
+  const openWingz = useWingzStore((s) => s.toggleWingz);
   return (
     <div className="flex items-center gap-2.5">
       <TypeIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={campaign.type} />
@@ -162,11 +162,11 @@ function NameCell({ campaign }: { campaign: Campaign }) {
           type="button"
           variant="ghost"
           size="icon"
-          title="Summarise with Wandz"
-          aria-label="Summarise with Wandz"
+          title="Summarise with Wingz"
+          aria-label="Summarise with Wingz"
           onClick={(e) => {
             e.stopPropagation();
-            openWandz({ kind: "campaign", campaignId: campaign.id });
+            openWingz({ kind: "campaign", campaignId: campaign.id });
           }}
           className={ROW_ICON_BUTTON}
         >

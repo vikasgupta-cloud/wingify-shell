@@ -26,7 +26,7 @@ import { addDays, diffDays, formatDayHeader, startOfDay } from "../../lib/dates"
 import { usePersonalizeTableStore, type GanttZoom } from "../../store/personalizeTable";
 import { useVisiblePersonalizations } from "../../store/personalizeRows";
 import { useActivePersonalizeViewState, usePersonalizeViewsStore } from "../../store/personalizeViews";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
@@ -126,7 +126,7 @@ function GanttRow({
   gridInterval: number;
 }) {
   
-  const openWandz = useWandzStore((s) => s.toggleWandz);
+  const openWingz = useWingzStore((s) => s.toggleWingz);
   const phases = phasesFor(c);
 
   const segs = phases.map((ph, idx) => {
@@ -184,11 +184,11 @@ function GanttRow({
             type="button"
             variant="ghost"
             size="icon"
-            title="Summarise with Wandz"
-            aria-label="Summarise with Wandz"
+            title="Summarise with Wingz"
+            aria-label="Summarise with Wingz"
             onClick={(e) => {
               stop(e);
-              openWandz({ kind: "general" });
+              openWingz({ kind: "general" });
             }}
             className={ROW_ICON_BUTTON}
           >

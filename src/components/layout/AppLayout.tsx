@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import ExpandedNav from "./ExpandedNav";
-import GlobalWandzDock from "./GlobalWandzDock";
+import GlobalWingzDock from "./GlobalWingzDock";
 import TopBar from "./TopBar";
 
 export default function AppLayout() {
@@ -21,7 +21,7 @@ export default function AppLayout() {
         >
           <Outlet />
         </main>
-        <GlobalWandzDock />
+        <GlobalWingzDock />
       </div>
     </div>
   );

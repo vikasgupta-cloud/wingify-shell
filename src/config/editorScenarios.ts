@@ -1,4 +1,4 @@
-// Summary: Change the editor default open panel to Edition (selection empty state now shows Wandz chat).
+// Summary: Change the editor default open panel to Edition (selection empty state now shows Wingz chat).
 import type { EditorSidePanelId } from "@/components/editor/EditorUtilityRail";
 
 export type EditorLayoutMode = "default" | "multipage" | "mvt";
@@ -233,7 +233,7 @@ export const EDITOR_SCENARIOS: EditorScenarioPreset[] = [
 ];
 
 export const DEFAULT_SCENARIO =
-  // Default to Edition shell so Wandz can render inside the Edition empty-state.
+  // Default to Edition shell so Wingz can render inside the Edition empty-state.
   EDITOR_SCENARIOS.find((s) => s.id === "edition-empty")!;
 
 export const FLOAT_EDITOR_SCENARIOS = EDITOR_SCENARIOS.filter(

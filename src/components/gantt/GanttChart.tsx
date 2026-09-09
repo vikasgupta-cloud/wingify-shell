@@ -26,7 +26,7 @@ import { useTableStore, type GanttZoom } from "../../store/table";
 import { useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { useQuickViewStore } from "../../store/quickView";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { TYPE_ICONS } from "../icons/campaignTypeIcons";
@@ -129,7 +129,7 @@ function GanttRow({
   const TypeIcon = TYPE_ICONS[c.type];
   const quickViewOpen = useQuickViewStore((s) => s.openId === c.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
-  const openWandz = useWandzStore((s) => s.toggleWandz);
+  const openWingz = useWingzStore((s) => s.toggleWingz);
   const phases = phasesFor(c);
 
   const segs = phases.map((ph, idx) => {
@@ -203,11 +203,11 @@ function GanttRow({
             type="button"
             variant="ghost"
             size="icon"
-            title="Summarise with Wandz"
-            aria-label="Summarise with Wandz"
+            title="Summarise with Wingz"
+            aria-label="Summarise with Wingz"
             onClick={(e) => {
               stop(e);
-              openWandz({ kind: "campaign", campaignId: c.id });
+              openWingz({ kind: "campaign", campaignId: c.id });
             }}
             className={ROW_ICON_BUTTON}
           >

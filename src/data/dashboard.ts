@@ -3,7 +3,7 @@
 
 export const DASHBOARD_USER_NAME = "Vinay";
 
-export const WANDZ_CTAS = [
+export const WINGZ_CTAS = [
   {
     id: "analyze",
     label: "Analyze data",
@@ -26,7 +26,7 @@ export const WANDZ_CTAS = [
   },
 ] as const;
 
-export const WANDZ_RECENT_CHATS = [
+export const WINGZ_RECENT_CHATS = [
   {
     id: "rc1",
     title: "Free Trial Sign Up Problem Analysis",
@@ -36,7 +36,7 @@ export const WANDZ_RECENT_CHATS = [
   },
 ] as const;
 
-export const WANDZ_DEFAULT_PROMPT =
+export const WINGZ_DEFAULT_PROMPT =
   "I want to create an A/B test for https://vwo.com/free-trial/. Help me build a variation with updated CTA copy and layout changes.";
 
 export const METRIC_REPORT_RANGE = ["Last 7 days", "Last 30 days"] as const;

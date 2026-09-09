@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 type CodeLang = "js" | "css" | "html";
-type CodeBlockId = "visual" | "wandz";
+type CodeBlockId = "visual" | "wingz";
 
 const TRIGGERS = [
   "Campaign executes",
@@ -57,22 +57,22 @@ const DEFAULT_CODE: Record<
   Limited drop — members get early access.
 </div>`,
   },
-  wandz: {
+  wingz: {
     js: `(function () {
-  // Wandz-generated helpers
-  console.info("[wandz] variation helpers ready");
+  // Wingz-generated helpers
+  console.info("[wingz] variation helpers ready");
 })();`,
-    css: `/* Wandz styles */
+    css: `/* Wingz styles */
 .nl-banner {
   font-size: 13px;
 }`,
-    html: `<!-- Wandz HTML -->`,
+    html: `<!-- Wingz HTML -->`,
   },
 };
 
 const BLOCKS: { id: CodeBlockId; label: string }[] = [
   { id: "visual", label: "Visual Editor Code" },
-  { id: "wandz", label: "Wandz Code" },
+  { id: "wingz", label: "Wingz Code" },
 ];
 
 /**

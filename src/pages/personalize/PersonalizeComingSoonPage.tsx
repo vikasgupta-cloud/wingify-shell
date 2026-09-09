@@ -7,7 +7,7 @@ export default function PersonalizeComingSoonPage() {
   return (
     <ComingSoonState
       title="Personalize campaign coming soon"
-      description="This campaign opens from the Personalize list. Configuration and reports will land here next — for now the listing, views, and Wandz hover are available."
+      description="This campaign opens from the Personalize list. Configuration and reports will land here next — for now the listing, views, and Wingz hover are available."
       homeTo="/personalize"
       homeLabel="Back to Personalize"
     />

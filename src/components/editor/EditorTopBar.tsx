@@ -79,6 +79,7 @@ export function EditorTopBar({
   onNavigateBack,
   onNavigateForward,
   onNavigateRefresh,
+  onBack,
 }: {
   campaignName?: string;
   status?: CampaignStatus;
@@ -104,6 +105,8 @@ export function EditorTopBar({
   onNavigateBack?: () => void;
   onNavigateForward?: () => void;
   onNavigateRefresh?: () => void;
+  /** When set (e.g. Wingz canvas), back uses this instead of routing to backHref. */
+  onBack?: () => void;
 }) {
   const versions = useEditorSavesStore((s) => s.versions);
   const activeVersionId = useEditorSavesStore((s) => s.activeVersionId);
@@ -129,27 +132,45 @@ export function EditorTopBar({
     setComposeOpen(false);
   };
 
+  const leaveEditor = () => {
+    if (onBack) onBack();
+    else navigate(backHref);
+  };
+
   const saveAndExit = () => {
     save();
     setMessage("");
     setComposeOpen(false);
-    navigate(backHref);
+    leaveEditor();
   };
 
   return (
     <header className="relative flex h-11 shrink-0 items-center gap-2 border-b border-border bg-background px-2">
       <div className="flex h-7 shrink-0 items-center gap-1.5 pl-0.5">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7 shrink-0 rounded-md"
-          aria-label="Back to campaign"
-          asChild
-        >
-          <Link to={backHref}>
+        {onBack ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0 rounded-md"
+            aria-label="Exit editor"
+            onClick={onBack}
+          >
             <ArrowLeft className="size-4" strokeWidth={1.75} />
-          </Link>
-        </Button>
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0 rounded-md"
+            aria-label="Back to campaign"
+            asChild
+          >
+            <Link to={backHref}>
+              <ArrowLeft className="size-4" strokeWidth={1.75} />
+            </Link>
+          </Button>
+        )}
         <p className="max-w-[160px] truncate text-[13px] font-medium leading-none text-foreground xl:max-w-[220px]">
           {campaignName}
         </p>

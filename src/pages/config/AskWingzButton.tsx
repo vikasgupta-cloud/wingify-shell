@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/tooltip";
 
 // A small ghost Sparkles button used beside section/field labels. Opens the
-// Wandz chat sheet via the onClick supplied by each section.
-export default function AskWandzButton({
-  label = "Ask Wandz",
+// Wingz chat sheet via the onClick supplied by each section.
+export default function AskWingzButton({
+  label = "Ask Wingz",
   onClick,
 }: {
   label?: string;

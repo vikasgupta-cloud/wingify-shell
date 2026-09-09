@@ -1,10 +1,10 @@
 // Personalize listing — Web Exp–parity views (table / kanban / gantt) with own stores & data.
-// Quick view hover is present but disabled; Wandz opens. Campaign click → Coming soon detail.
+// Quick view hover is present but disabled; Wingz opens. Campaign click → Coming soon detail.
 
 import { useEffect, useRef } from "react";
 import { Search } from "@/components/icons/protoLucide";
 import { Input } from "@/components/ui/input";
-import WandzPanel from "@/components/wandz/WandzPanel";
+import WingzPanel from "@/components/wingz/WingzPanel";
 import PersonalizeViewBar from "@/components/personalize/PersonalizeViewBar";
 import PersonalizeFilterBar from "@/components/personalize/PersonalizeFilterBar";
 import PersonalizeColumnConfig from "@/components/personalize/PersonalizeColumnConfig";
@@ -19,7 +19,7 @@ import {
   useActivePersonalizeViewState,
   usePersonalizeViewsStore,
 } from "@/store/personalizeViews";
-import { useWandzStore } from "@/store/wandz";
+import { useWingzStore } from "@/store/wingz";
 
 export default function PersonalizePage() {
   const { search, setSearch } = usePersonalizeTableStore();
@@ -27,9 +27,9 @@ export default function PersonalizePage() {
   const isOverview = usePersonalizeViewsStore(
     (s) => s.activeViewId === PERSONALIZE_OVERVIEW_ID
   );
-  const wandzOpen = useWandzStore((s) => s.open);
+  const wingzOpen = useWingzStore((s) => s.open);
 
-  // Close nothing for quick view (disabled); keep Wandz mount for hover AI.
+  // Close nothing for quick view (disabled); keep Wingz mount for hover AI.
   const firstRun = useRef(true);
   useEffect(() => {
     if (firstRun.current) {
@@ -79,7 +79,7 @@ export default function PersonalizePage() {
           </>
         )}
       </div>
-      {wandzOpen && <WandzPanel />}
+      {wingzOpen && <WingzPanel />}
     </>
   );
 }

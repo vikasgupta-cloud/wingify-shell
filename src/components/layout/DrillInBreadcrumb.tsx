@@ -1,7 +1,6 @@
-// Drill-in (Settings / Profile modes) breadcrumb — same dropdown pattern as
-// product BreadcrumbNav: plain mode label, section switcher, then leaf switcher.
+// Drill-in (Settings / Profile modes) breadcrumb — JD mode switcher, then
+// section / leaf switchers (Upgrade is flat: mode + product menu only).
 // Landing uses sectionLandPath (root page when landable, else first child).
-// alwaysOpen section groups (Upgrade) skip the section crumb — one flat product menu.
 
 import { NavLink } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -9,7 +8,9 @@ import { ChevronDown } from "@/components/icons/protoLucide";
 import {
   findDrillInLeaf,
   findDrillInSection,
+  jdSwitcherGroups,
   modeLeaves,
+  resolveJdSwitcherItem,
   sectionLandPath,
   type DrillInNavItem,
   type ProfileMode,
@@ -29,12 +30,17 @@ function CrumbDropdown({
   ariaLabel,
   activeId,
   items,
+  groups,
 }: {
   label: string;
   ariaLabel: string;
   activeId: string;
-  items: CrumbItem[];
+  items?: CrumbItem[];
+  /** Optional grouped list (JD mode switcher) — separators between groups. */
+  groups?: CrumbItem[][];
 }) {
+  const sections = groups ?? (items ? [items] : []);
+
   return (
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
@@ -53,29 +59,36 @@ function CrumbDropdown({
           sideOffset={6}
           className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
         >
-          {items.map((entry) => {
-            const Icon = entry.icon;
-            const isActive = (entry.id ?? entry.path) === activeId;
-            return (
-              <DropdownMenu.Item key={entry.id ?? entry.path} asChild>
-                <NavLink
-                  to={entry.path}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
-                    isActive && "bg-accent font-medium"
-                  )}
-                >
-                  {Icon && (
-                    <Icon
-                      className="h-4 w-4 shrink-0 text-muted-foreground"
-                      aria-hidden
-                    />
-                  )}
-                  <span className="truncate">{entry.label}</span>
-                </NavLink>
-              </DropdownMenu.Item>
-            );
-          })}
+          {sections.map((section, sectionIndex) => (
+            <div key={sectionIndex}>
+              {sectionIndex > 0 && (
+                <DropdownMenu.Separator className="my-1.5 h-px bg-border" />
+              )}
+              {section.map((entry) => {
+                const Icon = entry.icon;
+                const isActive = (entry.id ?? entry.path) === activeId;
+                return (
+                  <DropdownMenu.Item key={entry.id ?? entry.path} asChild>
+                    <NavLink
+                      to={entry.path}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-2.5 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
+                        isActive && "bg-accent font-medium"
+                      )}
+                    >
+                      {Icon && (
+                        <Icon
+                          className="h-4 w-4 shrink-0 text-muted-foreground"
+                          aria-hidden
+                        />
+                      )}
+                      <span className="truncate">{entry.label}</span>
+                    </NavLink>
+                  </DropdownMenu.Item>
+                );
+              })}
+            </div>
+          ))}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -87,6 +100,26 @@ function isFlatProductNav(mode: ProfileMode): boolean {
   const withChildren = mode.nav.filter((item) => item.items?.length);
   return (
     withChildren.length > 0 && withChildren.every((item) => item.alwaysOpen)
+  );
+}
+
+function ModeSwitcher({
+  mode,
+  pathname,
+}: {
+  mode: ProfileMode;
+  pathname: string;
+}) {
+  const active = resolveJdSwitcherItem(pathname);
+  const groups = jdSwitcherGroups();
+
+  return (
+    <CrumbDropdown
+      label={active?.label ?? mode.label}
+      ariaLabel="Switch JD destination"
+      activeId={active?.id ?? mode.path}
+      groups={groups}
+    />
   );
 }
 
@@ -116,9 +149,7 @@ export default function DrillInBreadcrumb({
 
     return (
       <div className="flex min-w-0 items-center gap-2 text-sm">
-        <span className="truncate px-1.5 font-semibold text-foreground">
-          {mode.label}
-        </span>
+        <ModeSwitcher mode={mode} pathname={pathname} />
         {active && (
           <>
             <span className="text-muted-foreground">/</span>
@@ -170,9 +201,7 @@ export default function DrillInBreadcrumb({
 
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm">
-      <span className="truncate px-1.5 font-semibold text-foreground">
-        {mode.label}
-      </span>
+      <ModeSwitcher mode={mode} pathname={pathname} />
 
       {section && (
         <>

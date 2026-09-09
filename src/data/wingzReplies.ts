@@ -1,4 +1,4 @@
-import type { WandzContext } from "../store/wandz";
+import type { WingzContext } from "../store/wingz";
 import type { Campaign } from "./campaigns";
 import {
   campaignBestVariant,
@@ -9,14 +9,14 @@ import {
 // the user's message and picks a plausible, context-shaped response so the same
 // question always yields the same answer within a session.
 
-export function greetingFor(ctx: WandzContext): string {
+export function greetingFor(ctx: WingzContext): string {
   switch (ctx.kind) {
     case "campaign":
       return "Hi — I can help with this campaign. Ask me about its setup, metrics, or what to try next.";
     case "section":
       return `Ask me anything about ${ctx.sectionLabel}. I can suggest options or explain what each setting does.`;
     case "general":
-      return "Hi, I'm Wandz. Ask me about your campaigns, metrics, or experiments.";
+      return "Hi, I'm Wingz. Ask me about your campaigns, metrics, or experiments.";
   }
 }
 
@@ -72,7 +72,7 @@ function formatCount(n: number): string {
   return n.toLocaleString("en-US");
 }
 
-/** Narrative campaign briefing — used by Campaign summary → Wandz. */
+/** Narrative campaign briefing — used by Campaign summary → Wingz. */
 export function campaignSummaryFor(campaign: Campaign): string {
   const best = campaignBestVariant(campaign);
   const variants = campaign.report.variants;
@@ -137,7 +137,7 @@ export function campaignSummaryFor(campaign: Campaign): string {
 }
 
 export function replyFor(
-  ctx: WandzContext,
+  ctx: WingzContext,
   userMessage: string,
   campaign?: Campaign | null
 ): string {
@@ -162,7 +162,7 @@ export function replyFor(
   return pick(GENERAL_POOL, seed);
 }
 
-function contextSeed(ctx: WandzContext): string {
+function contextSeed(ctx: WingzContext): string {
   switch (ctx.kind) {
     case "campaign":
       return `c:${ctx.campaignId}`;

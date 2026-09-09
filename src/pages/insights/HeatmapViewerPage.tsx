@@ -65,7 +65,7 @@ import {
   ObservationLayer,
   PagesDialog,
   SettingsPanel,
-  WandzReportPanel,
+  WingzReportPanel,
 } from "@/components/heatmap/HeatmapToolbarPanels";
 import {
   ClickAreaOverlay,
@@ -290,7 +290,7 @@ export default function HeatmapViewerPage() {
   const [tourOpen, setTourOpen] = useState(true);
   const [pagesOpen, setPagesOpen] = useState(false);
   const [campaignOpen, setCampaignOpen] = useState(false);
-  const [wandzOpen, setWandzOpen] = useState(false);
+  const [wingzOpen, setWingzOpen] = useState(false);
   const [observing, setObserving] = useState(false);
   const [editingZones, setEditingZones] = useState(false);
   /** Navigate mode drops the overlay so the page can be browsed underneath. */
@@ -355,9 +355,9 @@ export default function HeatmapViewerPage() {
 
         {editingZones ? <EditZonesLayer /> : null}
         {!navigating ? <ObservationPins /> : null}
-        {wandzOpen ? (
+        {wingzOpen ? (
           <div className="absolute inset-x-0 bottom-14 top-0 z-30">
-            <WandzReportPanel onClose={() => setWandzOpen(false)} />
+            <WingzReportPanel onClose={() => setWingzOpen(false)} />
           </div>
         ) : null}
         {/* Last so an observation being placed sits above the report panel. */}
@@ -582,11 +582,11 @@ export default function HeatmapViewerPage() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => setWandzOpen((v) => !v)}
-                className={cn(PILL, wandzOpen && "bg-muted text-foreground")}
+                onClick={() => setWingzOpen((v) => !v)}
+                className={cn(PILL, wingzOpen && "bg-muted text-foreground")}
               >
                 <Wand2 className="size-4" aria-hidden />
-                Wandz
+                Wingz
               </Button>
             </div>
 

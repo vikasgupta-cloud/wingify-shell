@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "../../lib/utils";
-import { useWandzStore, contextKey } from "../../store/wandz";
+import { useWingzStore, contextKey } from "../../store/wingz";
 import {
   SIDE_PANEL_WIDTH,
   useSidePanelWidthStore,
@@ -27,11 +27,11 @@ import SuggestionsPanel from "../detail-panels/SuggestionsPanel";
 
 // Keyframes for the "thinking" dots — inlined so the panel is self-contained.
 const DOTS_CSS = `
-@keyframes wandz-dot { 0%,80%,100% { opacity: .4 } 40% { opacity: 1 } }
-.wandz-dot { animation: wandz-dot 1.2s ease-in-out infinite; }
+@keyframes wingz-dot { 0%,80%,100% { opacity: .4 } 40% { opacity: 1 } }
+.wingz-dot { animation: wingz-dot 1.2s ease-in-out infinite; }
 `;
 
-const WANDZ_TABS = [
+const WINGZ_TABS = [
   { id: "chat" as const, label: "Chat" },
   { id: "insights" as const, label: "Insights" },
 ];
@@ -61,7 +61,7 @@ function ThinkingRow({ reduced }: { reduced: boolean }) {
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="wandz-dot size-1.5 rounded-full bg-highlight-fg/60"
+              className="wingz-dot size-1.5 rounded-full bg-highlight-fg/60"
               style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}
@@ -213,7 +213,7 @@ function ChatComposer({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Ask Wandz…"
+          placeholder="Ask Wingz…"
           className="max-h-32 min-h-0 resize-none"
         />
         <div className="mt-2 flex items-center justify-between">
@@ -237,16 +237,16 @@ function ChatComposer({
 }
 
 function PanelHeader({ fullPreview }: { fullPreview: boolean }) {
-  const closeWandz = useWandzStore((s) => s.closeWandz);
-  const setFullPreview = useWandzStore((s) => s.setFullPreview);
-  const panelTab = useWandzStore((s) => s.panelTab);
-  const setPanelTab = useWandzStore((s) => s.setPanelTab);
+  const closeWingz = useWingzStore((s) => s.closeWingz);
+  const setFullPreview = useWingzStore((s) => s.setFullPreview);
+  const panelTab = useWingzStore((s) => s.panelTab);
+  const setPanelTab = useWingzStore((s) => s.setPanelTab);
 
   return (
     <div className="flex shrink-0 flex-col border-b border-border">
       <div className="flex items-center gap-2 px-4 py-3">
         <Sparkles className="h-4 w-4 shrink-0 text-highlight-fg" aria-hidden />
-        <span className="text-sm font-medium text-highlight-fg">Wandz</span>
+        <span className="text-sm font-medium text-highlight-fg">Wingz</span>
         <div className="ml-auto flex items-center gap-0.5">
           <TooltipProvider delayDuration={200}>
             <Tooltip>
@@ -275,9 +275,9 @@ function PanelHeader({ fullPreview }: { fullPreview: boolean }) {
             type="button"
             variant="ghost"
             size="icon"
-            aria-label="Close Wandz"
+            aria-label="Close Wingz"
             className="h-auto w-auto p-1.5 text-muted-foreground hover:text-foreground"
-            onClick={closeWandz}
+            onClick={closeWingz}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -286,9 +286,9 @@ function PanelHeader({ fullPreview }: { fullPreview: boolean }) {
       <div
         className="flex items-end gap-5 px-4"
         role="tablist"
-        aria-label="Wandz views"
+        aria-label="Wingz views"
       >
-        {WANDZ_TABS.map((tab) => {
+        {WINGZ_TABS.map((tab) => {
           const active = panelTab === tab.id;
           return (
             <button
@@ -313,7 +313,7 @@ function PanelHeader({ fullPreview }: { fullPreview: boolean }) {
   );
 }
 
-export default function WandzPanel({
+export default function WingzPanel({
   className,
   fillHeight = false,
 }: {
@@ -321,15 +321,15 @@ export default function WandzPanel({
   /** Fill a fixed-height dock column (Reports). Skip sticky / viewport height cap. */
   fillHeight?: boolean;
 }) {
-  const context = useWandzStore((s) => s.context);
-  const threads = useWandzStore((s) => s.threads);
-  const drafts = useWandzStore((s) => s.drafts);
-  const pending = useWandzStore((s) => s.pending);
-  const fullPreview = useWandzStore((s) => s.fullPreview);
-  const panelTab = useWandzStore((s) => s.panelTab);
-  const setFullPreview = useWandzStore((s) => s.setFullPreview);
-  const setDraft = useWandzStore((s) => s.setDraft);
-  const send = useWandzStore((s) => s.send);
+  const context = useWingzStore((s) => s.context);
+  const threads = useWingzStore((s) => s.threads);
+  const drafts = useWingzStore((s) => s.drafts);
+  const pending = useWingzStore((s) => s.pending);
+  const fullPreview = useWingzStore((s) => s.fullPreview);
+  const panelTab = useWingzStore((s) => s.panelTab);
+  const setFullPreview = useWingzStore((s) => s.setFullPreview);
+  const setDraft = useWingzStore((s) => s.setDraft);
+  const send = useWingzStore((s) => s.send);
   const width = useSidePanelWidthStore((s) => s.width);
   const setWidth = useSidePanelWidthStore((s) => s.setWidth);
   const campaigns = useVisibleCampaigns();
@@ -426,7 +426,7 @@ export default function WandzPanel({
         className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background duration-200 animate-in fade-in-0"
         role="dialog"
         aria-modal="true"
-        aria-label="Wandz full preview"
+        aria-label="Wingz full preview"
       >
         {panel}
       </div>,

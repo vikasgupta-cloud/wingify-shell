@@ -11,11 +11,11 @@ import KanbanBoard from "../components/kanban/KanbanBoard";
 import GanttChart from "../components/gantt/GanttChart";
 import GanttControls from "../components/gantt/GanttControls";
 import QuickViewPanel from "../components/quickview/QuickViewPanel";
-import WandzPanel from "../components/wandz/WandzPanel";
+import WingzPanel from "../components/wingz/WingzPanel";
 import { useTableStore } from "../store/table";
 import { OVERVIEW_ID, useActiveViewState, useViewsStore } from "../store/views";
 import { useQuickViewStore } from "../store/quickView";
-import { useWandzStore } from "../store/wandz";
+import { useWingzStore } from "../store/wingz";
 
 export default function WebExperimentation() {
   const { search, setSearch } = useTableStore();
@@ -23,7 +23,7 @@ export default function WebExperimentation() {
   const isOverview = useViewsStore((s) => s.activeViewId === OVERVIEW_ID);
   const openId = useQuickViewStore((s) => s.openId);
   const closeQuickView = useQuickViewStore((s) => s.close);
-  const wandzOpen = useWandzStore((s) => s.open);
+  const wingzOpen = useWingzStore((s) => s.open);
 
   // The panel must not linger on stale content: close it when the layout, filters,
   // search, or grouping change. Skip the very first run so opening it doesn't self-close.
@@ -112,7 +112,7 @@ export default function WebExperimentation() {
           </>
         )}
       </div>
-      {wandzOpen && <WandzPanel />}
+      {wingzOpen && <WingzPanel />}
     </>
   );
 }

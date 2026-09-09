@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useDetailPanelsStore } from "./detailPanels";
-import { useWandzStore } from "./wandz";
+import { useWingzStore } from "./wingz";
 
 // Which campaign's Quick view panel is open. In-memory only — NOT persisted, so a
 // reload starts with the panel closed. WebExperimentation wires close() into layout
@@ -15,10 +15,10 @@ type QuickViewState = {
 
 export const useQuickViewStore = create<QuickViewState>((set, get) => ({
   openId: null,
-  // Mutual exclusion with Wandz / detail panels — opening one closes the others.
+  // Mutual exclusion with Wingz / detail panels — opening one closes the others.
   // Called via getState() at runtime (not a top-level use) to keep import cycles safe.
   open: (id) => {
-    useWandzStore.getState().closeWandz();
+    useWingzStore.getState().closeWingz();
     useDetailPanelsStore.getState().close();
     set({ openId: id });
   },

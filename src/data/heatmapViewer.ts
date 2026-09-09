@@ -425,8 +425,8 @@ export const CAMPAIGN_TYPES = [
   { id: "feature", label: "Feature Experimentation" },
 ] as const;
 
-/** Wandz analysis report. */
-export const WANDZ_REPORT = {
+/** Wingz analysis report. */
+export const WINGZ_REPORT = {
   suggestions: [
     "Mobile hero optimization",
     "Exit intent triggers",

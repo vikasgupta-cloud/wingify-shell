@@ -1,5 +1,5 @@
-// Summary: Edition empty state keeps the original Wandz chat zero state.
-// With a selection, the element editor stays in this panel; Wandz opens as a float on the canvas.
+// Summary: Edition empty state keeps the original Wingz chat zero state.
+// With a selection, the element editor stays in this panel; Wingz opens as a float on the canvas.
 import { useEffect, useState } from "react";
 import {
   AlignCenter,
@@ -810,13 +810,13 @@ function TrackingTab() {
   );
 }
 
-const WANDZ_ZERO_SUGGESTIONS: { icon: string; label: string }[] = [
+const WINGZ_ZERO_SUGGESTIONS: { icon: string; label: string }[] = [
   { icon: paletteSm, label: "Make the headline text larger" },
   { icon: move, label: "Move the image to the left" },
   { icon: paletteSm, label: "Change the button color to green" },
 ];
 
-/** Original Wandz chat zero state — shown when no element is selected. */
+/** Original Wingz chat zero state — shown when no element is selected. */
 function EditionEmptyState() {
   const [draft, setDraft] = useState("");
 
@@ -862,7 +862,7 @@ function EditionEmptyState() {
           <p className="text-xs text-muted-foreground">
             Try asking something like:
           </p>
-          {WANDZ_ZERO_SUGGESTIONS.map((s) => (
+          {WINGZ_ZERO_SUGGESTIONS.map((s) => (
             <Button
               key={s.label}
               type="button"
@@ -936,8 +936,8 @@ function EditionEmptyState() {
 }
 
 /** Edition inspector — Styles / Attributes / Tracking for the selected element.
- *  With no selection, the original Wandz chat zero state fills the panel.
- *  With selection, Wandz opens as a floating card near the element (not here).
+ *  With no selection, the original Wingz chat zero state fills the panel.
+ *  With selection, Wingz opens as a floating card near the element (not here).
  */
 export function EditorEditionPanel({
   onClose,

@@ -14,7 +14,7 @@ import type { CampaignStatus } from "../../data/campaigns";
 import { daysSince, formatShortDate, relativeTime } from "../../lib/dates";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { Target } from "@/components/icons/protoLucide";
 import StatusBadge, { VitalsIcon } from "../ui/StatusBadge";
 import CreatorAvatar from "../ui/CreatorAvatar";
@@ -74,7 +74,7 @@ export default function PersonalizeKanbanCard({
   showStatus: boolean;
 }) {
   const navigate = useNavigate();
-  const openWandz = useWandzStore((s) => s.toggleWandz);
+  const openWingz = useWingzStore((s) => s.toggleWingz);
   
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -124,11 +124,11 @@ export default function PersonalizeKanbanCard({
             type="button"
             variant="ghost"
             size="icon"
-            title="Summarise with Wandz"
-            aria-label="Summarise with Wandz"
+            title="Summarise with Wingz"
+            aria-label="Summarise with Wingz"
             onClick={(e) => {
               stop(e);
-              openWandz({ kind: "general" });
+              openWingz({ kind: "general" });
             }}
             className={CARD_ICON_BUTTON}
           >

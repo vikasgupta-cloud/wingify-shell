@@ -1,6 +1,6 @@
 // Static dashboard card presentational components.
 // Layout mirrors product screenshots 1:1; token-only styling for theming later.
-// Nothing functional except Wandz hero → existing chat store.
+// Nothing functional except Wingz hero → existing chat store.
 // Heatmaps list uses row dividers; session rows show country flags (not initials).
 
 import { useState } from "react";
@@ -37,7 +37,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useWandzStore } from "@/store/wandz";
+import { useWingzStore } from "@/store/wingz";
 import {
   ACTIVE_TESTS,
   FORMS_REPORT,
@@ -53,9 +53,9 @@ import {
   SURVEYS_REPORT,
   TOTAL_EXPERIENCES,
   UNTESTED_HYPOTHESES,
-  WANDZ_CTAS,
-  WANDZ_DEFAULT_PROMPT,
-  WANDZ_RECENT_CHATS,
+  WINGZ_CTAS,
+  WINGZ_DEFAULT_PROMPT,
+  WINGZ_RECENT_CHATS,
 } from "@/data/dashboard";
 import { openSessionPlayer } from "@/data/sessionRecordings";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,7 @@ import {
   chartSeriesOn,
 } from "@/config/chartTokens";
 
-const WANDZ_CTA_ICONS = {
+const WINGZ_CTA_ICONS = {
   analyze: BarChart3,
   friction: Layers,
   ideas: Lightbulb,
@@ -183,18 +183,18 @@ function CardShell({
   );
 }
 
-export function WandzHero() {
-  const [prompt, setPrompt] = useState(WANDZ_DEFAULT_PROMPT);
-  const openWandzAndAsk = useWandzStore((s) => s.openWandzAndAsk);
-  const openWandz = useWandzStore((s) => s.openWandz);
+export function WingzHero() {
+  const [prompt, setPrompt] = useState(WINGZ_DEFAULT_PROMPT);
+  const openWingzAndAsk = useWingzStore((s) => s.openWingzAndAsk);
+  const openWingz = useWingzStore((s) => s.openWingz);
 
   const ask = (text: string) => {
     const body = text.trim();
     if (!body) {
-      openWandz({ kind: "general" });
+      openWingz({ kind: "general" });
       return;
     }
-    openWandzAndAsk({ kind: "general" }, body);
+    openWingzAndAsk({ kind: "general" }, body);
   };
 
   return (
@@ -205,7 +205,7 @@ export function WandzHero() {
             className="pointer-events-none absolute right-full top-[0.2em] mr-2.5 size-[0.9em] text-foreground"
             aria-hidden
           />
-          Meet Wandz
+          Meet Wingz
         </h2>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
           Ask about campaigns, recordings, heatmaps, and test ideas. All in one
@@ -225,7 +225,7 @@ export function WandzHero() {
             onChange={(e) => setPrompt(e.target.value)}
             rows={3}
             className="min-h-[96px] resize-none border-0 bg-transparent px-5 pt-5 text-[15px] leading-relaxed shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-0"
-            placeholder="Ask Wandz…"
+            placeholder="Ask Wingz…"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -266,7 +266,7 @@ export function WandzHero() {
                 type="button"
                 size="icon"
                 className="size-8 transition-transform duration-150 hover:scale-[1.03] active:scale-[0.97]"
-                aria-label="Send to Wandz"
+                aria-label="Send to Wingz"
                 onClick={() => ask(prompt)}
               >
                 <SendHorizontal className="size-4" />
@@ -276,8 +276,8 @@ export function WandzHero() {
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
-          {WANDZ_CTAS.map((cta) => {
-            const Icon = WANDZ_CTA_ICONS[cta.id];
+          {WINGZ_CTAS.map((cta) => {
+            const Icon = WINGZ_CTA_ICONS[cta.id];
             return (
               <Button
                 key={cta.id}
@@ -299,7 +299,7 @@ export function WandzHero() {
             Your recent chats
           </p>
           <ul className="mt-3 w-full max-w-md space-y-1.5">
-            {WANDZ_RECENT_CHATS.map((chat) => (
+            {WINGZ_RECENT_CHATS.map((chat) => (
               <li key={chat.id}>
                 <button
                   type="button"

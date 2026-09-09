@@ -1,4 +1,4 @@
-/** Dashboard trial-expired alert — shown above Meet Wandz when Trial Over workspace is active. */
+/** Dashboard trial-expired alert — shown above Meet Wingz when Trial Over workspace is active. */
 
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "@/components/icons/protoLucide";

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-/** Shared width for Wandz, Insights, Chats, and Activity side panels. */
+/** Shared width for Wingz, Insights, Chats, and Activity side panels. */
 export const SIDE_PANEL_WIDTH = {
   default: 320,
   min: 280,

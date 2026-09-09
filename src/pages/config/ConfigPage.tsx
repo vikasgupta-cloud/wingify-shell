@@ -21,10 +21,11 @@ import QaAssistant from "./QaAssistant";
 import DotNav from "./DotNav";
 import GuidedStepHeader from "./GuidedStepHeader";
 import WorkflowMode from "./workflow/WorkflowMode";
-import WandzPanel from "../../components/wandz/WandzPanel";
+import WingzPanel from "../../components/wingz/WingzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
+import UtilityRail from "../../components/layout/UtilityRail";
 import { useDetailPanelsStore } from "../../store/detailPanels";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { TYPE_ICONS } from "../../components/icons/campaignTypeIcons";
 
 // The body for a single step section. Shared by Scroll (all sections) and
@@ -124,9 +125,17 @@ function StepNav({
   );
 }
 
-export default function ConfigPage() {
+export default function ConfigPage({
+  campaignId: campaignIdProp,
+  embedded = false,
+}: {
+  /** When set (Wingz canvas), use this id instead of the route param. */
+  campaignId?: string;
+  /** Hide floating Wingz/detail docks — parent already hosts chat. */
+  embedded?: boolean;
+} = {}) {
   const { entityId } = useParams();
-  const id = entityId ?? "";
+  const id = campaignIdProp ?? entityId ?? "";
   const campaigns = useVisibleCampaigns();
   const campaign = campaigns.find((c) => c.id === id);
   const ensureConfig = useConfigStore((s) => s.ensureConfig);
@@ -136,9 +145,9 @@ export default function ConfigPage() {
   const viewMode = useConfigStore((s) => s.viewMode);
   const activeStepId = useConfigStore((s) => s.activeStepId);
   const setActiveStepId = useConfigStore((s) => s.setActiveStepId);
-  const wandzOpen = useWandzStore((s) => s.open);
+  const wingzOpen = useWingzStore((s) => s.open);
   const detailPanelOpen = useDetailPanelsStore((s) => s.openId) !== null;
-  const sidePanelOpen = wandzOpen || detailPanelOpen;
+  const sidePanelOpen = wingzOpen || (!embedded && detailPanelOpen);
   const wasWorkflowOpen = useRef(false);
 
   useEffect(() => {
@@ -226,121 +235,145 @@ export default function ConfigPage() {
   return (
     <div
       className={cn(
-        "min-h-full bg-canvas",
-        dockState === "docked" && "flex items-start"
+        "bg-canvas",
+        embedded ? "flex h-full min-h-0" : "min-h-full",
+        !embedded && dockState === "docked" && "flex items-start"
       )}
     >
       {/* Docked: DotNav is an in-flow, sticky w-64 sidebar flush against the
           icon rail; the content area takes the remaining width. */}
-      {dockState === "docked" && <DotNav id={id} />}
-      {/* Content area: when docked it is the flex remainder next to the sidebar;
-          the centred content column + the Wandz panel sit inside it. */}
-      <div className={cn("min-w-0", dockState === "docked" && "flex-1")}>
-      {/* Content column + the Wandz panel sit side by side; the panel pushes the
-          content, which stays capped at 860px. */}
+      {!embedded && dockState === "docked" && <DotNav id={id} />}
+
+      {/* Content + optional Wingz panel. In canvas (embedded), this column
+          scrolls and sits beside the utility rail. */}
       <div
         className={cn(
-          "flex w-full items-start gap-6 px-6 py-10",
-          // No side panel: centre the capped content column. With a panel open,
-          // span full width so the panel sits flush against the right utility
-          // rail (matching Reports) instead of floating inward with a centred
-          // group; the content column re-centres itself via mx-auto below.
-          !sidePanelOpen && "mx-auto"
+          "min-w-0",
+          embedded ? "flex min-h-0 flex-1 flex-col overflow-hidden" : undefined,
+          !embedded && dockState === "docked" && "flex-1"
         )}
-        style={sidePanelOpen ? undefined : { maxWidth: 860 }}
       >
-        <div className="relative mx-auto min-w-0 max-w-[860px] flex-1">
-        {/* Undocked: DotNav floats in the left gutter of the content column. */}
-        {dockState === "undocked" && <DotNav id={id} />}
-        {/* Bespoke page header — product-type icon + name only (ID is in the
-            breadcrumb). Suppressed in guided, where the title lives in the
-            step header and the name is already in the breadcrumb. */}
-        {viewMode === "scroll" && (
-          <div className="flex items-center gap-3">
-            <TypeIcon className="h-6 w-6 text-foreground" aria-hidden />
-            <h1 className="text-2xl font-semibold text-foreground">{campaign.name}</h1>
-          </div>
-        )}
-
-        {viewMode === "guided" ? (
-          // GUIDED: one focused step, using the SAME content column width as
-          // Scroll. Re-keyed on activeStepId so a 200ms fade/slide plays on each
-          // swap (disabled under prefers-reduced-motion). The composed step
-          // (header + body) is vertically centred within the height below the
-          // global header when it's shorter than that space (justify-center over
-          // a min-height); a taller step grows past the min-height, so it
-          // top-aligns and scrolls in <main> — never clipped. The step body's
-          // own h2 heading (+ its Ask-Wandz sparkle) is hidden so the title
-          // shows once, in the guided header.
-          <div
-            key={activeStepId}
-            className="flex min-h-[calc(100vh-8.5rem)] flex-col duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
-          >
-            <div className="flex flex-1 flex-col justify-center">
-              <GuidedStepHeader
-                section={SECTIONS[Math.max(0, SECTIONS.findIndex((s) => s.id === activeStepId))]}
-                action={
-                  activeStepId === "variations" ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openWorkflow(id)}
-                    >
-                      Workflow Mode
-                    </Button>
-                  ) : activeStepId === "pages" ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      // TODO: save for future use
-                    >
-                      <Save />
-                      Save as page group
-                    </Button>
-                  ) : undefined
-                }
-              />
-              {/* In guided the step title lives in GuidedStepHeader, so each
-                  section's own heading row (h2 + its inline actions) is hidden. */}
-              <div className="[&_[data-section-heading]]:hidden [&_h2+button]:hidden [&_h2]:hidden">
-                <SectionBody sectionId={activeStepId} id={id} guided />
+        <div
+          className={cn(
+            "flex w-full items-start gap-6 px-6 py-10",
+            embedded && "min-h-0 flex-1 overflow-y-auto",
+            // No side panel: centre the capped content column. With a panel open,
+            // span full width so the panel sits flush against the right utility
+            // rail (matching Reports) instead of floating inward with a centred
+            // group; the content column re-centres itself via mx-auto below.
+            !sidePanelOpen && "mx-auto",
+            embedded && wingzOpen && "pr-0"
+          )}
+          style={sidePanelOpen ? undefined : { maxWidth: 860 }}
+        >
+          <div className="relative mx-auto min-w-0 max-w-[860px] flex-1">
+            {/* Undocked: DotNav floats in the left gutter of the content column. */}
+            {!embedded && dockState === "undocked" && <DotNav id={id} />}
+            {/* Bespoke page header — product-type icon + name only (ID is in the
+                breadcrumb). Suppressed in guided, where the title lives in the
+                step header and the name is already in the breadcrumb. */}
+            {viewMode === "scroll" && (
+              <div className="flex items-center gap-3">
+                <TypeIcon className="h-6 w-6 text-foreground" aria-hidden />
+                <h1 className="text-2xl font-semibold text-foreground">
+                  {campaign.name}
+                </h1>
               </div>
-            </div>
-            <StepNav activeStepId={activeStepId} onGo={setActiveStepId} />
-          </div>
-        ) : (
-          <div className="mt-10 flex flex-col gap-10">
-            {SECTIONS.map((section, i) => {
-              // Collapsible sections own their own `section-<id>` anchor, so the
-              // spacing wrapper here must not also set the id (no duplicates).
-              const isCollapsible = section.id === "additional" || section.id === "qa";
-              return (
-                <div
-                  key={section.id}
-                  id={isCollapsible ? undefined : `section-${section.id}`}
-                  className={cn(
-                    !isCollapsible && "scroll-mt-20",
-                    i > 0 && "border-t border-border pt-10"
-                  )}
-                >
-                  <SectionBody sectionId={section.id} id={id} />
-                </div>
-              );
-            })}
-            {/* Trailing scroll room so the last section can scroll up into the
-                nav's active-highlight band (and sit at the top when clicked). */}
-            <div aria-hidden className="h-[50vh] shrink-0" />
-          </div>
-        )}
-        </div>
+            )}
 
-        {/* Mutual exclusion keeps Quick view, Wandz, and detail panels exclusive. */}
-        {wandzOpen && <WandzPanel />}
-        {detailPanelOpen && <DetailSidePanel />}
+            {viewMode === "guided" ? (
+              // GUIDED: one focused step, using the SAME content column width as
+              // Scroll. Re-keyed on activeStepId so a 200ms fade/slide plays on each
+              // swap (disabled under prefers-reduced-motion). The composed step
+              // (header + body) is vertically centred within the height below the
+              // global header when it's shorter than that space (justify-center over
+              // a min-height); a taller step grows past the min-height, so it
+              // top-aligns and scrolls in <main> — never clipped. The step body's
+              // own h2 heading (+ its Ask-Wingz sparkle) is hidden so the title
+              // shows once, in the guided header.
+              <div
+                key={activeStepId}
+                className="flex min-h-[calc(100vh-8.5rem)] flex-col duration-200 animate-in fade-in-0 slide-in-from-bottom-2 motion-reduce:animate-none"
+              >
+                <div className="flex flex-1 flex-col justify-center">
+                  <GuidedStepHeader
+                    section={
+                      SECTIONS[
+                        Math.max(
+                          0,
+                          SECTIONS.findIndex((s) => s.id === activeStepId)
+                        )
+                      ]
+                    }
+                    action={
+                      activeStepId === "variations" ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openWorkflow(id)}
+                        >
+                          Workflow Mode
+                        </Button>
+                      ) : activeStepId === "pages" ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          // TODO: save for future use
+                        >
+                          <Save />
+                          Save as page group
+                        </Button>
+                      ) : undefined
+                    }
+                  />
+                  {/* In guided the step title lives in GuidedStepHeader, so each
+                      section's own heading row (h2 + its inline actions) is hidden. */}
+                  <div className="[&_[data-section-heading]]:hidden [&_h2+button]:hidden [&_h2]:hidden">
+                    <SectionBody sectionId={activeStepId} id={id} guided />
+                  </div>
+                </div>
+                <StepNav activeStepId={activeStepId} onGo={setActiveStepId} />
+              </div>
+            ) : (
+              <div className="mt-10 flex flex-col gap-10">
+                {SECTIONS.map((section, i) => {
+                  // Collapsible sections own their own `section-<id>` anchor, so the
+                  // spacing wrapper here must not also set the id (no duplicates).
+                  const isCollapsible =
+                    section.id === "additional" || section.id === "qa";
+                  return (
+                    <div
+                      key={section.id}
+                      id={isCollapsible ? undefined : `section-${section.id}`}
+                      className={cn(
+                        !isCollapsible && "scroll-mt-20",
+                        i > 0 && "border-t border-border pt-10"
+                      )}
+                    >
+                      <SectionBody sectionId={section.id} id={id} />
+                    </div>
+                  );
+                })}
+                {/* Trailing scroll room so the last section can scroll up into the
+                    nav's active-highlight band (and sit at the top when clicked). */}
+                <div aria-hidden className="h-[50vh] shrink-0" />
+              </div>
+            )}
+          </div>
+
+          {/* Non-canvas: Wingz docks in-flow next to the form column. */}
+          {!embedded && wingzOpen ? <WingzPanel /> : null}
+          {!embedded && detailPanelOpen ? <DetailSidePanel /> : null}
+        </div>
       </div>
-      </div>
+
+      {/* Canvas form: panel + rail stick to the right (no floating GlobalWingzDock). */}
+      {embedded && wingzOpen ? (
+        <WingzPanel fillHeight className="min-h-0 self-stretch" />
+      ) : null}
+      {embedded ? <UtilityRail entityId={id} /> : null}
     </div>
   );
 }

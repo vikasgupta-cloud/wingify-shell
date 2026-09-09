@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const ONBOARDING_PRODUCTS = productSwitcherItems().filter(
-  (item) => item.path !== "/wandz"
+  (item) => item.path !== "/wingz"
 );
 
 export default function GetStartedUnlockPanel() {

@@ -18,7 +18,9 @@ type RowsState = {
   archive: (ids: string[]) => void;
   remove: (ids: string[]) => void;
   setStatus: (id: string, status: CampaignStatus) => void;
-  createCampaign: (type: CampaignType) => string;
+  createCampaign: (type: CampaignType, opts?: { name?: string; url?: string }) => string;
+  /** Session-only metadata updates for Wingz canvas ↔ form sync. */
+  updateCampaign: (id: string, partial: Partial<Pick<Campaign, "name" | "url">>) => void;
 };
 
 // A fresh, unique 6-digit numeric id not colliding with the seed rows or any
@@ -64,16 +66,18 @@ export const useRowsStore = create<RowsState>((set, get) => ({
     set((s) => ({
       statusOverrides: { ...s.statusOverrides, [id]: status },
     })),
-  createCampaign: (type) => {
+  createCampaign: (type, opts) => {
     const { added } = get();
     const taken = new Set([...CAMPAIGNS.map((c) => c.id), ...added.map((c) => c.id)]);
     const id = mintId(taken);
     const now = new Date().toISOString();
     const status: CampaignStatus = "Draft";
+    const name = opts?.name?.trim() || `Campaign ${added.length + 1}`;
+    const url = opts?.url?.trim() || "";
     const campaign: Campaign = {
       id,
-      name: `Campaign ${added.length + 1}`,
-      url: "",
+      name,
+      url,
       type,
       status,
       scenario: "not-started",
@@ -100,8 +104,32 @@ export const useRowsStore = create<RowsState>((set, get) => ({
     // before its first Save is still retained — retention no longer depends on
     // the config page mounting. Session-only, like the config store itself.
     useConfigStore.getState().ensureConfig(id, campaign.name);
+    if (url) {
+      const cfg = useConfigStore.getState().configs[id];
+      if (cfg) {
+        const pageGroups = cfg.pageGroups.map((g, i) =>
+          i === 0 && g.kind === "include"
+            ? {
+                ...g,
+                rules: g.rules.map((r, ri) =>
+                  ri === 0 ? { ...r, value: url } : r
+                ),
+              }
+            : g
+        );
+        useConfigStore.getState().patch(id, {
+          editorUrl: url,
+          pageGroups,
+          qa: { ...cfg.qa, previewUrl: url },
+        });
+      }
+    }
     return id;
   },
+  updateCampaign: (id, partial) =>
+    set((s) => ({
+      added: s.added.map((c) => (c.id === id ? { ...c, ...partial } : c)),
+    })),
 }));
 
 export function useVisibleCampaigns(): Campaign[] {

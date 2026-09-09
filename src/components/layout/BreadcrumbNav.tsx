@@ -18,7 +18,7 @@ function isSwitcherProduct(item: NavItem): boolean {
   return PRODUCTS.some((p) => p.path === item.path);
 }
 
-/** Product crumb — dropdown to jump between Wandz and the other products. */
+/** Product crumb — dropdown to jump between Wingz and the other products. */
 function ProductSwitcher({
   item,
   locked = false,

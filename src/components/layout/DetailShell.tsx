@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import {
-  Activity,
   Archive,
   Check,
   ChevronDown,
@@ -12,7 +11,6 @@ import {
   Eraser,
   FileBarChart,
   GalleryVerticalEnd,
-  HelpCircle,
   ListFilter,
   MoreHorizontal,
   PenLine,
@@ -21,7 +19,6 @@ import {
   Save,
   Search,
   Share2,
-  Sparkles,
   Trash2,
 } from "@/components/icons/protoLucide";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
@@ -51,13 +48,6 @@ import {
 } from "@/components/ui/dialog";
 import StatusMenu from "@/components/ui/StatusMenu";
 import { useConfigStore, useIsConfigDirty } from "../../store/config";
-import { useWandzStore } from "../../store/wandz";
-import {
-  DETAIL_PANEL_META,
-  DETAIL_PANEL_RAIL_ORDER,
-  useDetailPanelsStore,
-  type DetailPanelId,
-} from "../../store/detailPanels";
 import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
 import {
   usePersonalizeRowsStore,
@@ -78,110 +68,7 @@ import {
 import { recommendationLandingPath } from "../../data/recommendations";
 import ExpandedNav from "./ExpandedNav";
 import WingifyLogoButton from "./WingifyLogoButton";
-
-const RAIL_PANEL_ICONS: Record<
-  DetailPanelId,
-  ComponentType<{ className?: string }>
-> = {
-  activity: Activity,
-};
-
-// The utility rail on the RIGHT of a detail surface: Ask Wandz, then
-// Activity; Help pinned to the bottom. Insights live inside Wandz as a tab.
-// Configure/Reports now live in the header tabs. On Reports, DetailShell
-// positions this absolutely below the sticky tab bar so the tabs stay edge-to-edge.
-function UtilityRail({ entityId }: { entityId?: string }) {
-  const wandzOpen = useWandzStore((s) => s.open);
-  const openPanelId = useDetailPanelsStore((s) => s.openId);
-  const togglePanel = useDetailPanelsStore((s) => s.toggle);
-
-  const railButton = (active: boolean, disabled = false) =>
-    cn(
-      "flex h-9 w-9 items-center justify-center rounded-md text-foreground transition-colors",
-      disabled
-        ? "cursor-not-allowed text-muted-foreground/40"
-        : "hover:bg-muted",
-      active && !disabled && "bg-accent text-foreground"
-    );
-
-  // Always close when already open (even if context is a section), so the rail
-  // icon acts as a true toggle for the panel.
-  const handleAskWandz = () => {
-    useDetailPanelsStore.getState().close();
-    const { open, closeWandz, openWandz } = useWandzStore.getState();
-    if (open) closeWandz();
-    else openWandz({ kind: "campaign", campaignId: entityId ?? "" });
-  };
-
-  return (
-    <TooltipProvider delayDuration={200}>
-      <nav
-        className="flex h-full shrink-0 flex-col items-center gap-3 border-l border-border bg-rail py-4"
-        style={{ width: UTILITY_RAIL_WIDTH }}
-      >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label="Ask Wandz"
-              aria-pressed={wandzOpen}
-              onClick={handleAskWandz}
-              className={railButton(wandzOpen)}
-            >
-              <Sparkles className="h-[18px] w-[18px]" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Ask Wandz</TooltipContent>
-        </Tooltip>
-
-        {DETAIL_PANEL_RAIL_ORDER.map((id) => {
-          const Icon = RAIL_PANEL_ICONS[id];
-          const meta = DETAIL_PANEL_META[id];
-          const disabled = Boolean(meta.disabled);
-          const active = openPanelId === id;
-          const button = (
-            <button
-              type="button"
-              aria-label={meta.label}
-              aria-pressed={active}
-              aria-disabled={disabled}
-              disabled={disabled}
-              onClick={() => {
-                if (!disabled) togglePanel(id);
-              }}
-              className={railButton(active, disabled)}
-            >
-              <Icon className="h-[18px] w-[18px]" />
-            </button>
-          );
-          return (
-            <Tooltip key={id}>
-              <TooltipTrigger asChild>
-                {disabled ? (
-                  <span className="inline-flex">{button}</span>
-                ) : (
-                  button
-                )}
-              </TooltipTrigger>
-              <TooltipContent side="left">
-                {disabled ? `${meta.label} (coming soon)` : meta.label}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button type="button" aria-label="Help" className={cn(railButton(false), "mt-auto")}>
-              <HelpCircle className="h-[18px] w-[18px]" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Help</TooltipContent>
-        </Tooltip>
-      </nav>
-    </TooltipProvider>
-  );
-}
+import UtilityRail from "./UtilityRail";
 
 // The Configure/Reports switcher, now horizontal underline tabs in the header
 // centre. The Scroll/Guided view toggle rides just ahead of the Configure tab

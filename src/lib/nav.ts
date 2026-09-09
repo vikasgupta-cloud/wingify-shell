@@ -140,8 +140,9 @@ export function showsSummarise(pathname: string): boolean {
   return showsCreate(pathname);
 }
 
-/** Pages that mount WandzPanel themselves (AppLayout uses a global dock elsewhere). */
-export function hasInlineWandzHost(pathname: string): boolean {
+/** Pages that mount WingzPanel themselves (AppLayout uses a global dock elsewhere). */
+export function hasInlineWingzHost(pathname: string): boolean {
+  if (pathname === "/wingz" || pathname.startsWith("/wingz/")) return true;
   if (
     pathname === "/web-experiment" ||
     pathname.startsWith("/web-experiment/")

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { CAMPAIGNS, type Campaign } from "../data/campaigns";
-import { greetingFor, replyFor } from "../data/wandzReplies";
+import { greetingFor, replyFor } from "../data/wingzReplies";
 import { useDetailPanelsStore } from "./detailPanels";
 import { useQuickViewStore } from "./quickView";
 import { useRowsStore } from "./rows";
@@ -14,13 +14,13 @@ export type ChatMessage = {
   at: string /* ISO */;
 };
 
-export type WandzContext =
+export type WingzContext =
   | { kind: "campaign"; campaignId: string }
   | { kind: "section"; campaignId: string; sectionLabel: string }
   | { kind: "general" };
 
 /** Stable per-context key so each conversation is kept separate. */
-export function contextKey(ctx: WandzContext): string {
+export function contextKey(ctx: WingzContext): string {
   switch (ctx.kind) {
     case "campaign":
       return `campaign:${ctx.campaignId}`;
@@ -55,34 +55,38 @@ function resolveCampaign(campaignId: string): Campaign | null {
   return status ? { ...found, status } : found;
 }
 
-type WandzPanelTab = "chat" | "insights";
+type WingzPanelTab = "chat" | "insights";
 
-type WandzState = {
+type WingzState = {
   open: boolean;
   /** Side panel vs full-screen preview overlay. */
   fullPreview: boolean;
-  /** Chat vs Insights inside the Wandz panel. Session-only. */
-  panelTab: WandzPanelTab;
-  context: WandzContext | null;
+  /** Chat vs Insights inside the Wingz panel. Session-only. */
+  panelTab: WingzPanelTab;
+  context: WingzContext | null;
   threads: Record<string /* contextKey */, ChatMessage[]>;
   /** Composer draft per conversation — survives panel close / remount. */
   drafts: Record<string /* contextKey */, string>;
   pending: boolean;
-  openWandz: (context: WandzContext) => void;
-  /** Opens Wandz and immediately asks a question (e.g. campaign summary). */
-  openWandzAndAsk: (context: WandzContext, prompt: string) => void;
-  toggleWandz: (context: WandzContext) => void;
-  closeWandz: () => void;
+  openWingz: (context: WingzContext) => void;
+  /** Opens Wingz and immediately asks a question (e.g. campaign summary). */
+  openWingzAndAsk: (context: WingzContext, prompt: string) => void;
+  toggleWingz: (context: WingzContext) => void;
+  closeWingz: () => void;
   setFullPreview: (fullPreview: boolean) => void;
-  setPanelTab: (tab: WandzPanelTab) => void;
+  setPanelTab: (tab: WingzPanelTab) => void;
   setDraft: (key: string, draft: string) => void;
   send: (body: string) => void;
   clearThread: (key: string) => void;
+  /** Point send() at a context without opening the floating panel. */
+  setContext: (context: WingzContext) => void;
+  /** Replace a thread (e.g. seed from main Wingz chat into a campaign). */
+  seedThread: (context: WingzContext, messages: ChatMessage[]) => void;
 };
 
 // NOTE: Replies are CANNED, not real AI — no API calls. Threads + drafts persist
 // across reloads (localStorage); open/pending stay session-only.
-export const useWandzStore = create<WandzState>()(
+export const useWingzStore = create<WingzState>()(
   persist(
     (set, get) => ({
       open: false,
@@ -93,7 +97,7 @@ export const useWandzStore = create<WandzState>()(
       drafts: {},
       pending: false,
 
-      openWandz: (context) => {
+      openWingz: (context) => {
         useQuickViewStore.getState().close();
         useDetailPanelsStore.getState().close();
         const key = contextKey(context);
@@ -107,22 +111,22 @@ export const useWandzStore = create<WandzState>()(
         }));
       },
 
-      openWandzAndAsk: (context, prompt) => {
-        get().openWandz(context);
+      openWingzAndAsk: (context, prompt) => {
+        get().openWingz(context);
         get().setPanelTab("chat");
         window.setTimeout(() => get().send(prompt), 80);
       },
 
-      toggleWandz: (context) => {
+      toggleWingz: (context) => {
         const s = get();
         if (s.open && s.context && contextKey(s.context) === contextKey(context)) {
           set({ open: false, fullPreview: false });
         } else {
-          get().openWandz(context);
+          get().openWingz(context);
         }
       },
 
-      closeWandz: () => set({ open: false, fullPreview: false, panelTab: "chat" }),
+      closeWingz: () => set({ open: false, fullPreview: false, panelTab: "chat" }),
 
       setFullPreview: (fullPreview) => set({ fullPreview }),
 
@@ -183,9 +187,25 @@ export const useWandzStore = create<WandzState>()(
             drafts: { ...s.drafts, [key]: "" },
           };
         }),
+
+      setContext: (context) => set({ context }),
+
+      seedThread: (context, messages) => {
+        const key = contextKey(context);
+        set((s) => ({
+          context,
+          threads: {
+            ...s.threads,
+            [key]:
+              messages.length > 0
+                ? messages
+                : s.threads[key] ?? [assistantMsg(greetingFor(context))],
+          },
+        }));
+      },
     }),
     {
-      name: "wingify-wandz",
+      name: "wingify-wingz",
       partialize: (s) => ({
         threads: s.threads,
         drafts: s.drafts,

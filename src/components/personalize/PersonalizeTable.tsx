@@ -32,7 +32,7 @@ import { groupPersonalizeRows } from "../../config/personalizeGrouping";
 import { usePersonalizeTableStore, type RowDensity } from "../../store/personalizeTable";
 import { usePersonalizeRowsStore, useVisiblePersonalizations } from "../../store/personalizeRows";
 import { useActivePersonalizeViewState, usePersonalizeViewsStore } from "../../store/personalizeViews";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
@@ -125,7 +125,7 @@ const MIN_COL_WIDTH = 80;
 const CHECKBOX_COL_WIDTH = 44;
 
 function NameCell({ campaign }: { campaign: Personalization }) {
-  const openWandz = useWandzStore((s) => s.toggleWandz);
+  const openWingz = useWingzStore((s) => s.toggleWingz);
   return (
     <div className="flex items-center gap-2.5">
       <Target className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={campaign.type} />
@@ -144,11 +144,11 @@ function NameCell({ campaign }: { campaign: Personalization }) {
           type="button"
           variant="ghost"
           size="icon"
-          title="Summarise with Wandz"
-          aria-label="Summarise with Wandz"
+          title="Summarise with Wingz"
+          aria-label="Summarise with Wingz"
           onClick={(e) => {
             e.stopPropagation();
-            openWandz({ kind: "general" });
+            openWingz({ kind: "general" });
           }}
           className={ROW_ICON_BUTTON}
         >

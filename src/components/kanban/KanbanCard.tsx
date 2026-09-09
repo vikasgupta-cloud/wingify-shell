@@ -16,7 +16,7 @@ import { daysSince, formatShortDate, relativeTime } from "../../lib/dates";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { useQuickViewStore } from "../../store/quickView";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import StatusBadge, { VitalsIcon } from "../ui/StatusBadge";
 import CreatorAvatar from "../ui/CreatorAvatar";
@@ -139,7 +139,7 @@ export default function KanbanCard({
   const navigate = useNavigate();
   const quickViewOpen = useQuickViewStore((s) => s.openId === campaign.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
-  const openWandz = useWandzStore((s) => s.toggleWandz);
+  const openWingz = useWingzStore((s) => s.toggleWingz);
   const TypeIcon = TYPE_ICONS[campaign.type];
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -196,11 +196,11 @@ export default function KanbanCard({
             type="button"
             variant="ghost"
             size="icon"
-            title="Summarise with Wandz"
-            aria-label="Summarise with Wandz"
+            title="Summarise with Wingz"
+            aria-label="Summarise with Wingz"
             onClick={(e) => {
               stop(e);
-              openWandz({ kind: "campaign", campaignId: campaign.id });
+              openWingz({ kind: "campaign", campaignId: campaign.id });
             }}
             className={CARD_ICON_BUTTON}
           >

@@ -103,7 +103,7 @@ import {
   METRICS_NAV_WIDTH,
   useMetricsNavWidthStore,
 } from "../../store/metricsNavWidth";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { useVisibleCampaigns } from "../../store/rows";
 import DateRangeDropdown, {
   getDateRangePresets,
@@ -1652,7 +1652,7 @@ function MetricHeader({
   onOpenLearnings: () => void;
   onViewVitalsDetails: () => void;
 }) {
-  const openWandzAndAsk = useWandzStore((s) => s.openWandzAndAsk);
+  const openWingzAndAsk = useWingzStore((s) => s.openWingzAndAsk);
   const metricTitleClass =
     "border-b border-dashed border-muted-foreground text-lg font-semibold leading-tight tracking-tight text-foreground";
 
@@ -1727,7 +1727,7 @@ function MetricHeader({
           className="h-9 gap-1.5 rounded-md font-medium"
           aria-label="Campaign summary"
           onClick={() =>
-            openWandzAndAsk(
+            openWingzAndAsk(
               { kind: "campaign", campaignId: campaign.id },
               "Summarise this campaign for me"
             )

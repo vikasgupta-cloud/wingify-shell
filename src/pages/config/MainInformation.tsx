@@ -31,9 +31,9 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useConfigStore } from "../../store/config";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { HYPOTHESES, LABELS, priorityScore, type Hypothesis } from "../../data/hypotheses";
-import AskWandzButton from "./AskWandzButton";
+import AskWingzButton from "./AskWingzButton";
 import SectionTitle from "./SectionTitle";
 
 // A small "?" help icon with a tooltip, matching the field-help affordance.
@@ -165,9 +165,9 @@ function HypothesisCard({
 export default function MainInformation({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
   const patch = useConfigStore((s) => s.patch);
-  const openWandz = useWandzStore((s) => s.openWandz);
-  const askWandz = (sectionLabel: string) =>
-    openWandz({ kind: "section", campaignId: id, sectionLabel });
+  const openWingz = useWingzStore((s) => s.openWingz);
+  const askWingz = (sectionLabel: string) =>
+    openWingz({ kind: "section", campaignId: id, sectionLabel });
   const [labelsOpen, setLabelsOpen] = useState(false);
   const [hypOpen, setHypOpen] = useState(false);
 
@@ -194,7 +194,7 @@ export default function MainInformation({ id }: { id: string }) {
     <section>
       <div className="mb-3 flex items-center gap-1">
         <SectionTitle sectionId="main" className="text-lg" />
-        <AskWandzButton onClick={() => askWandz("Main Information")} />
+        <AskWingzButton onClick={() => askWingz("Main Information")} />
       </div>
 
       <div className="rounded-lg border border-border bg-background p-6">
@@ -296,7 +296,7 @@ export default function MainInformation({ id }: { id: string }) {
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-foreground">Hypothesis</span>
               <HelpHint text="Pick the hypothesis this campaign tests." />
-              <AskWandzButton onClick={() => askWandz("Hypothesis")} />
+              <AskWingzButton onClick={() => askWingz("Hypothesis")} />
             </div>
 
             {selectedHypothesis ? (

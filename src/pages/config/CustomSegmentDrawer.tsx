@@ -40,14 +40,14 @@ import {
 } from "../../config/segments";
 import { findAttribute, findOperator } from "../../config/segmentAttributes";
 
-// Canned prompt suggestions for the (visual-only) Wandz assistant.
-const WANDZ_SUGGESTIONS = [
+// Canned prompt suggestions for the (visual-only) Wingz assistant.
+const WINGZ_SUGGESTIONS = [
   "Only to visitors using mobile device",
   "Target only new visitors to the website",
   "Segment visitors arriving from a specific paid ad campaign",
 ];
 
-function WandzBanner() {
+function WingzBanner() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -59,7 +59,7 @@ function WandzBanner() {
       >
         <span className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Sparkles className="h-4 w-4 text-muted-foreground" />
-          Go faster with Wandz
+          Go faster with Wingz
         </span>
         <ChevronDown
           className={cn(
@@ -71,10 +71,10 @@ function WandzBanner() {
 
       {open && (
         <div className="px-4 pb-4">
-          {/* Ask Wandz input — visual stub, no real assistant call. */}
+          {/* Ask Wingz input — visual stub, no real assistant call. */}
           <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
             <input
-              placeholder="Ask Wandz"
+              placeholder="Ask Wingz"
               className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
             />
             <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -88,7 +88,7 @@ function WandzBanner() {
 
           {/* Suggestion chips — stubs. */}
           <div className="mt-3 grid grid-cols-3 gap-2">
-            {WANDZ_SUGGESTIONS.map((s) => (
+            {WINGZ_SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 type="button"
@@ -327,7 +327,7 @@ export default function CustomSegmentDrawer({
             )}
           </div>
 
-          <WandzBanner />
+          <WingzBanner />
 
           <div className="text-sm text-muted-foreground">All visitors&hellip;</div>
 

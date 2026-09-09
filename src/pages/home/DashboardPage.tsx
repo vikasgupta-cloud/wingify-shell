@@ -11,7 +11,7 @@ import {
   SurveysCard,
   TotalExperiencesCard,
   UntestedHypothesesCard,
-  WandzHero,
+  WingzHero,
 } from "./dashboard/cards";
 import TrialExpiredBanner from "@/components/home/TrialExpiredBanner";
 
@@ -19,7 +19,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 px-12 pb-16 pt-10">
         <TrialExpiredBanner />
-        <WandzHero />
+        <WingzHero />
 
         {/* Metric + Funnel stacked full width */}
         <div className="flex flex-col gap-6">

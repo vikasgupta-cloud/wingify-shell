@@ -29,6 +29,8 @@ import { cn } from "../../lib/utils";
 import { IconVariantOverride } from "../icons/IconLibraryProvider";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
+import ActivityOverviewPopover from "./ActivityOverviewPopover";
+import HelpSupportPopover from "./HelpSupportPopover";
 import WingifyLogoButton from "./WingifyLogoButton";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -494,7 +496,12 @@ export default function ExpandedNav({
     let hoverRow = row;
     if (navDisabled && lockTooltip) {
       hoverRow = withNavLockTooltip(row, lockTooltip, true);
-    } else if (!expanded && !inMore && !hasSections) {
+    } else if (
+      !expanded &&
+      !inMore &&
+      !hasSections &&
+      item.path !== "/activity-timeline"
+    ) {
       hoverRow = item.pinnable ? (
         <HoverCard.Root openDelay={150} closeDelay={150}>
           <HoverCard.Trigger asChild>{row}</HoverCard.Trigger>
@@ -534,6 +541,22 @@ export default function ExpandedNav({
             </Tooltip.Content>
           </Tooltip.Portal>
         </Tooltip.Root>
+      );
+    }
+
+    if (item.path === "/activity-timeline") {
+      return (
+        <ActivityOverviewPopover key={item.path} side="right" align="end">
+          {row}
+        </ActivityOverviewPopover>
+      );
+    }
+
+    if (item.path === "/helpdesk") {
+      return (
+        <HelpSupportPopover key={item.path} side="right" align="end">
+          {row}
+        </HelpSupportPopover>
       );
     }
 

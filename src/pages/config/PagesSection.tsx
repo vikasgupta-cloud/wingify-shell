@@ -35,14 +35,14 @@ import {
   type PageRule,
   type UrlSettings,
 } from "../../store/config";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { PAGE_GROUPS } from "../../config/urlPredicates";
 import {
   ELIGIBILITY_MESSAGE,
   evaluateEligibility,
   type EligibilityResult,
 } from "../../lib/urlEligibility";
-import AskWandzButton from "./AskWandzButton";
+import AskWingzButton from "./AskWingzButton";
 import SectionTitle from "./SectionTitle";
 import PredicatePicker from "./PredicatePicker";
 
@@ -470,7 +470,7 @@ function EligibilityTester({ groups }: { groups: PageGroup[] }) {
 
 export default function PagesSection({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
-  const openWandz = useWandzStore((s) => s.openWandz);
+  const openWingz = useWingzStore((s) => s.openWingz);
   const [testOpen, setTestOpen] = useState(false);
 
   if (!config) return null;
@@ -485,9 +485,9 @@ export default function PagesSection({ id }: { id: string }) {
       <div data-section-heading className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <SectionTitle sectionId="pages" className="text-lg" />
-          <AskWandzButton
+          <AskWingzButton
             onClick={() =>
-              openWandz({ kind: "section", campaignId: id, sectionLabel: "Pages" })
+              openWingz({ kind: "section", campaignId: id, sectionLabel: "Pages" })
             }
           />
         </div>

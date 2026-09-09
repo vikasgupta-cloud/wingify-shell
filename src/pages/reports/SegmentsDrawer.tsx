@@ -470,7 +470,7 @@ function CustomLogicBuilder({
   onNameBlur?: () => void;
   nameError?: string | null;
 }) {
-  const [wandzOpen, setWandzOpen] = useState(false);
+  const [wingzOpen, setWingzOpen] = useState(false);
   const totalConditions = blocks.reduce((n, b) => n + b.conditions.length, 0);
 
   const changeCondition = (blockId: string, condId: string, next: SegmentCondition) =>
@@ -546,28 +546,28 @@ function CustomLogicBuilder({
         <p className="text-sm font-medium text-foreground">All visitors…</p>
         <button
           type="button"
-          onClick={() => setWandzOpen((o) => !o)}
-          aria-expanded={wandzOpen}
+          onClick={() => setWingzOpen((o) => !o)}
+          aria-expanded={wingzOpen}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium transition-colors",
-            wandzOpen
+            wingzOpen
               ? "bg-muted text-foreground"
               : "bg-background text-foreground hover:bg-muted/60"
           )}
         >
           Do it with
           <Sparkles className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-          Wandz AI
+          Wingz AI
         </button>
       </div>
 
-      {wandzOpen ? (
+      {wingzOpen ? (
         <div className="rounded-lg border border-border bg-muted/40 p-4">
           <p className="text-sm font-medium text-foreground">
             Describe the segment you want
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Wandz will turn your prompt into custom logic conditions.
+            Wingz will turn your prompt into custom logic conditions.
           </p>
           <div className="mt-3 flex items-center gap-2">
             <Input

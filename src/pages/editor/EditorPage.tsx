@@ -114,12 +114,23 @@ function codeScopeLabel(
 /**
  * Full-tab visual editor — Global Layout / Default from Figma.
  * Opened from campaign config via Launch Editor.
+ * Also embeddable in Wingz canvas via entityId / variationId / onExit props.
  */
-export default function EditorPage() {
-  const { entityId, variationId } = useParams<{
+export default function EditorPage({
+  entityId: entityIdProp,
+  variationId: variationIdProp,
+  onExit,
+}: {
+  entityId?: string;
+  variationId?: string;
+  onExit?: () => void;
+} = {}) {
+  const params = useParams<{
     entityId: string;
     variationId: string;
   }>();
+  const entityId = entityIdProp ?? params.entityId;
+  const variationId = variationIdProp ?? params.variationId;
 
   const campaigns = useVisibleCampaigns();
   const campaign = campaigns.find((c) => c.id === entityId);
@@ -191,7 +202,7 @@ export default function EditorPage() {
     activeSaveVersionId
   );
   const versionFoldKey = activeSaveVersion?.foldKey ?? "initial";
-  const ai = useEditorAi();
+  const ai = useEditorAi(onExit ? entityId : undefined);
 
   useEffect(() => {
     const previous = document.title;
@@ -200,6 +211,27 @@ export default function EditorPage() {
       document.title = previous;
     };
   }, []);
+
+  // Wingz canvas: open the editor AI / Copilot panel on the shared campaign thread.
+  useEffect(() => {
+    if (!onExit || !entityId) return;
+    setLeftTool(null);
+    setPanels((prev) => {
+      const next = { ...prev };
+      for (const id of PANEL_ORDER) {
+        if (
+          id !== "copilot" &&
+          next[id].open &&
+          next[id].chrome.mode === "docked"
+        ) {
+          next[id] = { ...next[id], open: false };
+        }
+      }
+      next.copilot = { ...next.copilot, open: true };
+      return next;
+    });
+    setActiveTab("copilot");
+  }, [entityId, onExit, setActiveTab, setLeftTool, setPanels]);
 
   const applyScenario = useCallback((id: EditorScenarioId) => {
     const scenario = EDITOR_SCENARIOS.find((s) => s.id === id);
@@ -603,6 +635,7 @@ export default function EditorPage() {
         backHref={
           entityId ? `/web-experiment/c/${entityId}` : "/web-experiment"
         }
+        onBack={onExit}
         showPreviewChrome={editorMode !== "code"}
         mode={editorMode}
         device={device}

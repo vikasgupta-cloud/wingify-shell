@@ -51,9 +51,9 @@ import {
   type ConfigVariation,
   type RedirectMatchType,
 } from "../../store/config";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 import { TRIGGERS, FREQUENCIES } from "../../config/configOptions";
-import AskWandzButton from "./AskWandzButton";
+import AskWingzButton from "./AskWingzButton";
 import SectionTitle from "./SectionTitle";
 import SegmentPicker from "./SegmentPicker";
 import TrafficAllocationViz from "./TrafficAllocationViz";
@@ -967,7 +967,7 @@ export default function VariationsSection({ id }: { id: string }) {
   const config = useConfigStore((s) => s.configs[id]);
   const patch = useConfigStore((s) => s.patch);
   const openWorkflow = useConfigStore((s) => s.openWorkflow);
-  const openWandz = useWandzStore((s) => s.openWandz);
+  const openWingz = useWingzStore((s) => s.openWingz);
 
   if (!config) return null;
 
@@ -1020,9 +1020,9 @@ export default function VariationsSection({ id }: { id: string }) {
       <div data-section-heading className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <SectionTitle sectionId="variations" className="text-lg" />
-          <AskWandzButton
+          <AskWingzButton
             onClick={() =>
-              openWandz({
+              openWingz({
                 kind: "section",
                 campaignId: id,
                 sectionLabel: "Variations and Targets",

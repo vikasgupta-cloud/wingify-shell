@@ -277,21 +277,21 @@ export function EditorCanvas({
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [aiDraft, setAiDraft] = useState("");
-  const [wandzOpen, setWandzOpen] = useState(false);
+  const [wingzOpen, setWingzOpen] = useState(false);
   const aiInputRef = useRef<HTMLInputElement>(null);
 
   modeRef.current = mode;
 
   useEffect(() => {
     setAiDraft("");
-    setWandzOpen(false);
+    setWingzOpen(false);
   }, [selection?.selector]);
 
   useEffect(() => {
-    if (!wandzOpen) return;
+    if (!wingzOpen) return;
     const id = window.requestAnimationFrame(() => aiInputRef.current?.focus());
     return () => window.cancelAnimationFrame(id);
-  }, [wandzOpen]);
+  }, [wingzOpen]);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -335,8 +335,8 @@ export function EditorCanvas({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (wandzOpen) {
-        setWandzOpen(false);
+      if (wingzOpen) {
+        setWingzOpen(false);
         return;
       }
       if (!selection) return;
@@ -348,7 +348,7 @@ export function EditorCanvas({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [wandzOpen, selection, onClearSelection, clearHover]);
+  }, [wingzOpen, selection, onClearSelection, clearHover]);
 
   const onClearSelectionRef = useRef(onClearSelection);
   onClearSelectionRef.current = onClearSelection;
@@ -739,14 +739,14 @@ export function EditorCanvas({
                     size="icon"
                     className={cn(
                       "size-7 rounded-full",
-                      wandzOpen && "bg-muted text-foreground"
+                      wingzOpen && "bg-muted text-foreground"
                     )}
-                    aria-label="Wandz"
-                    aria-pressed={wandzOpen}
-                    title="Wandz"
+                    aria-label="Wingz"
+                    aria-pressed={wingzOpen}
+                    title="Wingz"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setWandzOpen((open) => !open);
+                      setWingzOpen((open) => !open);
                     }}
                   >
                     <EditorIcon src={aiSparkle} size={14} />
@@ -760,7 +760,7 @@ export function EditorCanvas({
                     title="Edit in Edition"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setWandzOpen(false);
+                      setWingzOpen(false);
                       onOpenEdition?.();
                     }}
                   >
@@ -799,7 +799,7 @@ export function EditorCanvas({
                   </Button>
                 </div>
 
-                {wandzOpen && (
+                {wingzOpen && (
                   <div
                     className="relative rounded-xl border border-border bg-background p-3 pt-4 shadow-[0_12px_40px_-12px_rgb(from var(--foreground) r g b / 0.28)]"
                     onClick={(e) => e.stopPropagation()}
@@ -809,10 +809,10 @@ export function EditorCanvas({
                       variant="outline"
                       size="icon"
                       className="absolute -right-2 -top-2 size-7 rounded-full border-border bg-background shadow-sm hover:bg-muted"
-                      aria-label="Close Wandz"
+                      aria-label="Close Wingz"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setWandzOpen(false);
+                        setWingzOpen(false);
                         setAiDraft("");
                       }}
                     >
@@ -828,7 +828,7 @@ export function EditorCanvas({
                         if (!next) return;
                         onAskAi?.(next, selection);
                         setAiDraft("");
-                        setWandzOpen(false);
+                        setWingzOpen(false);
                         showToast("Sent to AI thread");
                       }}
                     >
@@ -899,7 +899,7 @@ export function EditorCanvas({
                           onClick={(e) => {
                             e.stopPropagation();
                             if (id === "more") {
-                              setWandzOpen(false);
+                              setWingzOpen(false);
                               onOpenCopilot?.();
                               return;
                             }
@@ -908,7 +908,7 @@ export function EditorCanvas({
                                 ? "Create variations of this element"
                                 : "Generate content for this element";
                             onAskAi?.(prompt, selection);
-                            setWandzOpen(false);
+                            setWingzOpen(false);
                             showToast("Sent to AI thread");
                           }}
                         >

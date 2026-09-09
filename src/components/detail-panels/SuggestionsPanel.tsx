@@ -54,7 +54,7 @@ function ThinkingState() {
         <Sparkles className="h-4 w-4 animate-pulse text-foreground" aria-hidden />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">Wandz is thinking…</p>
+        <p className="text-sm font-medium text-foreground">Wingz is thinking…</p>
         <p className="max-w-[240px] text-xs text-muted-foreground">
           Reviewing this campaign’s setup, traffic, and decision to draft top
           insights.
@@ -66,14 +66,14 @@ function ThinkingState() {
             key={i}
             className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50"
             style={{
-              animation: "wandz-sug-dot 1.2s ease-in-out infinite",
+              animation: "wingz-sug-dot 1.2s ease-in-out infinite",
               animationDelay: `${i * 0.15}s`,
             }}
           />
         ))}
       </div>
       <style>{`
-        @keyframes wandz-sug-dot {
+        @keyframes wingz-sug-dot {
           0%, 80%, 100% { opacity: .35; transform: translateY(0); }
           40% { opacity: 1; transform: translateY(-2px); }
         }
@@ -177,7 +177,7 @@ export default function SuggestionsPanel({
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center">
         <p className="text-sm font-medium text-foreground">No campaign selected</p>
         <p className="text-xs text-muted-foreground">
-          Open a campaign to see Wandz AI Insights for this test.
+          Open a campaign to see Wingz AI Insights for this test.
         </p>
       </div>
     );
@@ -231,7 +231,7 @@ export default function SuggestionsPanel({
                       No open insights
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Regenerate for a fresh Wandz AI Insights set, or pick a
+                      Regenerate for a fresh Wingz AI Insights set, or pick a
                       question below.
                     </p>
                   </div>

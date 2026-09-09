@@ -16,7 +16,7 @@ import ActivityTimeline from "./ActivityTimeline";
 
 /**
  * Cap the docked panel to the space between its live top edge and the bottom of
- * the scroll viewport — same approach as Wandz / Quick View.
+ * the scroll viewport — same approach as Wingz / Quick View.
  */
 function useViewportCappedMaxHeight(
   rootRef: React.RefObject<HTMLDivElement | null>,

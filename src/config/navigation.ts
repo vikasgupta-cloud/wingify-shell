@@ -168,13 +168,13 @@ export const NAV: NavItem[] = [
       { label: "Account Overview", path: "/home/account-overview", hideCreate: true },
     ]},
   ]},
-  { label: "Wandz", path: "/wandz", icon: Wand2, group: 1, pinnable: true, sections: [
-    { heading: "Assistant", items: [{ label: "Chat", path: "/wandz/chat" }]},
+  { label: "Wingz", path: "/wingz", icon: Wand2, group: 1, pinnable: true, hideCreate: true, sections: [
+    { heading: "Assistant", items: [{ label: "Chat", path: "/wingz/chat", hideCreate: true }]},
     { heading: "Automation", items: [
-      { label: "Agents", path: "/wandz/agents" },
-      { label: "Workflows", path: "/wandz/workflows" },
+      { label: "Agents", path: "/wingz/agents", hideCreate: true },
+      { label: "Workflows", path: "/wingz/workflows", hideCreate: true },
     ]},
-    { heading: "Discover", items: [{ label: "What's New", path: "/wandz/whats-new" }]},
+    { heading: "Discover", items: [{ label: "What's New", path: "/wingz/whats-new", hideCreate: true }]},
   ]},
   { label: "Experimentation", path: "/experimentation", icon: FlaskConical, group: 2, pinnable: true, sections: [
     { items: [
@@ -549,14 +549,60 @@ if (profileItem) {
   profileItem.sections = profileFlyoutSections;
 }
 
+/** JD flyout destinations for the drill-in mode breadcrumb (excludes Logout). */
+export type JdSwitcherItem = {
+  id: string;
+  label: string;
+  path: string;
+  icon?: LucideIcon;
+};
+
+/** Same order/grouping as the Profile flyout, minus Logout. */
+export function jdSwitcherGroups(): JdSwitcherItem[][] {
+  return profileFlyoutSections
+    .map((section) =>
+      section.items
+        .filter((item) => item.path !== LOGOUT_PATH)
+        .map((item) => {
+          const mode = PROFILE_MODES.find((m) => m.path === item.path);
+          return {
+            id: item.path,
+            label: item.label,
+            path: mode ? firstModePath(mode) : item.path,
+            icon: item.icon,
+          };
+        })
+    )
+    .filter((group) => group.length > 0);
+}
+
+/** Flat list of JD switcher destinations. */
+export function jdSwitcherItems(): JdSwitcherItem[] {
+  return jdSwitcherGroups().flat();
+}
+
+/** Active JD switcher item for the current path (Profile wins over Settings). */
+export function resolveJdSwitcherItem(pathname: string): JdSwitcherItem | undefined {
+  const items = jdSwitcherItems();
+  if (
+    pathname === PROFILE_DETAILS_PATH ||
+    pathname.startsWith(`${PROFILE_DETAILS_PATH}/`)
+  ) {
+    return items.find((item) => item.id === PROFILE_DETAILS_PATH);
+  }
+  const mode = findProfileMode(pathname);
+  if (!mode) return undefined;
+  return items.find((item) => item.id === mode.path);
+}
+
 export const PINNABLE_PATHS = NAV.filter((i) => i.pinnable).map((i) => i.path);
 
 /**
- * Products shown in the TopBar breadcrumb switcher (Wandz + group-2 products).
+ * Products shown in the TopBar breadcrumb switcher (Wingz + group-2 products).
  * Order is intentional — matches the product switcher list, not rail grouping.
  */
 export const PRODUCT_SWITCHER_PATHS = [
-  "/wandz",
+  "/wingz",
   "/experimentation",
   "/personalize",
   "/feature-management",

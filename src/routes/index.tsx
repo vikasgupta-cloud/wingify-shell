@@ -44,6 +44,8 @@ import CatalogPage from "../pages/commerce/CatalogPage";
 import RecommendationPage from "../pages/commerce/RecommendationPage";
 import RecommendationDetailPage from "../pages/commerce/RecommendationDetailPage";
 import RecommendationReportPage from "../pages/commerce/RecommendationReportPage";
+import WingzChatShell from "../components/wingz/WingzChatShell";
+import WingzChatPage from "../pages/wingz/WingzChatPage";
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -103,6 +105,8 @@ const leafElement = (leafPath: string) => {
 for (const item of NAV) {
   // Profile flyout destinations live in DrillInShell via PROFILE_MODES — not AppLayout.
   if (item.path === "/profile") continue;
+  // Wingz full-page chat uses WingzChatShell (edge-reveal nav) — not AppLayout.
+  if (item.path === "/wingz") continue;
 
   if (item.sections) {
     const leaves = flattenNavLeaves(item.sections);
@@ -218,6 +222,21 @@ export const router = createBrowserRouter([
       },
       ...detailRoutes,
       ...profileModeRoutes,
+      // Wingz — immersive chat shell (no persistent main rail; edge-reveal like campaigns).
+      {
+        path: "/wingz",
+        element: <WingzChatShell />,
+        children: [
+          { index: true, element: <Navigate to="/wingz/chat" replace /> },
+          { path: "chat", element: <WingzChatPage /> },
+          { path: "agents", element: <PlaceholderPage /> },
+          { path: "workflows", element: <PlaceholderPage /> },
+          { path: "whats-new", element: <PlaceholderPage /> },
+        ],
+      },
+      // Legacy Wandz URLs → Wingz.
+      { path: "/wandz", element: <Navigate to="/wingz/chat" replace /> },
+      { path: "/wandz/*", element: <Navigate to="/wingz/chat" replace /> },
       {
         element: <AppLayout />,
         children: [

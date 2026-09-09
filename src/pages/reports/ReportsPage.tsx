@@ -38,11 +38,11 @@ import {
 import { formatNumber } from "./reportMetrics";
 import ResultsTab from "./ResultsTab";
 import VitalsTab from "./VitalsTab";
-import WandzPanel from "../../components/wandz/WandzPanel";
+import WingzPanel from "../../components/wingz/WingzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
 import ReportsEmptyState from "../../components/reports/ReportsEmptyState";
 import { useDetailPanelsStore } from "../../store/detailPanels";
-import { useWandzStore } from "../../store/wandz";
+import { useWingzStore } from "../../store/wingz";
 
 // ---------------------------------------------------------------------------
 // Overview UI — numbers always come from ReportDataProvider (one reactive source).
@@ -694,8 +694,8 @@ function ReportsChrome({
   tabsBarHeight: string;
 }) {
   const { campaign, overview } = useReportData();
-  const wandzOpen = useWandzStore((s) => s.open);
-  const wandzFullPreview = useWandzStore((s) => s.fullPreview);
+  const wingzOpen = useWingzStore((s) => s.open);
+  const wingzFullPreview = useWingzStore((s) => s.fullPreview);
   const detailPanelOpen = useDetailPanelsStore((s) => s.openId) !== null;
 
   return (
@@ -769,10 +769,10 @@ function ReportsChrome({
               </TabsContent>
             </div>
           )}
-          {wandzOpen && wandzFullPreview ? <WandzPanel /> : null}
-          {wandzOpen && !wandzFullPreview ? (
+          {wingzOpen && wingzFullPreview ? <WingzPanel /> : null}
+          {wingzOpen && !wingzFullPreview ? (
             <div className="relative z-30 flex h-full min-h-0 shrink-0 flex-col py-4 pl-2 pr-4">
-              <WandzPanel fillHeight className="min-h-0" />
+              <WingzPanel fillHeight className="min-h-0" />
             </div>
           ) : null}
           {detailPanelOpen ? (
