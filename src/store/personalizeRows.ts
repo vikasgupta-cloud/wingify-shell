@@ -11,15 +11,18 @@ type PersonalizeRowsState = {
   archivedIds: string[];
   deletedIds: string[];
   statusOverrides: Record<string, CampaignStatus>;
+  nameOverrides: Record<string, string>;
   archive: (ids: string[]) => void;
   remove: (ids: string[]) => void;
   setStatus: (id: string, status: CampaignStatus) => void;
+  rename: (id: string, name: string) => void;
 };
 
 export const usePersonalizeRowsStore = create<PersonalizeRowsState>((set) => ({
   archivedIds: [],
   deletedIds: [],
   statusOverrides: {},
+  nameOverrides: {},
   archive: (ids) =>
     set((s) => ({
       archivedIds: [...new Set([...s.archivedIds, ...ids])],
@@ -32,14 +35,21 @@ export const usePersonalizeRowsStore = create<PersonalizeRowsState>((set) => ({
     set((s) => ({
       statusOverrides: { ...s.statusOverrides, [id]: status },
     })),
+  rename: (id, name) =>
+    set((s) => ({
+      nameOverrides: { ...s.nameOverrides, [id]: name },
+    })),
 }));
 
 export function useVisiblePersonalizations(): Personalization[] {
   const archivedIds = usePersonalizeRowsStore((s) => s.archivedIds);
   const deletedIds = usePersonalizeRowsStore((s) => s.deletedIds);
   const statusOverrides = usePersonalizeRowsStore((s) => s.statusOverrides);
+  const nameOverrides = usePersonalizeRowsStore((s) => s.nameOverrides);
   const hidden = new Set([...archivedIds, ...deletedIds]);
-  return PERSONALIZATIONS.filter((c) => !hidden.has(c.id)).map((c) =>
-    statusOverrides[c.id] ? { ...c, status: statusOverrides[c.id] } : c
-  );
+  return PERSONALIZATIONS.filter((c) => !hidden.has(c.id)).map((c) => ({
+    ...c,
+    ...(statusOverrides[c.id] ? { status: statusOverrides[c.id] } : {}),
+    ...(nameOverrides[c.id] ? { name: nameOverrides[c.id] } : {}),
+  }));
 }

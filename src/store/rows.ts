@@ -14,6 +14,7 @@ type RowsState = {
   archivedIds: string[];
   deletedIds: string[];
   statusOverrides: Record<string, CampaignStatus>;
+  nameOverrides: Record<string, string>;
   added: Campaign[];
   archive: (ids: string[]) => void;
   remove: (ids: string[]) => void;
@@ -53,6 +54,7 @@ export const useRowsStore = create<RowsState>((set, get) => ({
   archivedIds: [],
   deletedIds: [],
   statusOverrides: {},
+  nameOverrides: {},
   added: [],
   archive: (ids) =>
     set((s) => ({
@@ -127,18 +129,34 @@ export const useRowsStore = create<RowsState>((set, get) => ({
     return id;
   },
   updateCampaign: (id, partial) =>
-    set((s) => ({
-      added: s.added.map((c) => (c.id === id ? { ...c, ...partial } : c)),
-    })),
+    set((s) => {
+      const inAdded = s.added.some((c) => c.id === id);
+      if (inAdded) {
+        return {
+          added: s.added.map((c) => (c.id === id ? { ...c, ...partial } : c)),
+        };
+      }
+      const next: Partial<RowsState> = {};
+      if (partial.name != null) {
+        next.nameOverrides = { ...s.nameOverrides, [id]: partial.name };
+      }
+      // Seed rows don't persist URL overrides yet — name is the header edit target.
+      return next;
+    }),
 }));
 
 export function useVisibleCampaigns(): Campaign[] {
   const archivedIds = useRowsStore((s) => s.archivedIds);
   const deletedIds = useRowsStore((s) => s.deletedIds);
   const statusOverrides = useRowsStore((s) => s.statusOverrides);
+  const nameOverrides = useRowsStore((s) => s.nameOverrides);
   const added = useRowsStore((s) => s.added);
   const hidden = new Set([...archivedIds, ...deletedIds]);
   return [...CAMPAIGNS, ...added]
     .filter((c) => !hidden.has(c.id))
-    .map((c) => (statusOverrides[c.id] ? { ...c, status: statusOverrides[c.id] } : c));
+    .map((c) => ({
+      ...c,
+      ...(statusOverrides[c.id] ? { status: statusOverrides[c.id] } : {}),
+      ...(nameOverrides[c.id] ? { name: nameOverrides[c.id] } : {}),
+    }));
 }

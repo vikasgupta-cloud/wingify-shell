@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -15,6 +15,7 @@ import {
   ListFilter,
   MoreHorizontal,
   PenLine,
+  Pencil,
   Printer,
   Rows3,
   Save,
@@ -26,6 +27,8 @@ import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
 import { mainNavCrumbPath, UTILITY_RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +58,7 @@ import {
   useVisiblePersonalizations,
 } from "../../store/personalizeRows";
 import {
+  useRecommendationRowsStore,
   useVisibleRecommendations,
 } from "../../store/recommendationRows";
 import {
@@ -289,6 +293,71 @@ const OVERLAY_CLOSE_GRACE_MS = 250;
 /** Must match the [transition-duration:180ms] classes on the overlay scrim and panel. */
 const OVERLAY_ANIM_MS = 180;
 
+/** Neutral ID badge with copy — copies the number only (no #).
+ *  Copy control is a span (not a button) so it can sit inside the switcher trigger. */
+function CampaignIdBadge({
+  id,
+  className,
+}: {
+  id: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyId = async (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard may be blocked */
+    }
+  };
+
+  return (
+    <Badge
+      tone="neutral"
+      fill="light"
+      size="sm"
+      className={cn("shrink-0 gap-1 font-normal tabular-nums", className)}
+    >
+      <span>#{id}</span>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              role="button"
+              tabIndex={0}
+              data-copy-id=""
+              aria-label={copied ? "Copied" : "Copy campaign number"}
+              onClick={copyId}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  void copyId(e as unknown as MouseEvent);
+                }
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="inline-flex size-3.5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {copied ? (
+                <Check className="size-2.5" strokeWidth={2.25} aria-hidden />
+              ) : (
+                <Copy className="size-2.5" strokeWidth={1.75} aria-hidden />
+              )}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {copied ? "Copied" : "Copy number"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </Badge>
+  );
+}
+
 type DetailShellProps = {
   /** The leaf page path this detail surface belongs to, e.g. "/feature-management/holdouts". Defaults to the URL before "/c/". */
   basePath?: string;
@@ -329,12 +398,18 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const recommendations = useVisibleRecommendations();
   const webArchive = useRowsStore((s) => s.archive);
   const webRemove = useRowsStore((s) => s.remove);
+  const updateCampaign = useRowsStore((s) => s.updateCampaign);
   const persArchive = usePersonalizeRowsStore((s) => s.archive);
   const persRemove = usePersonalizeRowsStore((s) => s.remove);
   const persSetStatus = usePersonalizeRowsStore((s) => s.setStatus);
+  const persRename = usePersonalizeRowsStore((s) => s.rename);
+  const recUpdate = useRecommendationRowsStore((s) => s.update);
   const [activeFilter, setActiveFilter] = useState("All");
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [entitySearch, setEntitySearch] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const productRows = isPersonalize
     ? personalizations
@@ -368,6 +443,37 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const selected = realData
     ? campaign && { id: campaign.id, name: campaign.name }
     : dummyEntities.find((e) => e.id === entityId) ?? dummyEntities[0];
+
+  const startRename = () => {
+    if (!selected || !realData) return;
+    setDraftName(selected.name);
+    setRenaming(true);
+    setEntityOpen(false);
+    requestAnimationFrame(() => nameInputRef.current?.select());
+  };
+
+  const commitRename = () => {
+    if (!selected || !realData) {
+      setRenaming(false);
+      return;
+    }
+    const next = draftName.trim();
+    setRenaming(false);
+    if (!next || next === selected.name) return;
+    if (isPersonalize) persRename(selected.id, next);
+    else if (isRecommendation) recUpdate(selected.id, { name: next });
+    else updateCampaign(selected.id, { name: next });
+  };
+
+  const cancelRename = () => {
+    setRenaming(false);
+    setDraftName(selected?.name ?? "");
+  };
+
+  useEffect(() => {
+    setRenaming(false);
+    setDraftName(selected?.name ?? "");
+  }, [selected?.id, selected?.name]);
 
   const cancelOpen = () => window.clearTimeout(openTimer.current);
   const cancelScheduledClose = () => window.clearTimeout(closeTimer.current);
@@ -507,25 +613,75 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
             <Popover.Root
               open={entityOpen}
               onOpenChange={(o) => {
+                if (renaming) return;
                 setEntityOpen(o);
                 if (!o) setFilterMenuOpen(false);
               }}
             >
-              <Popover.Trigger asChild>
-                <button
-                  type="button"
-                  title={selected?.name ?? "Untitled"}
-                  className="flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                >
-                  <span className="min-w-0 truncate">
-                    {selected?.name ?? "Untitled"}
-                  </span>
-                  <span className="shrink-0 font-normal text-muted-foreground">
-                    #{selected?.id}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                </button>
-              </Popover.Trigger>
+              <div className="group/entity flex min-w-0 items-center gap-0.5">
+                {renaming && realData ? (
+                  <Input
+                    ref={nameInputRef}
+                    value={draftName}
+                    onChange={(e) => setDraftName(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitRename();
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        cancelRename();
+                      }
+                    }}
+                    aria-label="Campaign name"
+                    className="h-8 min-w-[14rem] max-w-[28rem] px-2 text-sm font-semibold shadow-none"
+                  />
+                ) : (
+                  <>
+                    {/* One chip: name + ID badge + chevron. Click opens switcher;
+                        copy icon only copies; rename via hover pencil or menu. */}
+                    <Popover.Trigger asChild>
+                      <button
+                        type="button"
+                        title={selected?.name ?? "Untitled"}
+                        className="flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                      >
+                        <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+                          {selected?.name ?? "Untitled"}
+                        </span>
+                        {selected?.id != null && (
+                          <CampaignIdBadge id={String(selected.id)} />
+                        )}
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </button>
+                    </Popover.Trigger>
+
+                    {realData && (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Rename campaign"
+                              onClick={startRename}
+                              className="h-7 w-7 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover/entity:opacity-100 focus-visible:opacity-100"
+                            >
+                              <Pencil
+                                className="h-3.5 w-3.5"
+                                strokeWidth={1.75}
+                              />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom">Rename</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </>
+                )}
+              </div>
               <Popover.Portal>
                 <Popover.Content
                   align="start"
@@ -586,39 +742,60 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                       </div>
                     )}
                   </div>
+                  {realData && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEntityOpen(false);
+                        startRename();
+                      }}
+                      className="mb-1 flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Pencil
+                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                        strokeWidth={1.75}
+                      />
+                      Rename current campaign
+                    </button>
+                  )}
                   <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
                     {entities.map((entity) => (
-                      <button
+                      <div
                         key={entity.id}
-                        type="button"
-                        onClick={() => {
-                          // Real campaigns land on Reports or Configuration by status;
-                          // dummy sections keep their plain detail path.
-                          const target = isPersonalize
-                            ? personalizeLandingPath({ id: entity.id })
-                            : isRecommendation
-                              ? recommendationLandingPath({ id: entity.id })
-                              : realData
-                                ? campaignLandingPath({
-                                    id: entity.id,
-                                    status:
-                                      (productRows.find((c) => c.id === entity.id)
-                                        ?.status as CampaignStatus) ?? "Draft",
-                                  })
-                                : `${basePath}/c/${entity.id}`;
-                          navigate(target);
-                          setEntityOpen(false);
-                        }}
                         className={cn(
-                          "flex items-baseline gap-2 rounded-sm px-2.5 py-2 text-left transition-colors hover:bg-muted",
-                          entity.id === selected?.id && "bg-accent font-medium"
+                          "flex items-center gap-2 rounded-sm px-2.5 py-1.5 transition-colors hover:bg-muted",
+                          entity.id === selected?.id && "bg-accent"
                         )}
                       >
-                        <span className="truncate">{entity.name}</span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          #{entity.id}
-                        </span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Real campaigns land on Reports or Configuration by status;
+                            // dummy sections keep their plain detail path.
+                            const target = isPersonalize
+                              ? personalizeLandingPath({ id: entity.id })
+                              : isRecommendation
+                                ? recommendationLandingPath({ id: entity.id })
+                                : realData
+                                  ? campaignLandingPath({
+                                      id: entity.id,
+                                      status:
+                                        (productRows.find((c) => c.id === entity.id)
+                                          ?.status as CampaignStatus) ?? "Draft",
+                                    })
+                                  : `${basePath}/c/${entity.id}`;
+                            navigate(target);
+                            setEntityOpen(false);
+                          }}
+                          className={cn(
+                            "min-w-0 flex-1 truncate text-left text-sm",
+                            entity.id === selected?.id && "font-medium"
+                          )}
+                        >
+                          {entity.name}
+                        </button>
+                        <CampaignIdBadge id={String(entity.id)} />
+                      </div>
                     ))}
                   </div>
                 </Popover.Content>

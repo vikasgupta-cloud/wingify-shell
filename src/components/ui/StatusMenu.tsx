@@ -52,7 +52,7 @@ export default function StatusMenu({
           size="sm"
           disabled
           aria-label={`Status ${campaign.status}`}
-          className={cn("disabled:opacity-100 w-[140px]", STATUS_TRIGGER[campaign.status])}
+          className={cn("disabled:opacity-100 w-auto", STATUS_TRIGGER[campaign.status])}
         >
           {campaign.status}
         </Button>
@@ -76,7 +76,7 @@ export default function StatusMenu({
             size="sm"
             onClick={stop}
             aria-label={`Change status from ${campaign.status}`}
-            className={cn("group w-[140px] hover:text-white", STATUS_TRIGGER[campaign.status])}
+            className={cn("group w-auto hover:text-white", STATUS_TRIGGER[campaign.status])}
           >
             {campaign.status}
             <ChevronDown className="h-3 w-3 opacity-70 transition-transform duration-150 group-data-[state=open]:rotate-180" />
