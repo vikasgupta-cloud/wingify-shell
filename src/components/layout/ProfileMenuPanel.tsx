@@ -1,4 +1,7 @@
+// @summary JD avatar flyout: destinations, theme, switch-to-old-nav trigger, Logout.
+// Feedback modal mounts in ExpandedNav (not here) so closing the flyout does not unmount it.
 import { NavLink } from "react-router-dom";
+import { History } from "@/components/icons/protoLucide";
 import {
   CURRENT_USER,
   LOGOUT_PATH,
@@ -18,9 +21,11 @@ const PANEL_WIDTH = 280;
 export default function ProfileMenuPanel({
   item,
   onRequestClose,
+  onSwitchToOldNav,
 }: {
   item: NavItem;
   onRequestClose?: () => void;
+  onSwitchToOldNav?: () => void;
 }) {
   if (!item.sections) return null;
 
@@ -37,16 +42,22 @@ export default function ProfileMenuPanel({
   const logoutSection = sections.find((section) =>
     section.items.some((leaf) => leaf.path === LOGOUT_PATH)
   );
+  const beforeLogout =
+    logoutSection?.items.filter((leaf) => leaf.path !== LOGOUT_PATH) ?? [];
+  const logoutLeaf = logoutSection?.items.find(
+    (leaf) => leaf.path === LOGOUT_PATH
+  );
+  const LogoutIcon = logoutLeaf?.icon;
 
   return (
     <nav
-      className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-lg"
+      className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg"
       style={{ width: PANEL_WIDTH }}
     >
       <NavLink
         to={PROFILE_DETAILS_PATH}
         onClick={() => onRequestClose?.()}
-        className="flex items-center gap-3 border-b border-border bg-muted/40 px-4 py-3.5 transition-colors hover:bg-muted"
+        className="flex items-center gap-3 rounded-md bg-muted/40 px-3 py-3 transition-colors hover:bg-muted"
       >
         <ProfileAvatar initials={CURRENT_USER.initials} size="lg" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -59,67 +70,86 @@ export default function ProfileMenuPanel({
         </span>
       </NavLink>
 
-      {mainSections.map((section, i) => (
-        <div key={section.heading ?? i} className="border-t border-border">
-          {section.items.map((leaf) => {
-            const Icon = leaf.icon;
-            return (
-              <NavLink
-                key={leaf.path}
-                to={leaf.path}
-                onClick={() => onRequestClose?.()}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-muted",
-                    isActive && "bg-accent font-medium"
-                  )
-                }
-              >
-                {Icon && (
-                  <Icon
-                    className="h-4 w-4 shrink-0 text-muted-foreground"
-                    strokeWidth={1.75}
-                  />
-                )}
-                <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
-              </NavLink>
-            );
-          })}
-        </div>
-      ))}
+      {mainSections.flatMap((section) =>
+        section.items.map((leaf) => {
+          const Icon = leaf.icon;
+          return (
+            <NavLink
+              key={leaf.path}
+              to={leaf.path}
+              onClick={() => onRequestClose?.()}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted",
+                  isActive && "bg-accent font-medium"
+                )
+              }
+            >
+              {Icon && (
+                <Icon
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
+              )}
+              <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+            </NavLink>
+          );
+        })
+      )}
 
-      <div className="border-t border-border">
-        <ColorModeToggle />
-      </div>
+      <ColorModeToggle className="rounded-md px-3" />
 
-      {logoutSection ? (
-        <div className="border-t border-border">
-          {logoutSection.items.map((leaf) => {
-            const Icon = leaf.icon;
-            return (
-              <div
-                key={leaf.path}
-                className={
-                  leaf.path === LOGOUT_PATH ? "border-t border-border" : undefined
-                }
-              >
-                <NavLink
-                  to={leaf.path}
-                  onClick={() => onRequestClose?.()}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-                >
-                  {Icon && (
-                    <Icon
-                      className="h-4 w-4 shrink-0 text-muted-foreground"
-                      strokeWidth={1.75}
-                    />
-                  )}
-                  <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
-                </NavLink>
-              </div>
-            );
-          })}
-        </div>
+      {beforeLogout.map((leaf) => {
+        const Icon = leaf.icon;
+        return (
+          <NavLink
+            key={leaf.path}
+            to={leaf.path}
+            onClick={() => onRequestClose?.()}
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+          >
+            {Icon && (
+              <Icon
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+            )}
+            <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+          </NavLink>
+        );
+      })}
+
+      <button
+        type="button"
+        onClick={() => {
+          onRequestClose?.();
+          onSwitchToOldNav?.();
+        }}
+        className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
+      >
+        <History
+          className="h-4 w-4 shrink-0 text-muted-foreground"
+          strokeWidth={1.75}
+        />
+        <span className="min-w-0 flex-1 truncate">
+          Switch to old Navigation
+        </span>
+      </button>
+
+      {logoutLeaf ? (
+        <NavLink
+          to={logoutLeaf.path}
+          onClick={() => onRequestClose?.()}
+          className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          {LogoutIcon && (
+            <LogoutIcon
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          )}
+          <span className="min-w-0 flex-1 truncate">{logoutLeaf.label}</span>
+        </NavLink>
       ) : null}
     </nav>
   );

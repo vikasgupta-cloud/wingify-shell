@@ -29,6 +29,7 @@ import { cn } from "../../lib/utils";
 import { IconVariantOverride } from "../icons/IconLibraryProvider";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
+import OldNavFeedbackDialog from "./OldNavFeedbackDialog";
 import ActivityOverviewPopover from "./ActivityOverviewPopover";
 import HelpSupportPopover from "./HelpSupportPopover";
 import WingifyLogoButton from "./WingifyLogoButton";
@@ -132,6 +133,7 @@ export default function ExpandedNav({
   const [flyout, setFlyout] = useState<{ path: string; top: number } | null>(
     null
   );
+  const [oldNavFeedbackOpen, setOldNavFeedbackOpen] = useState(false);
   const closeTimer = useRef<number | undefined>(undefined);
   const flyoutRef = useRef<HTMLDivElement>(null);
   const [moreFlyout, setMoreFlyout] = useState<{ top: number } | null>(null);
@@ -958,6 +960,7 @@ export default function ExpandedNav({
               <ProfileMenuPanel
                 item={flyoutItem}
                 onRequestClose={() => setFlyout(null)}
+                onSwitchToOldNav={() => setOldNavFeedbackOpen(true)}
               />
             ) : (
               <SubNavPanel
@@ -1063,6 +1066,10 @@ export default function ExpandedNav({
           </div>
         )}
       </div>
+      <OldNavFeedbackDialog
+        open={oldNavFeedbackOpen}
+        onOpenChange={setOldNavFeedbackOpen}
+      />
     </Tooltip.Provider>
   );
 }
