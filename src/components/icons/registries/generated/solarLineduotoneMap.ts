@@ -18,6 +18,7 @@ export const SOLAR_LINEDUOTONE_MAP = {
   "ArrowUpRight": "QuestionCircleLinear",
   "Award": "CupLineDuotone",
   "BarChart3": "ChartLineDuotone",
+  "Bell": "BellLineDuotone",
   "Blocks": "BoxLineDuotone",
   "Bold": "TextBoldLineDuotone",
   "Bookmark": "BookmarkLineDuotone",

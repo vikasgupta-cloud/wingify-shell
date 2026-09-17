@@ -21,6 +21,7 @@ export const ArrowUpLeft = (props: any) => <AppIcon name="ArrowUpLeft" {...props
 export const ArrowUpRight = (props: any) => <AppIcon name="ArrowUpRight" {...props} />;
 export const Award = (props: any) => <AppIcon name="Award" {...props} />;
 export const BarChart3 = (props: any) => <AppIcon name="BarChart3" {...props} />;
+export const Bell = (props: any) => <AppIcon name="Bell" {...props} />;
 export const Bold = (props: any) => <AppIcon name="Bold" {...props} />;
 export const BookOpen = (props: any) => <AppIcon name="BookOpen" {...props} />;
 export const Bookmark = (props: any) => <AppIcon name="Bookmark" {...props} />;

@@ -18,6 +18,7 @@ export const FLUENT_FILLED_MAP = {
   "ArrowUpRight": "ArrowUpRight24Filled",
   "Award": "Trophy24Filled",
   "BarChart3": "DataBarVertical24Filled",
+  "Bell": "QuestionCircle24Regular",
   "Blocks": "Cube24Filled",
   "Bold": "TextBold24Filled",
   "Bookmark": "Bookmark24Filled",

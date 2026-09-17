@@ -18,6 +18,7 @@ export const REMIX_FILL_MAP = {
   "ArrowUpRight": "RiQuestionFill",
   "Award": "RiAwardFill",
   "BarChart3": "RiBarChartFill",
+  "Bell": "RiBellFill",
   "Blocks": "RiQuestionFill",
   "Bold": "RiQuestionFill",
   "Bookmark": "RiBookmarkFill",

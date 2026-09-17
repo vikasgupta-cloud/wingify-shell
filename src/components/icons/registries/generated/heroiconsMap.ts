@@ -18,6 +18,7 @@ export const HEROICONS_MAP = {
   "ArrowUpRight": "ArrowUpRightIcon",
   "Award": "TrophyIcon",
   "BarChart3": "ChartBarIcon",
+  "Bell": "BellIcon",
   "Blocks": "CubeIcon",
   "Bold": "BoldIcon",
   "Bookmark": "BookmarkIcon",

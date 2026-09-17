@@ -18,6 +18,7 @@ export const MATERIAL_SHARP_MAP = {
   "ArrowUpRight": "NorthEastSharp",
   "Award": "EmojiEventsSharp",
   "BarChart3": "BarChartSharp",
+  "Bell": "NotificationsSharp",
   "Blocks": "WidgetsSharp",
   "Bold": "FormatBoldSharp",
   "Bookmark": "BookmarkSharp",

@@ -433,16 +433,26 @@ export function loadIconRegistry(
       promise = loadPhosphorRegistry("regular");
   }
 
-  promise = promise.catch((err) => {
-    console.error(
-      `[wingify icons] Failed to load ${libraryId}:${variant}`,
-      err
-    );
-    return {};
-  });
+  // Never permanently cache a failed/empty pack — a transient HMR race
+  // used to leave every AppIcon stuck on the HelpCircle fallback.
+  const tracked = promise
+    .then((registry) => {
+      if (!registry || Object.keys(registry).length === 0) {
+        cache.delete(cacheKey);
+      }
+      return registry;
+    })
+    .catch((err) => {
+      cache.delete(cacheKey);
+      console.error(
+        `[wingify icons] Failed to load ${libraryId}:${variant}`,
+        err
+      );
+      return {};
+    });
 
-  cache.set(cacheKey, promise);
-  return promise;
+  cache.set(cacheKey, tracked);
+  return tracked;
 }
 
 export function registryCacheKey(

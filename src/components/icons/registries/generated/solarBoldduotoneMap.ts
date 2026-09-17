@@ -18,6 +18,7 @@ export const SOLAR_BOLDDUOTONE_MAP = {
   "ArrowUpRight": "QuestionCircleLinear",
   "Award": "CupBoldDuotone",
   "BarChart3": "ChartBoldDuotone",
+  "Bell": "BellBoldDuotone",
   "Blocks": "BoxBoldDuotone",
   "Bold": "TextBoldBoldDuotone",
   "Bookmark": "BookmarkBoldDuotone",

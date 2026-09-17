@@ -18,6 +18,7 @@ export const RADIX_MAP = {
   "ArrowUpRight": "QuestionMarkCircledIcon",
   "Award": "QuestionMarkCircledIcon",
   "BarChart3": "BarChartIcon",
+  "Bell": "BellIcon",
   "Blocks": "CubeIcon",
   "Bold": "QuestionMarkCircledIcon",
   "Bookmark": "BookmarkIcon",

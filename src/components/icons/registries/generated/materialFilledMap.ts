@@ -18,6 +18,7 @@ export const MATERIAL_FILLED_MAP = {
   "ArrowUpRight": "NorthEast",
   "Award": "EmojiEvents",
   "BarChart3": "BarChart",
+  "Bell": "Notifications",
   "Blocks": "Widgets",
   "Bold": "FormatBold",
   "Bookmark": "Bookmark",

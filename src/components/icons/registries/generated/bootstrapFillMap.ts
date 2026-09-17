@@ -18,6 +18,7 @@ export const BOOTSTRAP_FILL_MAP = {
   "ArrowUpRight": "ArrowUpRight",
   "Award": "TrophyFill",
   "BarChart3": "BarChartFill",
+  "Bell": "BellFill",
   "Blocks": "Boxes",
   "Bold": "TypeBold",
   "Bookmark": "BookmarkFill",

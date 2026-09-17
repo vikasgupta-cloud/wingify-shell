@@ -18,6 +18,7 @@ export const TABLER_OUTLINE_MAP = {
   "ArrowUpRight": "IconArrowUpRight",
   "Award": "IconAward",
   "BarChart3": "IconChartBar",
+  "Bell": "IconBell",
   "Blocks": "IconBlocks",
   "Bold": "IconBold",
   "Bookmark": "IconBookmark",

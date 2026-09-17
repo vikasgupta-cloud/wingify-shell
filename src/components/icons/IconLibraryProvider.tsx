@@ -41,20 +41,34 @@ export function IconLibraryProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    // Keep current glyphs visible while the next pack loads — clearing
-    // ready caused blank rails when a render loop interrupted the load.
-    loadIconRegistry(libraryId, variant)
-      .then((next) => {
-        if (cancelled) return;
-        setRegistry(next);
-        setReady(true);
-      })
-      .catch((err) => {
-        console.error("[wingify icons] registry load failed", err);
-        if (cancelled) return;
-        setRegistry({});
-        setReady(true);
-      });
+    let attempts = 0;
+
+    const load = () => {
+      attempts += 1;
+      loadIconRegistry(libraryId, variant)
+        .then((next) => {
+          if (cancelled) return;
+          // Retry once if a transient HMR race returned an empty pack.
+          if (Object.keys(next).length === 0 && attempts < 3) {
+            window.setTimeout(load, 50 * attempts);
+            return;
+          }
+          setRegistry(next);
+          setReady(true);
+        })
+        .catch((err) => {
+          console.error("[wingify icons] registry load failed", err);
+          if (cancelled) return;
+          if (attempts < 3) {
+            window.setTimeout(load, 50 * attempts);
+            return;
+          }
+          setRegistry({});
+          setReady(true);
+        });
+    };
+
+    load();
 
     return () => {
       cancelled = true;

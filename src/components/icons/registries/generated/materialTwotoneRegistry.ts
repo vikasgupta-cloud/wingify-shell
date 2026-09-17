@@ -81,6 +81,7 @@ import MoreHorizTwoTone from "@mui/icons-material/MoreHorizTwoTone";
 import MoreVertTwoTone from "@mui/icons-material/MoreVertTwoTone";
 import NorthEastTwoTone from "@mui/icons-material/NorthEastTwoTone";
 import NorthWestTwoTone from "@mui/icons-material/NorthWestTwoTone";
+import NotificationsTwoTone from "@mui/icons-material/NotificationsTwoTone";
 import OpenInNewTwoTone from "@mui/icons-material/OpenInNewTwoTone";
 import OpenWithTwoTone from "@mui/icons-material/OpenWithTwoTone";
 import PaletteTwoTone from "@mui/icons-material/PaletteTwoTone";
@@ -149,6 +150,7 @@ export const MATERIAL_TWOTONE_COMPONENTS = {
   "ArrowUpRight": NorthEastTwoTone,
   "Award": EmojiEventsTwoTone,
   "BarChart3": BarChartTwoTone,
+  "Bell": NotificationsTwoTone,
   "Blocks": WidgetsTwoTone,
   "Bold": FormatBoldTwoTone,
   "Bookmark": BookmarkTwoTone,

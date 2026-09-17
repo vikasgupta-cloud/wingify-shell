@@ -18,6 +18,7 @@ export const TABLER_FILLED_MAP = {
   "ArrowUpRight": "IconArrowUpRight",
   "Award": "IconAwardFilled",
   "BarChart3": "IconChartBar",
+  "Bell": "IconBellFilled",
   "Blocks": "IconBlocks",
   "Bold": "IconBold",
   "Bookmark": "IconBookmarkFilled",

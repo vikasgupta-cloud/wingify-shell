@@ -18,6 +18,7 @@ export const BOOTSTRAP_OUTLINE_MAP = {
   "ArrowUpRight": "ArrowUpRight",
   "Award": "Trophy",
   "BarChart3": "BarChart",
+  "Bell": "Bell",
   "Blocks": "Boxes",
   "Bold": "TypeBold",
   "Bookmark": "Bookmark",

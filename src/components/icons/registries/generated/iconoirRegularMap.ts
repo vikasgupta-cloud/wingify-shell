@@ -18,6 +18,7 @@ export const ICONOIR_REGULAR_MAP = {
   "ArrowUpRight": "ArrowUpRight",
   "Award": "Medal",
   "BarChart3": "StatsReport",
+  "Bell": "Bell",
   "Blocks": "Cube",
   "Bold": "Bold",
   "Bookmark": "Bookmark",

@@ -34,6 +34,8 @@ import ActivityOverviewPopover from "./ActivityOverviewPopover";
 import HelpSupportPopover from "./HelpSupportPopover";
 import WingifyLogoButton from "./WingifyLogoButton";
 import ProfileAvatar from "./ProfileAvatar";
+import { useHasUnreadNotifications } from "@/store/notifications";
+import { useProfileSubmenuStore } from "@/store/profileSubmenu";
 
 /** Width of the expanded (labeled) navigation sidebar — shared with the app grid. */
 export const EXPANDED_NAV_WIDTH = 280;
@@ -116,6 +118,8 @@ export default function ExpandedNav({
   const nav = visibleNav();
   const navLocked = useIsGetStartedLocked();
   const lockTooltip = useGetStartedNavLockTooltip();
+  const hasUnreadNotifications = useHasUnreadNotifications();
+  const profileSubmenuOpen = useProfileSubmenuStore((s) => s.openCount > 0);
 
   const previewMascotFor = (item: NavItem) => {
     previewMascot(mascotForPath(item.path));
@@ -213,6 +217,7 @@ export default function ExpandedNav({
     );
   };
   const scheduleClose = () => {
+    if (profileSubmenuOpen) return;
     window.clearTimeout(closeTimer.current);
     closeTimer.current = window.setTimeout(() => {
       setFlyout(null);
@@ -220,6 +225,10 @@ export default function ExpandedNav({
     }, FLYOUT_CLOSE_GRACE_MS);
   };
   const cancelClose = () => window.clearTimeout(closeTimer.current);
+
+  useEffect(() => {
+    if (profileSubmenuOpen) cancelClose();
+  }, [profileSubmenuOpen]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -242,10 +251,18 @@ export default function ExpandedNav({
   useEffect(() => {
     if (!expanded || !flyout || flyout.path !== "/profile") return;
     const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Node;
+      const target = e.target as Node | null;
+      if (!(target instanceof Element) && !(target instanceof Node)) return;
       if (flyoutRef.current?.contains(target)) return;
       const row = document.querySelector('[data-nav-item="/profile"]');
       if (row?.contains(target)) return;
+      // Language / Notifications popovers portal outside the flyout.
+      if (
+        target instanceof Element &&
+        target.closest("[data-profile-submenu]")
+      ) {
+        return;
+      }
       setFlyout(null);
       clearMascotPreview();
     };
@@ -326,6 +343,9 @@ export default function ExpandedNav({
         initials={item.initials}
         size="sm"
         onDark={isActive && !expanded}
+        showUnreadDot={
+          item.path === "/profile" ? hasUnreadNotifications : false
+        }
       />
     ) : isActive ? (
       <IconVariantOverride libraryId="phosphor" variant="fill">

@@ -18,6 +18,7 @@ export const MATERIAL_OUTLINED_MAP = {
   "ArrowUpRight": "NorthEastOutlined",
   "Award": "EmojiEventsOutlined",
   "BarChart3": "BarChartOutlined",
+  "Bell": "NotificationsOutlined",
   "Blocks": "WidgetsOutlined",
   "Bold": "FormatBoldOutlined",
   "Bookmark": "BookmarkOutlined",

@@ -18,6 +18,7 @@ export const FLUENT_REGULAR_MAP = {
   "ArrowUpRight": "ArrowUpRight24Regular",
   "Award": "Trophy24Regular",
   "BarChart3": "DataBarVertical24Regular",
+  "Bell": "QuestionCircle24Regular",
   "Blocks": "Cube24Regular",
   "Bold": "TextBold24Regular",
   "Bookmark": "Bookmark24Regular",

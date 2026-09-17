@@ -18,6 +18,7 @@ export const SOLAR_BROKEN_MAP = {
   "ArrowUpRight": "QuestionCircleLinear",
   "Award": "CupBroken",
   "BarChart3": "ChartBroken",
+  "Bell": "BellBroken",
   "Blocks": "BoxBroken",
   "Bold": "TextBoldBroken",
   "Bookmark": "BookmarkBroken",

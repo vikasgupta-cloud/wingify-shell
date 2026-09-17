@@ -80,6 +80,7 @@ import MoreHoriz from "@mui/icons-material/MoreHoriz";
 import MoreVert from "@mui/icons-material/MoreVert";
 import NorthEast from "@mui/icons-material/NorthEast";
 import NorthWest from "@mui/icons-material/NorthWest";
+import Notifications from "@mui/icons-material/Notifications";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 import OpenWith from "@mui/icons-material/OpenWith";
 import Palette from "@mui/icons-material/Palette";
@@ -148,6 +149,7 @@ export const MATERIAL_FILLED_COMPONENTS = {
   "ArrowUpRight": NorthEast,
   "Award": EmojiEvents,
   "BarChart3": BarChart,
+  "Bell": Notifications,
   "Blocks": Widgets,
   "Bold": FormatBold,
   "Bookmark": Bookmark,

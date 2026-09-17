@@ -18,6 +18,7 @@ export const FA_SOLID_MAP = {
   "ArrowUpRight": "FaCircleQuestion",
   "Award": "FaAward",
   "BarChart3": "FaChartColumn",
+  "Bell": "FaBell",
   "Blocks": "FaCubes",
   "Bold": "FaBold",
   "Bookmark": "FaBookmark",

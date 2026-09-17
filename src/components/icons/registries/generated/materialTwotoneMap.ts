@@ -18,6 +18,7 @@ export const MATERIAL_TWOTONE_MAP = {
   "ArrowUpRight": "NorthEastTwoTone",
   "Award": "EmojiEventsTwoTone",
   "BarChart3": "BarChartTwoTone",
+  "Bell": "NotificationsTwoTone",
   "Blocks": "WidgetsTwoTone",
   "Bold": "FormatBoldTwoTone",
   "Bookmark": "BookmarkTwoTone",

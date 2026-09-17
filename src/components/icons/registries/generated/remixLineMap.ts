@@ -18,6 +18,7 @@ export const REMIX_LINE_MAP = {
   "ArrowUpRight": "RiQuestionLine",
   "Award": "RiAwardLine",
   "BarChart3": "RiBarChartLine",
+  "Bell": "RiBellLine",
   "Blocks": "RiQuestionLine",
   "Bold": "RiQuestionLine",
   "Bookmark": "RiBookmarkLine",

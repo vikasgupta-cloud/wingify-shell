@@ -18,6 +18,7 @@ export const FA_REGULAR_MAP = {
   "ArrowUpRight": "FaRegCircleQuestion",
   "Award": "FaAward",
   "BarChart3": "FaChartColumn",
+  "Bell": "FaRegBell",
   "Blocks": "FaCubes",
   "Bold": "FaBold",
   "Bookmark": "FaRegBookmark",

@@ -18,6 +18,7 @@ export const SOLAR_LINEAR_MAP = {
   "ArrowUpRight": "QuestionCircleLinear",
   "Award": "CupLinear",
   "BarChart3": "ChartLinear",
+  "Bell": "BellLinear",
   "Blocks": "BoxLinear",
   "Bold": "TextBoldLinear",
   "Bookmark": "BookmarkLinear",

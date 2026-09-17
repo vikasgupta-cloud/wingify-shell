@@ -18,6 +18,7 @@ export const MATERIAL_ROUNDED_MAP = {
   "ArrowUpRight": "NorthEastRounded",
   "Award": "EmojiEventsRounded",
   "BarChart3": "BarChartRounded",
+  "Bell": "NotificationsRounded",
   "Blocks": "WidgetsRounded",
   "Bold": "FormatBoldRounded",
   "Bookmark": "BookmarkRounded",

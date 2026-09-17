@@ -1,4 +1,4 @@
-// @summary JD avatar flyout: destinations, theme, product-updates stub, switch-to-old-nav, Logout.
+// @summary JD avatar flyout: user card + notifications, destinations, language, theme, stubs, Logout.
 // Feedback modal mounts in ExpandedNav (not here) so closing the flyout does not unmount it.
 import { NavLink } from "react-router-dom";
 import { ExternalLink, History, Sparkles } from "@/components/icons/protoLucide";
@@ -14,6 +14,8 @@ import {
   useWorkspaceStore,
 } from "@/store/workspace";
 import ColorModeToggle from "./ColorModeToggle";
+import LanguageMenu from "./LanguageMenu";
+import NotificationsMenu from "./NotificationsMenu";
 import ProfileAvatar from "./ProfileAvatar";
 
 const PANEL_WIDTH = 280;
@@ -61,21 +63,24 @@ export default function ProfileMenuPanel({
       className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg"
       style={{ width: PANEL_WIDTH }}
     >
-      <NavLink
-        to={PROFILE_DETAILS_PATH}
-        onClick={() => onRequestClose?.()}
-        className="flex items-center gap-3 rounded-md bg-muted/40 px-3 py-3 transition-colors hover:bg-muted"
-      >
-        <ProfileAvatar initials={CURRENT_USER.initials} size="lg" />
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-sm font-semibold tracking-tight text-foreground">
-            {CURRENT_USER.name}
+      <div className="flex items-center gap-1 rounded-md bg-muted/40 px-1.5 py-1.5">
+        <NavLink
+          to={PROFILE_DETAILS_PATH}
+          onClick={() => onRequestClose?.()}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1.5 py-1.5 transition-colors hover:bg-muted"
+        >
+          <ProfileAvatar initials={CURRENT_USER.initials} size="lg" />
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="truncate text-sm font-semibold tracking-tight text-foreground">
+              {CURRENT_USER.name}
+            </span>
+            <span className="truncate text-xs text-muted-foreground">
+              {CURRENT_USER.email}
+            </span>
           </span>
-          <span className="truncate text-xs text-muted-foreground">
-            {CURRENT_USER.email}
-          </span>
-        </span>
-      </NavLink>
+        </NavLink>
+        <NotificationsMenu />
+      </div>
 
       {mainSections.flatMap((section) =>
         section.items.map((leaf) => {
@@ -103,8 +108,6 @@ export default function ProfileMenuPanel({
           );
         })
       )}
-
-      <ColorModeToggle className="rounded-md px-3" />
 
       {beforeLogout.map((leaf) => {
         const Icon = leaf.icon;
@@ -139,6 +142,10 @@ export default function ProfileMenuPanel({
         />
         <span className="min-w-0 flex-1 truncate">Product updates</span>
       </button>
+
+      <LanguageMenu />
+
+      <ColorModeToggle className="rounded-md px-3" />
 
       <button
         type="button"

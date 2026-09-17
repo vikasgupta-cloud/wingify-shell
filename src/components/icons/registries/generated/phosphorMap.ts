@@ -18,6 +18,7 @@ export const PHOSPHOR_ICON_MAP = {
   "ArrowUpRight": "ArrowUpRight",
   "Award": "Medal",
   "BarChart3": "ChartBar",
+  "Bell": "Bell",
   "Blocks": "SquaresFour",
   "Bold": "TextB",
   "Bookmark": "Bookmark",

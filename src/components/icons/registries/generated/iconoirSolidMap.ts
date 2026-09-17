@@ -18,6 +18,7 @@ export const ICONOIR_SOLID_MAP = {
   "ArrowUpRight": "ArrowUpRight",
   "Award": "MedalSolid",
   "BarChart3": "StatsReport",
+  "Bell": "Bell",
   "Blocks": "Cube",
   "Bold": "Bold",
   "Bookmark": "BookmarkSolid",

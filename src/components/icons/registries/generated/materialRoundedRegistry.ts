@@ -81,6 +81,7 @@ import MoreHorizRounded from "@mui/icons-material/MoreHorizRounded";
 import MoreVertRounded from "@mui/icons-material/MoreVertRounded";
 import NorthEastRounded from "@mui/icons-material/NorthEastRounded";
 import NorthWestRounded from "@mui/icons-material/NorthWestRounded";
+import NotificationsRounded from "@mui/icons-material/NotificationsRounded";
 import OpenInNewRounded from "@mui/icons-material/OpenInNewRounded";
 import OpenWithRounded from "@mui/icons-material/OpenWithRounded";
 import PaletteRounded from "@mui/icons-material/PaletteRounded";
@@ -149,6 +150,7 @@ export const MATERIAL_ROUNDED_COMPONENTS = {
   "ArrowUpRight": NorthEastRounded,
   "Award": EmojiEventsRounded,
   "BarChart3": BarChartRounded,
+  "Bell": NotificationsRounded,
   "Blocks": WidgetsRounded,
   "Bold": FormatBoldRounded,
   "Bookmark": BookmarkRounded,

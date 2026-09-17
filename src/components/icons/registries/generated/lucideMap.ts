@@ -18,6 +18,7 @@ export const LUCIDE_ICON_MAP = {
   "ArrowUpRight": "arrow-up-right",
   "Award": "award",
   "BarChart3": "bar-chart-3",
+  "Bell": "bell",
   "Blocks": "blocks",
   "Bold": "bold",
   "Bookmark": "bookmark",

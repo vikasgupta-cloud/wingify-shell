@@ -18,6 +18,7 @@ export const SOLAR_OUTLINE_MAP = {
   "ArrowUpRight": "QuestionCircleLinear",
   "Award": "CupOutline",
   "BarChart3": "ChartOutline",
+  "Bell": "BellOutline",
   "Blocks": "BoxOutline",
   "Bold": "TextBoldOutline",
   "Bookmark": "BookmarkOutline",

@@ -18,6 +18,7 @@ export const SOLAR_BOLD_MAP = {
   "ArrowUpRight": "QuestionCircleLinear",
   "Award": "CupBold",
   "BarChart3": "ChartBold",
+  "Bell": "BellBold",
   "Blocks": "BoxBold",
   "Bold": "TextBoldBold",
   "Bookmark": "BookmarkBold",

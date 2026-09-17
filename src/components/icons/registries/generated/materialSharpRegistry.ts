@@ -81,6 +81,7 @@ import MoreHorizSharp from "@mui/icons-material/MoreHorizSharp";
 import MoreVertSharp from "@mui/icons-material/MoreVertSharp";
 import NorthEastSharp from "@mui/icons-material/NorthEastSharp";
 import NorthWestSharp from "@mui/icons-material/NorthWestSharp";
+import NotificationsSharp from "@mui/icons-material/NotificationsSharp";
 import OpenInNewSharp from "@mui/icons-material/OpenInNewSharp";
 import OpenWithSharp from "@mui/icons-material/OpenWithSharp";
 import PaletteSharp from "@mui/icons-material/PaletteSharp";
@@ -149,6 +150,7 @@ export const MATERIAL_SHARP_COMPONENTS = {
   "ArrowUpRight": NorthEastSharp,
   "Award": EmojiEventsSharp,
   "BarChart3": BarChartSharp,
+  "Bell": NotificationsSharp,
   "Blocks": WidgetsSharp,
   "Bold": FormatBoldSharp,
   "Bookmark": BookmarkSharp,

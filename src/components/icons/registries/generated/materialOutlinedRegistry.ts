@@ -80,6 +80,7 @@ import MoreHorizOutlined from "@mui/icons-material/MoreHorizOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVertOutlined";
 import NorthEastOutlined from "@mui/icons-material/NorthEastOutlined";
 import NorthWestOutlined from "@mui/icons-material/NorthWestOutlined";
+import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import OpenWithOutlined from "@mui/icons-material/OpenWithOutlined";
 import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
@@ -148,6 +149,7 @@ export const MATERIAL_OUTLINED_COMPONENTS = {
   "ArrowUpRight": NorthEastOutlined,
   "Award": EmojiEventsOutlined,
   "BarChart3": BarChartOutlined,
+  "Bell": NotificationsOutlined,
   "Blocks": WidgetsOutlined,
   "Bold": FormatBoldOutlined,
   "Bookmark": BookmarkOutlined,
