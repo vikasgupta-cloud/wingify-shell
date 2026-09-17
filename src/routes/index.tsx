@@ -47,6 +47,7 @@ import RecommendationReportPage from "../pages/commerce/RecommendationReportPage
 import WingzChatShell from "../components/wingz/WingzChatShell";
 import WingzChatPage from "../pages/wingz/WingzChatPage";
 import AnalyticsOverviewPage from "../pages/analytics/AnalyticsOverviewPage";
+import AnalyticsBrowsePage from "../pages/analytics/AnalyticsBrowsePage";
 import AnalyticsItemDetailPage from "../pages/analytics/AnalyticsItemDetailPage";
 
 function LegacyAnalyticsItemRedirect() {
@@ -75,6 +76,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/commerce/catalog": CatalogPage,
   "/commerce/recommendation": RecommendationPage,
   "/analytics/overview": AnalyticsOverviewPage,
+  "/analytics/browse": AnalyticsBrowsePage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
@@ -93,7 +95,7 @@ const addDetailRoute = (leafPath: string) => {
     return;
   }
   // Journey Analytics boards/reports — DetailShell with analytics tabs + body.
-  if (leafPath === "/analytics/overview") {
+  if (leafPath === "/analytics/overview" || leafPath === "/analytics/browse") {
     detailRoutes.push({
       path: `${leafPath}/c/:entityId`,
       element: (

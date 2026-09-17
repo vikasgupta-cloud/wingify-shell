@@ -1,17 +1,11 @@
-// @summary Board/report canvas with dummy KPI + SVG charts (range-aware).
-// Boards list linked reports; nested reports link back to their parent board.
+/** Board/report canvas with dummy SVG charts (range-aware).
+ *  Board charts open linked reports; report pages skip the KPI strip. */
 import { useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
-import {
-  Calendar,
-  LayoutGrid,
-  LineChart,
-  Plus,
-} from "@/components/icons/protoLucide";
+import { Navigate, useLocation, useParams } from "react-router-dom";
+import { Calendar, Plus } from "@/components/icons/protoLucide";
 import {
   BarBreakdownCard,
   DonutCard,
-  KpiStrip,
   LineTrendCard,
 } from "@/components/analytics/AnalyticsCharts";
 import { Button } from "@/components/ui/button";
@@ -22,12 +16,13 @@ import {
   type AnalyticsRange,
 } from "@/data/analyticsCharts";
 import {
+  analyticsBaseFromPath,
   analyticsItemPath,
   getAnalyticsItem,
-  getAnalyticsParentBoard,
-  getReportsForBoard,
-  type AnalyticsOverviewItem,
+  getBoardChartReportIds,
+  withAnalyticsNameOverride,
 } from "@/data/analyticsOverview";
+import { useAnalyticsRowsStore } from "@/store/analyticsRows";
 import { cn } from "@/lib/utils";
 
 const RANGE_PRESETS: AnalyticsRange[] = [
@@ -57,111 +52,49 @@ function AddStub({ label }: { label: string }) {
   );
 }
 
-function LinkedReportsCard({
-  reports,
-  boardId,
-}: {
-  reports: AnalyticsOverviewItem[];
-  boardId: string;
-}) {
-  if (reports.length === 0) return null;
-  return (
-    <div className="rounded-xl border border-border bg-background shadow-sm">
-      <div className="border-b border-border px-4 py-3">
-        <p className="text-sm font-medium text-foreground">
-          Reports on this board ({reports.length})
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Open any linked report — return via Part of board or the Board tab
-        </p>
-      </div>
-      <ul className="divide-y divide-border">
-        {reports.map((report) => (
-          <li key={report.id}>
-            <Link
-              to={analyticsItemPath(report.id, { boardId })}
-              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
-            >
-              <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
-                <LineChart className="size-4" strokeWidth={1.75} aria-hidden />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-foreground">
-                  {report.name}
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {report.editedLabel}
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ParentBoardCard({ board }: { board: AnalyticsOverviewItem }) {
-  return (
-    <div className="rounded-xl border border-border bg-background shadow-sm">
-      <div className="border-b border-border px-4 py-3">
-        <p className="text-sm font-medium text-foreground">Part of board</p>
-      </div>
-      <Link
-        to={analyticsItemPath(board.id)}
-        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
-      >
-        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-[var(--info-bg)] text-[var(--info-fg)]">
-          <LayoutGrid className="size-4" strokeWidth={1.75} aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-foreground">
-            {board.name}
-          </span>
-          <span className="block truncate text-xs text-muted-foreground">
-            Open board · switch sibling reports from the name menu
-          </span>
-        </span>
-      </Link>
-    </div>
-  );
-}
-
 export default function AnalyticsItemDetailPage() {
   const { entityId = "" } = useParams();
-  const item = getAnalyticsItem(entityId);
+  const { pathname } = useLocation();
+  const listBase = analyticsBaseFromPath(pathname);
+  const nameOverrides = useAnalyticsRowsStore((s) => s.nameOverrides);
+  const raw = getAnalyticsItem(entityId);
+  const item = raw ? withAnalyticsNameOverride(raw, nameOverrides) : undefined;
   const [range, setRange] = useState<AnalyticsRange>("7D");
   const [description, setDescription] = useState("");
 
   if (!item) {
-    return <Navigate to="/analytics/overview" replace />;
+    return <Navigate to={listBase} replace />;
   }
 
   const boardData =
     item.kind === "board" ? getBoardChartData(item.id, range) : null;
   const reportData =
     item.kind === "report" ? getReportChartData(item.id, range) : null;
-  const linkedReports =
-    item.kind === "board" ? getReportsForBoard(item.id) : [];
-  const parentBoard =
-    item.kind === "report" ? getAnalyticsParentBoard(item) : undefined;
+  const chartReports =
+    item.kind === "board" ? getBoardChartReportIds(item.id) : null;
+  const reportPath = (reportId: string | undefined) =>
+    reportId
+      ? analyticsItemPath(reportId, { boardId: item.id, basePath: listBase })
+      : undefined;
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-8 pb-16 pt-8">
-      <div className="space-y-2">
-        <Input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add description..."
-          aria-label="Description"
-          className="h-8 max-w-md border-transparent bg-transparent px-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:border-border focus-visible:bg-background focus-visible:px-2"
-        />
-        <p className="text-xs text-muted-foreground">
-          Created by {item.createdBy}
-          <span className="mx-1.5 text-border">·</span>
-          {item.lastEditedDetail}
-        </p>
-      </div>
+      {item.kind === "board" ? (
+        <div className="space-y-2">
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add description..."
+            aria-label="Description"
+            className="h-8 max-w-md border-transparent bg-transparent px-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:border-border focus-visible:bg-background focus-visible:px-2"
+          />
+          <p className="text-xs text-muted-foreground">
+            Created by {item.createdBy}
+            <span className="mx-1.5 text-border">·</span>
+            {item.lastEditedDetail}
+          </p>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <div
@@ -201,26 +134,31 @@ export default function AnalyticsItemDetailPage() {
       <div className="flex items-stretch gap-2">
         <AddStub label="Add widget" />
         <div className="min-w-0 flex-1 space-y-4">
-          {boardData ? (
+          {boardData && chartReports ? (
             <>
-              <LinkedReportsCard reports={linkedReports} boardId={item.id} />
-              <KpiStrip items={boardData.kpis} />
               <div className="grid gap-4 lg:grid-cols-2">
                 <LineTrendCard
                   title="Sessions over time"
                   subtitle={`Range · ${range}`}
                   points={boardData.traffic}
+                  to={reportPath(chartReports.traffic)}
                 />
-                <DonutCard title="Traffic mix" slices={boardData.mix} />
+                <DonutCard
+                  title="Traffic mix"
+                  slices={boardData.mix}
+                  to={reportPath(chartReports.mix)}
+                />
               </div>
-              <BarBreakdownCard title="Funnel" rows={boardData.funnels} />
+              <BarBreakdownCard
+                title="Funnel"
+                rows={boardData.funnels}
+                to={reportPath(chartReports.funnel)}
+              />
             </>
           ) : null}
 
           {reportData ? (
             <>
-              {parentBoard ? <ParentBoardCard board={parentBoard} /> : null}
-              <KpiStrip items={reportData.kpis} />
               <LineTrendCard
                 title="Trend"
                 subtitle={`Range · ${range}`}

@@ -269,7 +269,6 @@ export const NAV: NavItem[] = [
             label: "Browse",
             path: "/analytics/browse",
             icon: Search,
-            hideCreate: true,
           },
         ],
       },

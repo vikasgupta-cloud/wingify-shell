@@ -1,5 +1,7 @@
 // @summary SVG chart widgets for Journey Analytics boards/reports (dummy data).
-// Uses chart-* CSS tokens; no chart library dependency.
+// Uses chart-* CSS tokens; no chart library dependency. Optional `to` makes a card a link.
+import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type {
   AnalyticsBarRow,
@@ -29,6 +31,31 @@ function areaPath(points: AnalyticsSeriesPoint[]): string {
   const line = linePath(points);
   if (!line || points.length === 0) return "";
   return `${line} L${PLOT_W},${PLOT_H} L0,${PLOT_H} Z`;
+}
+
+function ChartShell({
+  to,
+  className,
+  children,
+}: {
+  to?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const classes = cn(
+    "flex min-h-[280px] flex-col rounded-xl border border-border bg-background shadow-sm",
+    to &&
+      "outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring",
+    className
+  );
+  if (to) {
+    return (
+      <Link to={to} className={classes}>
+        {children}
+      </Link>
+    );
+  }
+  return <div className={classes}>{children}</div>;
 }
 
 export function KpiStrip({ items }: { items: AnalyticsKpi[] }) {
@@ -63,16 +90,18 @@ export function LineTrendCard({
   title,
   subtitle,
   points,
+  to,
 }: {
   title: string;
   subtitle?: string;
   points: AnalyticsSeriesPoint[];
+  to?: string;
 }) {
   const d = linePath(points);
   const fill = areaPath(points);
 
   return (
-    <div className="flex min-h-[280px] flex-col rounded-xl border border-border bg-background shadow-sm">
+    <ChartShell to={to}>
       <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div>
           <p className="text-sm font-medium text-foreground">{title}</p>
@@ -119,16 +148,18 @@ export function LineTrendCard({
           ))}
         </div>
       </div>
-    </div>
+    </ChartShell>
   );
 }
 
 export function DonutCard({
   title,
   slices,
+  to,
 }: {
   title: string;
   slices: AnalyticsDonutSlice[];
+  to?: string;
 }) {
   const total = slices.reduce((s, x) => s + x.value, 0) || 1;
   const r = 54;
@@ -136,7 +167,7 @@ export function DonutCard({
   let offset = 0;
 
   return (
-    <div className="flex min-h-[280px] flex-col rounded-xl border border-border bg-background shadow-sm">
+    <ChartShell to={to}>
       <div className="border-b border-border px-4 py-3">
         <p className="text-sm font-medium text-foreground">{title}</p>
       </div>
@@ -165,7 +196,6 @@ export function DonutCard({
               offset += len;
               return el;
             })}
-            <circle r={36} fill="var(--background)" />
             <text
               textAnchor="middle"
               dominantBaseline="central"
@@ -196,19 +226,21 @@ export function DonutCard({
           ))}
         </ul>
       </div>
-    </div>
+    </ChartShell>
   );
 }
 
 export function BarBreakdownCard({
   title,
   rows,
+  to,
 }: {
   title: string;
   rows: AnalyticsBarRow[];
+  to?: string;
 }) {
   return (
-    <div className="flex min-h-[280px] flex-col rounded-xl border border-border bg-background shadow-sm">
+    <ChartShell to={to}>
       <div className="border-b border-border px-4 py-3">
         <p className="text-sm font-medium text-foreground">{title}</p>
       </div>
@@ -233,6 +265,6 @@ export function BarBreakdownCard({
           );
         })}
       </div>
-    </div>
+    </ChartShell>
   );
 }

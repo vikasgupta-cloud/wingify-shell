@@ -98,7 +98,7 @@ export const ANALYTICS_RECENT: AnalyticsOverviewItem[] = [
   {
     id: "r6",
     displayId: "417",
-    name: "Untitled board · Sessions",
+    name: "Sessions",
     kind: "report",
     editedLabel: "Edited 16 hours ago",
     lastEditedDetail: "Last edited 16 hours ago",
@@ -111,7 +111,7 @@ export const ANALYTICS_RECENT: AnalyticsOverviewItem[] = [
   {
     id: "r6b",
     displayId: "419",
-    name: "Untitled board · Bounce",
+    name: "Bounce",
     kind: "report",
     editedLabel: "Edited 14 hours ago",
     lastEditedDetail: "Last edited 14 hours ago",
@@ -124,7 +124,7 @@ export const ANALYTICS_RECENT: AnalyticsOverviewItem[] = [
   {
     id: "r6c",
     displayId: "420",
-    name: "Untitled board · Paths",
+    name: "Paths",
     kind: "report",
     editedLabel: "Edited 10 hours ago",
     lastEditedDetail: "Last edited 10 hours ago",
@@ -165,7 +165,20 @@ export const ANALYTICS_LIBRARY: AnalyticsOverviewItem[] = [
   {
     id: "l2b",
     displayId: "269",
-    name: "Untitled board · Goals",
+    name: "Goals",
+    kind: "report",
+    editedLabel: "1 day ago",
+    lastEditedDetail: "Last edited 1 day ago",
+    createdBy: "Vikas G",
+    creatorInitials: "VG",
+    starred: false,
+    createdByMe: true,
+    parentBoardId: "l1",
+  },
+  {
+    id: "l2c",
+    displayId: "271",
+    name: "Funnel",
     kind: "report",
     editedLabel: "1 day ago",
     lastEditedDetail: "Last edited 1 day ago",
@@ -190,7 +203,7 @@ export const ANALYTICS_LIBRARY: AnalyticsOverviewItem[] = [
   {
     id: "l3r",
     displayId: "268",
-    name: "Board 266 · Engagement",
+    name: "Engagement",
     kind: "report",
     editedLabel: "1 month ago",
     lastEditedDetail: "Last edited 1 month ago",
@@ -203,13 +216,26 @@ export const ANALYTICS_LIBRARY: AnalyticsOverviewItem[] = [
   {
     id: "l3r2",
     displayId: "270",
-    name: "Board 266 · Drop-off",
+    name: "Drop-off",
     kind: "report",
     editedLabel: "1 month ago",
     lastEditedDetail: "Last edited 1 month ago",
     createdBy: "Vikas G",
     creatorInitials: "VG",
     starred: true,
+    createdByMe: true,
+    parentBoardId: "l3",
+  },
+  {
+    id: "l3r3",
+    displayId: "272",
+    name: "Funnel",
+    kind: "report",
+    editedLabel: "1 month ago",
+    lastEditedDetail: "Last edited 1 month ago",
+    createdBy: "Vikas G",
+    creatorInitials: "VG",
+    starred: false,
     createdByMe: true,
     parentBoardId: "l3",
   },
@@ -228,7 +254,7 @@ export const ANALYTICS_LIBRARY: AnalyticsOverviewItem[] = [
   {
     id: "l4r",
     displayId: "307",
-    name: "Board 302 · Revenue",
+    name: "Revenue",
     kind: "report",
     editedLabel: "1 month ago",
     lastEditedDetail: "Last edited 1 month ago",
@@ -241,7 +267,20 @@ export const ANALYTICS_LIBRARY: AnalyticsOverviewItem[] = [
   {
     id: "l4r2",
     displayId: "308",
-    name: "Board 302 · AOV",
+    name: "AOV",
+    kind: "report",
+    editedLabel: "1 month ago",
+    lastEditedDetail: "Last edited 1 month ago",
+    createdBy: "Vikas G",
+    creatorInitials: "VG",
+    starred: false,
+    createdByMe: true,
+    parentBoardId: "l4",
+  },
+  {
+    id: "l4r3",
+    displayId: "310",
+    name: "Funnel",
     kind: "report",
     editedLabel: "1 month ago",
     lastEditedDetail: "Last edited 1 month ago",
@@ -266,7 +305,7 @@ export const ANALYTICS_LIBRARY: AnalyticsOverviewItem[] = [
   {
     id: "l5r",
     displayId: "306",
-    name: "Board 303 · Retention",
+    name: "Retention",
     kind: "report",
     editedLabel: "1 month ago",
     lastEditedDetail: "Last edited 1 month ago",
@@ -279,13 +318,26 @@ export const ANALYTICS_LIBRARY: AnalyticsOverviewItem[] = [
   {
     id: "l5r2",
     displayId: "309",
-    name: "Board 303 · Cohorts",
+    name: "Cohorts",
     kind: "report",
     editedLabel: "1 month ago",
     lastEditedDetail: "Last edited 1 month ago",
     createdBy: "Vikas G",
     creatorInitials: "VG",
     starred: true,
+    createdByMe: true,
+    parentBoardId: "l5",
+  },
+  {
+    id: "l5r3",
+    displayId: "311",
+    name: "Funnel",
+    kind: "report",
+    editedLabel: "1 month ago",
+    lastEditedDetail: "Last edited 1 month ago",
+    createdBy: "Vikas G",
+    creatorInitials: "VG",
+    starred: false,
     createdByMe: true,
     parentBoardId: "l5",
   },
@@ -311,6 +363,23 @@ export function getAnalyticsItem(id: string): AnalyticsOverviewItem | undefined 
   return BY_ID.get(id);
 }
 
+/** Apply session name overrides onto a static analytics item. */
+export function withAnalyticsNameOverride(
+  item: AnalyticsOverviewItem,
+  overrides: Record<string, string>
+): AnalyticsOverviewItem {
+  const name = overrides[item.id];
+  return name && name !== item.name ? { ...item, name } : item;
+}
+
+export function mapAnalyticsNameOverrides<T extends AnalyticsOverviewItem>(
+  items: T[],
+  overrides: Record<string, string>
+): T[] {
+  if (Object.keys(overrides).length === 0) return items;
+  return items.map((item) => withAnalyticsNameOverride(item, overrides) as T);
+}
+
 /** Parent board when this report is nested inside a board. */
 export function getAnalyticsParentBoard(
   item: AnalyticsOverviewItem | undefined
@@ -327,6 +396,23 @@ export function getReportsForBoard(
   return ANALYTICS_ITEMS.filter(
     (item) => item.kind === "report" && item.parentBoardId === boardId
   );
+}
+
+/**
+ * Maps board charts → linked reports (index order).
+ * 0 traffic line, 1 traffic mix donut, 2 funnel bars.
+ */
+export function getBoardChartReportIds(boardId: string): {
+  traffic: string | undefined;
+  mix: string | undefined;
+  funnel: string | undefined;
+} {
+  const reports = getReportsForBoard(boardId);
+  return {
+    traffic: reports[0]?.id,
+    mix: reports[1]?.id,
+    funnel: reports[2]?.id,
+  };
 }
 
 /** Sibling reports under the same board, or standalone reports when unlinked. */
@@ -354,12 +440,35 @@ export function analyticsShowsBoardCrumb(
   return item.parentBoardId === boardContextId;
 }
 
+export const ANALYTICS_OVERVIEW_BASE = "/analytics/overview";
+export const ANALYTICS_BROWSE_BASE = "/analytics/browse";
+
+export function isAnalyticsListBase(path: string): boolean {
+  return path === ANALYTICS_OVERVIEW_BASE || path === ANALYTICS_BROWSE_BASE;
+}
+
+export function analyticsListLabel(basePath: string): string {
+  return basePath === ANALYTICS_BROWSE_BASE ? "Browse" : "Overview";
+}
+
+/** Resolve overview vs browse list base from a detail (or list) pathname. */
+export function analyticsBaseFromPath(pathname: string): string {
+  if (
+    pathname === ANALYTICS_BROWSE_BASE ||
+    pathname.startsWith(`${ANALYTICS_BROWSE_BASE}/`)
+  ) {
+    return ANALYTICS_BROWSE_BASE;
+  }
+  return ANALYTICS_OVERVIEW_BASE;
+}
+
 /** Detail path; pass `boardId` when opening a report from a board (crumb context). */
 export function analyticsItemPath(
   id: string,
-  opts?: { boardId?: string }
+  opts?: { boardId?: string; basePath?: string }
 ): string {
-  const base = `/analytics/overview/c/${id}`;
+  const listBase = opts?.basePath ?? ANALYTICS_OVERVIEW_BASE;
+  const base = `${listBase}/c/${id}`;
   if (!opts?.boardId) return base;
   return `${base}?board=${encodeURIComponent(opts.boardId)}`;
 }
@@ -370,7 +479,8 @@ export function analyticsItemPath(
  */
 export function analyticsReportNavPath(
   reportId: string,
-  boardContextId: string | undefined | null
+  boardContextId: string | undefined | null,
+  basePath?: string
 ): string {
   const report = getAnalyticsItem(reportId);
   if (
@@ -378,9 +488,9 @@ export function analyticsReportNavPath(
     report?.kind === "report" &&
     report.parentBoardId === boardContextId
   ) {
-    return analyticsItemPath(reportId, { boardId: boardContextId });
+    return analyticsItemPath(reportId, { boardId: boardContextId, basePath });
   }
-  return analyticsItemPath(reportId);
+  return analyticsItemPath(reportId, { basePath });
 }
 
 export function firstAnalyticsItemOfKind(

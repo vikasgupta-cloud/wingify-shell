@@ -59,6 +59,8 @@ CREATE_MENU["/analytics/overview"] = [
   },
 ];
 
+CREATE_MENU["/analytics/browse"] = CREATE_MENU["/analytics/overview"];
+
 // Sections without a bespoke menu fall back to a single generic option.
 export function getCreateOptions(pathname: string, label: string): CreateOption[] {
   return (

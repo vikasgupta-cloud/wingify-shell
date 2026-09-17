@@ -22,9 +22,11 @@ import {
   ANALYTICS_LIBRARY,
   ANALYTICS_RECENT,
   analyticsItemPath,
+  mapAnalyticsNameOverrides,
   type AnalyticsItemKind,
   type AnalyticsOverviewItem,
 } from "@/data/analyticsOverview";
+import { useAnalyticsRowsStore } from "@/store/analyticsRows";
 import { cn } from "@/lib/utils";
 
 type ScopeTab = "starred" | "mine";
@@ -196,15 +198,23 @@ export default function AnalyticsOverviewPage() {
   const [prompt, setPrompt] = useState("");
   const [scope, setScope] = useState<ScopeTab>("starred");
   const [kind, setKind] = useState<KindFilter>("all");
+  const nameOverrides = useAnalyticsRowsStore((s) => s.nameOverrides);
+
+  const recent = useMemo(
+    () => mapAnalyticsNameOverrides(ANALYTICS_RECENT, nameOverrides),
+    [nameOverrides]
+  );
 
   const rows = useMemo(() => {
-    return ANALYTICS_LIBRARY.filter((item) => {
-      if (scope === "starred" && !item.starred) return false;
-      if (scope === "mine" && !item.createdByMe) return false;
-      if (kind !== "all" && item.kind !== kind) return false;
-      return true;
-    });
-  }, [scope, kind]);
+    return mapAnalyticsNameOverrides(ANALYTICS_LIBRARY, nameOverrides).filter(
+      (item) => {
+        if (scope === "starred" && !item.starred) return false;
+        if (scope === "mine" && !item.createdByMe) return false;
+        if (kind !== "all" && item.kind !== kind) return false;
+        return true;
+      }
+    );
+  }, [scope, kind, nameOverrides]);
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 px-8 pb-16 pt-10">
@@ -239,7 +249,7 @@ export default function AnalyticsOverviewPage() {
           <Clock className="size-3.5" strokeWidth={1.75} aria-hidden />
           <h2 className="font-medium">Recently viewed</h2>
         </div>
-        <RecentCarousel items={ANALYTICS_RECENT} />
+        <RecentCarousel items={recent} />
       </section>
 
       {/* Library */}
