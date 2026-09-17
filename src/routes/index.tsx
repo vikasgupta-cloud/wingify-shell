@@ -49,6 +49,9 @@ import WingzChatPage from "../pages/wingz/WingzChatPage";
 import AnalyticsOverviewPage from "../pages/analytics/AnalyticsOverviewPage";
 import AnalyticsBrowsePage from "../pages/analytics/AnalyticsBrowsePage";
 import AnalyticsItemDetailPage from "../pages/analytics/AnalyticsItemDetailPage";
+import PlanObservationsPage from "../pages/plan/PlanObservationsPage";
+import PlanHypothesesPage from "../pages/plan/PlanHypothesesPage";
+import PlanIdeasPage from "../pages/plan/PlanIdeasPage";
 
 function LegacyAnalyticsItemRedirect() {
   const { entityId = "" } = useParams();
@@ -77,6 +80,9 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/commerce/recommendation": RecommendationPage,
   "/analytics/overview": AnalyticsOverviewPage,
   "/analytics/browse": AnalyticsBrowsePage,
+  "/plan/observations": PlanObservationsPage,
+  "/plan/hypotheses": PlanHypothesesPage,
+  "/plan/ideas": PlanIdeasPage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
@@ -104,6 +110,14 @@ const addDetailRoute = (leafPath: string) => {
         </DetailShell>
       ),
     });
+    return;
+  }
+  // Plan leaves use list-page modals — no /c/:entityId detail routes.
+  if (
+    leafPath === "/plan/observations" ||
+    leafPath === "/plan/hypotheses" ||
+    leafPath === "/plan/ideas"
+  ) {
     return;
   }
   // Web Exp → ConfigPage; Personalize → Coming soon.

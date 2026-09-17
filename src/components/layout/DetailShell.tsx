@@ -518,6 +518,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const isPersonalize = basePath === "/personalize";
   const isRecommendation = basePath === "/commerce/recommendation";
   const isAnalytics = isAnalyticsListBase(basePath);
+  const isPlanDetail =
+    basePath === "/plan/observations" || basePath === "/plan/hypotheses";
   const analyticsListCrumb = analyticsListLabel(basePath);
   const analyticsNameOverrides = useAnalyticsRowsStore((s) => s.nameOverrides);
   const analyticsRename = useAnalyticsRowsStore((s) => s.rename);
@@ -1306,7 +1308,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         <span className="min-w-0 truncate text-sm font-semibold text-foreground">
                           {selected?.name ?? "Untitled"}
                         </span>
-                        {!isAnalytics && badgeId ? (
+                        {!isAnalytics && !isPlanDetail && badgeId ? (
                           <CampaignIdBadge id={badgeId} />
                         ) : null}
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -1442,7 +1444,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         >
                           {entity.name}
                         </button>
-                        {!isAnalytics ? (
+                        {!isAnalytics && !isPlanDetail ? (
                           <CampaignIdBadge id={String(entity.id)} />
                         ) : null}
                       </div>
@@ -1457,10 +1459,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           )}
         </div>
 
-        {/* Center switcher: Configure/Reports for campaigns. Analytics uses
-            left breadcrumb only (no Overview/Board/Report tabs). */}
+        {/* Center switcher: Configure/Reports for campaigns. Analytics / Plan
+            use left breadcrumb only (no Configure/Reports tabs). */}
         <div className="flex shrink-0 items-end justify-center self-stretch">
-          {isAnalytics ? null : (
+          {isAnalytics || isPlanDetail ? null : (
             <SurfaceTabs
               basePath={basePath}
               entityId={entityId}

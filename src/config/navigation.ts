@@ -36,6 +36,10 @@ import {
   Award,
   Search,
   Puzzle,
+  ClipboardList,
+  Eye,
+  Lightbulb,
+  Sparkles,
 } from "@/components/icons/protoLucide";
 import { UPGRADE_ADDONS_PATH, UPGRADE_SECTIONS } from "./upgradeNav";
 
@@ -327,6 +331,22 @@ export const NAV: NavItem[] = [
       { label: "Audit", path: "/data-360/audit", hideCreate: true },
     ]},
   ]},
+  {
+    label: "Plan",
+    path: "/plan",
+    icon: ClipboardList,
+    group: 2,
+    pinnable: true,
+    sections: [
+      {
+        items: [
+          { label: "Observations", path: "/plan/observations", icon: Eye },
+          { label: "Hypotheses", path: "/plan/hypotheses", icon: Lightbulb },
+          { label: "Ideas", path: "/plan/ideas", icon: Sparkles },
+        ],
+      },
+    ],
+  },
   { label: "Activity", path: "/activity-timeline", icon: Activity, group: 3, flyoutOnly: true, hideCreate: true },
   { label: "Help", path: "/helpdesk", icon: Headphones, group: 3, flyoutOnly: true, hideCreate: true },
   // Settings lives in the Profile flyout (no rail gear). Avatar expands options; does not navigate.
@@ -633,6 +653,7 @@ export const PRODUCT_SWITCHER_PATHS = [
   "/pulse",
   "/engage",
   "/data-360",
+  "/plan",
 ] as const;
 
 export function productSwitcherItems(): NavItem[] {

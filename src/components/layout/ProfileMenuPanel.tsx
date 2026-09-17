@@ -1,7 +1,7 @@
-// @summary JD avatar flyout: destinations, theme, switch-to-old-nav trigger, Logout.
+// @summary JD avatar flyout: destinations, theme, product-updates stub, switch-to-old-nav, Logout.
 // Feedback modal mounts in ExpandedNav (not here) so closing the flyout does not unmount it.
 import { NavLink } from "react-router-dom";
-import { History, Sparkles } from "@/components/icons/protoLucide";
+import { ExternalLink, History, Sparkles } from "@/components/icons/protoLucide";
 import {
   CURRENT_USER,
   LOGOUT_PATH,
@@ -125,6 +125,20 @@ export default function ProfileMenuPanel({
           </NavLink>
         );
       })}
+
+      <button
+        type="button"
+        title="Opens in a new tab"
+        onClick={() => onRequestClose?.()}
+        className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
+      >
+        <ExternalLink
+          className="h-4 w-4 shrink-0 text-muted-foreground"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 truncate">Product updates</span>
+      </button>
 
       <button
         type="button"

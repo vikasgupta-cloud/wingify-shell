@@ -8,8 +8,8 @@ import {
   DonutCard,
   LineTrendCard,
 } from "@/components/analytics/AnalyticsCharts";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   getBoardChartData,
   getReportChartData,
@@ -80,19 +80,31 @@ export default function AnalyticsItemDetailPage() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-8 pb-16 pt-8">
       {item.kind === "board" ? (
-        <div className="space-y-2">
-          <Input
+        <div className="flex items-start justify-between gap-8 border-b border-border/70 pb-3">
+          <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add description..."
+            placeholder="Add a short description for this board…"
             aria-label="Description"
-            className="h-8 max-w-md border-transparent bg-transparent px-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:border-border focus-visible:bg-background focus-visible:px-2"
+            rows={2}
+            className="min-h-[2.75rem] min-w-0 max-w-xl flex-1 resize-none rounded-lg border-0 bg-transparent px-0 py-0.5 text-sm leading-snug text-foreground outline-none placeholder:text-muted-foreground/80 focus-visible:ring-0"
           />
-          <p className="text-xs text-muted-foreground">
-            Created by {item.createdBy}
-            <span className="mx-1.5 text-border">·</span>
-            {item.lastEditedDetail}
-          </p>
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="text-right leading-snug">
+              <p className="text-sm text-foreground">
+                <span className="text-muted-foreground">Created by </span>
+                {item.createdBy}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {item.lastEditedDetail}
+              </p>
+            </div>
+            <Avatar className="size-8 border border-border">
+              <AvatarFallback className="bg-muted text-[10px] font-medium text-foreground">
+                {item.creatorInitials}
+              </AvatarFallback>
+            </Avatar>
+          </div>
         </div>
       ) : null}
 

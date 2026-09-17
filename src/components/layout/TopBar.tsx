@@ -8,6 +8,7 @@ import { useRowsStore } from "../../store/rows";
 import { useRecommendationRowsStore } from "../../store/recommendationRows";
 import { showsCreate, showsSummarise, pageLabel } from "../../lib/nav";
 import { useWingzStore } from "@/store/wingz";
+import { usePlanModalsStore } from "@/store/planModals";
 import {
   CREATE_GROUP_LABELS,
   getCreateOptions,
@@ -107,6 +108,14 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
     if (option.id === "recommendation") {
       const id = createRecommendation();
       navigate(`/commerce/recommendation/c/${id}`);
+      return;
+    }
+    if (option.id === "observation") {
+      usePlanModalsStore.getState().openCreateObservation();
+      return;
+    }
+    if (option.id === "hypothesis") {
+      usePlanModalsStore.getState().openCreateHypothesis();
       return;
     }
     if (!option.campaignType) return; // stub

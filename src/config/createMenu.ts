@@ -61,6 +61,33 @@ CREATE_MENU["/analytics/overview"] = [
 
 CREATE_MENU["/analytics/browse"] = CREATE_MENU["/analytics/overview"];
 
+CREATE_MENU["/plan/observations"] = [
+  {
+    id: "observation",
+    label: "Observation",
+    description: "Log something you noticed in research",
+    icon: Plus,
+  },
+];
+
+CREATE_MENU["/plan/hypotheses"] = [
+  {
+    id: "hypothesis",
+    label: "Hypothesis",
+    description: "Capture a testable idea",
+    icon: Plus,
+  },
+];
+
+CREATE_MENU["/plan/ideas"] = [
+  {
+    id: "idea",
+    label: "Idea",
+    description: "Save a new idea",
+    icon: Plus,
+  },
+];
+
 // Sections without a bespoke menu fall back to a single generic option.
 export function getCreateOptions(pathname: string, label: string): CreateOption[] {
   return (
