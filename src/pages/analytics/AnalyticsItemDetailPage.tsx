@@ -57,7 +57,13 @@ function AddStub({ label }: { label: string }) {
   );
 }
 
-function LinkedReportsCard({ reports }: { reports: AnalyticsOverviewItem[] }) {
+function LinkedReportsCard({
+  reports,
+  boardId,
+}: {
+  reports: AnalyticsOverviewItem[];
+  boardId: string;
+}) {
   if (reports.length === 0) return null;
   return (
     <div className="rounded-xl border border-border bg-background shadow-sm">
@@ -73,7 +79,7 @@ function LinkedReportsCard({ reports }: { reports: AnalyticsOverviewItem[] }) {
         {reports.map((report) => (
           <li key={report.id}>
             <Link
-              to={analyticsItemPath(report.id)}
+              to={analyticsItemPath(report.id, { boardId })}
               className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
             >
               <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
@@ -197,7 +203,7 @@ export default function AnalyticsItemDetailPage() {
         <div className="min-w-0 flex-1 space-y-4">
           {boardData ? (
             <>
-              <LinkedReportsCard reports={linkedReports} />
+              <LinkedReportsCard reports={linkedReports} boardId={item.id} />
               <KpiStrip items={boardData.kpis} />
               <div className="grid gap-4 lg:grid-cols-2">
                 <LineTrendCard

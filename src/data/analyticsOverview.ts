@@ -342,17 +342,45 @@ export function getRelatedReports(
   );
 }
 
-/** Whether the secondary nav should include the Board segment. */
+/** Whether the secondary nav should include the Board segment.
+ *  Board pages always show it; reports only when opened via board context. */
 export function analyticsShowsBoardCrumb(
-  item: AnalyticsOverviewItem | undefined
+  item: AnalyticsOverviewItem | undefined,
+  boardContextId?: string | null
 ): boolean {
   if (!item) return false;
   if (item.kind === "board") return true;
-  return Boolean(getAnalyticsParentBoard(item));
+  if (item.kind !== "report" || !boardContextId) return false;
+  return item.parentBoardId === boardContextId;
 }
 
-export function analyticsItemPath(id: string): string {
-  return `/analytics/overview/c/${id}`;
+/** Detail path; pass `boardId` when opening a report from a board (crumb context). */
+export function analyticsItemPath(
+  id: string,
+  opts?: { boardId?: string }
+): string {
+  const base = `/analytics/overview/c/${id}`;
+  if (!opts?.boardId) return base;
+  return `${base}?board=${encodeURIComponent(opts.boardId)}`;
+}
+
+/**
+ * Navigate to a report while preserving board crumb only if the report
+ * still belongs to the active board context.
+ */
+export function analyticsReportNavPath(
+  reportId: string,
+  boardContextId: string | undefined | null
+): string {
+  const report = getAnalyticsItem(reportId);
+  if (
+    boardContextId &&
+    report?.kind === "report" &&
+    report.parentBoardId === boardContextId
+  ) {
+    return analyticsItemPath(reportId, { boardId: boardContextId });
+  }
+  return analyticsItemPath(reportId);
 }
 
 export function firstAnalyticsItemOfKind(

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import {
@@ -33,7 +33,9 @@ import {
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
 import {
   ANALYTICS_ITEMS,
+  ANALYTICS_RECENT,
   analyticsItemPath,
+  analyticsReportNavPath,
   getAnalyticsItem,
   getAnalyticsParentBoard,
   getReportsForBoard,
@@ -288,15 +290,18 @@ function filterCampaigns(
   filter: string,
   search: string
 ): { id: string; name: string }[] {
-  let list = campaigns;
-  if (filter === "Recent") {
-    list = [...campaigns]
-      .sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))
-      .slice(0, 10);
-  } else if (filter !== "All") {
-    list = campaigns.filter((c) => c.status === filter);
-  }
   const q = search.trim().toLowerCase();
+  // While searching, ignore status/recent filters and match across the full list.
+  let list = campaigns;
+  if (!q) {
+    if (filter === "Recent") {
+      list = [...campaigns]
+        .sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))
+        .slice(0, 10);
+    } else if (filter !== "All") {
+      list = campaigns.filter((c) => c.status === filter);
+    }
+  }
   if (q) list = list.filter((c) => c.name.toLowerCase().includes(q));
   return list.map((c) => ({ id: c.id, name: c.name }));
 }
@@ -465,6 +470,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const { entityId } = useParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [navOpen, setNavOpen] = useState(false);
   // Animation pair: the overlay stays mounted (navRendered) while it slides
   // out, and the "shown" styles (navShown) lag mount by a frame so the
@@ -472,6 +478,12 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const [navRendered, setNavRendered] = useState(false);
   const [navShown, setNavShown] = useState(false);
   const [entityOpen, setEntityOpen] = useState(false);
+  const [boardMenuOpen, setBoardMenuOpen] = useState(false);
+  const [boardSearch, setBoardSearch] = useState("");
+  const [boardScope, setBoardScope] = useState<"all" | "recent" | "starred">("recent");
+  const [reportScope, setReportScope] = useState<
+    "board" | "all" | "recent" | "starred"
+  >("all");
   const openTimer = useRef<number | undefined>(undefined);
   const closeTimer = useRef<number | undefined>(undefined);
 
@@ -489,11 +501,41 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const isRecommendation = basePath === "/commerce/recommendation";
   const isAnalytics = basePath === "/analytics/overview";
   const analyticsItem = isAnalytics && entityId ? getAnalyticsItem(entityId) : undefined;
-  const analyticsParentBoard = getAnalyticsParentBoard(analyticsItem);
+  // Board crumb / “This Board” only when opened via a board (`?board=`), not
+  // merely because the report has a parentBoardId in data.
+  const boardContextId = searchParams.get("board");
+  const contextBoardCandidate = boardContextId
+    ? getAnalyticsItem(boardContextId)
+    : undefined;
+  const contextBoard =
+    contextBoardCandidate?.kind === "board" ? contextBoardCandidate : undefined;
   const isAnalyticsBoard = Boolean(analyticsItem && analyticsItem.kind === "board");
-  const isAnalyticsNestedReport = Boolean(
-    analyticsItem?.kind === "report" && analyticsParentBoard
+  const isAnalyticsBoardContext = Boolean(
+    analyticsItem?.kind === "report" &&
+      contextBoard &&
+      analyticsItem.parentBoardId === contextBoard.id
   );
+  const analyticsBoards = ANALYTICS_ITEMS.filter((row) => row.kind === "board");
+  const recentBoardIds = new Set(
+    ANALYTICS_RECENT.filter((row) => row.kind === "board").map((row) => row.id)
+  );
+  const boardSwitcherList = (() => {
+    const q = boardSearch.trim().toLowerCase();
+    // While searching, ignore All/Recent/Starred and match across all boards.
+    let list = analyticsBoards;
+    if (!q) {
+      list =
+        boardScope === "starred"
+          ? analyticsBoards.filter((b) => b.starred)
+          : boardScope === "recent"
+            ? analyticsBoards.filter((b) => recentBoardIds.has(b.id))
+            : analyticsBoards;
+      // Fall back to all boards if recent set is empty so the menu isn't blank.
+      if (boardScope === "recent" && list.length === 0) list = analyticsBoards;
+    }
+    if (q) list = list.filter((b) => b.name.toLowerCase().includes(q));
+    return list;
+  })();
   const webCampaigns = useVisibleCampaigns();
   const personalizations = useVisiblePersonalizations();
   const recommendations = useVisibleRecommendations();
@@ -539,21 +581,32 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
     ? productRows.find((c) => c.id === entityId) ?? productRows[0]
     : undefined;
 
+  const recentReportIds = new Set(
+    ANALYTICS_RECENT.filter((row) => row.kind === "report").map((row) => row.id)
+  );
+  const allReports = ANALYTICS_ITEMS.filter((row) => row.kind === "report");
+  const defaultReportScope = isAnalyticsBoardContext ? "board" : "all";
   const entities = isAnalytics
     ? (() => {
-        // Nested report → only siblings on that parent board.
-        // Standalone report → other reports with no board.
         // Board → boards only.
+        // Report → This Board (board context only) / All / Recent / Starred.
+        // While searching, ignore the scope and match across the full pool.
         let pool = ANALYTICS_ITEMS;
         if (analyticsItem?.kind === "board") {
-          pool = ANALYTICS_ITEMS.filter((row) => row.kind === "board");
+          pool = analyticsBoards;
         } else if (analyticsItem?.kind === "report") {
-          if (analyticsItem.parentBoardId) {
-            pool = getReportsForBoard(analyticsItem.parentBoardId);
+          const q = entitySearch.trim();
+          if (q) {
+            pool = allReports;
+          } else if (reportScope === "board" && contextBoard) {
+            pool = getReportsForBoard(contextBoard.id);
+          } else if (reportScope === "starred") {
+            pool = allReports.filter((row) => row.starred);
+          } else if (reportScope === "recent") {
+            const recent = allReports.filter((row) => recentReportIds.has(row.id));
+            pool = recent.length > 0 ? recent : allReports;
           } else {
-            pool = ANALYTICS_ITEMS.filter(
-              (row) => row.kind === "report" && !row.parentBoardId
-            );
+            pool = allReports;
           }
         }
         const q = entitySearch.trim().toLowerCase();
@@ -564,6 +617,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
             name: row.name,
             status: "Recent" as const,
             displayId: row.displayId,
+            starred: row.starred,
           }));
       })()
     : realData
@@ -628,6 +682,19 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
     setRenaming(false);
     setDraftName(selected?.name ?? "");
   }, [selected?.id, selected?.name]);
+
+  // Drop stale `?board=` when the report isn't on that board (or param is invalid).
+  useEffect(() => {
+    if (!isAnalytics || !entityId || !boardContextId) return;
+    if (isAnalyticsBoardContext) return;
+    navigate(analyticsItemPath(entityId), { replace: true });
+  }, [
+    isAnalytics,
+    entityId,
+    boardContextId,
+    isAnalyticsBoardContext,
+    navigate,
+  ]);
 
   const cancelOpen = () => window.clearTimeout(openTimer.current);
   const cancelScheduledClose = () => window.clearTimeout(closeTimer.current);
@@ -707,8 +774,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                     >
                       <Link
                         to={
-                          isAnalyticsNestedReport && analyticsParentBoard
-                            ? analyticsItemPath(analyticsParentBoard.id)
+                          isAnalyticsBoardContext && contextBoard
+                            ? analyticsItemPath(contextBoard.id)
                             : "/analytics/overview"
                         }
                       >
@@ -717,7 +784,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {isAnalyticsNestedReport ? "Back to board" : "Back to list"}
+                    {isAnalyticsBoardContext ? "Back to board" : "Back to list"}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -729,18 +796,27 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 >
                   Overview
                 </Link>
-                {isAnalyticsNestedReport && analyticsParentBoard ? (
+                {isAnalyticsBoardContext && contextBoard ? (
                   <>
                     <ChevronRight
                       className="size-3.5 shrink-0 text-muted-foreground"
                       strokeWidth={1.75}
                       aria-hidden
                     />
-                    <DropdownMenu.Root modal={false}>
-                      <DropdownMenu.Trigger asChild>
+                    <Popover.Root
+                      open={boardMenuOpen}
+                      onOpenChange={(o) => {
+                        setBoardMenuOpen(o);
+                        if (!o) {
+                          setBoardSearch("");
+                          setBoardScope("recent");
+                        }
+                      }}
+                    >
+                      <Popover.Trigger asChild>
                         <button
                           type="button"
-                          title={analyticsParentBoard.name}
+                          title={contextBoard.name}
                           aria-label="Switch board"
                           className="flex min-w-0 max-w-[14rem] shrink items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
                         >
@@ -748,25 +824,78 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                             <LayoutGrid className="size-3" strokeWidth={1.75} aria-hidden />
                           </span>
                           <span className="truncate text-sm">
-                            {analyticsParentBoard.name}
+                            {contextBoard.name}
                           </span>
                           <ChevronDown className="h-3.5 w-3.5 shrink-0" />
                         </button>
-                      </DropdownMenu.Trigger>
-                      <DropdownMenu.Portal>
-                        <DropdownMenu.Content
+                      </Popover.Trigger>
+                      <Popover.Portal>
+                        <Popover.Content
                           align="start"
                           sideOffset={6}
-                          className="z-50 max-h-72 min-w-[240px] overflow-y-auto rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+                          className="z-50 w-[300px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
                         >
-                          {ANALYTICS_ITEMS.filter((row) => row.kind === "board").map(
-                            (board) => (
-                              <DropdownMenu.Item key={board.id} asChild>
-                                <NavLink
-                                  to={analyticsItemPath(board.id)}
+                          <div className="flex items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
+                            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <input
+                              type="text"
+                              placeholder="Search boards…"
+                              value={boardSearch}
+                              onChange={(e) => setBoardSearch(e.target.value)}
+                              className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                            />
+                          </div>
+                          {!boardSearch.trim() ? (
+                            <div
+                              role="tablist"
+                              aria-label="Board filters"
+                              className="mt-2 flex gap-1 rounded-md border border-border bg-background p-0.5"
+                            >
+                              {(
+                                [
+                                  ["all", "All"],
+                                  ["recent", "Recent"],
+                                  ["starred", "Starred"],
+                                ] as const
+                              ).map(([value, label]) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  role="tab"
+                                  aria-selected={boardScope === value}
+                                  onClick={() => setBoardScope(value)}
                                   className={cn(
-                                    "flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
-                                    board.id === analyticsParentBoard.id &&
+                                    "flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+                                    boardScope === value
+                                      ? "bg-muted text-foreground"
+                                      : "text-muted-foreground hover:text-foreground"
+                                  )}
+                                >
+                                  {value === "starred" ? (
+                                    <Star className="size-3" strokeWidth={1.75} aria-hidden />
+                                  ) : null}
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                          <div className="mt-2 flex max-h-56 flex-col gap-0.5 overflow-y-auto">
+                            {boardSwitcherList.length === 0 ? (
+                              <p className="px-2.5 py-3 text-center text-xs text-muted-foreground">
+                                No boards in this view.
+                              </p>
+                            ) : (
+                              boardSwitcherList.map((board) => (
+                                <button
+                                  key={board.id}
+                                  type="button"
+                                  onClick={() => {
+                                    navigate(analyticsItemPath(board.id));
+                                    setBoardMenuOpen(false);
+                                  }}
+                                  className={cn(
+                                    "flex w-full items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+                                    board.id === contextBoard.id &&
                                       "bg-accent font-medium"
                                   )}
                                 >
@@ -777,14 +906,23 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                                       aria-hidden
                                     />
                                   </span>
-                                  <span className="truncate">{board.name}</span>
-                                </NavLink>
-                              </DropdownMenu.Item>
-                            )
-                          )}
-                        </DropdownMenu.Content>
-                      </DropdownMenu.Portal>
-                    </DropdownMenu.Root>
+                                  <span className="min-w-0 flex-1 truncate">
+                                    {board.name}
+                                  </span>
+                                  {board.starred ? (
+                                    <Star
+                                      className="size-3.5 shrink-0 fill-foreground text-foreground"
+                                      strokeWidth={1.75}
+                                      aria-label="Starred"
+                                    />
+                                  ) : null}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </Popover.Content>
+                      </Popover.Portal>
+                    </Popover.Root>
                   </>
                 ) : null}
                 <ChevronRight
@@ -796,7 +934,13 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                   open={entityOpen}
                   onOpenChange={(o) => {
                     setEntityOpen(o);
-                    if (!o) setFilterMenuOpen(false);
+                    if (!o) {
+                      setFilterMenuOpen(false);
+                      setEntitySearch("");
+                      setReportScope(defaultReportScope);
+                    } else if (!isAnalyticsBoard) {
+                      setReportScope(defaultReportScope);
+                    }
                   }}
                 >
                   <Popover.Trigger asChild>
@@ -829,37 +973,97 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                     <Popover.Content
                       align="start"
                       sideOffset={6}
-                      className="z-50 w-[300px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
+                      className="z-50 w-[320px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
-                          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                          <input
-                            type="text"
-                            placeholder="Search…"
-                            value={entitySearch}
-                            onChange={(e) => setEntitySearch(e.target.value)}
-                            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-                          />
-                        </div>
+                      <div className="flex items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
+                        <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder={
+                            isAnalyticsBoard ? "Search boards…" : "Search reports…"
+                          }
+                          value={entitySearch}
+                          onChange={(e) => setEntitySearch(e.target.value)}
+                          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                        />
                       </div>
+                      {!isAnalyticsBoard && !entitySearch.trim() ? (
+                        <div
+                          role="tablist"
+                          aria-label="Report filters"
+                          className="mt-2 flex flex-wrap gap-1 rounded-md border border-border bg-background p-0.5"
+                        >
+                          {(isAnalyticsBoardContext
+                            ? ([
+                                ["board", "This Board"],
+                                ["all", "All Reports"],
+                                ["recent", "Recent"],
+                                ["starred", "Starred"],
+                              ] as const)
+                            : ([
+                                ["all", "All Reports"],
+                                ["recent", "Recent"],
+                                ["starred", "Starred"],
+                              ] as const)
+                          ).map(([value, label]) => (
+                            <button
+                              key={value}
+                              type="button"
+                              role="tab"
+                              aria-selected={reportScope === value}
+                              onClick={() => setReportScope(value)}
+                              className={cn(
+                                "flex flex-1 items-center justify-center gap-1 rounded px-1.5 py-1 text-[11px] font-medium transition-colors",
+                                reportScope === value
+                                  ? "bg-muted text-foreground"
+                                  : "text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {value === "starred" ? (
+                                <Star className="size-3" strokeWidth={1.75} aria-hidden />
+                              ) : null}
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
                       <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-                        {entities.map((entity) => (
-                          <button
-                            key={entity.id}
-                            type="button"
-                            onClick={() => {
-                              navigate(analyticsItemPath(entity.id));
-                              setEntityOpen(false);
-                            }}
-                            className={cn(
-                              "w-full truncate rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted",
-                              entity.id === selected?.id && "bg-accent font-medium"
-                            )}
-                          >
-                            {entity.name}
-                          </button>
-                        ))}
+                        {entities.length === 0 ? (
+                          <p className="px-2.5 py-3 text-center text-xs text-muted-foreground">
+                            No {isAnalyticsBoard ? "boards" : "reports"} in this view.
+                          </p>
+                        ) : (
+                          entities.map((entity) => (
+                            <button
+                              key={entity.id}
+                              type="button"
+                              onClick={() => {
+                                navigate(
+                                  analyticsReportNavPath(
+                                    entity.id,
+                                    contextBoard?.id
+                                  )
+                                );
+                                setEntityOpen(false);
+                              }}
+                              className={cn(
+                                "flex w-full items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+                                entity.id === selected?.id && "bg-accent font-medium"
+                              )}
+                            >
+                              <span className="min-w-0 flex-1 truncate">
+                                {entity.name}
+                              </span>
+                              {"starred" in entity && entity.starred ? (
+                                <Star
+                                  className="size-3.5 shrink-0 fill-foreground text-foreground"
+                                  strokeWidth={1.75}
+                                  aria-label="Starred"
+                                />
+                              ) : null}
+                            </button>
+                          ))
+                        )}
                       </div>
                     </Popover.Content>
                   </Popover.Portal>
@@ -1018,7 +1222,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                   sideOffset={6}
                   className="z-50 w-[300px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
                 >
-                  {/* Real-data paths wire search + a status filter; others stay visual-only. */}
+                  {/* Real-data paths wire search + a status filter; others stay visual-only.
+                      While searching, hide filters and match across the full list. */}
                   <div className="flex items-center gap-2">
                     <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
                       <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -1034,7 +1239,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                       />
                     </div>
-                    {(realData || (isAnalytics && !analyticsItem?.kind)) && (
+                    {(realData || (isAnalytics && !analyticsItem?.kind)) &&
+                    !entitySearch.trim() ? (
                       <div className="relative shrink-0">
                         <button
                           type="button"
@@ -1074,7 +1280,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           </div>
                         )}
                       </div>
-                    )}
+                    ) : null}
                   </div>
                   <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
                     {entities.map((entity) => (
