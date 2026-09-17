@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useWorkspaceStore } from "@/store/workspace";
 
 const OLD_NAV_REASONS = [
   { value: "prefer-layout", label: "I prefer the previous layout" },
@@ -57,8 +58,9 @@ export default function OldNavFeedbackDialog({
   }, [open]);
 
   const confirmFeedback = () => {
-    // Stub: collect feedback only — do not switch navigation.
+    // Collect feedback stub, then land on the Old navigation workspace.
     onOpenChange(false);
+    useWorkspaceStore.getState().enterOldNavigation();
   };
 
   return (

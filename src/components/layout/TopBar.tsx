@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, Plus, Sparkles } from "@/components/icons/protoLucide";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Badge, BadgeDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRowsStore } from "../../store/rows";
 import { useRecommendationRowsStore } from "../../store/recommendationRows";
@@ -153,6 +154,17 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
         )}
         {isCancellationWorkspace && !revoked && (
           <CancellationRequestNotice onRevoke={() => setRevoked(true)} />
+        )}
+        {pathname === "/analytics/overview" && (
+          <Badge
+            tone="green"
+            fill="light"
+            size="md"
+            className="gap-1.5 font-normal"
+          >
+            <BadgeDot className="bg-[var(--status-running-fg)]" />
+            Collecting Data
+          </Badge>
         )}
         {showsSummarise(pathname) && (
           <Button

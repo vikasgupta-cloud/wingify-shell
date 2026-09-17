@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
+import { createBrowserRouter, Navigate, useParams, type RouteObject } from "react-router-dom";
 import {
   NAV,
   PROFILE_MODES,
@@ -46,6 +46,13 @@ import RecommendationDetailPage from "../pages/commerce/RecommendationDetailPage
 import RecommendationReportPage from "../pages/commerce/RecommendationReportPage";
 import WingzChatShell from "../components/wingz/WingzChatShell";
 import WingzChatPage from "../pages/wingz/WingzChatPage";
+import AnalyticsOverviewPage from "../pages/analytics/AnalyticsOverviewPage";
+import AnalyticsItemDetailPage from "../pages/analytics/AnalyticsItemDetailPage";
+
+function LegacyAnalyticsItemRedirect() {
+  const { entityId = "" } = useParams();
+  return <Navigate to={`/analytics/overview/c/${entityId}`} replace />;
+}
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
 const PAGES: Partial<Record<string, ComponentType>> = {
@@ -67,6 +74,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/data-360/metrics": MetricsPage,
   "/commerce/catalog": CatalogPage,
   "/commerce/recommendation": RecommendationPage,
+  "/analytics/overview": AnalyticsOverviewPage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
@@ -81,6 +89,18 @@ const addDetailRoute = (leafPath: string) => {
     detailRoutes.push({
       path: `${leafPath}/c/:entityId`,
       element: <RecommendationDetailPage />,
+    });
+    return;
+  }
+  // Journey Analytics boards/reports — DetailShell with analytics tabs + body.
+  if (leafPath === "/analytics/overview") {
+    detailRoutes.push({
+      path: `${leafPath}/c/:entityId`,
+      element: (
+        <DetailShell basePath={leafPath}>
+          <AnalyticsItemDetailPage />
+        </DetailShell>
+      ),
     });
     return;
   }
@@ -221,6 +241,11 @@ export const router = createBrowserRouter([
         element: <SessionRecordingPlayerPage />,
       },
       ...detailRoutes,
+      // Legacy analytics detail URLs → DetailShell `/c/:entityId`.
+      {
+        path: "/analytics/overview/i/:entityId",
+        element: <LegacyAnalyticsItemRedirect />,
+      },
       ...profileModeRoutes,
       // Wingz — full-page chat with the same persistent main rail as AppLayout.
       {

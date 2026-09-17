@@ -7,7 +7,6 @@ import {
   Flag,
   ShoppingCart,
   BarChart3,
-  LineChart,
   HeartPulse,
   Megaphone,
   Database,
@@ -252,7 +251,30 @@ export const NAV: NavItem[] = [
       { label: "Settings", path: "/commerce/settings", icon: Settings, hideCreate: true },
     ]},
   ]},
-  { label: "Analytics", path: "/analytics", icon: LineChart, group: 2, pinnable: true },
+  {
+    label: "Journey Analytics",
+    path: "/analytics",
+    icon: AppWindow,
+    group: 2,
+    pinnable: true,
+    sections: [
+      {
+        items: [
+          {
+            label: "Overview",
+            path: "/analytics/overview",
+            icon: LayoutGrid,
+          },
+          {
+            label: "Browse",
+            path: "/analytics/browse",
+            icon: Search,
+            hideCreate: true,
+          },
+        ],
+      },
+    ],
+  },
   { label: "Insights", path: "/insights", icon: BarChart3, group: 2, pinnable: true, sections: [
     { heading: "Overview", items: [{ label: "Dashboard", path: "/insights/dashboard", hideCreate: true }]},
     { heading: "Reports", items: [

@@ -124,6 +124,7 @@ const SUMMARISE_EXCLUDED_PATHS = new Set([
   "/data-360/funnels",
   "/data-360/data-studio",
   "/data-360/triggers",
+  "/analytics/overview",
 ]);
 
 /** Summarise on these listing routes without a Create button. */

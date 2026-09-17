@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import FontController from "./FontController";
 import { GetStartedGate } from "./GetStartedGate";
 import PlaygroundBanner from "./PlaygroundBanner";
+import RebrandingIntroModal from "./RebrandingIntroModal";
 
 /**
  * Top-level chrome shared by every route. Keeps FontController inside the
@@ -17,6 +18,7 @@ export default function RootChrome() {
         <Outlet />
       </div>
       <FontController />
+      <RebrandingIntroModal />
     </div>
   );
 }

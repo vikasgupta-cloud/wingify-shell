@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Plus } from "lucide-react";
+import { LayoutGrid, LineChart, Plus } from "lucide-react";
 import type { CampaignType } from "../data/campaigns";
 import { TYPE_ICONS } from "../components/icons/campaignTypeIcons";
 
@@ -41,6 +41,21 @@ CREATE_MENU["/commerce/recommendation"] = [
     label: "Recommendation",
     description: "Create a product recommendation strategy",
     icon: Plus,
+  },
+];
+
+CREATE_MENU["/analytics/overview"] = [
+  {
+    id: "board",
+    label: "Board",
+    description: "Group reports and charts on a shared canvas",
+    icon: LayoutGrid,
+  },
+  {
+    id: "report",
+    label: "Report",
+    description: "Track a metric or funnel over time",
+    icon: LineChart,
   },
 ];
 

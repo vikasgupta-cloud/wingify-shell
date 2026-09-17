@@ -8,22 +8,36 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  ChevronRight,
   Copy,
   Eraser,
   FileBarChart,
   GalleryVerticalEnd,
+  LayoutGrid,
+  LineChart,
   ListFilter,
   MoreHorizontal,
+  MoreVertical,
   PenLine,
   Pencil,
+  Plus,
   Printer,
   Rows3,
   Save,
   Search,
   Share2,
+  Sparkles,
+  Star,
   Trash2,
 } from "@/components/icons/protoLucide";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
+import {
+  ANALYTICS_ITEMS,
+  analyticsItemPath,
+  getAnalyticsItem,
+  getAnalyticsParentBoard,
+  getReportsForBoard,
+} from "@/data/analyticsOverview";
 import { mainNavCrumbPath, UTILITY_RAIL_WIDTH, resolveBreadcrumb } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
@@ -129,6 +143,86 @@ function SurfaceTabs({
         <FileBarChart className="h-4 w-4" />
         Reports
       </Link>
+    </div>
+  );
+}
+
+/** Right-header actions for Journey Analytics boards/reports (visual stubs).
+ *  Standalone report → “Add to board”
+ *  Nested report → “Added to N board(s)” dropdown
+ *  Board → “Add content”
+ */
+function AnalyticsDetailActions({ entityId }: { entityId?: string }) {
+  const item = entityId ? getAnalyticsItem(entityId) : undefined;
+  const starred = Boolean(item?.starred);
+  const parentBoard = getAnalyticsParentBoard(item);
+  const standaloneReport =
+    item?.kind === "report" && !item.parentBoardId;
+  const nestedReport = item?.kind === "report" && Boolean(parentBoard);
+  const boardCount = nestedReport ? 1 : 0;
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label={starred ? "Unstar" : "Star"}
+        className="size-8 text-muted-foreground hover:text-foreground"
+      >
+        <Star
+          className={cn("size-4", starred && "fill-foreground text-foreground")}
+          strokeWidth={1.75}
+        />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="Share"
+        className="size-8 text-muted-foreground hover:text-foreground"
+      >
+        <Share2 className="size-4" strokeWidth={1.75} />
+      </Button>
+      {nestedReport && parentBoard ? (
+        <DropdownMenuRoot modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" size="sm" className="gap-1.5">
+              <LayoutGrid className="size-3.5" strokeWidth={1.75} aria-hidden />
+              Added to {boardCount} board{boardCount === 1 ? "" : "s"}
+              <ChevronDown className="size-3.5 opacity-70" aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[220px]">
+            <DropdownMenuItem asChild>
+              <NavLink to={analyticsItemPath(parentBoard.id)}>
+                {parentBoard.name}
+              </NavLink>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuRoot>
+      ) : (
+        <Button type="button" variant="outline" size="sm" className="gap-1.5">
+          <Plus className="size-3.5" strokeWidth={1.75} aria-hidden />
+          {standaloneReport ? "Add to board" : "Add content"}
+        </Button>
+      )}
+      <Button type="button" variant="outline" size="sm" className="gap-1.5">
+        <Sparkles className="size-3.5" strokeWidth={1.75} aria-hidden />
+        Analyze
+      </Button>
+      <Button type="button" size="sm" disabled className="gap-1.5">
+        Save
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="More actions"
+        className="size-8 text-muted-foreground hover:text-foreground"
+      >
+        <MoreVertical className="size-4" strokeWidth={1.75} />
+      </Button>
     </div>
   );
 }
@@ -393,6 +487,13 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const realData = isRealDataPath(basePath);
   const isPersonalize = basePath === "/personalize";
   const isRecommendation = basePath === "/commerce/recommendation";
+  const isAnalytics = basePath === "/analytics/overview";
+  const analyticsItem = isAnalytics && entityId ? getAnalyticsItem(entityId) : undefined;
+  const analyticsParentBoard = getAnalyticsParentBoard(analyticsItem);
+  const isAnalyticsBoard = Boolean(analyticsItem && analyticsItem.kind === "board");
+  const isAnalyticsNestedReport = Boolean(
+    analyticsItem?.kind === "report" && analyticsParentBoard
+  );
   const webCampaigns = useVisibleCampaigns();
   const personalizations = useVisiblePersonalizations();
   const recommendations = useVisibleRecommendations();
@@ -428,21 +529,74 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
       : CAMPAIGN_STATUSES;
 
   const dummyEntities = getEntities(basePath);
-  const filters = realData
-    ? ["All", "Recent", ...statusList]
-    : getFilters(basePath);
+  const filters = isAnalytics
+    ? ["All", "Boards", "Reports"]
+    : realData
+      ? ["All", "Recent", ...statusList]
+      : getFilters(basePath);
 
   const campaign = realData
     ? productRows.find((c) => c.id === entityId) ?? productRows[0]
     : undefined;
 
-  const entities = realData
-    ? filterCampaigns(productRows, activeFilter, entitySearch)
-    : dummyEntities;
+  const entities = isAnalytics
+    ? (() => {
+        // Nested report → only siblings on that parent board.
+        // Standalone report → other reports with no board.
+        // Board → boards only.
+        let pool = ANALYTICS_ITEMS;
+        if (analyticsItem?.kind === "board") {
+          pool = ANALYTICS_ITEMS.filter((row) => row.kind === "board");
+        } else if (analyticsItem?.kind === "report") {
+          if (analyticsItem.parentBoardId) {
+            pool = getReportsForBoard(analyticsItem.parentBoardId);
+          } else {
+            pool = ANALYTICS_ITEMS.filter(
+              (row) => row.kind === "report" && !row.parentBoardId
+            );
+          }
+        }
+        const q = entitySearch.trim().toLowerCase();
+        return pool
+          .filter((row) => !q || row.name.toLowerCase().includes(q))
+          .map((row) => ({
+            id: row.id,
+            name: row.name,
+            status: "Recent" as const,
+            displayId: row.displayId,
+          }));
+      })()
+    : realData
+      ? filterCampaigns(productRows, activeFilter, entitySearch)
+      : dummyEntities;
 
-  const selected = realData
-    ? campaign && { id: campaign.id, name: campaign.name }
-    : dummyEntities.find((e) => e.id === entityId) ?? dummyEntities[0];
+  const selected = isAnalytics
+    ? analyticsItem
+      ? {
+          id: analyticsItem.id,
+          name: analyticsItem.name,
+          displayId: analyticsItem.displayId,
+        }
+      : entities[0]
+        ? {
+            id: entities[0].id,
+            name: entities[0].name,
+            displayId: (entities[0] as { displayId?: string }).displayId,
+          }
+        : undefined
+    : realData
+      ? campaign && { id: campaign.id, name: campaign.name }
+      : dummyEntities.find((e) => e.id === entityId) ?? dummyEntities[0];
+
+  const badgeId = isAnalytics
+    ? String(
+        (selected as { displayId?: string } | undefined)?.displayId ??
+          selected?.id ??
+          ""
+      )
+    : selected?.id != null
+      ? String(selected.id)
+      : "";
 
   const startRename = () => {
     if (!selected || !realData) return;
@@ -537,6 +691,182 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <WingifyLogoButton />
 
+          {isAnalytics ? (
+            /* Analytics: Overview › [Board] › item ▾ — report switcher is board-scoped. */
+            <div className="flex min-w-0 items-center gap-0.5">
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                      aria-label="Back to list"
+                      asChild
+                    >
+                      <Link
+                        to={
+                          isAnalyticsNestedReport && analyticsParentBoard
+                            ? analyticsItemPath(analyticsParentBoard.id)
+                            : "/analytics/overview"
+                        }
+                      >
+                        <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {isAnalyticsNestedReport ? "Back to board" : "Back to list"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <div className="flex min-w-0 items-center gap-1.5 text-sm">
+                <Link
+                  to="/analytics/overview"
+                  className="shrink-0 rounded-md px-1.5 py-1 font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+                >
+                  Overview
+                </Link>
+                {isAnalyticsNestedReport && analyticsParentBoard ? (
+                  <>
+                    <ChevronRight
+                      className="size-3.5 shrink-0 text-muted-foreground"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                    <DropdownMenu.Root modal={false}>
+                      <DropdownMenu.Trigger asChild>
+                        <button
+                          type="button"
+                          title={analyticsParentBoard.name}
+                          aria-label="Switch board"
+                          className="flex min-w-0 max-w-[14rem] shrink items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
+                        >
+                          <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-[4px] bg-[var(--info-bg)] text-[var(--info-fg)]">
+                            <LayoutGrid className="size-3" strokeWidth={1.75} aria-hidden />
+                          </span>
+                          <span className="truncate text-sm">
+                            {analyticsParentBoard.name}
+                          </span>
+                          <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                        </button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.Content
+                          align="start"
+                          sideOffset={6}
+                          className="z-50 max-h-72 min-w-[240px] overflow-y-auto rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+                        >
+                          {ANALYTICS_ITEMS.filter((row) => row.kind === "board").map(
+                            (board) => (
+                              <DropdownMenu.Item key={board.id} asChild>
+                                <NavLink
+                                  to={analyticsItemPath(board.id)}
+                                  className={cn(
+                                    "flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
+                                    board.id === analyticsParentBoard.id &&
+                                      "bg-accent font-medium"
+                                  )}
+                                >
+                                  <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-[4px] bg-[var(--info-bg)] text-[var(--info-fg)]">
+                                    <LayoutGrid
+                                      className="size-3"
+                                      strokeWidth={1.75}
+                                      aria-hidden
+                                    />
+                                  </span>
+                                  <span className="truncate">{board.name}</span>
+                                </NavLink>
+                              </DropdownMenu.Item>
+                            )
+                          )}
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
+                  </>
+                ) : null}
+                <ChevronRight
+                  className="size-3.5 shrink-0 text-muted-foreground"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+                <Popover.Root
+                  open={entityOpen}
+                  onOpenChange={(o) => {
+                    setEntityOpen(o);
+                    if (!o) setFilterMenuOpen(false);
+                  }}
+                >
+                  <Popover.Trigger asChild>
+                    <button
+                      type="button"
+                      title={selected?.name ?? "Untitled"}
+                      className="flex min-w-0 max-w-full items-center gap-2 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                    >
+                      <span
+                        className={cn(
+                          "inline-flex size-5 shrink-0 items-center justify-center rounded-[4px]",
+                          isAnalyticsBoard
+                            ? "bg-[var(--info-bg)] text-[var(--info-fg)]"
+                            : "bg-muted text-foreground"
+                        )}
+                      >
+                        {isAnalyticsBoard ? (
+                          <LayoutGrid className="size-3" strokeWidth={1.75} aria-hidden />
+                        ) : (
+                          <LineChart className="size-3" strokeWidth={1.75} aria-hidden />
+                        )}
+                      </span>
+                      <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                        {selected?.name ?? "Untitled"}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </button>
+                  </Popover.Trigger>
+                  <Popover.Portal>
+                    <Popover.Content
+                      align="start"
+                      sideOffset={6}
+                      className="z-50 w-[300px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
+                          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <input
+                            type="text"
+                            placeholder="Search…"
+                            value={entitySearch}
+                            onChange={(e) => setEntitySearch(e.target.value)}
+                            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
+                        {entities.map((entity) => (
+                          <button
+                            key={entity.id}
+                            type="button"
+                            onClick={() => {
+                              navigate(analyticsItemPath(entity.id));
+                              setEntityOpen(false);
+                            }}
+                            className={cn(
+                              "w-full truncate rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+                              entity.id === selected?.id && "bg-accent font-medium"
+                            )}
+                          >
+                            {entity.name}
+                          </button>
+                        ))}
+                      </div>
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover.Root>
+              </div>
+            </div>
+          ) : (
           <div className="flex min-w-0 items-center gap-0.5">
             <TooltipProvider delayDuration={200}>
               <Tooltip>
@@ -650,9 +980,9 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         <span className="min-w-0 truncate text-sm font-semibold text-foreground">
                           {selected?.name ?? "Untitled"}
                         </span>
-                        {selected?.id != null && (
-                          <CampaignIdBadge id={String(selected.id)} />
-                        )}
+                        {!isAnalytics && badgeId ? (
+                          <CampaignIdBadge id={badgeId} />
+                        ) : null}
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       </button>
                     </Popover.Trigger>
@@ -695,17 +1025,21 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                       <input
                         type="text"
                         placeholder="Search…"
-                        value={realData ? entitySearch : undefined}
-                        onChange={realData ? (e) => setEntitySearch(e.target.value) : undefined}
+                        value={realData || isAnalytics ? entitySearch : undefined}
+                        onChange={
+                          realData || isAnalytics
+                            ? (e) => setEntitySearch(e.target.value)
+                            : undefined
+                        }
                         className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                       />
                     </div>
-                    {realData && (
+                    {(realData || (isAnalytics && !analyticsItem?.kind)) && (
                       <div className="relative shrink-0">
                         <button
                           type="button"
-                          title="Filter by status"
-                          aria-label="Filter by status"
+                          title={isAnalytics ? "Filter by type" : "Filter by status"}
+                          aria-label={isAnalytics ? "Filter by type" : "Filter by status"}
                           aria-expanded={filterMenuOpen}
                           onClick={() => setFilterMenuOpen((o) => !o)}
                           className={cn(
@@ -742,22 +1076,6 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                       </div>
                     )}
                   </div>
-                  {realData && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEntityOpen(false);
-                        startRename();
-                      }}
-                      className="mb-1 flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                    >
-                      <Pencil
-                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                        strokeWidth={1.75}
-                      />
-                      Rename current campaign
-                    </button>
-                  )}
                   <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
                     {entities.map((entity) => (
                       <div
@@ -771,19 +1089,21 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           type="button"
                           onClick={() => {
                             // Real campaigns land on Reports or Configuration by status;
-                            // dummy sections keep their plain detail path.
-                            const target = isPersonalize
-                              ? personalizeLandingPath({ id: entity.id })
-                              : isRecommendation
-                                ? recommendationLandingPath({ id: entity.id })
-                                : realData
-                                  ? campaignLandingPath({
-                                      id: entity.id,
-                                      status:
-                                        (productRows.find((c) => c.id === entity.id)
-                                          ?.status as CampaignStatus) ?? "Draft",
-                                    })
-                                  : `${basePath}/c/${entity.id}`;
+                            // analytics boards/reports share one detail path; dummy keep plain path.
+                            const target = isAnalytics
+                              ? analyticsItemPath(entity.id)
+                              : isPersonalize
+                                ? personalizeLandingPath({ id: entity.id })
+                                : isRecommendation
+                                  ? recommendationLandingPath({ id: entity.id })
+                                  : realData
+                                    ? campaignLandingPath({
+                                        id: entity.id,
+                                        status:
+                                          (productRows.find((c) => c.id === entity.id)
+                                            ?.status as CampaignStatus) ?? "Draft",
+                                      })
+                                    : `${basePath}/c/${entity.id}`;
                             navigate(target);
                             setEntityOpen(false);
                           }}
@@ -794,7 +1114,9 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         >
                           {entity.name}
                         </button>
-                        <CampaignIdBadge id={String(entity.id)} />
+                        {!isAnalytics ? (
+                          <CampaignIdBadge id={String(entity.id)} />
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -804,51 +1126,58 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
 
           </div>
           </div>
+          )}
         </div>
 
-        {/* Center switcher: Configure/Reports tabs bottom-aligned to the bar so
-            the active underline sits on the header's own bottom border. Middle
-            column of the three-column bar → stays centered while the breadcrumb
-            truncates in its own column. */}
+        {/* Center switcher: Configure/Reports for campaigns. Analytics uses
+            left breadcrumb only (no Overview/Board/Report tabs). */}
         <div className="flex shrink-0 items-end justify-center self-stretch">
-          <SurfaceTabs
-            basePath={basePath}
-            entityId={entityId}
-            showViewToggle={
-              !isPersonalize &&
-              !isRecommendation &&
-              Boolean(campaign) &&
-              !pathname.endsWith("/reports")
-            }
-          />
+          {isAnalytics ? null : (
+            <SurfaceTabs
+              basePath={basePath}
+              entityId={entityId}
+              showViewToggle={
+                !isPersonalize &&
+                !isRecommendation &&
+                Boolean(campaign) &&
+                !pathname.endsWith("/reports")
+              }
+            />
+          )}
         </div>
 
-        {/* Actions slot: Save, the full StatusMenu, and the kebab. Create lives on
-            the list pages only. Status + kebab need a real campaign. */}
+        {/* Actions slot: analytics uses star/share/add/analyze/save; campaigns use
+            Save + StatusMenu + kebab. Create lives on the list pages only. */}
         <div className="flex flex-1 items-center justify-end gap-2">
-          {!isPersonalize && !isRecommendation && (
-            <SaveButton entityId={entityId} />
-          )}
-          {!isRecommendation && campaign && (
-            <StatusMenu
-              campaign={campaign as { id: string; status: CampaignStatus }}
-              triggerVariant="button"
-              onSetStatus={isPersonalize ? persSetStatus : undefined}
-            />
-          )}
-          {!isRecommendation && campaign && (
-            <KebabMenu
-              campaign={
-                campaign as {
-                  id: string;
-                  status: CampaignStatus;
-                  name: string;
-                }
-              }
-              listPath={basePath}
-              onArchive={isPersonalize ? persArchive : webArchive}
-              onRemove={isPersonalize ? persRemove : webRemove}
-            />
+          {isAnalytics ? (
+            <AnalyticsDetailActions entityId={entityId} />
+          ) : (
+            <>
+              {!isPersonalize && !isRecommendation && (
+                <SaveButton entityId={entityId} />
+              )}
+              {!isRecommendation && campaign && (
+                <StatusMenu
+                  campaign={campaign as { id: string; status: CampaignStatus }}
+                  triggerVariant="button"
+                  onSetStatus={isPersonalize ? persSetStatus : undefined}
+                />
+              )}
+              {!isRecommendation && campaign && (
+                <KebabMenu
+                  campaign={
+                    campaign as {
+                      id: string;
+                      status: CampaignStatus;
+                      name: string;
+                    }
+                  }
+                  listPath={basePath}
+                  onArchive={isPersonalize ? persArchive : webArchive}
+                  onRemove={isPersonalize ? persRemove : webRemove}
+                />
+              )}
+            </>
           )}
         </div>
       </header>

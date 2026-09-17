@@ -9,7 +9,9 @@ export type WorkspaceId =
   | "demo"
   | "cancellation-revoke"
   | "trial-over"
-  | "get-started";
+  | "get-started"
+  | "old-navigation"
+  | "new-rebranding";
 
 export type Workspace = {
   id: WorkspaceId;
@@ -23,6 +25,10 @@ export type Workspace = {
   trialOver?: boolean;
   /** Lock app to Get Started until email verified + product selected. */
   getStartedGate?: boolean;
+  /** Session playground: old-nav label swap in JD menu (chrome unchanged). */
+  oldNavigation?: boolean;
+  /** Opens the rebranding intro modal whenever this workspace is selected. */
+  rebrandingIntro?: boolean;
 };
 
 export const WORKSPACES: Workspace[] = [
@@ -59,6 +65,18 @@ export const WORKSPACES: Workspace[] = [
     label: "Get Started",
     triggerLabel: "Get Started",
     getStartedGate: true,
+  },
+  {
+    id: "old-navigation",
+    label: "Old navigation",
+    triggerLabel: "Old navigation",
+    oldNavigation: true,
+  },
+  {
+    id: "new-rebranding",
+    label: "New Rebranding",
+    triggerLabel: "New Rebranding",
+    rebrandingIntro: true,
   },
 ];
 
@@ -109,10 +127,18 @@ function readLegacyWorkspaceId(): WorkspaceId | null {
 
 type WorkspaceState = {
   workspaceId: WorkspaceId;
+  /** Workspace to restore when leaving Old navigation via JD menu. */
+  oldNavReturnWorkspaceId: WorkspaceId | null;
+  rebrandingModalOpen: boolean;
   getStartedProgress: GetStartedProgress;
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   setWorkspaceId: (id: WorkspaceId) => void;
+  /** Confirm JD “switch to old nav” — remembers current workspace, then enters old-navigation. */
+  enterOldNavigation: () => void;
+  /** JD “switch to new nav” — returns to the workspace that led into old-navigation. */
+  leaveOldNavigation: () => void;
+  setRebrandingModalOpen: (open: boolean) => void;
   verifyGetStartedEmail: () => void;
   selectGetStartedProduct: (productPath: string) => void;
   resetGetStartedProgress: () => void;
@@ -120,8 +146,10 @@ type WorkspaceState = {
 
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       workspaceId: "delhi",
+      oldNavReturnWorkspaceId: null,
+      rebrandingModalOpen: false,
       getStartedProgress: DEFAULT_GET_STARTED_PROGRESS,
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
@@ -129,13 +157,44 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((s) => {
           const enteringGetStarted =
             workspaceId === "get-started" && s.workspaceId !== "get-started";
+          const enteringOldNav =
+            workspaceId === "old-navigation" &&
+            s.workspaceId !== "old-navigation";
+
           return {
             workspaceId,
+            rebrandingModalOpen: workspaceId === "new-rebranding",
+            ...(enteringOldNav
+              ? { oldNavReturnWorkspaceId: s.workspaceId }
+              : null),
             ...(enteringGetStarted
               ? { getStartedProgress: DEFAULT_GET_STARTED_PROGRESS }
               : null),
           };
         }),
+      enterOldNavigation: () => {
+        const { workspaceId } = get();
+        if (workspaceId === "old-navigation") return;
+        set({
+          oldNavReturnWorkspaceId: workspaceId,
+          workspaceId: "old-navigation",
+          rebrandingModalOpen: false,
+        });
+      },
+      leaveOldNavigation: () => {
+        const { oldNavReturnWorkspaceId } = get();
+        const target =
+          oldNavReturnWorkspaceId &&
+          oldNavReturnWorkspaceId !== "old-navigation"
+            ? oldNavReturnWorkspaceId
+            : "delhi";
+        set({
+          workspaceId: target,
+          oldNavReturnWorkspaceId: null,
+          rebrandingModalOpen: target === "new-rebranding",
+        });
+      },
+      setRebrandingModalOpen: (open) => set({ rebrandingModalOpen: open }),
       verifyGetStartedEmail: () =>
         set((s) => ({
           getStartedProgress: {
@@ -157,6 +216,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       name: "wingify-workspace-v2",
       partialize: (state) => ({
         workspaceId: state.workspaceId,
+        oldNavReturnWorkspaceId: state.oldNavReturnWorkspaceId,
         getStartedProgress: state.getStartedProgress,
       }),
       merge: (persisted, current) => {
@@ -178,11 +238,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }
         }
 
+        const workspaceId =
+          saved.workspaceId ?? legacyWorkspaceId ?? current.workspaceId;
+
         return {
           ...current,
           ...saved,
-          workspaceId:
-            saved.workspaceId ?? legacyWorkspaceId ?? current.workspaceId,
+          workspaceId,
+          oldNavReturnWorkspaceId: saved.oldNavReturnWorkspaceId ?? null,
+          // Re-open intro whenever persisted workspace is New Rebranding.
+          rebrandingModalOpen: workspaceId === "new-rebranding",
           getStartedProgress,
         };
       },
@@ -216,6 +281,10 @@ export function useIsTrialOverWorkspace(): boolean {
 
 export function useIsGetStartedWorkspace(): boolean {
   return useActiveWorkspace().getStartedGate === true;
+}
+
+export function useIsOldNavigationWorkspace(): boolean {
+  return useActiveWorkspace().oldNavigation === true;
 }
 
 export function useGetStartedGateReady(): boolean {

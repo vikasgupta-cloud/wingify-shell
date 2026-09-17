@@ -1,7 +1,7 @@
 // @summary JD avatar flyout: destinations, theme, switch-to-old-nav trigger, Logout.
 // Feedback modal mounts in ExpandedNav (not here) so closing the flyout does not unmount it.
 import { NavLink } from "react-router-dom";
-import { History } from "@/components/icons/protoLucide";
+import { History, Sparkles } from "@/components/icons/protoLucide";
 import {
   CURRENT_USER,
   LOGOUT_PATH,
@@ -9,6 +9,10 @@ import {
   type NavItem,
 } from "../../config/navigation";
 import { cn } from "../../lib/utils";
+import {
+  useIsOldNavigationWorkspace,
+  useWorkspaceStore,
+} from "@/store/workspace";
 import ColorModeToggle from "./ColorModeToggle";
 import ProfileAvatar from "./ProfileAvatar";
 
@@ -27,6 +31,9 @@ export default function ProfileMenuPanel({
   onRequestClose?: () => void;
   onSwitchToOldNav?: () => void;
 }) {
+  const onOldNavigation = useIsOldNavigationWorkspace();
+  const leaveOldNavigation = useWorkspaceStore((s) => s.leaveOldNavigation);
+
   if (!item.sections) return null;
 
   const sections = item.sections
@@ -123,16 +130,26 @@ export default function ProfileMenuPanel({
         type="button"
         onClick={() => {
           onRequestClose?.();
-          onSwitchToOldNav?.();
+          if (onOldNavigation) leaveOldNavigation();
+          else onSwitchToOldNav?.();
         }}
         className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
       >
-        <History
-          className="h-4 w-4 shrink-0 text-muted-foreground"
-          strokeWidth={1.75}
-        />
+        {onOldNavigation ? (
+          <Sparkles
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+        ) : (
+          <History
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+        )}
         <span className="min-w-0 flex-1 truncate">
-          Switch to old Navigation
+          {onOldNavigation
+            ? "Switch to new Navigation"
+            : "Switch to old Navigation"}
         </span>
       </button>
 
