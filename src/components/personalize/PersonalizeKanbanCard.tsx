@@ -79,7 +79,7 @@ export default function PersonalizeKanbanCard({
   const openWingz = useWingzStore((s) => s.toggleWingz);
   const rename = usePersonalizeRowsStore((s) => s.rename);
   
-  const stop = (e: React.MouseEvent) => e.stopPropagation();
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   const started = STARTED_STATUSES.includes(campaign.status);
   const showStats = campaign.status !== "Draft";

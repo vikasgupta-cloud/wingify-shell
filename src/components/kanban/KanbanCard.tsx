@@ -144,7 +144,7 @@ export default function KanbanCard({
   const openWingz = useWingzStore((s) => s.toggleWingz);
   const updateCampaign = useRowsStore((s) => s.updateCampaign);
   const TypeIcon = TYPE_ICONS[campaign.type];
-  const stop = (e: React.MouseEvent) => e.stopPropagation();
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   const started = STARTED_STATUSES.includes(campaign.status);
   const showStats = campaign.status !== "Draft";
