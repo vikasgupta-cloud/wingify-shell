@@ -1,7 +1,12 @@
+/** DetailShell — entity detail chrome (header crumbs, tabs, overlay nav).
+ * @summary Section crumb + analytics Overview/Browse are plain text (no switcher);
+ * board + entity switchers unchanged. Reuses resolveBreadcrumb, Popover, shadcn menus.
+ */
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+// @undo — section-crumb DropdownMenu removed; entity/header menus use shadcn DropdownMenu.
+// import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import {
   Archive,
@@ -39,9 +44,9 @@ import {
 import { TYPE_ICONS } from "@/components/icons/campaignTypeIcons";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
 import {
-  ANALYTICS_BROWSE_BASE,
+  // ANALYTICS_BROWSE_BASE, // @undo — Overview/Browse switcher removed from analytics detail
   ANALYTICS_ITEMS,
-  ANALYTICS_OVERVIEW_BASE,
+  // ANALYTICS_OVERVIEW_BASE, // @undo — Overview/Browse switcher removed from analytics detail
   ANALYTICS_RECENT,
   analyticsItemPath,
   analyticsListLabel,
@@ -887,7 +892,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const [boardMenuOpen, setBoardMenuOpen] = useState(false);
   const [boardSearch, setBoardSearch] = useState("");
   const [boardScope, setBoardScope] = useState<"all" | "recent" | "starred">("recent");
-  const [listMenuOpen, setListMenuOpen] = useState(false);
+  // const [listMenuOpen, setListMenuOpen] = useState(false); // @undo — Overview/Browse switcher removed
   const [reportScope, setReportScope] = useState<
     "board" | "all" | "recent" | "starred"
   >("all");
@@ -900,7 +905,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const onReports = pathname.endsWith("/reports");
 
   // Breadcrumb trail: main-nav label, plus the sub-nav label when basePath is a leaf.
-  const { item, leaf, siblings } = resolveBreadcrumb(basePath);
+  const { item, leaf } = resolveBreadcrumb(basePath);
 
   // Real-data paths: Web Exp, Personalize, or Commerce Recommendation.
   const realData = isRealDataPath(basePath);
@@ -1392,50 +1397,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               </TooltipProvider>
 
               <div className="flex min-w-0 items-center gap-1.5 text-sm">
-                <Popover.Root open={listMenuOpen} onOpenChange={setListMenuOpen}>
-                  <Popover.Trigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Switch list"
-                      className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                    >
-                      {analyticsListCrumb}
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    </button>
-                  </Popover.Trigger>
-                  <Popover.Portal>
-                    <Popover.Content
-                      align="start"
-                      sideOffset={6}
-                      className="z-50 w-[180px] rounded-md border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg"
-                    >
-                      {(
-                        [
-                          [ANALYTICS_OVERVIEW_BASE, "Overview"],
-                          [ANALYTICS_BROWSE_BASE, "Browse"],
-                        ] as const
-                      ).map(([path, label]) => (
-                        <button
-                          key={path}
-                          type="button"
-                          onClick={() => {
-                            navigate(path);
-                            setListMenuOpen(false);
-                          }}
-                          className={cn(
-                            "flex w-full items-center justify-between gap-2 rounded-sm px-2.5 py-1.5 text-left transition-colors hover:bg-muted",
-                            path === basePath && "bg-accent font-medium"
-                          )}
-                        >
-                          {label}
-                          {path === basePath ? (
-                            <Check className="size-3.5 shrink-0" strokeWidth={1.75} />
-                          ) : null}
-                        </button>
-                      ))}
-                    </Popover.Content>
-                  </Popover.Portal>
-                </Popover.Root>
+                {/* Overview/Browse is plain text — no list switcher on analytics detail. */}
+                <span className="shrink-0 px-1.5 py-1 font-medium text-foreground">
+                  {analyticsListCrumb}
+                </span>
                 {isAnalyticsBoardContext && contextBoard ? (
                   <>
                     <span className="shrink-0 text-muted-foreground">/</span>
@@ -1841,57 +1806,32 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
             </TooltipProvider>
 
             <div className="flex min-w-0 items-center gap-2 text-sm">
-              {/* Deeper (campaign) crumb: leaf product name when present — e.g.
-                  "Web Experimentation / Campaign", not "Experimentation / …". */}
+              {/* Section crumb is plain text (no sibling switcher). Prefer leaf
+                  label — e.g. "Web Experimentation / Campaign". */}
               {leaf ? (
-              <DropdownMenu.Root modal={false}>
-                <DropdownMenu.Trigger asChild>
-                  <button
-                    type="button"
-                    title={leaf.label}
-                    className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
-                  >
-                    <span className="max-w-[10rem] truncate">{leaf.label}</span>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-                  </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    align="start"
-                    sideOffset={6}
-                    className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
-                  >
-                    {siblings.map((sibling) => (
-                      <DropdownMenu.Item key={sibling.path} asChild>
-                        <NavLink
-                          to={sibling.path}
-                          className={cn(
-                            "block cursor-pointer rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
-                            sibling.path === leaf.path && "bg-accent font-medium"
-                          )}
-                        >
-                          {sibling.label}
-                        </NavLink>
-                      </DropdownMenu.Item>
-                    ))}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-            ) : (
-              <Link
-                to={mainNavCrumbPath(basePath)}
-                title={item?.label ?? basePath}
-                className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none"
-              >
-                {item?.icon && (
-                  <item.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                )}
-                <span className="hidden max-w-[10rem] truncate lg:inline">
-                  {item?.label ?? basePath}
+                <span
+                  title={leaf.label}
+                  className="max-w-[10rem] shrink-0 truncate px-1.5 py-1 text-muted-foreground"
+                >
+                  {leaf.label}
                 </span>
-              </Link>
-            )}
-            <span className="shrink-0 text-muted-foreground">/</span>
+              ) : (
+                <span
+                  title={item?.label ?? basePath}
+                  className="flex shrink-0 items-center gap-1.5 px-1.5 py-1 text-muted-foreground"
+                >
+                  {item?.icon && (
+                    <item.icon
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
+                  )}
+                  <span className="hidden max-w-[10rem] truncate lg:inline">
+                    {item?.label ?? basePath}
+                  </span>
+                </span>
+              )}
+              <span className="shrink-0 text-muted-foreground">/</span>
             <Popover.Root
               open={entityOpen}
               onOpenChange={(o) => {
