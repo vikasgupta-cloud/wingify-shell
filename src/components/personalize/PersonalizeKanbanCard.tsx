@@ -18,6 +18,8 @@ import { useWingzStore } from "../../store/wingz";
 import { Target } from "@/components/icons/protoLucide";
 import StatusBadge, { VitalsIcon } from "../ui/StatusBadge";
 import CreatorAvatar from "../ui/CreatorAvatar";
+import InlineEditableName from "@/components/ui/InlineEditableName";
+import { usePersonalizeRowsStore } from "../../store/personalizeRows";
 
 // Statuses whose campaigns have started: they carry vitals, results, and the
 // full three-stat row.
@@ -75,6 +77,7 @@ export default function PersonalizeKanbanCard({
 }) {
   const navigate = useNavigate();
   const openWingz = useWingzStore((s) => s.toggleWingz);
+  const rename = usePersonalizeRowsStore((s) => s.rename);
   
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -103,12 +106,14 @@ export default function PersonalizeKanbanCard({
           className="h-4 w-4 shrink-0 text-muted-foreground"
           aria-label={campaign.type}
         />
-        <span
-          title={campaign.name}
-          className="min-w-0 truncate text-sm font-medium text-foreground"
-        >
-          {campaign.name}
-        </span>
+        <div className="min-w-0 flex-1" onClick={stop} onKeyDown={stop}>
+          <InlineEditableName
+            name={campaign.name}
+            to={personalizeLandingPath(campaign)}
+            onRename={(next) => rename(campaign.id, next)}
+            className="block truncate text-sm font-medium text-foreground hover:underline"
+          />
+        </div>
         {started && (
           <span className="shrink-0">
             <VitalsIcon campaign={campaign} />

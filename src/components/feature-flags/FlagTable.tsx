@@ -35,6 +35,7 @@ import {
   useFlagViewsStore,
 } from "@/store/flagViews";
 import { cn } from "@/lib/utils";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 import { useFlagPipeline } from "./useFlagPipeline";
 
 const CHECKBOX_COL_WIDTH = 44;
@@ -72,6 +73,7 @@ export default function FlagTable() {
   const { visibleColumns, sort, columnWidths } = useActiveFlagViewState();
   const updateDraft = useFlagViewsStore((s) => s.updateActiveViewDraft);
   const remove = useFlagRowsStore((s) => s.remove);
+  const rename = useFlagRowsStore((s) => s.rename);
   const { page, pageSize, rowDensity, setPage, setPageSize } =
     useFlagTableStore();
 
@@ -161,9 +163,12 @@ export default function FlagTable() {
             <Flag className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
-                <span className="truncate font-medium text-foreground">
-                  {f.name}
-                </span>
+                <InlineEditableName
+                  name={f.name}
+                  to={`/feature-management/feature-flags/c/${f.id}`}
+                  onRename={(next) => rename(f.id, next)}
+                  className="truncate font-medium text-foreground hover:underline"
+                />
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <Button

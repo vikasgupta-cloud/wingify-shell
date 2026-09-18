@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ChevronDown,
@@ -24,13 +23,17 @@ import { applyPersonalizeFilters } from "../../config/personalizeFilters";
 import { groupPersonalizeRows } from "../../config/personalizeGrouping";
 import { addDays, diffDays, formatDayHeader, startOfDay } from "../../lib/dates";
 import { usePersonalizeTableStore, type GanttZoom } from "../../store/personalizeTable";
-import { useVisiblePersonalizations } from "../../store/personalizeRows";
+import {
+  usePersonalizeRowsStore,
+  useVisiblePersonalizations,
+} from "../../store/personalizeRows";
 import { useActivePersonalizeViewState, usePersonalizeViewsStore } from "../../store/personalizeViews";
 import { useWingzStore } from "../../store/wingz";
 import { Button } from "@/components/ui/button";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 import { sortPersonalizations } from "./PersonalizeTable";
 
 // Horizontal scale (px per calendar day) by zoom — a week reads ~84px, a month ~120px.
@@ -127,6 +130,7 @@ function GanttRow({
 }) {
   
   const openWingz = useWingzStore((s) => s.toggleWingz);
+  const rename = usePersonalizeRowsStore((s) => s.rename);
   const phases = phasesFor(c);
 
   const segs = phases.map((ph, idx) => {
@@ -161,13 +165,12 @@ function GanttRow({
         <Target className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={c.type} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <Link
+            <InlineEditableName
+              name={c.name}
               to={personalizeLandingPath(c)}
-              title={c.name}
+              onRename={(next) => rename(c.id, next)}
               className="truncate text-sm font-medium text-foreground hover:underline"
-            >
-              {c.name}
-            </Link>
+            />
             <span className="shrink-0">
               <VitalsIcon campaign={c} />
             </span>

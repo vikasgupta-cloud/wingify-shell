@@ -51,12 +51,13 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "../../lib/utils";
 import { useQuickViewStore } from "../../store/quickView";
-import { useVisibleCampaigns } from "../../store/rows";
+import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
 import { useActiveViewState } from "../../store/views";
 import { useTableStore } from "../../store/table";
 import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import { sortCampaigns } from "../table/CampaignTable";
 import StatusMenu from "../ui/StatusMenu";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 
 const formatNumber = (n: number) => n.toLocaleString("en-US");
 const formatUplift = (n: number) => `${n >= 0 ? "+" : ""}${n}%`;
@@ -616,6 +617,7 @@ export default function QuickViewPanel() {
 
   const TypeIcon = TYPE_ICONS[campaign.type];
   const r = campaign.report;
+  const updateCampaign = useRowsStore((s) => s.updateCampaign);
 
   return (
     // flex-1 min-h-0 so the panel fills its sticky wrapper up to the wrapper's
@@ -624,12 +626,11 @@ export default function QuickViewPanel() {
       {/* Header */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3">
         <TypeIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={campaign.type} />
-        <span
-          title={campaign.name}
+        <InlineEditableName
+          name={campaign.name}
+          onRename={(next) => updateCampaign(campaign.id, { name: next })}
           className="min-w-0 flex-1 truncate text-sm font-medium text-foreground"
-        >
-          {campaign.name}
-        </span>
+        />
         <StatusMenu campaign={campaign} />
         <Button
           type="button"

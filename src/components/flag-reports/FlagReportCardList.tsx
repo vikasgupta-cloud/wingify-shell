@@ -20,6 +20,8 @@ import {
   type FlagReportKind,
 } from "@/config/flagReports";
 import { getFlagReportTableStore } from "@/store/flagReportTable";
+import { useFlagReportRowsStore } from "@/store/flagReportRows";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 import { useFlagReportPipeline } from "./useFlagReportPipeline";
 
 const PAGE_SIZES = [10, 25, 50];
@@ -52,6 +54,7 @@ export default function FlagReportCardList({
   const config = FLAG_REPORT_CONFIG[kind];
   const Icon = config.icon;
   const sorted = useFlagReportPipeline(kind);
+  const rename = useFlagReportRowsStore((s) => s.rename);
   const tableStore = getFlagReportTableStore(kind);
   const page = tableStore((s) => s.page);
   const pageSize = tableStore((s) => s.pageSize);
@@ -103,9 +106,12 @@ export default function FlagReportCardList({
                   <Icon className="size-3.5" aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {row.name}
-                  </p>
+                  <InlineEditableName
+                    name={row.name}
+                    to={`${config.path}/c/${row.id}`}
+                    onRename={(next) => rename(kind, row.id, next)}
+                    className="truncate text-sm font-semibold text-foreground hover:underline"
+                  />
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     ID {row.id} · Created by {row.createdBy} on{" "}
                     {formatDate(row.createdOn)}

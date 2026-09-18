@@ -28,10 +28,12 @@ import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
 import SessionRecordingPlayerPage from "../pages/insights/SessionRecordingPlayerPage";
 import SurveysPage from "../pages/pulse/SurveysPage";
 import FeatureFlagsPage from "../pages/feature-management/FeatureFlagsPage";
+import FlagDetailPage from "../pages/feature-management/FlagDetailPage";
 import FlagRolloutPage from "../pages/feature-management/FlagRolloutPage";
 import FlagTestingPage from "../pages/feature-management/FlagTestingPage";
 import FlagMultivariatePage from "../pages/feature-management/FlagMultivariatePage";
 import FlagPersonalizePage from "../pages/feature-management/FlagPersonalizePage";
+import TechDebtPage from "../pages/feature-management/TechDebtPage";
 import AttributesPage from "../pages/data-360/AttributesPage";
 import EventsPage from "../pages/data-360/EventsPage";
 import SegmentsPage from "../pages/data-360/SegmentsPage";
@@ -72,6 +74,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/feature-management/flag-testing": FlagTestingPage,
   "/feature-management/flag-multivariate": FlagMultivariatePage,
   "/feature-management/flag-personalize": FlagPersonalizePage,
+  "/feature-management/tech-debt": TechDebtPage,
   "/data-360/attributes": AttributesPage,
   "/data-360/events": EventsPage,
   "/data-360/segments": SegmentsPage,
@@ -118,6 +121,52 @@ const addDetailRoute = (leafPath: string) => {
     leafPath === "/plan/hypotheses" ||
     leafPath === "/plan/ideas"
   ) {
+    return;
+  }
+  // Feature Management leaves — Coming soon body; DetailShell breadcrumbs + switcher.
+  // Tech Debt is list-only (no detail route).
+  const fmComingSoonDetails = [
+    "/feature-management/feature-flags",
+    "/feature-management/flag-rollout",
+    "/feature-management/flag-testing",
+    "/feature-management/flag-personalize",
+    "/feature-management/flag-multivariate",
+  ];
+  if (fmComingSoonDetails.includes(leafPath)) {
+    detailRoutes.push({
+      path: `${leafPath}/c/:entityId`,
+      element: (
+        <DetailShell basePath={leafPath}>
+          <FlagDetailPage listPath={leafPath} />
+        </DetailShell>
+      ),
+    });
+    // Feature Flags Rules + Flag report kinds Reports (same Coming soon body).
+    if (leafPath === "/feature-management/feature-flags") {
+      detailRoutes.push({
+        path: `${leafPath}/c/:entityId/rules`,
+        element: (
+          <DetailShell basePath={leafPath}>
+            <FlagDetailPage listPath={leafPath} />
+          </DetailShell>
+        ),
+      });
+    }
+    if (
+      leafPath === "/feature-management/flag-rollout" ||
+      leafPath === "/feature-management/flag-testing" ||
+      leafPath === "/feature-management/flag-personalize" ||
+      leafPath === "/feature-management/flag-multivariate"
+    ) {
+      detailRoutes.push({
+        path: `${leafPath}/c/:entityId/reports`,
+        element: (
+          <DetailShell basePath={leafPath}>
+            <FlagDetailPage listPath={leafPath} />
+          </DetailShell>
+        ),
+      });
+    }
     return;
   }
   // Web Exp → ConfigPage; Personalize → Coming soon.

@@ -20,6 +20,8 @@ import { useWingzStore } from "../../store/wingz";
 import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import StatusBadge, { VitalsIcon } from "../ui/StatusBadge";
 import CreatorAvatar from "../ui/CreatorAvatar";
+import InlineEditableName from "@/components/ui/InlineEditableName";
+import { useRowsStore } from "../../store/rows";
 
 // Statuses whose campaigns have started: they carry vitals, results, and the
 // full three-stat row.
@@ -140,6 +142,7 @@ export default function KanbanCard({
   const quickViewOpen = useQuickViewStore((s) => s.openId === campaign.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
   const openWingz = useWingzStore((s) => s.toggleWingz);
+  const updateCampaign = useRowsStore((s) => s.updateCampaign);
   const TypeIcon = TYPE_ICONS[campaign.type];
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -172,12 +175,18 @@ export default function KanbanCard({
           className="h-4 w-4 shrink-0 text-muted-foreground"
           aria-label={campaign.type}
         />
-        <span
-          title={campaign.name}
-          className="min-w-0 truncate text-sm font-medium text-foreground"
+        <div
+          className="min-w-0 flex-1"
+          onClick={stop}
+          onKeyDown={stop}
         >
-          {campaign.name}
-        </span>
+          <InlineEditableName
+            name={campaign.name}
+            to={campaignLandingPath(campaign)}
+            onRename={(next) => updateCampaign(campaign.id, { name: next })}
+            className="block truncate text-sm font-medium text-foreground hover:underline"
+          />
+        </div>
         {started && (
           <span className="shrink-0">
             <VitalsIcon campaign={campaign} />

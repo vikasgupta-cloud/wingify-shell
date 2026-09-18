@@ -16,8 +16,12 @@ export type WorkspaceId =
 export type Workspace = {
   id: WorkspaceId;
   label: string;
-  /** Short label shown in the switcher trigger. */
+  /** Short label shown in the switcher trigger (name only; id is a separate badge). */
   triggerLabel: string;
+  /** Numeric account id shown in the #badge (copied without #). */
+  accountId: string;
+  /** Main account uses crown; sub-workspaces use building. */
+  isMainAccount?: boolean;
   playground?: boolean;
   /** Show TopBar cancellation notice + Revoke CTA. */
   cancellationRevoke?: boolean;
@@ -35,47 +39,56 @@ export const WORKSPACES: Workspace[] = [
   {
     id: "delhi",
     label: "Wingify Delhi",
-    triggerLabel: "Wingify Delhi #4532345",
+    triggerLabel: "Wingify Delhi",
+    accountId: "4532345",
+    isMainAccount: true,
   },
   {
     id: "bangalore",
     label: "VWO Bangalore team",
     triggerLabel: "VWO Bangalore team",
+    accountId: "8820141",
   },
   {
     id: "demo",
     label: "Demo Workspace",
     triggerLabel: "Demo Workspace",
+    accountId: "7103392",
     playground: true,
   },
   {
     id: "cancellation-revoke",
     label: "Cancellation Revoke",
     triggerLabel: "Cancellation Revoke",
+    accountId: "6641208",
     cancellationRevoke: true,
   },
   {
     id: "trial-over",
     label: "Trial Over",
     triggerLabel: "Trial Over",
+    accountId: "5519083",
     trialOver: true,
   },
   {
     id: "get-started",
     label: "Get Started",
     triggerLabel: "Get Started",
+    accountId: "4492716",
     getStartedGate: true,
   },
   {
     id: "old-navigation",
     label: "Old navigation",
     triggerLabel: "Old navigation",
+    accountId: "3388604",
     oldNavigation: true,
   },
   {
     id: "new-rebranding",
     label: "New Rebranding",
     triggerLabel: "New Rebranding",
+    accountId: "2275540",
     rebrandingIntro: true,
   },
 ];

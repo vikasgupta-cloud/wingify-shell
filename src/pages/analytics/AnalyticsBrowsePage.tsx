@@ -1,6 +1,5 @@
 /** Journey Analytics → Browse. Search + list table; Create lives in TopBar. */
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   ChevronDown,
   LayoutGrid,
@@ -23,6 +22,7 @@ import {
 } from "@/data/analyticsOverview";
 import { useAnalyticsRowsStore } from "@/store/analyticsRows";
 import { cn } from "@/lib/utils";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 
 function KindIcon({ kind }: { kind: AnalyticsItemKind }) {
   const Icon = kind === "board" ? LayoutGrid : LineChart;
@@ -48,17 +48,18 @@ function viewsFor(id: string): number {
 }
 
 function BrowseRow({ item }: { item: AnalyticsOverviewItem }) {
+  const rename = useAnalyticsRowsStore((s) => s.rename);
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_9rem_4.5rem_5rem_5.5rem] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
-      <Link
-        to={analyticsItemPath(item.id, { basePath: ANALYTICS_BROWSE_BASE })}
-        className="flex min-w-0 items-center gap-3 hover:underline"
-      >
+      <div className="flex min-w-0 items-center gap-3">
         <KindIcon kind={item.kind} />
-        <span className="truncate text-sm font-medium text-foreground">
-          {item.name}
-        </span>
-      </Link>
+        <InlineEditableName
+          name={item.name}
+          to={analyticsItemPath(item.id, { basePath: ANALYTICS_BROWSE_BASE })}
+          onRename={(next) => rename(item.id, next)}
+          className="truncate text-sm font-medium text-foreground hover:underline"
+        />
+      </div>
       <span className="text-sm text-muted-foreground">{item.editedLabel}</span>
       <span className="text-sm tabular-nums text-muted-foreground">
         {viewsFor(item.id)}

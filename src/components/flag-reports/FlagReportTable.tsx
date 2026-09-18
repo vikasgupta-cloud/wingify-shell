@@ -31,7 +31,9 @@ import {
 } from "@/store/flagReportViews";
 import { getFlagReportTableStore } from "@/store/flagReportTable";
 import { cn } from "@/lib/utils";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 import { useFlagReportPipeline } from "./useFlagReportPipeline";
+import { useFlagReportRowsStore } from "@/store/flagReportRows";
 
 const CHECKBOX_COL_WIDTH = 44;
 const PAGE_SIZES = [10, 25, 50];
@@ -66,6 +68,7 @@ export default function FlagReportTable({ kind }: { kind: FlagReportKind }) {
   const config = FLAG_REPORT_CONFIG[kind];
   const Icon = config.icon;
   const sorted = useFlagReportPipeline(kind);
+  const rename = useFlagReportRowsStore((s) => s.rename);
   const { visibleColumns, sort, columnWidths } =
     useActiveFlagReportViewState(kind);
   const updateDraft = getFlagReportViewsStore(kind)(
@@ -161,9 +164,12 @@ export default function FlagReportTable({ kind }: { kind: FlagReportKind }) {
             <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-secondary">
               <Icon className="size-3.5 text-foreground" aria-hidden />
             </span>
-            <span className="truncate font-medium text-foreground">
-              {row.name}
-            </span>
+            <InlineEditableName
+              name={row.name}
+              to={`${config.path}/c/${row.id}`}
+              onRename={(next) => rename(kind, row.id, next)}
+              className="truncate font-medium text-foreground hover:underline"
+            />
           </div>
         );
       case "id":

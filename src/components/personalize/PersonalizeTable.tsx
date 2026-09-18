@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import {
@@ -36,6 +35,7 @@ import { useWingzStore } from "../../store/wingz";
 import { cn } from "../../lib/utils";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 // Subtle placeholder for any null cell — a small en-dash, not a graphic em-dash.
@@ -126,16 +126,17 @@ const CHECKBOX_COL_WIDTH = 44;
 
 function NameCell({ campaign }: { campaign: Personalization }) {
   const openWingz = useWingzStore((s) => s.toggleWingz);
+  const rename = usePersonalizeRowsStore((s) => s.rename);
   return (
     <div className="flex items-center gap-2.5">
       <Target className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={campaign.type} />
       <div className="min-w-0 flex-1">
-        <Link
+        <InlineEditableName
+          name={campaign.name}
           to={personalizeLandingPath(campaign)}
+          onRename={(next) => rename(campaign.id, next)}
           className="block truncate text-sm font-medium text-foreground hover:underline"
-        >
-          {campaign.name}
-        </Link>
+        />
         <div className="truncate text-xs text-muted-foreground">{campaign.url}</div>
       </div>
       {/* Hover-revealed row actions — Quick view deferred (no detail data yet). */}

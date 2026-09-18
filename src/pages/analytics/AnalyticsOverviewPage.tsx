@@ -1,7 +1,6 @@
 // @summary Journey Analytics → Overview. Collecting Data + Create live in TopBar.
 // Recently viewed is a horizontal snap carousel; library rows link to detail.
 import { useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -28,6 +27,7 @@ import {
 } from "@/data/analyticsOverview";
 import { useAnalyticsRowsStore } from "@/store/analyticsRows";
 import { cn } from "@/lib/utils";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 
 type ScopeTab = "starred" | "mine";
 type KindFilter = "all" | AnalyticsItemKind;
@@ -53,17 +53,18 @@ function KindIcon({
 }
 
 function RecentCard({ item }: { item: AnalyticsOverviewItem }) {
+  const rename = useAnalyticsRowsStore((s) => s.rename);
   return (
-    <Link
-      to={analyticsItemPath(item.id)}
-      className="flex h-full min-w-0 flex-col gap-6 rounded-xl border border-border bg-background p-4 text-left shadow-sm transition-colors hover:bg-muted/40"
-    >
+    <div className="flex h-full min-w-0 flex-col gap-6 rounded-xl border border-border bg-background p-4 text-left shadow-sm transition-colors hover:bg-muted/40">
       <KindIcon kind={item.kind} />
       <div className="flex min-w-0 items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {item.name}
-          </p>
+          <InlineEditableName
+            name={item.name}
+            to={analyticsItemPath(item.id)}
+            onRename={(next) => rename(item.id, next)}
+            className="truncate text-sm font-semibold text-foreground hover:underline"
+          />
           <p className="mt-1 truncate text-xs text-muted-foreground">
             {item.editedLabel}
           </p>
@@ -74,7 +75,7 @@ function RecentCard({ item }: { item: AnalyticsOverviewItem }) {
           </AvatarFallback>
         </Avatar>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -154,17 +155,18 @@ function RecentCarousel({ items }: { items: AnalyticsOverviewItem[] }) {
 }
 
 function LibraryRow({ item }: { item: AnalyticsOverviewItem }) {
+  const rename = useAnalyticsRowsStore((s) => s.rename);
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_9rem_5rem_4.5rem] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
-      <Link
-        to={analyticsItemPath(item.id)}
-        className="flex min-w-0 items-center gap-3 hover:underline"
-      >
+      <div className="flex min-w-0 items-center gap-3">
         <KindIcon kind={item.kind} className="size-7" />
-        <span className="truncate text-sm font-medium text-foreground">
-          {item.name}
-        </span>
-      </Link>
+        <InlineEditableName
+          name={item.name}
+          to={analyticsItemPath(item.id)}
+          onRename={(next) => rename(item.id, next)}
+          className="truncate text-sm font-medium text-foreground hover:underline"
+        />
+      </div>
       <span className="text-sm text-muted-foreground">{item.editedLabel}</span>
       <span className="text-sm text-muted-foreground">{item.creatorInitials}</span>
       <div className="flex items-center justify-end gap-1">

@@ -8,27 +8,33 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  CircleMinus,
   Copy,
+  CopyPlus,
+  Download,
   Eraser,
   FileBarChart,
+  Flag,
   GalleryVerticalEnd,
+  History,
   LayoutGrid,
   LineChart,
   ListFilter,
-  MoreHorizontal,
   MoreVertical,
   PenLine,
   Pencil,
   Plus,
   Printer,
   Rows3,
-  Save,
+  // Save, // @undo — Save removed from WE detail header cluster
   Search,
   Share2,
   Sparkles,
   Star,
+  Target,
   Trash2,
 } from "@/components/icons/protoLucide";
+import { TYPE_ICONS } from "@/components/icons/campaignTypeIcons";
 import { getEntities, getFilters, isRealDataPath } from "../../config/entities";
 import {
   ANALYTICS_BROWSE_BASE,
@@ -62,6 +68,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -73,7 +82,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import StatusMenu from "@/components/ui/StatusMenu";
-import { useConfigStore, useIsConfigDirty } from "../../store/config";
+import { useConfigStore } from "../../store/config";
+// @undo — Save removed from WE detail header; useIsConfigDirty unused while Save is gone.
+// import { useConfigStore, useIsConfigDirty } from "../../store/config";
 import { useRowsStore, useVisibleCampaigns } from "../../store/rows";
 import {
   usePersonalizeRowsStore,
@@ -84,9 +95,24 @@ import {
   useVisibleRecommendations,
 } from "../../store/recommendationRows";
 import {
+  useFlagRowsStore,
+  useVisibleFeatureFlags,
+} from "../../store/flagRows";
+import { FLAG_REPORT_ROWS } from "@/data/flagReports";
+import {
+  FLAG_REPORT_CONFIG,
+  type FlagReportKind,
+} from "@/config/flagReports";
+import { useFlagReportRowsStore } from "@/store/flagReportRows";
+import {
+  entityNameKey,
+  useEntityNameOverridesStore,
+} from "@/store/entityNameOverrides";
+import {
   campaignLandingPath,
   CAMPAIGN_STATUSES,
   type CampaignStatus,
+  type CampaignType,
 } from "../../data/campaigns";
 import {
   personalizeLandingPath,
@@ -152,6 +178,158 @@ function SurfaceTabs({
         Reports
       </Link>
     </div>
+  );
+}
+
+const HEADER_ICON_BTN =
+  "size-8 text-muted-foreground hover:bg-muted hover:text-foreground";
+const HEADER_MENU_ITEM =
+  "focus:bg-[var(--neutral-50)] data-[highlighted]:bg-[var(--neutral-50)]";
+
+/** FM detail center tabs — Configuration + secondary (Rules / Reports). */
+function FlagSurfaceTabs({
+  basePath,
+  entityId,
+  secondary,
+  withIcons = false,
+}: {
+  basePath: string;
+  entityId?: string;
+  /** Second tab — Rules for feature flags, Reports for flag rollout. */
+  secondary: { label: string; suffix: "/rules" | "/reports" };
+  /** Match WE Configure/Reports — PenLine + FileBarChart (Flag Rollout). */
+  withIcons?: boolean;
+}) {
+  const { pathname } = useLocation();
+  const configPath = `${basePath}/c/${entityId}`;
+  const secondaryPath = `${configPath}${secondary.suffix}`;
+  const onSecondary = pathname.endsWith(secondary.suffix);
+  const onConfiguration = !onSecondary;
+
+  const tab = (active: boolean) =>
+    cn(
+      "flex items-center gap-1.5 border-b-2 px-0.5 py-2 -mb-px text-sm font-medium transition-colors",
+      active
+        ? "border-foreground text-foreground"
+        : "border-transparent text-muted-foreground hover:text-foreground"
+    );
+
+  return (
+    <div className="flex items-stretch gap-4">
+      <Link
+        to={configPath}
+        aria-label="Configuration"
+        aria-current={onConfiguration ? "page" : undefined}
+        className={tab(onConfiguration)}
+      >
+        {withIcons ? <PenLine className="h-4 w-4" /> : null}
+        Configuration
+      </Link>
+      <Link
+        to={secondaryPath}
+        aria-label={secondary.label}
+        aria-current={onSecondary ? "page" : undefined}
+        className={tab(onSecondary)}
+      >
+        {withIcons && secondary.suffix === "/reports" ? (
+          <FileBarChart className="h-4 w-4" />
+        ) : null}
+        {secondary.label}
+      </Link>
+    </div>
+  );
+}
+
+/** FM detail right actions — History stub + More. */
+function FeatureFlagsDetailActions({
+  entityId,
+  listPath,
+  onRemove,
+  deleteLabel = "flag",
+}: {
+  entityId: string;
+  listPath: string;
+  onRemove?: (ids: string[]) => void;
+  deleteLabel?: string;
+}) {
+  const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5">
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="History"
+                className={HEADER_ICON_BTN}
+              >
+                <History className="size-4" strokeWidth={1.75} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">History</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <DropdownMenuRoot modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="More actions"
+              className={HEADER_ICON_BTN}
+            >
+              <MoreVertical className="size-4" strokeWidth={1.75} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              className={HEADER_MENU_ITEM}
+              onSelect={() => {
+                /* TODO */
+              }}
+            >
+              <Share2 />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className={HEADER_MENU_ITEM}
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <CircleMinus />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuRoot>
+      </div>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete {deleteLabel}?</DialogTitle>
+            <DialogDescription>This can't be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                onRemove?.([entityId]);
+                setDeleteOpen(false);
+                navigate(listPath);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -276,30 +454,30 @@ function ViewToggle() {
   );
 }
 
-// The Save button in the actions cluster — disabled until the config is dirty.
-function SaveButton({ entityId }: { entityId?: string }) {
-  const dirty = useIsConfigDirty(entityId ?? "");
-  const save = useConfigStore((s) => s.save);
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="default"
-            size="icon"
-            disabled={!dirty}
-            aria-label="Save"
-            onClick={() => entityId && save(entityId)}
-            className="h-8 w-8 transition-opacity duration-200"
-          >
-            <Save className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">Save</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
+// @undo — Save was in the WE detail actions cluster; removed per header redesign.
+// function SaveButton({ entityId }: { entityId?: string }) {
+//   const dirty = useIsConfigDirty(entityId ?? "");
+//   const save = useConfigStore((s) => s.save);
+//   return (
+//     <TooltipProvider delayDuration={200}>
+//       <Tooltip>
+//         <TooltipTrigger asChild>
+//           <Button
+//             variant="default"
+//             size="icon"
+//             disabled={!dirty}
+//             aria-label="Save"
+//             onClick={() => entityId && save(entityId)}
+//             className="h-8 w-8 transition-opacity duration-200"
+//           >
+//             <Save className="h-4 w-4" />
+//           </Button>
+//         </TooltipTrigger>
+//         <TooltipContent side="bottom">Save</TooltipContent>
+//       </Tooltip>
+//     </TooltipProvider>
+//   );
+// }
 
 // Filter real product rows for the entity switcher.
 function filterCampaigns(
@@ -323,8 +501,173 @@ function filterCampaigns(
   return list.map((c) => ({ id: c.id, name: c.name }));
 }
 
-// The kebab in the level-2 action cluster. Flush Data and Archive are disabled
-// on a Draft; Delete Permanently confirms, removes the row, and returns to the list.
+// Campaign detail header actions (Web Exp + Personalize): Status | divider |
+// Clone · History · More. Flush Data / Archive disabled on Draft.
+function CampaignDetailActions({
+  campaign,
+  listPath,
+  onArchive,
+  onRemove,
+  onSetStatus,
+}: {
+  campaign: { id: string; status: CampaignStatus; name: string };
+  listPath: string;
+  onArchive: (ids: string[]) => void;
+  onRemove: (ids: string[]) => void;
+  onSetStatus?: (id: string, status: CampaignStatus) => void;
+}) {
+  const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const isDraft = campaign.status === "Draft";
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5">
+        <StatusMenu
+          campaign={campaign}
+          triggerVariant="button"
+          onSetStatus={onSetStatus}
+        />
+        <div className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Clone campaign"
+                onClick={() => {
+                  /* TODO — Clone modal is a deferred prompt */
+                }}
+                className={HEADER_ICON_BTN}
+              >
+                <CopyPlus className="size-4" strokeWidth={1.75} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Clone</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="History"
+                className={HEADER_ICON_BTN}
+              >
+                <History className="size-4" strokeWidth={1.75} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">History</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <DropdownMenuRoot modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="More actions"
+              className={HEADER_ICON_BTN}
+            >
+              <MoreVertical className="size-4" strokeWidth={1.75} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              className={HEADER_MENU_ITEM}
+              onSelect={() => {
+                /* TODO */
+              }}
+            >
+              <Share2 />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger
+                className={cn(
+                  HEADER_MENU_ITEM,
+                  "focus:bg-[var(--neutral-50)] data-[state=open]:bg-[var(--neutral-50)]"
+                )}
+              >
+                <Download />
+                Download CSV
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-44">
+                <DropdownMenuItem disabled className={HEADER_MENU_ITEM}>
+                  Coming soon
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem
+              className={HEADER_MENU_ITEM}
+              onSelect={() => {
+                /* TODO */
+              }}
+            >
+              <Printer />
+              Print
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isDraft}
+              className={HEADER_MENU_ITEM}
+              onSelect={() => {
+                /* TODO */
+              }}
+            >
+              <Eraser />
+              Flush Data
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isDraft}
+              className={HEADER_MENU_ITEM}
+              onSelect={() => onArchive([campaign.id])}
+            >
+              <Archive />
+              Archive
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className={HEADER_MENU_ITEM}
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <CircleMinus />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuRoot>
+      </div>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete campaign?</DialogTitle>
+            <DialogDescription>This can't be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                onRemove([campaign.id]);
+                setDeleteOpen(false);
+                navigate(listPath);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// Fallback kebab for non-campaign-cluster surfaces (currently unused when WE +
+// Personalize both use CampaignDetailActions).
 function KebabMenu({
   campaign,
   listPath,
@@ -344,34 +687,68 @@ function KebabMenu({
     <>
       <DropdownMenuRoot modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" aria-label="More actions" className="h-9 w-9">
-            <MoreHorizontal className="h-4 w-4" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="More actions"
+            className={HEADER_ICON_BTN}
+          >
+            <MoreVertical className="size-4" strokeWidth={1.75} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onSelect={() => { /* TODO — Clone modal is a deferred prompt */ }}>
+          <DropdownMenuItem
+            className={HEADER_MENU_ITEM}
+            onSelect={() => {
+              /* TODO — Clone modal is a deferred prompt */
+            }}
+          >
             <Copy />
             Clone
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => { /* TODO */ }}>
+          <DropdownMenuItem
+            className={HEADER_MENU_ITEM}
+            onSelect={() => {
+              /* TODO */
+            }}
+          >
             <Share2 />
             Share
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => { /* TODO */ }}>
+          <DropdownMenuItem
+            className={HEADER_MENU_ITEM}
+            onSelect={() => {
+              /* TODO */
+            }}
+          >
             <Printer />
             Print
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled={isDraft} onSelect={() => { /* TODO */ }}>
+          <DropdownMenuItem
+            disabled={isDraft}
+            className={HEADER_MENU_ITEM}
+            onSelect={() => {
+              /* TODO */
+            }}
+          >
             <Eraser />
             Flush Data
           </DropdownMenuItem>
-          <DropdownMenuItem disabled={isDraft} onSelect={() => onArchive([campaign.id])}>
+          <DropdownMenuItem
+            disabled={isDraft}
+            className={HEADER_MENU_ITEM}
+            onSelect={() => onArchive([campaign.id])}
+          >
             <Archive />
             Archive
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setDeleteOpen(true)}>
+          <DropdownMenuItem
+            className={HEADER_MENU_ITEM}
+            onSelect={() => setDeleteOpen(true)}
+          >
             <Trash2 />
             Delete Permanently
           </DropdownMenuItem>
@@ -517,9 +894,28 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const realData = isRealDataPath(basePath);
   const isPersonalize = basePath === "/personalize";
   const isRecommendation = basePath === "/commerce/recommendation";
+  const isFeatureFlags = basePath === "/feature-management/feature-flags";
+  const flagReportKind = (
+    {
+      "/feature-management/flag-rollout": "rollout",
+      "/feature-management/flag-testing": "testing",
+      "/feature-management/flag-personalize": "personalize",
+      "/feature-management/flag-multivariate": "multivariate",
+    } as Partial<Record<string, FlagReportKind>>
+  )[basePath];
+  const isFlagReportDetail = Boolean(flagReportKind);
+  const isFlagConfigReports =
+    flagReportKind === "rollout" ||
+    flagReportKind === "testing" ||
+    flagReportKind === "personalize" ||
+    flagReportKind === "multivariate";
+  const isFmComingSoonDetail = isFeatureFlags || isFlagReportDetail;
   const isAnalytics = isAnalyticsListBase(basePath);
   const isPlanDetail =
     basePath === "/plan/observations" || basePath === "/plan/hypotheses";
+  // Coming-soon bodies with breadcrumb chrome only (no center tabs / right cluster).
+  // Feature Flags + Flag report kinds keep their own tabs + History/More.
+  const chromeOnlyDetail = isPlanDetail;
   const analyticsListCrumb = analyticsListLabel(basePath);
   const analyticsNameOverrides = useAnalyticsRowsStore((s) => s.nameOverrides);
   const analyticsRename = useAnalyticsRowsStore((s) => s.rename);
@@ -569,6 +965,13 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const webCampaigns = useVisibleCampaigns();
   const personalizations = useVisiblePersonalizations();
   const recommendations = useVisibleRecommendations();
+  const featureFlags = useVisibleFeatureFlags();
+  const renameFlag = useFlagRowsStore((s) => s.rename);
+  const removeFlag = useFlagRowsStore((s) => s.remove);
+  const renameFlagReport = useFlagReportRowsStore((s) => s.rename);
+  const flagReportNameOverrides = useFlagReportRowsStore((s) => s.nameOverrides);
+  const entityNameOverrides = useEntityNameOverridesStore((s) => s.nameOverrides);
+  const renameEntity = useEntityNameOverridesStore((s) => s.rename);
   const webArchive = useRowsStore((s) => s.archive);
   const webRemove = useRowsStore((s) => s.remove);
   const updateCampaign = useRowsStore((s) => s.updateCampaign);
@@ -583,6 +986,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const switcherClickTimer = useRef<number | undefined>(undefined);
 
   const productRows = isPersonalize
     ? personalizations
@@ -623,7 +1027,21 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         // While searching, ignore the scope and match across the full pool.
         let pool = ANALYTICS_ITEMS;
         if (analyticsItem?.kind === "board") {
-          pool = analyticsBoards;
+          // Board → All / Recent / Starred (same tabs as report→board switcher).
+          // While searching, ignore the scope and match across all boards.
+          const q = entitySearch.trim();
+          if (q) {
+            pool = analyticsBoards;
+          } else if (boardScope === "starred") {
+            pool = analyticsBoards.filter((row) => row.starred);
+          } else if (boardScope === "recent") {
+            const recent = analyticsBoards.filter((row) =>
+              recentBoardIds.has(row.id)
+            );
+            pool = recent.length > 0 ? recent : analyticsBoards;
+          } else {
+            pool = analyticsBoards;
+          }
         } else if (analyticsItem?.kind === "report") {
           const q = entitySearch.trim();
           if (q) {
@@ -652,7 +1070,47 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
       })()
     : realData
       ? filterCampaigns(productRows, activeFilter, entitySearch)
-      : dummyEntities;
+      : isFeatureFlags
+        ? featureFlags
+            .filter((f) => {
+              const q = entitySearch.trim().toLowerCase();
+              return !q || f.name.toLowerCase().includes(q) || f.id.includes(q);
+            })
+            .map((f) => ({
+              id: f.id,
+              name: f.name,
+              status: "Recent" as const,
+            }))
+        : isFlagReportDetail && flagReportKind
+          ? FLAG_REPORT_ROWS[flagReportKind]
+              .map((f) => {
+                const overridden =
+                  flagReportNameOverrides[flagReportKind]?.[f.id];
+                return overridden ? { ...f, name: overridden } : f;
+              })
+              .filter((f) => {
+                const q = entitySearch.trim().toLowerCase();
+                return (
+                  !q || f.name.toLowerCase().includes(q) || f.id.includes(q)
+                );
+              })
+              .map((f) => ({
+                id: f.id,
+                name: f.name,
+                status: "Recent" as const,
+              }))
+          : dummyEntities
+              .map((e) => {
+                const overridden =
+                  entityNameOverrides[entityNameKey(basePath, e.id)];
+                return overridden ? { ...e, name: overridden } : e;
+              })
+              .filter((e) => {
+                const q = entitySearch.trim().toLowerCase();
+                return (
+                  !q || e.name.toLowerCase().includes(q) || e.id.includes(q)
+                );
+              });
 
   const selected = isAnalytics
     ? analyticsItem
@@ -670,7 +1128,31 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         : undefined
     : realData
       ? campaign && { id: campaign.id, name: campaign.name }
-      : dummyEntities.find((e) => e.id === entityId) ?? dummyEntities[0];
+      : isFeatureFlags
+        ? (() => {
+            const flag =
+              featureFlags.find((f) => f.id === entityId) ?? featureFlags[0];
+            return flag ? { id: flag.id, name: flag.name } : undefined;
+          })()
+        : isFlagReportDetail && flagReportKind
+          ? (() => {
+              const rows = FLAG_REPORT_ROWS[flagReportKind].map((f) => {
+                const overridden =
+                  flagReportNameOverrides[flagReportKind]?.[f.id];
+                return overridden ? { ...f, name: overridden } : f;
+              });
+              const row = rows.find((f) => f.id === entityId) ?? rows[0];
+              return row ? { id: row.id, name: row.name } : undefined;
+            })()
+          : (() => {
+              const base =
+                dummyEntities.find((e) => e.id === entityId) ??
+                dummyEntities[0];
+              if (!base) return undefined;
+              const overridden =
+                entityNameOverrides[entityNameKey(basePath, base.id)];
+              return overridden ? { ...base, name: overridden } : base;
+            })();
 
   const badgeId = isAnalytics
     ? String(
@@ -682,8 +1164,12 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
       ? String(selected.id)
       : "";
 
+  const canRename = realData || isAnalytics || isFmComingSoonDetail;
+
   const startRename = () => {
-    if (!selected || !(realData || isAnalytics)) return;
+    if (!selected || !canRename) return;
+    window.clearTimeout(switcherClickTimer.current);
+    switcherClickTimer.current = undefined;
     setDraftName(selected.name);
     setRenaming(true);
     setEntityOpen(false);
@@ -691,7 +1177,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   };
 
   const commitRename = () => {
-    if (!selected || !(realData || isAnalytics)) {
+    if (!selected || !canRename) {
       setRenaming(false);
       return;
     }
@@ -701,6 +1187,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
     if (isAnalytics) analyticsRename(selected.id, next);
     else if (isPersonalize) persRename(selected.id, next);
     else if (isRecommendation) recUpdate(selected.id, { name: next });
+    else if (isFeatureFlags) renameFlag(selected.id, next);
+    else if (isFlagReportDetail && flagReportKind)
+      renameFlagReport(flagReportKind, selected.id, next);
+    else if (isPlanDetail) renameEntity(basePath, selected.id, next);
     else updateCampaign(selected.id, { name: next });
   };
 
@@ -998,14 +1488,24 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                   open={entityOpen}
                   onOpenChange={(o) => {
                     if (renaming) return;
-                    setEntityOpen(o);
                     if (!o) {
+                      window.clearTimeout(switcherClickTimer.current);
+                      switcherClickTimer.current = undefined;
+                      setEntityOpen(false);
                       setFilterMenuOpen(false);
                       setEntitySearch("");
                       setReportScope(defaultReportScope);
-                    } else if (!isAnalyticsBoard) {
-                      setReportScope(defaultReportScope);
+                      return;
                     }
+                    // Delay open so double-click can enter rename instead.
+                    window.clearTimeout(switcherClickTimer.current);
+                    switcherClickTimer.current = window.setTimeout(() => {
+                      switcherClickTimer.current = undefined;
+                      setEntityOpen(true);
+                      if (!isAnalyticsBoard) {
+                        setReportScope(defaultReportScope);
+                      }
+                    }, 280);
                   }}
                 >
                   <div className="group/entity flex min-w-0 items-center gap-0.5">
@@ -1035,6 +1535,11 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           <button
                             type="button"
                             title={selected?.name ?? "Untitled"}
+                            onDoubleClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              startRename();
+                            }}
                             className="flex min-w-0 max-w-full items-center gap-2 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                           >
                             <span
@@ -1110,7 +1615,45 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                         />
                       </div>
-                      {!isAnalyticsBoard && !entitySearch.trim() ? (
+                      {!entitySearch.trim() ? (
+                        isAnalyticsBoard ? (
+                          <div
+                            role="tablist"
+                            aria-label="Board filters"
+                            className="mt-2 flex gap-1 rounded-md border border-border bg-background p-0.5"
+                          >
+                            {(
+                              [
+                                ["all", "All"],
+                                ["recent", "Recent"],
+                                ["starred", "Starred"],
+                              ] as const
+                            ).map(([value, label]) => (
+                              <button
+                                key={value}
+                                type="button"
+                                role="tab"
+                                aria-selected={boardScope === value}
+                                onClick={() => setBoardScope(value)}
+                                className={cn(
+                                  "flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+                                  boardScope === value
+                                    ? "bg-muted text-foreground"
+                                    : "text-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                {value === "starred" ? (
+                                  <Star
+                                    className="size-3"
+                                    strokeWidth={1.75}
+                                    aria-hidden
+                                  />
+                                ) : null}
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
                         <div
                           role="tablist"
                           aria-label="Report filters"
@@ -1149,6 +1692,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                             </button>
                           ))}
                         </div>
+                        )
                       ) : null}
                       <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
                         {entities.length === 0 ? (
@@ -1272,12 +1816,22 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               open={entityOpen}
               onOpenChange={(o) => {
                 if (renaming) return;
-                setEntityOpen(o);
-                if (!o) setFilterMenuOpen(false);
+                if (!o) {
+                  window.clearTimeout(switcherClickTimer.current);
+                  switcherClickTimer.current = undefined;
+                  setEntityOpen(false);
+                  setFilterMenuOpen(false);
+                  return;
+                }
+                window.clearTimeout(switcherClickTimer.current);
+                switcherClickTimer.current = window.setTimeout(() => {
+                  switcherClickTimer.current = undefined;
+                  setEntityOpen(true);
+                }, 280);
               }}
             >
               <div className="group/entity flex min-w-0 items-center gap-0.5">
-                {renaming && realData ? (
+                {renaming && canRename ? (
                   <Input
                     ref={nameInputRef}
                     value={draftName}
@@ -1292,17 +1846,22 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         cancelRename();
                       }
                     }}
-                    aria-label="Campaign name"
+                    aria-label="Name"
                     className="h-8 min-w-[14rem] max-w-[28rem] px-2 text-sm font-semibold shadow-none"
                   />
                 ) : (
                   <>
-                    {/* One chip: name + ID badge + chevron. Click opens switcher;
-                        copy icon only copies; rename via hover pencil or menu. */}
+                    {/* One chip: name + ID badge + chevron. Single-click opens
+                        switcher; double-click renames; pencil is the alt path. */}
                     <Popover.Trigger asChild>
                       <button
                         type="button"
                         title={selected?.name ?? "Untitled"}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          startRename();
+                        }}
                         className="flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                       >
                         <span className="min-w-0 truncate text-sm font-semibold text-foreground">
@@ -1315,7 +1874,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                       </button>
                     </Popover.Trigger>
 
-                    {realData && (
+                    {canRename && (
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1323,7 +1882,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                               type="button"
                               variant="ghost"
                               size="icon"
-                              aria-label="Rename campaign"
+                              aria-label="Rename"
                               onClick={startRename}
                               className="h-7 w-7 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover/entity:opacity-100 focus-visible:opacity-100"
                             >
@@ -1354,9 +1913,13 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                       <input
                         type="text"
                         placeholder="Search…"
-                        value={realData || isAnalytics ? entitySearch : undefined}
+                        value={
+                          realData || isAnalytics || isFmComingSoonDetail
+                            ? entitySearch
+                            : undefined
+                        }
                         onChange={
-                          realData || isAnalytics
+                          realData || isAnalytics || isFmComingSoonDetail
                             ? (e) => setEntitySearch(e.target.value)
                             : undefined
                         }
@@ -1407,14 +1970,43 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                     ) : null}
                   </div>
                   <div className="mt-2 flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-                    {entities.map((entity) => (
+                    {entities.map((entity) => {
+                      // Same leading icons as the list/table views (campaign type, Target, etc).
+                      const product = productRows.find((c) => c.id === entity.id) as
+                        | { type?: CampaignType }
+                        | undefined;
+                      const ReportIcon =
+                        flagReportKind
+                          ? FLAG_REPORT_CONFIG[flagReportKind].icon
+                          : null;
+                      const TypeIcon = isAnalytics
+                        ? getAnalyticsItem(entity.id)?.kind === "board"
+                          ? GalleryVerticalEnd
+                          : FileBarChart
+                        : isFeatureFlags
+                          ? Flag
+                          : isFlagReportDetail && ReportIcon
+                            ? ReportIcon
+                            : isPersonalize
+                              ? Target
+                              : isRecommendation
+                                ? Sparkles
+                                : TYPE_ICONS[product?.type ?? "A/B"];
+
+                      return (
                       <div
                         key={entity.id}
                         className={cn(
-                          "flex items-center gap-2 rounded-sm px-2.5 py-1.5 transition-colors hover:bg-muted",
-                          entity.id === selected?.id && "bg-accent"
+                          "flex items-center gap-2 rounded-sm px-2.5 py-1.5 transition-colors hover:bg-[var(--neutral-50)]",
+                          entity.id === selected?.id && "bg-[var(--neutral-50)]"
                         )}
                       >
+                        {(realData || isAnalytics || isFmComingSoonDetail) && (
+                          <TypeIcon
+                            className="h-4 w-4 shrink-0 text-muted-foreground"
+                            aria-hidden
+                          />
+                        )}
                         <button
                           type="button"
                           onClick={() => {
@@ -1426,14 +2018,16 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                                 ? personalizeLandingPath({ id: entity.id })
                                 : isRecommendation
                                   ? recommendationLandingPath({ id: entity.id })
-                                  : realData
-                                    ? campaignLandingPath({
-                                        id: entity.id,
-                                        status:
-                                          (productRows.find((c) => c.id === entity.id)
-                                            ?.status as CampaignStatus) ?? "Draft",
-                                      })
-                                    : `${basePath}/c/${entity.id}`;
+                                  : isFmComingSoonDetail
+                                    ? `${basePath}/c/${entity.id}`
+                                    : realData
+                                      ? campaignLandingPath({
+                                          id: entity.id,
+                                          status:
+                                            (productRows.find((c) => c.id === entity.id)
+                                              ?.status as CampaignStatus) ?? "Draft",
+                                        })
+                                      : `${basePath}/c/${entity.id}`;
                             navigate(target);
                             setEntityOpen(false);
                           }}
@@ -1448,7 +2042,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           <CampaignIdBadge id={String(entity.id)} />
                         ) : null}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </Popover.Content>
               </Popover.Portal>
@@ -1459,10 +2054,23 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           )}
         </div>
 
-        {/* Center switcher: Configure/Reports for campaigns. Analytics / Plan
-            use left breadcrumb only (no Configure/Reports tabs). */}
+        {/* Center switcher: Configure/Reports for campaigns; Configuration/Rules
+            for Feature Flags; Configuration/Reports for Flag Rollout & Testing. */}
         <div className="flex shrink-0 items-end justify-center self-stretch">
-          {isAnalytics || isPlanDetail ? null : (
+          {isAnalytics || chromeOnlyDetail ? null : isFeatureFlags ? (
+            <FlagSurfaceTabs
+              basePath={basePath}
+              entityId={entityId}
+              secondary={{ label: "Rules", suffix: "/rules" }}
+            />
+          ) : isFlagConfigReports ? (
+            <FlagSurfaceTabs
+              basePath={basePath}
+              entityId={entityId}
+              secondary={{ label: "Reports", suffix: "/reports" }}
+              withIcons
+            />
+          ) : (
             <SurfaceTabs
               basePath={basePath}
               entityId={entityId}
@@ -1476,39 +2084,67 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           )}
         </div>
 
-        {/* Actions slot: analytics uses star/share/add/analyze/save; campaigns use
-            Save + StatusMenu + kebab. Create lives on the list pages only. */}
+        {/* Actions slot: analytics / WE+Personalize / Feature Flags & Flag Rollout/Testing. */}
         <div className="flex flex-1 items-center justify-end gap-2">
           {isAnalytics ? (
             <AnalyticsDetailActions entityId={entityId} listBase={basePath} />
-          ) : (
+          ) : isFeatureFlags && selected ? (
+            <FeatureFlagsDetailActions
+              entityId={selected.id}
+              listPath={basePath}
+              onRemove={removeFlag}
+              deleteLabel="flag"
+            />
+          ) : isFlagConfigReports && selected ? (
+            <FeatureFlagsDetailActions
+              entityId={selected.id}
+              listPath={basePath}
+              deleteLabel={
+                flagReportKind === "testing"
+                  ? "test"
+                  : flagReportKind === "personalize"
+                    ? "personalization"
+                    : flagReportKind === "multivariate"
+                      ? "multivariate"
+                      : "rollout"
+              }
+            />
+          ) : chromeOnlyDetail ? null : (basePath === "/web-experiment" ||
+              isPersonalize) &&
+            campaign ? (
+            <CampaignDetailActions
+              campaign={
+                campaign as {
+                  id: string;
+                  status: CampaignStatus;
+                  name: string;
+                }
+              }
+              listPath={basePath}
+              onArchive={isPersonalize ? persArchive : webArchive}
+              onRemove={isPersonalize ? persRemove : webRemove}
+              onSetStatus={isPersonalize ? persSetStatus : undefined}
+            />
+          ) : !isRecommendation && campaign ? (
             <>
-              {!isPersonalize && !isRecommendation && (
-                <SaveButton entityId={entityId} />
-              )}
-              {!isRecommendation && campaign && (
-                <StatusMenu
-                  campaign={campaign as { id: string; status: CampaignStatus }}
-                  triggerVariant="button"
-                  onSetStatus={isPersonalize ? persSetStatus : undefined}
-                />
-              )}
-              {!isRecommendation && campaign && (
-                <KebabMenu
-                  campaign={
-                    campaign as {
-                      id: string;
-                      status: CampaignStatus;
-                      name: string;
-                    }
+              <StatusMenu
+                campaign={campaign as { id: string; status: CampaignStatus }}
+                triggerVariant="button"
+              />
+              <KebabMenu
+                campaign={
+                  campaign as {
+                    id: string;
+                    status: CampaignStatus;
+                    name: string;
                   }
-                  listPath={basePath}
-                  onArchive={isPersonalize ? persArchive : webArchive}
-                  onRemove={isPersonalize ? persRemove : webRemove}
-                />
-              )}
+                }
+                listPath={basePath}
+                onArchive={webArchive}
+                onRemove={webRemove}
+              />
             </>
-          )}
+          ) : null}
         </div>
       </header>
 

@@ -7,6 +7,7 @@ import type {
 import { applyFlagReportFilters } from "@/config/flagReportFilters";
 import { FLAG_REPORT_ROWS } from "@/data/flagReports";
 import { getFlagReportTableStore } from "@/store/flagReportTable";
+import { useFlagReportRowsStore } from "@/store/flagReportRows";
 import { useActiveFlagReportViewState } from "@/store/flagReportViews";
 
 function sortValue(
@@ -65,9 +66,15 @@ export function useFlagReportPipeline(kind: FlagReportKind): FlagReportRow[] {
   const rows = FLAG_REPORT_ROWS[kind];
   const search = getFlagReportTableStore(kind)((s) => s.search);
   const { filters, sort } = useActiveFlagReportViewState(kind);
+  const nameOverrides = useFlagReportRowsStore((s) => s.nameOverrides[kind]);
 
   return useMemo(() => {
-    const filtered = applyFlagReportFilters(rows, filters);
+    const withNames = nameOverrides
+      ? rows.map((r) =>
+          nameOverrides[r.id] ? { ...r, name: nameOverrides[r.id] } : r
+        )
+      : rows;
+    const filtered = applyFlagReportFilters(withNames, filters);
     const q = search.trim().toLowerCase();
     const searched = q
       ? filtered.filter(
@@ -75,5 +82,5 @@ export function useFlagReportPipeline(kind: FlagReportKind): FlagReportRow[] {
         )
       : filtered;
     return sortRows(searched, sort);
-  }, [rows, filters, search, sort]);
+  }, [rows, filters, search, sort, nameOverrides]);
 }

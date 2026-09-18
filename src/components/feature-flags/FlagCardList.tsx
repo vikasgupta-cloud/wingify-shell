@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useFlagTableStore } from "@/store/flagTable";
+import { useFlagRowsStore } from "@/store/flagRows";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 import { useFlagPipeline } from "./useFlagPipeline";
 
 const PAGE_SIZES = [10, 25, 50];
@@ -43,6 +45,7 @@ function formatLongDate(iso: string) {
 
 export default function FlagCardList() {
   const sorted = useFlagPipeline();
+  const rename = useFlagRowsStore((s) => s.rename);
   const { page, pageSize, setPage, setPageSize } = useFlagTableStore();
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -81,9 +84,12 @@ export default function FlagCardList() {
                 className="mt-0.5"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {f.name}
-                </p>
+                <InlineEditableName
+                  name={f.name}
+                  to={`/feature-management/feature-flags/c/${f.id}`}
+                  onRename={(next) => rename(f.id, next)}
+                  className="truncate text-sm font-semibold text-foreground hover:underline"
+                />
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Created by {f.createdBy} on {formatLongDate(f.createdOn)}
                 </p>

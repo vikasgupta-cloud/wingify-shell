@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ChevronDown,
@@ -23,7 +22,7 @@ import { applyFilters } from "../../config/filters";
 import { groupRows } from "../../config/grouping";
 import { addDays, diffDays, formatDayHeader, startOfDay } from "../../lib/dates";
 import { useTableStore, type GanttZoom } from "../../store/table";
-import { useVisibleCampaigns } from "../../store/rows";
+import { useVisibleCampaigns, useRowsStore } from "../../store/rows";
 import { useActiveViewState, useViewsStore } from "../../store/views";
 import { useQuickViewStore } from "../../store/quickView";
 import { useWingzStore } from "../../store/wingz";
@@ -33,6 +32,7 @@ import { TYPE_ICONS } from "../icons/campaignTypeIcons";
 import { VitalsIcon } from "../ui/StatusBadge";
 import StatusMenu from "../ui/StatusMenu";
 import DecisionIcon from "../ui/DecisionIcon";
+import InlineEditableName from "@/components/ui/InlineEditableName";
 import { sortCampaigns } from "../table/CampaignTable";
 
 // Horizontal scale (px per calendar day) by zoom — a week reads ~84px, a month ~120px.
@@ -130,6 +130,7 @@ function GanttRow({
   const quickViewOpen = useQuickViewStore((s) => s.openId === c.id);
   const openQuickView = useQuickViewStore((s) => s.toggle);
   const openWingz = useWingzStore((s) => s.toggleWingz);
+  const updateCampaign = useRowsStore((s) => s.updateCampaign);
   const phases = phasesFor(c);
 
   const segs = phases.map((ph, idx) => {
@@ -177,13 +178,12 @@ function GanttRow({
         <TypeIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-label={c.type} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <Link
+            <InlineEditableName
+              name={c.name}
               to={campaignLandingPath(c)}
-              title={c.name}
+              onRename={(next) => updateCampaign(c.id, { name: next })}
               className="truncate text-sm font-medium text-foreground hover:underline"
-            >
-              {c.name}
-            </Link>
+            />
             <span className="shrink-0">
               <VitalsIcon campaign={c} />
             </span>
