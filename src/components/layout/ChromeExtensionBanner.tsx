@@ -2,8 +2,10 @@
  * Dashboard-only Chrome extension promo in the TopBar.
  * Single-line control — must stay ≤ other TopBar actions (never grow h-14).
  * Collapsed → small icon that re-opens the promo.
+ * When preferCollapsed (right-side TopBar notice present), start as the small icon.
  */
 
+import { useEffect, useState } from "react";
 import { X } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,10 +48,35 @@ function MascotBadge({
   );
 }
 
-export default function ChromeExtensionBanner() {
-  const collapsed = useChromeExtensionBannerStore((s) => s.collapsed);
+export default function ChromeExtensionBanner({
+  preferCollapsed = false,
+}: {
+  /** When a competing TopBar notice is visible, default to the small mascot. */
+  preferCollapsed?: boolean;
+}) {
+  const storeCollapsed = useChromeExtensionBannerStore((s) => s.collapsed);
   const collapse = useChromeExtensionBannerStore((s) => s.collapse);
   const expand = useChromeExtensionBannerStore((s) => s.expand);
+  // Session expand so preferCollapsed can start small without blocking a manual open.
+  const [sessionExpanded, setSessionExpanded] = useState(false);
+
+  useEffect(() => {
+    if (preferCollapsed) setSessionExpanded(false);
+  }, [preferCollapsed]);
+
+  const collapsed = preferCollapsed
+    ? !sessionExpanded
+    : storeCollapsed;
+
+  const handleExpand = () => {
+    setSessionExpanded(true);
+    expand();
+  };
+
+  const handleCollapse = () => {
+    setSessionExpanded(false);
+    collapse();
+  };
 
   if (collapsed) {
     return (
@@ -59,7 +86,7 @@ export default function ChromeExtensionBanner() {
             <button
               type="button"
               aria-label="Open Wingify Chrome Extension promo"
-              onClick={expand}
+              onClick={handleExpand}
               className={cn(
                 "relative flex size-8 shrink-0 items-center justify-center rounded-full",
                 "outline-none transition-transform hover:scale-105",
@@ -140,7 +167,7 @@ export default function ChromeExtensionBanner() {
                 variant="ghost"
                 size="icon"
                 aria-label="Minimize extension promo"
-                onClick={collapse}
+                onClick={handleCollapse}
                 className="size-6 shrink-0 rounded-full text-muted-foreground hover:bg-background/80 hover:text-foreground"
               >
                 <X className="size-3" strokeWidth={2} />

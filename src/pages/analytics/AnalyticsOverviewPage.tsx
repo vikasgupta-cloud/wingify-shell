@@ -1,6 +1,8 @@
 // @summary Journey Analytics → Overview. Collecting Data + Create live in TopBar.
-// Recently viewed is a horizontal snap carousel; library rows link to detail.
+// Recently viewed cards are fully clickable (navigate to board/report); library rows link via name.
+// Reuses: InlineEditableName, analyticsItemPath, shadcn Avatar/Button/Input/Tabs.
 import { useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -54,17 +56,42 @@ function KindIcon({
 
 function RecentCard({ item }: { item: AnalyticsOverviewItem }) {
   const rename = useAnalyticsRowsStore((s) => s.rename);
+  const navigate = useNavigate();
+  const path =
+    item.kind === "report" && item.parentBoardId
+      ? analyticsItemPath(item.id, { boardId: item.parentBoardId })
+      : analyticsItemPath(item.id);
+
+  const go = () => navigate(path);
+
   return (
-    <div className="flex h-full min-w-0 flex-col gap-6 rounded-xl border border-border bg-background p-4 text-left shadow-sm transition-colors hover:bg-muted/40">
+    <div
+      role="link"
+      tabIndex={0}
+      className="flex h-full min-w-0 cursor-pointer flex-col gap-6 rounded-xl border border-border bg-background p-4 text-left shadow-sm transition-colors hover:bg-muted/40"
+      onClick={go}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          go();
+        }
+      }}
+    >
       <KindIcon kind={item.kind} />
       <div className="flex min-w-0 items-end justify-between gap-3">
         <div className="min-w-0">
-          <InlineEditableName
-            name={item.name}
-            to={analyticsItemPath(item.id)}
-            onRename={(next) => rename(item.id, next)}
-            className="truncate text-sm font-semibold text-foreground hover:underline"
-          />
+          {/* Name keeps its own link + rename; stop card navigate so double-click rename still works */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <InlineEditableName
+              name={item.name}
+              to={path}
+              onRename={(next) => rename(item.id, next)}
+              className="truncate text-sm font-semibold text-foreground hover:underline"
+            />
+          </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">
             {item.editedLabel}
           </p>

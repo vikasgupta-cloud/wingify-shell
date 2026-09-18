@@ -156,7 +156,15 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
 
       {/* Actions slot — first-level TopBar only (not DetailShell / DrillIn). */}
       <div className="flex shrink-0 items-center gap-2">
-        {pathname === "/home/dashboard" && <ChromeExtensionBanner />}
+        {pathname === "/home/dashboard" && (
+          <ChromeExtensionBanner
+            preferCollapsed={
+              isTrialOverWorkspace ||
+              (isGetStartedWorkspace && !getStartedEmailVerified) ||
+              (isCancellationWorkspace && !revoked)
+            }
+          />
+        )}
         {isTrialOverWorkspace && (
           <TrialOverNotice onUpgrade={() => navigate("/upgrade")} />
         )}
