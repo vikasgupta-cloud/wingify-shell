@@ -23,6 +23,7 @@ import {
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import BreadcrumbNav from "./BreadcrumbNav";
 import CancellationRequestNotice from "./CancellationRequestNotice";
+import ChromeExtensionBanner from "./ChromeExtensionBanner";
 import TrialOverNotice from "./TrialOverNotice";
 import VerifyEmailNotice from "./VerifyEmailNotice";
 import WingifyLogoButton from "./WingifyLogoButton";
@@ -138,7 +139,7 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
     <header
       data-slot="top-bar"
       className={cn(
-        "relative z-10 flex h-14 shrink-0 items-center justify-between gap-4 px-4 text-panel-foreground",
+        "relative z-10 flex h-14 max-h-14 shrink-0 items-center justify-between gap-4 px-4 text-panel-foreground",
         // Immersive shells (no rail): solid bar. Use box-shadow hairline — border-b
         // color utilities don't paint reliably on this white-on-white chrome.
         showLogo
@@ -155,6 +156,7 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
 
       {/* Actions slot — first-level TopBar only (not DetailShell / DrillIn). */}
       <div className="flex shrink-0 items-center gap-2">
+        {pathname === "/home/dashboard" && <ChromeExtensionBanner />}
         {isTrialOverWorkspace && (
           <TrialOverNotice onUpgrade={() => navigate("/upgrade")} />
         )}
