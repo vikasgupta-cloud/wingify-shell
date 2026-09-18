@@ -16,9 +16,11 @@ import {
   FileBarChart,
   Flag,
   GalleryVerticalEnd,
+  Globe,
   History,
   LayoutGrid,
   LineChart,
+  Link2,
   ListFilter,
   MoreVertical,
   PenLine,
@@ -98,6 +100,16 @@ import {
   useFlagRowsStore,
   useVisibleFeatureFlags,
 } from "../../store/flagRows";
+import {
+  useSurveyRowsStore,
+  useVisibleSurveys,
+} from "../../store/surveyRows";
+import {
+  useConceptTestRowsStore,
+  useVisibleConceptTests,
+} from "../../store/conceptTestRows";
+import { SURVEY_STATUSES } from "@/data/surveys";
+import { CONCEPT_TEST_STATUSES } from "@/data/conceptTests";
 import { FLAG_REPORT_ROWS } from "@/data/flagReports";
 import {
   FLAG_REPORT_CONFIG,
@@ -895,6 +907,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const isPersonalize = basePath === "/personalize";
   const isRecommendation = basePath === "/commerce/recommendation";
   const isFeatureFlags = basePath === "/feature-management/feature-flags";
+  const isSurveyDetail = basePath === "/pulse/surveys";
+  const isConceptTestDetail = basePath === "/pulse/concept-test";
   const flagReportKind = (
     {
       "/feature-management/flag-rollout": "rollout",
@@ -914,8 +928,9 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const isPlanDetail =
     basePath === "/plan/observations" || basePath === "/plan/hypotheses";
   // Coming-soon bodies with breadcrumb chrome only (no center tabs / right cluster).
-  // Feature Flags + Flag report kinds keep their own tabs + History/More.
-  const chromeOnlyDetail = isPlanDetail;
+  // Surveys: detail header without Configure/Reports.
+  const chromeOnlyDetail =
+    isPlanDetail || isSurveyDetail || isConceptTestDetail;
   const analyticsListCrumb = analyticsListLabel(basePath);
   const analyticsNameOverrides = useAnalyticsRowsStore((s) => s.nameOverrides);
   const analyticsRename = useAnalyticsRowsStore((s) => s.rename);
@@ -968,6 +983,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const featureFlags = useVisibleFeatureFlags();
   const renameFlag = useFlagRowsStore((s) => s.rename);
   const removeFlag = useFlagRowsStore((s) => s.remove);
+  const surveys = useVisibleSurveys();
+  const renameSurvey = useSurveyRowsStore((s) => s.rename);
+  const conceptTests = useVisibleConceptTests();
+  const renameConceptTest = useConceptTestRowsStore((s) => s.rename);
   const renameFlagReport = useFlagReportRowsStore((s) => s.rename);
   const flagReportNameOverrides = useFlagReportRowsStore((s) => s.nameOverrides);
   const entityNameOverrides = useEntityNameOverridesStore((s) => s.nameOverrides);
@@ -1007,9 +1026,13 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const dummyEntities = getEntities(basePath);
   const filters = isAnalytics
     ? ["All", "Boards", "Reports"]
-    : realData
-      ? ["All", "Recent", ...statusList]
-      : getFilters(basePath);
+    : isSurveyDetail
+      ? ["All", ...SURVEY_STATUSES]
+      : isConceptTestDetail
+        ? ["All", ...CONCEPT_TEST_STATUSES]
+        : realData
+          ? ["All", "Recent", ...statusList]
+          : getFilters(basePath);
 
   const campaign = realData
     ? productRows.find((c) => c.id === entityId) ?? productRows[0]
@@ -1081,6 +1104,44 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               name: f.name,
               status: "Recent" as const,
             }))
+        : isSurveyDetail
+          ? surveys
+              .filter((s) => {
+                const q = entitySearch.trim().toLowerCase();
+                if (q) {
+                  return (
+                    s.name.toLowerCase().includes(q) || s.id.includes(q)
+                  );
+                }
+                if (activeFilter !== "All" && s.status !== activeFilter) {
+                  return false;
+                }
+                return true;
+              })
+              .map((s) => ({
+                id: s.id,
+                name: s.name,
+                status: "Recent" as const,
+              }))
+        : isConceptTestDetail
+          ? conceptTests
+              .filter((s) => {
+                const q = entitySearch.trim().toLowerCase();
+                if (q) {
+                  return (
+                    s.name.toLowerCase().includes(q) || s.id.includes(q)
+                  );
+                }
+                if (activeFilter !== "All" && s.status !== activeFilter) {
+                  return false;
+                }
+                return true;
+              })
+              .map((s) => ({
+                id: s.id,
+                name: s.name,
+                status: "Recent" as const,
+              }))
         : isFlagReportDetail && flagReportKind
           ? FLAG_REPORT_ROWS[flagReportKind]
               .map((f) => {
@@ -1134,6 +1195,18 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               featureFlags.find((f) => f.id === entityId) ?? featureFlags[0];
             return flag ? { id: flag.id, name: flag.name } : undefined;
           })()
+        : isSurveyDetail
+          ? (() => {
+              const row =
+                surveys.find((s) => s.id === entityId) ?? surveys[0];
+              return row ? { id: row.id, name: row.name } : undefined;
+            })()
+        : isConceptTestDetail
+          ? (() => {
+              const row =
+                conceptTests.find((s) => s.id === entityId) ?? conceptTests[0];
+              return row ? { id: row.id, name: row.name } : undefined;
+            })()
         : isFlagReportDetail && flagReportKind
           ? (() => {
               const rows = FLAG_REPORT_ROWS[flagReportKind].map((f) => {
@@ -1164,7 +1237,12 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
       ? String(selected.id)
       : "";
 
-  const canRename = realData || isAnalytics || isFmComingSoonDetail;
+  const canRename =
+    realData ||
+    isAnalytics ||
+    isFmComingSoonDetail ||
+    isSurveyDetail ||
+    isConceptTestDetail;
 
   const startRename = () => {
     if (!selected || !canRename) return;
@@ -1188,6 +1266,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
     else if (isPersonalize) persRename(selected.id, next);
     else if (isRecommendation) recUpdate(selected.id, { name: next });
     else if (isFeatureFlags) renameFlag(selected.id, next);
+    else if (isSurveyDetail) renameSurvey(selected.id, next);
+    else if (isConceptTestDetail) renameConceptTest(selected.id, next);
     else if (isFlagReportDetail && flagReportKind)
       renameFlagReport(flagReportKind, selected.id, next);
     else if (isPlanDetail) renameEntity(basePath, selected.id, next);
@@ -1914,19 +1994,30 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         type="text"
                         placeholder="Search…"
                         value={
-                          realData || isAnalytics || isFmComingSoonDetail
+                          realData ||
+                          isAnalytics ||
+                          isFmComingSoonDetail ||
+                          isSurveyDetail ||
+                          isConceptTestDetail
                             ? entitySearch
                             : undefined
                         }
                         onChange={
-                          realData || isAnalytics || isFmComingSoonDetail
+                          realData ||
+                          isAnalytics ||
+                          isFmComingSoonDetail ||
+                          isSurveyDetail ||
+                          isConceptTestDetail
                             ? (e) => setEntitySearch(e.target.value)
                             : undefined
                         }
                         className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                       />
                     </div>
-                    {(realData || (isAnalytics && !analyticsItem?.kind)) &&
+                    {(realData ||
+                      (isAnalytics && !analyticsItem?.kind) ||
+                      isSurveyDetail ||
+                      isConceptTestDetail) &&
                     !entitySearch.trim() ? (
                       <div className="relative shrink-0">
                         <button
@@ -1985,6 +2076,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           : FileBarChart
                         : isFeatureFlags
                           ? Flag
+                          : isSurveyDetail
+                            ? Globe
+                          : isConceptTestDetail
+                            ? Link2
                           : isFlagReportDetail && ReportIcon
                             ? ReportIcon
                             : isPersonalize
@@ -2001,7 +2096,11 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                           entity.id === selected?.id && "bg-[var(--neutral-50)]"
                         )}
                       >
-                        {(realData || isAnalytics || isFmComingSoonDetail) && (
+                        {(realData ||
+                          isAnalytics ||
+                          isFmComingSoonDetail ||
+                          isSurveyDetail ||
+                          isConceptTestDetail) && (
                           <TypeIcon
                             className="h-4 w-4 shrink-0 text-muted-foreground"
                             aria-hidden
@@ -2018,7 +2117,9 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                                 ? personalizeLandingPath({ id: entity.id })
                                 : isRecommendation
                                   ? recommendationLandingPath({ id: entity.id })
-                                  : isFmComingSoonDetail
+                                  : isFmComingSoonDetail ||
+                                      isSurveyDetail ||
+                                      isConceptTestDetail
                                     ? `${basePath}/c/${entity.id}`
                                     : realData
                                       ? campaignLandingPath({

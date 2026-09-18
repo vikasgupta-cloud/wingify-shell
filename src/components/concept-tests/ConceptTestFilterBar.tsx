@@ -1,4 +1,4 @@
-// Survey filter chips — same UX as WE FilterBar (Add filter / Clear All). No group-by.
+// ConceptTest filter chips — same UX as WE FilterBar (Add filter / Clear All). No group-by.
 
 import { useEffect, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
@@ -7,16 +7,16 @@ import * as Checkbox from "@radix-ui/react-checkbox";
 import { Check, ChevronDown, Plus, X } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
 import {
-  getSurveyFilterFields,
-  type SurveyFilter,
-  type SurveyFilterField,
-  type SurveyFilterOp,
-} from "../../config/surveyFilters";
-import { useVisibleSurveys } from "../../store/surveyRows";
+  getConceptTestFilterFields,
+  type ConceptTestFilter,
+  type ConceptTestFilterField,
+  type ConceptTestFilterOp,
+} from "../../config/conceptTestFilters";
+import { useVisibleConceptTests } from "../../store/conceptTestRows";
 import {
-  useActiveSurveyViewState,
-  useSurveyViewsStore,
-} from "../../store/surveyViews";
+  useActiveConceptTestViewState,
+  useConceptTestViewsStore,
+} from "../../store/conceptTestViews";
 import { cn } from "../../lib/utils";
 
 const DASHED_BUTTON =
@@ -28,41 +28,42 @@ const ACTIVE_FILTER_CHIP_CLOSE =
   "rounded-sm text-muted-foreground transition-colors hover:text-foreground";
 
 /** Prefixed dashed chips when that field isn’t already an active filter. */
-const QUICK_FILTERS: { field: SurveyFilterField; label: string }[] = [
+const QUICK_FILTERS: { field: ConceptTestFilterField; label: string }[] = [
+  { field: "status", label: "Status" },
   { field: "creationDate", label: "Created date range" },
 ];
 
-const OP_LABELS: Record<Exclude<SurveyFilterOp, "is">, string> = {
+const OP_LABELS: Record<Exclude<ConceptTestFilterOp, "is">, string> = {
   isAnyOf: "is any of",
   isNoneOf: "is none of",
 };
 
-function opLabel(op: SurveyFilterOp): string {
+function opLabel(op: ConceptTestFilterOp): string {
   return op === "is" ? "is" : OP_LABELS[op];
 }
 
-function filterValueLength(filter: SurveyFilter): number {
+function filterValueLength(filter: ConceptTestFilter): number {
   return Array.isArray(filter.value) ? filter.value.length : filter.value ? 1 : 0;
 }
 
-export default function SurveyFilterBar() {
-  const rows = useVisibleSurveys();
-  const fields = getSurveyFilterFields(rows);
-  const { filters } = useActiveSurveyViewState();
-  const updateDraft = useSurveyViewsStore((s) => s.updateActiveViewDraft);
+export default function ConceptTestFilterBar() {
+  const rows = useVisibleConceptTests();
+  const fields = getConceptTestFilterFields(rows);
+  const { filters } = useActiveConceptTestViewState();
+  const updateDraft = useConceptTestViewsStore((s) => s.updateActiveViewDraft);
 
-  const fieldDef = (field: SurveyFilterField) =>
+  const fieldDef = (field: ConceptTestFilterField) =>
     fields.find((f) => f.field === field);
-  const fieldLabel = (field: SurveyFilterField) =>
+  const fieldLabel = (field: ConceptTestFilterField) =>
     fieldDef(field)?.label ?? field;
 
-  const addFilter = (field: SurveyFilterField) => {
+  const addFilter = (field: ConceptTestFilterField) => {
     updateDraft({
       filters: [...filters, { field, op: "isAnyOf", value: [] }],
     });
   };
 
-  const setFilterAt = (index: number, patch: Partial<SurveyFilter>) => {
+  const setFilterAt = (index: number, patch: Partial<ConceptTestFilter>) => {
     updateDraft({
       filters: filters.map((f, i) => (i === index ? { ...f, ...patch } : f)),
     });
@@ -159,11 +160,11 @@ function FilterChip({
   onChange,
   onRemove,
 }: {
-  filter: SurveyFilter;
+  filter: ConceptTestFilter;
   fieldLabel: string;
   options: string[];
   openOnMount: boolean;
-  onChange: (patch: Partial<SurveyFilter>) => void;
+  onChange: (patch: Partial<ConceptTestFilter>) => void;
   onRemove: () => void;
 }) {
   const selected = Array.isArray(filter.value)

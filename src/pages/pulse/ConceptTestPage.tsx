@@ -1,40 +1,40 @@
-// Pulse → Surveys — WE-style views/filters/columns with survey data; table + card layouts.
+// Pulse → ConceptTests — WE-style views/filters/columns with concept test data; table + card layouts.
 // Create comes from the shell TopBar (no page-level Create button).
 
 import { LayoutGrid, Rows3, Search } from "@/components/icons/protoLucide";
 import { Input } from "@/components/ui/input";
-import SurveyViewBar from "@/components/surveys/SurveyViewBar";
-import SurveyFilterBar from "@/components/surveys/SurveyFilterBar";
-import SurveyTable from "@/components/surveys/SurveyTable";
-import SurveyCardList from "@/components/surveys/SurveyCardList";
-import { useSurveyTableStore } from "@/store/surveyTable";
+import ConceptTestViewBar from "@/components/concept-tests/ConceptTestViewBar";
+import ConceptTestFilterBar from "@/components/concept-tests/ConceptTestFilterBar";
+import ConceptTestTable from "@/components/concept-tests/ConceptTestTable";
+import ConceptTestCardList from "@/components/concept-tests/ConceptTestCardList";
+import { useConceptTestTableStore } from "@/store/conceptTestTable";
 import {
-  SURVEY_OVERVIEW_ID,
-  useActiveSurveyViewState,
-  useSurveyViewsStore,
-  type SurveyLayout,
-} from "@/store/surveyViews";
+  CONCEPT_TEST_OVERVIEW_ID,
+  useActiveConceptTestViewState,
+  useConceptTestViewsStore,
+  type ConceptTestLayout,
+} from "@/store/conceptTestViews";
 import { cn } from "@/lib/utils";
 
-export default function SurveysPage() {
-  const { search, setSearch } = useSurveyTableStore();
-  const { layout } = useActiveSurveyViewState();
-  const updateDraft = useSurveyViewsStore((s) => s.updateActiveViewDraft);
-  const isOverview = useSurveyViewsStore(
-    (s) => s.activeViewId === SURVEY_OVERVIEW_ID
+export default function ConceptTestPage() {
+  const { search, setSearch } = useConceptTestTableStore();
+  const { layout } = useActiveConceptTestViewState();
+  const updateDraft = useConceptTestViewsStore((s) => s.updateActiveViewDraft);
+  const isOverview = useConceptTestViewsStore(
+    (s) => s.activeViewId === CONCEPT_TEST_OVERVIEW_ID
   );
 
-  const setLayout = (next: SurveyLayout) => updateDraft({ layout: next });
+  const setLayout = (next: ConceptTestLayout) => updateDraft({ layout: next });
 
   return (
     <>
       <div className="px-12 pb-12 pt-10">
-        <SurveyViewBar />
+        <ConceptTestViewBar />
         {isOverview ? (
           <div className="flex min-h-[360px] flex-col items-center justify-center rounded-lg border border-border bg-background text-center">
             <p className="text-sm font-medium text-foreground">Coming soon</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              An overview of your Pulse surveys will live here.
+              An overview of your Pulse concept tests will live here.
             </p>
           </div>
         ) : (
@@ -50,7 +50,7 @@ export default function SurveysPage() {
                   className="h-auto border-0 bg-transparent px-0 py-0 text-foreground shadow-none focus-visible:ring-0"
                 />
               </div>
-              <SurveyFilterBar />
+              <ConceptTestFilterBar />
               <div
                 role="group"
                 aria-label="Layout"
@@ -87,7 +87,7 @@ export default function SurveysPage() {
               </div>
             </div>
 
-            {layout === "table" ? <SurveyTable /> : <SurveyCardList />}
+            {layout === "table" ? <ConceptTestTable /> : <ConceptTestCardList />}
           </>
         )}
       </div>

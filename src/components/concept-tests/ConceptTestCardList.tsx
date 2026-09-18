@@ -1,4 +1,4 @@
-// Surveys card layout — list cards with URL, metrics, and changeable status.
+// ConceptTests card layout — list cards with URL, metrics, and changeable status.
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -17,11 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatSurveyMetric, type SurveyStatus } from "@/data/surveys";
-import { useSurveyTableStore } from "@/store/surveyTable";
+import { formatConceptTestMetric, type ConceptTestStatus } from "@/data/conceptTests";
+import { useConceptTestTableStore } from "@/store/conceptTestTable";
 import { cn } from "@/lib/utils";
-import SurveyStatusMenu from "./SurveyStatusMenu";
-import { useSurveyPipeline } from "./useSurveyPipeline";
+import ConceptTestStatusMenu from "./ConceptTestStatusMenu";
+import { useConceptTestPipeline } from "./useConceptTestPipeline";
 
 const PAGE_SIZES = [10, 25, 50];
 
@@ -45,15 +45,15 @@ function formatDate(iso: string) {
   return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-const ACCENT: Record<SurveyStatus, string> = {
+const ACCENT: Record<ConceptTestStatus, string> = {
   Draft: "bg-status-draft-fg",
   Running: "bg-status-running-fg",
   Paused: "bg-status-paused-fg",
 };
 
-export default function SurveyCardList() {
-  const sorted = useSurveyPipeline();
-  const { page, pageSize, setPage, setPageSize } = useSurveyTableStore();
+export default function ConceptTestCardList() {
+  const sorted = useConceptTestPipeline();
+  const { page, pageSize, setPage, setPageSize } = useConceptTestTableStore();
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function SurveyCardList() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">
                     <Link
-                      to={`/pulse/surveys/c/${s.id}`}
+                      to={`/pulse/concept-test/c/${s.id}`}
                       className="hover:underline"
                     >
                       {s.name}
@@ -113,19 +113,19 @@ export default function SurveyCardList() {
                   <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground">
                     <span>
                       <span className="font-medium">
-                        {formatSurveyMetric(s.displayed)}
+                        {formatConceptTestMetric(s.displayed)}
                       </span>{" "}
                       <span className="text-muted-foreground">Displayed</span>
                     </span>
                     <span>
                       <span className="font-medium">
-                        {formatSurveyMetric(s.attempted)}
+                        {formatConceptTestMetric(s.attempted)}
                       </span>{" "}
                       <span className="text-muted-foreground">Attempted</span>
                     </span>
                     <span>
                       <span className="font-medium">
-                        {formatSurveyMetric(s.completed)}
+                        {formatConceptTestMetric(s.completed)}
                       </span>{" "}
                       <span className="text-muted-foreground">Completed</span>
                     </span>
@@ -134,7 +134,7 @@ export default function SurveyCardList() {
               </div>
 
               <div className="flex shrink-0 flex-col items-end gap-3">
-                <SurveyStatusMenu survey={s} />
+                <ConceptTestStatusMenu conceptTest={s} />
                 <p className="text-xs text-muted-foreground">
                   Created by {s.createdBy} on {formatDate(s.createdOn)}
                 </p>

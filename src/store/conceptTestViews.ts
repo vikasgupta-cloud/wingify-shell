@@ -1,88 +1,85 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
-  SURVEY_DEFAULT_VISIBLE,
-  type SurveyColumnId,
-} from "../config/surveyColumns";
-import type { SurveyFilter } from "../config/surveyFilters";
-import { useSurveyTableStore } from "./surveyTable";
+  CONCEPT_TEST_DEFAULT_VISIBLE,
+  type ConceptTestColumnId,
+} from "../config/conceptTestColumns";
+import type { ConceptTestFilter } from "../config/conceptTestFilters";
+import { useConceptTestTableStore } from "./conceptTestTable";
 
-export type SurveyLayout = "table" | "card";
+export type ConceptTestLayout = "table" | "card";
 
-export const SURVEY_LAYOUT_LABEL: Record<SurveyLayout, string> = {
+export const CONCEPT_TEST_LAYOUT_LABEL: Record<ConceptTestLayout, string> = {
   table: "Table",
   card: "Card",
 };
 
-export type SurveyViewState = {
-  filters: SurveyFilter[];
-  sort: { column: SurveyColumnId; dir: "asc" | "desc" } | null;
-  visibleColumns: SurveyColumnId[];
-  layout: SurveyLayout;
-  columnWidths: Partial<Record<SurveyColumnId, number>>;
+export type ConceptTestViewState = {
+  filters: ConceptTestFilter[];
+  sort: { column: ConceptTestColumnId; dir: "asc" | "desc" } | null;
+  visibleColumns: ConceptTestColumnId[];
+  layout: ConceptTestLayout;
+  columnWidths: Partial<Record<ConceptTestColumnId, number>>;
 };
 
-export type SurveyView = { id: string; name: string; state: SurveyViewState };
+export type ConceptTestView = { id: string; name: string; state: ConceptTestViewState };
 
-export const SURVEY_OVERVIEW_ID = "survey-overview";
+export const CONCEPT_TEST_OVERVIEW_ID = "concept-test-overview";
 
-const SEED_TABLE_ID = "survey-seed-table";
-const SEED_CARD_ID = "survey-seed-card";
+const SEED_TABLE_ID = "concept-test-seed-table";
+const SEED_CARD_ID = "concept-test-seed-card";
 
-function makeState(layout: SurveyLayout): SurveyViewState {
+function makeState(layout: ConceptTestLayout): ConceptTestViewState {
   return {
-    // Match listing screenshot — Status is Running by default on table.
-    filters:
-      layout === "table"
-        ? [{ field: "status", op: "is", value: "Running" }]
-        : [],
+    // Screenshot: Status / Created date range as dashed quick filters (not pre-applied).
+    filters: [],
     sort: null,
-    visibleColumns: [...SURVEY_DEFAULT_VISIBLE],
+    visibleColumns: [...CONCEPT_TEST_DEFAULT_VISIBLE],
     layout,
     columnWidths: {},
   };
 }
 
-export const SURVEY_BASE_STATE: SurveyViewState = makeState("table");
+export const CONCEPT_TEST_BASE_STATE: ConceptTestViewState = makeState("table");
 
-function seedViews(): SurveyView[] {
+function seedViews(): ConceptTestView[] {
   return [
     { id: SEED_TABLE_ID, name: "Table View", state: makeState("table") },
     { id: SEED_CARD_ID, name: "Card View", state: makeState("card") },
   ];
 }
 
-type SurveyViewsState = {
-  views: SurveyView[];
-  draftViews: SurveyView[];
+type ConceptTestViewsState = {
+  views: ConceptTestView[];
+  draftViews: ConceptTestView[];
   activeViewId: string;
   defaultViewId: string;
-  drafts: Record<string, SurveyViewState>;
+  drafts: Record<string, ConceptTestViewState>;
   setActiveView: (id: string) => void;
   setDefaultView: (id: string) => void;
-  updateActiveViewDraft: (patch: Partial<SurveyViewState>) => void;
+  updateActiveViewDraft: (patch: Partial<ConceptTestViewState>) => void;
   saveDraftToActiveView: () => void;
   saveDraftAsNewView: (name: string) => string;
   discardActiveViewDraft: () => void;
-  createDraftView: (layout: SurveyLayout) => string;
-  saveInNewLayout: (sourceId: string, layout: SurveyLayout) => string;
+  createDraftView: (layout: ConceptTestLayout) => string;
+  saveInNewLayout: (sourceId: string, layout: ConceptTestLayout) => string;
   renameView: (id: string, name: string) => void;
   deleteView: (id: string) => void;
   reorderViews: (from: number, to: number) => void;
   resetActiveViewColumns: () => void;
 };
 
-export const useSurveyViewsStore = create<SurveyViewsState>()(
+export const useConceptTestViewsStore = create<ConceptTestViewsState>()(
   persist(
     (set, get) => {
-      const findView = (id: string): SurveyView | undefined =>
+      const findView = (id: string): ConceptTestView | undefined =>
         get().views.find((v) => v.id === id) ??
         get().draftViews.find((v) => v.id === id);
 
-      const savedState = (id: string): SurveyViewState =>
-        findView(id)?.state ?? SURVEY_BASE_STATE;
+      const savedState = (id: string): ConceptTestViewState =>
+        findView(id)?.state ?? CONCEPT_TEST_BASE_STATE;
 
-      const effectiveState = (id: string): SurveyViewState =>
+      const effectiveState = (id: string): ConceptTestViewState =>
         get().drafts[id] ?? savedState(id);
 
       return {
@@ -94,19 +91,19 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
 
         setActiveView: (id) => {
           set({ activeViewId: id });
-          useSurveyTableStore.getState().setPage(1);
+          useConceptTestTableStore.getState().setPage(1);
         },
 
         setDefaultView: (id) => {
-          if (id === SURVEY_OVERVIEW_ID) return;
+          if (id === CONCEPT_TEST_OVERVIEW_ID) return;
           if (!get().views.some((v) => v.id === id)) return;
           set({ defaultViewId: id, activeViewId: id });
-          useSurveyTableStore.getState().setPage(1);
+          useConceptTestTableStore.getState().setPage(1);
         },
 
         updateActiveViewDraft: (patch) =>
           set((s) => {
-            if (s.activeViewId === SURVEY_OVERVIEW_ID) return s;
+            if (s.activeViewId === CONCEPT_TEST_OVERVIEW_ID) return s;
             const base = s.drafts[s.activeViewId] ?? savedState(s.activeViewId);
             const { layout: _lockedLayout, ...safePatch } = patch;
             return {
@@ -147,7 +144,7 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
               drafts: restDrafts,
             };
           });
-          useSurveyTableStore.getState().setPage(1);
+          useConceptTestTableStore.getState().setPage(1);
           return id;
         },
 
@@ -165,7 +162,7 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
             }
             return { drafts: restDrafts };
           });
-          if (isDraftView) useSurveyTableStore.getState().setPage(1);
+          if (isDraftView) useConceptTestTableStore.getState().setPage(1);
         },
 
         createDraftView: (layout) => {
@@ -175,13 +172,13 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
               ...s.draftViews,
               {
                 id,
-                name: `${SURVEY_LAYOUT_LABEL[layout]} view`,
+                name: `${CONCEPT_TEST_LAYOUT_LABEL[layout]} view`,
                 state: makeState(layout),
               },
             ],
             activeViewId: id,
           }));
-          useSurveyTableStore.getState().setPage(1);
+          useConceptTestTableStore.getState().setPage(1);
           return id;
         },
 
@@ -190,7 +187,7 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
           if (!source) return sourceId;
           const src = effectiveState(sourceId);
           const id = crypto.randomUUID();
-          const state: SurveyViewState = {
+          const state: ConceptTestViewState = {
             ...makeState(layout),
             filters: src.filters.map((f) => ({
               ...f,
@@ -198,12 +195,12 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
             })),
             sort: src.sort ? { ...src.sort } : null,
           };
-          const name = `${source.name} — ${SURVEY_LAYOUT_LABEL[layout]}`;
+          const name = `${source.name} — ${CONCEPT_TEST_LAYOUT_LABEL[layout]}`;
           set((s) => ({
             views: [...s.views, { id, name, state }],
             activeViewId: id,
           }));
-          useSurveyTableStore.getState().setPage(1);
+          useConceptTestTableStore.getState().setPage(1);
           return id;
         },
 
@@ -260,12 +257,12 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
 
         resetActiveViewColumns: () =>
           get().updateActiveViewDraft({
-            visibleColumns: [...SURVEY_DEFAULT_VISIBLE],
+            visibleColumns: [...CONCEPT_TEST_DEFAULT_VISIBLE],
           }),
       };
     },
     {
-      name: "wingify-survey-views-v2",
+      name: "wingify-concept-test-views-v1",
       partialize: (s) => ({
         views: s.views,
         activeViewId: s.activeViewId,
@@ -274,7 +271,7 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
       merge: (persisted, current) => {
         if (!persisted || typeof persisted !== "object") return current;
         const p = persisted as Partial<
-          Pick<SurveyViewsState, "views" | "activeViewId" | "defaultViewId">
+          Pick<ConceptTestViewsState, "views" | "activeViewId" | "defaultViewId">
         >;
         const views =
           Array.isArray(p.views) && p.views.length ? p.views : current.views;
@@ -284,8 +281,8 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
           ? (p.defaultViewId as string)
           : views[0].id;
         const activeViewId =
-          p.activeViewId === SURVEY_OVERVIEW_ID
-            ? SURVEY_OVERVIEW_ID
+          p.activeViewId === CONCEPT_TEST_OVERVIEW_ID
+            ? CONCEPT_TEST_OVERVIEW_ID
             : isView(p.activeViewId)
               ? (p.activeViewId as string)
               : defaultViewId;
@@ -301,35 +298,35 @@ export const useSurveyViewsStore = create<SurveyViewsState>()(
   )
 );
 
-const savedStateFor = (s: SurveyViewsState, id: string): SurveyViewState =>
+const savedStateFor = (s: ConceptTestViewsState, id: string): ConceptTestViewState =>
   (s.views.find((v) => v.id === id) ?? s.draftViews.find((v) => v.id === id))
-    ?.state ?? SURVEY_BASE_STATE;
+    ?.state ?? CONCEPT_TEST_BASE_STATE;
 
-export function isSurveyDirtyIgnoringLayout(
-  draft: SurveyViewState,
-  saved: SurveyViewState
+export function isConceptTestDirtyIgnoringLayout(
+  draft: ConceptTestViewState,
+  saved: ConceptTestViewState
 ): boolean {
   const { layout: _d, ...draftRest } = draft;
   const { layout: _s, ...savedRest } = saved;
   return JSON.stringify(draftRest) !== JSON.stringify(savedRest);
 }
 
-export function useActiveSurveyViewState(): SurveyViewState {
-  return useSurveyViewsStore(
+export function useActiveConceptTestViewState(): ConceptTestViewState {
+  return useConceptTestViewsStore(
     (s) => s.drafts[s.activeViewId] ?? savedStateFor(s, s.activeViewId)
   );
 }
 
-export function useIsActiveSurveyViewDirty(): boolean {
-  return useSurveyViewsStore((s) => {
+export function useIsActiveConceptTestViewDirty(): boolean {
+  return useConceptTestViewsStore((s) => {
     const draft = s.drafts[s.activeViewId];
     if (!draft) return false;
-    return isSurveyDirtyIgnoringLayout(draft, savedStateFor(s, s.activeViewId));
+    return isConceptTestDirtyIgnoringLayout(draft, savedStateFor(s, s.activeViewId));
   });
 }
 
-export function useIsActiveSurveyViewUnsaved(): boolean {
-  return useSurveyViewsStore((s) =>
+export function useIsActiveConceptTestViewUnsaved(): boolean {
+  return useConceptTestViewsStore((s) =>
     s.draftViews.some((v) => v.id === s.activeViewId)
   );
 }

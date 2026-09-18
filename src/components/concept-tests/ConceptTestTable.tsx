@@ -1,4 +1,4 @@
-// Surveys table — WE CampaignTable interaction model (sort, select, pagination, status).
+// ConceptTests table — WE CampaignTable interaction model (sort, select, pagination, status).
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -11,7 +11,7 @@ import {
   ChevronsRight,
   ChevronsUpDown,
   EllipsisVertical,
-  Globe,
+  Link2,
   Trash2,
 } from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
@@ -24,21 +24,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  SURVEY_COLUMNS,
-  type SurveyColumnDef,
-  type SurveyColumnId,
-} from "@/config/surveyColumns";
-import { formatSurveyMetric, type Survey } from "@/data/surveys";
-import { useSurveyRowsStore } from "@/store/surveyRows";
-import { useSurveyTableStore } from "@/store/surveyTable";
+  CONCEPT_TEST_COLUMNS,
+  type ConceptTestColumnDef,
+  type ConceptTestColumnId,
+} from "@/config/conceptTestColumns";
+import { formatConceptTestMetric, type ConceptTest } from "@/data/conceptTests";
+import { useConceptTestRowsStore } from "@/store/conceptTestRows";
+import { useConceptTestTableStore } from "@/store/conceptTestTable";
 import {
-  useActiveSurveyViewState,
-  useSurveyViewsStore,
-} from "@/store/surveyViews";
+  useActiveConceptTestViewState,
+  useConceptTestViewsStore,
+} from "@/store/conceptTestViews";
 import { cn } from "@/lib/utils";
-import SurveyStatusMenu from "./SurveyStatusMenu";
-import SurveyColumnConfig from "./SurveyColumnConfig";
-import { useSurveyPipeline } from "./useSurveyPipeline";
+import ConceptTestStatusMenu from "./ConceptTestStatusMenu";
+import ConceptTestColumnConfig from "./ConceptTestColumnConfig";
+import { useConceptTestPipeline } from "./useConceptTestPipeline";
 
 const CHECKBOX_COL_WIDTH = 44;
 const PAGE_SIZES = [10, 25, 50];
@@ -71,13 +71,13 @@ function formatDate(iso: string | null) {
   return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-export default function SurveyTable() {
-  const sorted = useSurveyPipeline();
-  const { visibleColumns, sort, columnWidths } = useActiveSurveyViewState();
-  const updateDraft = useSurveyViewsStore((s) => s.updateActiveViewDraft);
-  const remove = useSurveyRowsStore((s) => s.remove);
+export default function ConceptTestTable() {
+  const sorted = useConceptTestPipeline();
+  const { visibleColumns, sort, columnWidths } = useActiveConceptTestViewState();
+  const updateDraft = useConceptTestViewsStore((s) => s.updateActiveViewDraft);
+  const remove = useConceptTestRowsStore((s) => s.remove);
   const { page, pageSize, rowDensity, setPage, setPageSize } =
-    useSurveyTableStore();
+    useConceptTestTableStore();
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -86,10 +86,10 @@ export default function SurveyTable() {
   }, [sorted]);
 
   const columns = visibleColumns
-    .map((id) => SURVEY_COLUMNS.find((c) => c.id === id))
-    .filter((c): c is SurveyColumnDef => c !== undefined);
+    .map((id) => CONCEPT_TEST_COLUMNS.find((c) => c.id === id))
+    .filter((c): c is ConceptTestColumnDef => c !== undefined);
 
-  const effWidth = (col: SurveyColumnDef) =>
+  const effWidth = (col: ConceptTestColumnDef) =>
     columnWidths[col.id] ?? col.width;
 
   const tableWidth =
@@ -132,7 +132,7 @@ export default function SurveyTable() {
 
   const clearSelection = () => setSelected(new Set());
 
-  const toggleSort = (col: SurveyColumnDef) => {
+  const toggleSort = (col: ConceptTestColumnDef) => {
     if (!col.sortable) return;
     if (sort?.column !== col.id) {
       updateDraft({ sort: { column: col.id, dir: "asc" } });
@@ -145,7 +145,7 @@ export default function SurveyTable() {
     updateDraft({ sort: null });
   };
 
-  const sortIcon = (col: SurveyColumnDef) => {
+  const sortIcon = (col: ConceptTestColumnDef) => {
     if (sort?.column !== col.id)
       return <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-60" />;
     return (
@@ -158,16 +158,16 @@ export default function SurveyTable() {
     );
   };
 
-  const renderCell = (s: Survey, col: SurveyColumnDef) => {
-    switch (col.id as SurveyColumnId) {
+  const renderCell = (s: ConceptTest, col: ConceptTestColumnDef) => {
+    switch (col.id as ConceptTestColumnId) {
       case "name":
         return (
           <div className="flex items-center gap-2">
-            <Globe className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <Link2 className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
                 <span className="truncate font-medium text-foreground hover:underline">
-                  <Link to={`/pulse/surveys/c/${s.id}`}>{s.name}</Link>
+                  <Link to={`/pulse/concept-test/c/${s.id}`}>{s.name}</Link>
                 </span>
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
@@ -204,13 +204,13 @@ export default function SurveyTable() {
       case "id":
         return s.id;
       case "status":
-        return <SurveyStatusMenu survey={s} />;
+        return <ConceptTestStatusMenu conceptTest={s} />;
       case "displayed":
-        return formatSurveyMetric(s.displayed);
+        return formatConceptTestMetric(s.displayed);
       case "attempted":
-        return formatSurveyMetric(s.attempted);
+        return formatConceptTestMetric(s.attempted);
       case "completed":
-        return formatSurveyMetric(s.completed);
+        return formatConceptTestMetric(s.completed);
       case "createdOnBy":
         return (
           <span>
@@ -315,7 +315,7 @@ export default function SurveyTable() {
                   ))}
                   <th className="w-10 px-2 py-2.5 text-right">
                     <div className="flex justify-end">
-                      <SurveyColumnConfig />
+                      <ConceptTestColumnConfig />
                     </div>
                   </th>
                 </tr>

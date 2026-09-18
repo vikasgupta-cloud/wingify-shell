@@ -1,16 +1,20 @@
 import { create } from "zustand";
-import { SURVEYS, type Survey, type SurveyStatus } from "../data/surveys";
+import {
+  CONCEPT_TESTS,
+  type ConceptTest,
+  type ConceptTestStatus,
+} from "../data/conceptTests";
 
-type SurveyRowsState = {
+type ConceptTestRowsState = {
   deletedIds: string[];
-  statusOverrides: Record<string, SurveyStatus>;
+  statusOverrides: Record<string, ConceptTestStatus>;
   nameOverrides: Record<string, string>;
   remove: (ids: string[]) => void;
-  setStatus: (id: string, status: SurveyStatus) => void;
+  setStatus: (id: string, status: ConceptTestStatus) => void;
   rename: (id: string, name: string) => void;
 };
 
-export const useSurveyRowsStore = create<SurveyRowsState>((set) => ({
+export const useConceptTestRowsStore = create<ConceptTestRowsState>((set) => ({
   deletedIds: [],
   statusOverrides: {},
   nameOverrides: {},
@@ -28,12 +32,12 @@ export const useSurveyRowsStore = create<SurveyRowsState>((set) => ({
     })),
 }));
 
-export function useVisibleSurveys(): Survey[] {
-  const deletedIds = useSurveyRowsStore((s) => s.deletedIds);
-  const statusOverrides = useSurveyRowsStore((s) => s.statusOverrides);
-  const nameOverrides = useSurveyRowsStore((s) => s.nameOverrides);
+export function useVisibleConceptTests(): ConceptTest[] {
+  const deletedIds = useConceptTestRowsStore((s) => s.deletedIds);
+  const statusOverrides = useConceptTestRowsStore((s) => s.statusOverrides);
+  const nameOverrides = useConceptTestRowsStore((s) => s.nameOverrides);
   const deleted = new Set(deletedIds);
-  return SURVEYS.filter((s) => !deleted.has(s.id)).map((s) => ({
+  return CONCEPT_TESTS.filter((s) => !deleted.has(s.id)).map((s) => ({
     ...s,
     status: statusOverrides[s.id] ?? s.status,
     name: nameOverrides[s.id] ?? s.name,

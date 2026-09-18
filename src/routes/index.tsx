@@ -27,6 +27,9 @@ import HeatmapsPage from "../pages/insights/HeatmapsPage";
 import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
 import SessionRecordingPlayerPage from "../pages/insights/SessionRecordingPlayerPage";
 import SurveysPage from "../pages/pulse/SurveysPage";
+import SurveyDetailPage from "../pages/pulse/SurveyDetailPage";
+import ConceptTestPage from "../pages/pulse/ConceptTestPage";
+import ConceptTestDetailPage from "../pages/pulse/ConceptTestDetailPage";
 import FeatureFlagsPage from "../pages/feature-management/FeatureFlagsPage";
 import FlagDetailPage from "../pages/feature-management/FlagDetailPage";
 import FlagRolloutPage from "../pages/feature-management/FlagRolloutPage";
@@ -69,6 +72,7 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/insights/session-recordings": SessionRecordingsPage,
   "/insights/heatmaps": HeatmapsPage,
   "/pulse/surveys": SurveysPage,
+  "/pulse/concept-test": ConceptTestPage,
   "/feature-management/feature-flags": FeatureFlagsPage,
   "/feature-management/flag-rollout": FlagRolloutPage,
   "/feature-management/flag-testing": FlagTestingPage,
@@ -121,6 +125,30 @@ const addDetailRoute = (leafPath: string) => {
     leafPath === "/plan/hypotheses" ||
     leafPath === "/plan/ideas"
   ) {
+    return;
+  }
+  // Pulse Surveys — Coming soon detail; DetailShell breadcrumbs only (no Configure/Reports).
+  if (leafPath === "/pulse/surveys") {
+    detailRoutes.push({
+      path: `${leafPath}/c/:entityId`,
+      element: (
+        <DetailShell basePath={leafPath}>
+          <SurveyDetailPage />
+        </DetailShell>
+      ),
+    });
+    return;
+  }
+  // Pulse Concept Test — same chrome as Surveys (no Configure/Reports).
+  if (leafPath === "/pulse/concept-test") {
+    detailRoutes.push({
+      path: `${leafPath}/c/:entityId`,
+      element: (
+        <DetailShell basePath={leafPath}>
+          <ConceptTestDetailPage />
+        </DetailShell>
+      ),
+    });
     return;
   }
   // Feature Management leaves — Coming soon body; DetailShell breadcrumbs + switcher.
