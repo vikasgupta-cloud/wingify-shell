@@ -1,3 +1,6 @@
+/** Linear-style drill-in sidebar for Profile modes (Settings, Websites and Apps, …).
+ * @summary alwaysOpen + landRoot headings (e.g. Websites and Apps) are NavLinks like Introduction.
+ */
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Search } from "@/components/icons/protoLucide";
@@ -139,9 +142,33 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
     if (item.alwaysOpen) {
       return (
         <div key={item.path} className="flex flex-col gap-0.5">
-          <div className="px-2 pb-1 pt-3 text-xs font-medium text-muted-foreground">
-            {item.label}
-          </div>
+          {/* Landable alwaysOpen roots (e.g. Websites and Apps) match Introduction leaf styling. */}
+          {item.landRoot ? (
+            <NavLink
+              to={item.path}
+              end
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-foreground transition-colors hover:bg-muted",
+                  isActive &&
+                    "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                )
+              }
+            >
+              {Icon && (
+                <Icon
+                  className="h-4 w-4 shrink-0 text-foreground"
+                  strokeWidth={1.75}
+                />
+              )}
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+              {item.count != null && <CountPill count={item.count} />}
+            </NavLink>
+          ) : (
+            <div className="px-2 pb-1 pt-3 text-xs font-medium text-muted-foreground">
+              {item.label}
+            </div>
+          )}
           {item.items!.map((leaf) => (
             <LeafLink key={leaf.path} leaf={leaf} />
           ))}

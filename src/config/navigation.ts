@@ -20,7 +20,7 @@ import {
   Building2,
   // Circle, // reserved for dummyNav placeholder sidebars
   AppWindow,
-  CirclePlus,
+  // CirclePlus, // @undo — Add new site row removed from WNA nav
   Image,
   Images,
   Component,
@@ -395,53 +395,26 @@ export const SETTINGS_NAV: DrillInNavItem[] = [
 ];
 
 /**
- * Websites and Apps drill-in — real nav from product.
- * Site rows are stubs; Replace with live property data later.
+ * Websites and Apps drill-in — flat section list (no per-site rows in the rail).
+ * @undo Site list + Add new lived under alwaysOpen "Websites and Apps"; removed from nav.
  */
 const WNA = "/websites-and-apps";
-const wnaSite = (label: string): NavLeaf => ({
-  label,
-  path: `${WNA}/sites/${slugify(label)}`,
-  hideCreate: true,
-  icon: AppWindow,
-});
+// @undo — per-site stub rows (kept for restore)
+// const wnaSite = (label: string): NavLeaf => ({
+//   label,
+//   path: `${WNA}/sites/${slugify(label)}`,
+//   hideCreate: true,
+//   icon: AppWindow,
+// });
 
 export const WEBSITES_AND_APPS_NAV: DrillInNavItem[] = [
   { label: "Introduction", path: `${WNA}/introduction`, hideCreate: true },
-  {
-    label: "Websites and Apps",
-    path: `${WNA}/sites`,
-    alwaysOpen: true,
-    items: [
-      wnaSite("Jatinm Wingified"),
-      wnaSite("Help Vwo"),
-      wnaSite("Wingified"),
-      wnaSite("Cro Vwo"),
-      wnaSite("VWO"),
-      wnaSite("Wingify"),
-      wnaSite("Sahil1610 Github"),
-      wnaSite("Ecommerce Tryvwo"),
-      wnaSite("Jatinm Wingifie1d"),
-      wnaSite("Lp Vwo"),
-      wnaSite("Dash Partnerstack"),
-      wnaSite("Tryvwo"),
-      wnaSite("Developers Vwo"),
-      wnaSite("Help Wingify"),
-      {
-        label: "Add new",
-        path: `${WNA}/sites/add-new`,
-        hideCreate: true,
-        action: true,
-        icon: CirclePlus,
-      },
-    ],
-  },
-  {
-    label: "Content Security Policy (CSP)",
-    path: `${WNA}/csp`,
-    hideCreate: true,
-  },
+  { label: "Websites and Apps", path: `${WNA}/sites`, hideCreate: true },
+  { label: "CSP", path: `${WNA}/csp`, hideCreate: true },
   { label: "Debugger", path: `${WNA}/debugger`, hideCreate: true },
+  { label: "Privacy", path: `${WNA}/privacy`, hideCreate: true },
+  { label: "Compliance", path: `${WNA}/compliance`, hideCreate: true },
+  { label: "FAQs", path: `${WNA}/faqs`, hideCreate: true },
 ];
 
 /**

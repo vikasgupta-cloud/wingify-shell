@@ -39,7 +39,14 @@ function CreateItem({ option, onSelect }: { option: CreateOption; onSelect: () =
       className="flex cursor-pointer items-start gap-3 rounded-md p-2 outline-none hover:bg-muted focus:bg-muted data-[highlighted]:bg-muted"
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-foreground">
-        <Icon className="h-[18px] w-[18px]" size={18} aria-hidden />
+        <Icon
+          className={cn(
+            "h-[18px] w-[18px]",
+            option.group === "ai" && "text-[var(--badge-berry-light-fg)]"
+          )}
+          size={18}
+          aria-hidden
+        />
       </span>
       <div className="flex flex-col gap-0.5 pt-0.5">
         <span className="text-sm font-medium text-foreground">{option.label}</span>
@@ -85,8 +92,9 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
   const createOptions = getCreateOptions(pathname, pageLabel(pathname));
   const aiOptions = createOptions.filter((o) => o.group === "ai");
   const restOptions = createOptions.filter((o) => o.group !== "ai");
-  // A single ungrouped fallback option reads better without a heading over it.
-  const showHeadings = aiOptions.length > 0 && restOptions.length > 0;
+  // Mockup: AI option + divider + rest — no "AI" / "Other" section labels.
+  // const showHeadings = aiOptions.length > 0 && restOptions.length > 0; // @undo
+  const showHeadings = false;
   const isCancellationWorkspace = useIsCancellationRevokeWorkspace();
   const isTrialOverWorkspace = useIsTrialOverWorkspace();
   const isGetStartedWorkspace = useIsGetStartedWorkspace();

@@ -1,5 +1,9 @@
+/** Create menu options per listing path.
+ * @summary Adds Create with Wingz (AI group) atop Web Experimentation Create menu.
+ * Reuses TYPE_ICONS + route-backed option handling in TopBar.
+ */
 import type { LucideIcon } from "lucide-react";
-import { LayoutGrid, LineChart, Plus } from "lucide-react";
+import { LayoutGrid, LineChart, Plus, Sparkles } from "lucide-react";
 import type { CampaignType } from "../data/campaigns";
 import { TYPE_ICONS } from "../components/icons/campaignTypeIcons";
 
@@ -26,6 +30,14 @@ export type CreateOption = {
 // Campaign-type icons come from TYPE_ICONS (Figma test-type glyphs for A/B, Split, MVT).
 export const CREATE_MENU: Record<string, CreateOption[]> = {
   "/web-experiment": [
+    {
+      id: "create-with-wingz",
+      label: "Create with Wingz",
+      description: "Let AI transform your idea into a campaign using Wingz",
+      icon: Sparkles,
+      group: "ai",
+      route: "/wingz/chat",
+    },
     { id: "ab-single", label: "AB - Single Page", description: "Compare different versions of the same page on your website", icon: TYPE_ICONS["A/B"], campaignType: "A/B" },
     { id: "ab-multi", label: "AB - Multi Page", description: "Test all the page of a conversion funnel on your site", icon: TYPE_ICONS.Multipage, campaignType: "Multipage" },
     { id: "split-url", label: "Split URL", description: "Compare different URLs against each other", icon: TYPE_ICONS["Split URL"], campaignType: "Split URL" },
