@@ -1,5 +1,11 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter, Navigate, useParams, type RouteObject } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  useLocation,
+  useParams,
+  type RouteObject,
+} from "react-router-dom";
 import {
   NAV,
   PROFILE_MODES,
@@ -20,6 +26,9 @@ import EditorPage from "../pages/editor/EditorPage";
 import IntegrationsPage from "../pages/integrations/IntegrationsPage";
 import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
 import WebsitesAndAppsPage from "../pages/websites-and-apps/WebsitesAndAppsPage";
+import AssetImagesPage from "../pages/configuration/AssetImagesPage";
+import AssetWidgetsPage from "../pages/configuration/AssetWidgetsPage";
+import AssetThemesPage from "../pages/configuration/AssetThemesPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import FormGalleryPage from "../pages/design/FormGalleryPage";
 import DesignSystemPage from "../pages/design/DesignSystemPage";
@@ -62,6 +71,19 @@ import PlanIdeasPage from "../pages/plan/PlanIdeasPage";
 function LegacyAnalyticsItemRedirect() {
   const { entityId = "" } = useParams();
   return <Navigate to={`/analytics/overview/c/${entityId}`} replace />;
+}
+
+/** Map legacy profile-mode URLs under an old prefix into Configuration. */
+function LegacyPathPrefixRedirect({
+  from,
+  to,
+}: {
+  from: string;
+  to: string;
+}) {
+  const { pathname } = useLocation();
+  const rest = pathname.slice(from.length);
+  return <Navigate to={`${to}${rest}`} replace />;
 }
 
 // Built pages, keyed by leaf path. Everything else falls back to PlaceholderPage.
@@ -303,12 +325,19 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
       ...leaves.map((leaf) => ({
         path: leaf.path.slice(mode.path.length + 1),
         element:
-          mode.id === "integrations" ? (
+          mode.id === "configuration" &&
+          leaf.path === "/configuration/integrations" ? (
             <IntegrationsPage />
           ) : leaf.path === "/settings/accounts/general" ? (
             <AccountGeneralPage />
-          ) : leaf.path === "/websites-and-apps/sites" ? (
+          ) : leaf.path === "/configuration/websites-and-apps/sites" ? (
             <WebsitesAndAppsPage />
+          ) : leaf.path === "/configuration/assets-hub/images" ? (
+            <AssetImagesPage />
+          ) : leaf.path === "/configuration/assets-hub/widgets" ? (
+            <AssetWidgetsPage />
+          ) : leaf.path === "/configuration/assets-hub/themes" ? (
+            <AssetThemesPage />
           ) : (
             <PlaceholderPage />
           ),
@@ -343,6 +372,41 @@ export const router = createBrowserRouter([
         element: <LegacyAnalyticsItemRedirect />,
       },
       ...profileModeRoutes,
+      // Legacy profile-mode URLs → Configuration shell.
+      {
+        path: "/websites-and-apps",
+        element: (
+          <Navigate to="/configuration/websites-and-apps/introduction" replace />
+        ),
+      },
+      {
+        path: "/websites-and-apps/*",
+        element: <LegacyPathPrefixRedirect from="/websites-and-apps" to="/configuration/websites-and-apps" />,
+      },
+      {
+        path: "/integrations",
+        element: <Navigate to="/configuration/integrations" replace />,
+      },
+      {
+        path: "/integrations/*",
+        element: <Navigate to="/configuration/integrations" replace />,
+      },
+      {
+        path: "/pages-library",
+        element: <Navigate to="/configuration/pages" replace />,
+      },
+      {
+        path: "/pages-library/*",
+        element: <Navigate to="/configuration/pages" replace />,
+      },
+      {
+        path: "/assets-hub",
+        element: <Navigate to="/configuration/assets-hub" replace />,
+      },
+      {
+        path: "/assets-hub/*",
+        element: <Navigate to="/configuration/assets-hub" replace />,
+      },
       // Wingz — full-page chat with the same persistent main rail as AppLayout.
       {
         path: "/wingz",

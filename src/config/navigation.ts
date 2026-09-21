@@ -14,6 +14,7 @@ import {
   Headphones,
   UserCircle,
   Settings,
+  Settings2,
   Layers,
   FileText,
   Contact,
@@ -396,30 +397,65 @@ export const SETTINGS_NAV: DrillInNavItem[] = [
 ];
 
 /**
- * Websites and Apps drill-in — flat section list (no per-site rows in the rail).
- * @undo Site list + Add new lived under alwaysOpen "Websites and Apps"; removed from nav.
+ * Configuration drill-in — clubs Websites and Apps, Integrations, Pages, Assets Hub.
+ * WNA + Assets Hub are accordions; Integrations and Pages are leaf rows like Settings.
  */
-const WNA = "/websites-and-apps";
-// @undo — per-site stub rows (kept for restore)
-// const wnaSite = (label: string): NavLeaf => ({
-//   label,
-//   path: `${WNA}/sites/${slugify(label)}`,
-//   hideCreate: true,
-//   icon: AppWindow,
-// });
+const CONFIG = "/configuration";
+const WNA = `${CONFIG}/websites-and-apps`;
+const ASSETS = `${CONFIG}/assets-hub`;
 
-export const WEBSITES_AND_APPS_NAV: DrillInNavItem[] = [
-  { label: "Introduction", path: `${WNA}/introduction`, hideCreate: true },
-  { label: "Websites and Apps", path: `${WNA}/sites`, hideCreate: true },
-  { label: "CSP", path: `${WNA}/csp`, hideCreate: true },
-  { label: "Debugger", path: `${WNA}/debugger`, hideCreate: true },
-  { label: "Privacy", path: `${WNA}/privacy`, hideCreate: true },
-  { label: "Compliance", path: `${WNA}/compliance`, hideCreate: true },
-  { label: "FAQs", path: `${WNA}/faqs`, hideCreate: true },
+export const CONFIGURATION_NAV: DrillInNavItem[] = [
+  {
+    label: "Websites and Apps",
+    path: WNA,
+    icon: AppWindow,
+    items: [
+      { label: "Introduction", path: `${WNA}/introduction`, hideCreate: true },
+      { label: "Websites and Apps", path: `${WNA}/sites`, hideCreate: true },
+      { label: "CSP", path: `${WNA}/csp`, hideCreate: true },
+      { label: "Debugger", path: `${WNA}/debugger`, hideCreate: true },
+      { label: "Privacy", path: `${WNA}/privacy`, hideCreate: true },
+      { label: "Compliance", path: `${WNA}/compliance`, hideCreate: true },
+      { label: "FAQs", path: `${WNA}/faqs`, hideCreate: true },
+    ],
+  },
+  {
+    label: "Integrations",
+    path: `${CONFIG}/integrations`,
+    icon: Blocks,
+    hideCreate: true,
+  },
+  {
+    label: "Pages",
+    path: `${CONFIG}/pages`,
+    icon: FileText,
+    hideCreate: true,
+  },
+  {
+    label: "Assets Hub",
+    path: ASSETS,
+    icon: Images,
+    items: [
+      { label: "Images", path: `${ASSETS}/images`, icon: Image, count: 167, hideCreate: true },
+      { label: "Widgets", path: `${ASSETS}/widgets`, icon: Component, count: 25, hideCreate: true },
+      { label: "Themes", path: `${ASSETS}/themes`, icon: Palette, count: 10, hideCreate: true },
+      {
+        label: "Code Snippets",
+        path: `${ASSETS}/code-snippets`,
+        icon: CodeXml,
+        count: 0,
+        hideCreate: true,
+      },
+    ],
+  },
 ];
+
+// @undo — flat WNA-only rail before Configuration club
+// export const WEBSITES_AND_APPS_NAV: DrillInNavItem[] = [ ... ]
 
 /**
  * Pages library — flat searchable list. Labels truncated in UI; stubs for now.
+ * @undo Was its own Profile mode rail; Pages is now a Configuration leaf.
  */
 const PAGES = "/pages-library";
 export const PAGES_NAV: DrillInNavItem[] = [
@@ -435,18 +471,18 @@ export const PAGES_NAV: DrillInNavItem[] = [
 }));
 
 /**
- * Assets Hub — flat icon + count list.
+ * Assets Hub leaves — kept for reference; live copy lives under CONFIGURATION_NAV.
+ * @undo Standalone Assets Hub Profile mode rail.
  */
-const ASSETS = "/assets-hub";
 export const ASSETS_HUB_NAV: DrillInNavItem[] = [
-  { label: "Images", path: `${ASSETS}/images`, icon: Image, count: 208, hideCreate: true },
-  { label: "Widgets", path: `${ASSETS}/widgets`, icon: Component, count: 34, hideCreate: true },
-  { label: "Themes", path: `${ASSETS}/themes`, icon: Palette, count: 12, hideCreate: true },
+  { label: "Images", path: `${ASSETS}/images`, icon: Image, count: 167, hideCreate: true },
+  { label: "Widgets", path: `${ASSETS}/widgets`, icon: Component, count: 25, hideCreate: true },
+  { label: "Themes", path: `${ASSETS}/themes`, icon: Palette, count: 10, hideCreate: true },
   {
     label: "Code Snippets",
     path: `${ASSETS}/code-snippets`,
     icon: CodeXml,
-    count: 1,
+    count: 0,
     hideCreate: true,
   },
 ];
@@ -475,36 +511,10 @@ export const UPGRADE_NAV: DrillInNavItem[] = [
 export const PROFILE_MODES: ProfileMode[] = [
   { id: "settings", label: "Settings", path: "/settings", nav: SETTINGS_NAV },
   {
-    id: "websites-and-apps",
-    label: "Websites and Apps",
-    path: "/websites-and-apps",
-    nav: WEBSITES_AND_APPS_NAV,
-  },
-  {
-    id: "integrations",
-    label: "Integrations",
-    path: "/integrations",
-    nav: [
-      {
-        label: "All integrations",
-        path: "/integrations/all",
-        icon: Blocks,
-        hideCreate: true,
-      },
-    ],
-  },
-  {
-    id: "pages",
-    label: "Pages",
-    path: "/pages-library",
-    nav: PAGES_NAV,
-    searchPlaceholder: "Search Pages",
-  },
-  {
-    id: "assets-hub",
-    label: "Assets Hub",
-    path: "/assets-hub",
-    nav: ASSETS_HUB_NAV,
+    id: "configuration",
+    label: "Configuration",
+    path: CONFIG,
+    nav: CONFIGURATION_NAV,
   },
   { id: "upgrade", label: "Upgrade", path: "/upgrade", nav: UPGRADE_NAV },
 ];
@@ -521,10 +531,7 @@ export const PROFILE_DETAILS_PATH = "/settings/profile-details";
 export const LOGOUT_PATH = "/logout";
 
 const MODE_ICONS: Record<string, LucideIcon> = {
-  "websites-and-apps": AppWindow,
-  integrations: Blocks,
-  pages: FileText,
-  "assets-hub": Images,
+  configuration: Settings2,
   settings: Settings,
   upgrade: Zap,
 };
@@ -546,8 +553,7 @@ const profileFlyoutSections: NavSection[] = [
       { label: "Profile", path: PROFILE_DETAILS_PATH, hideCreate: true, icon: Contact },
     ],
   },
-  { items: [modeLeaf("websites-and-apps"), modeLeaf("integrations")] },
-  { items: [modeLeaf("pages"), modeLeaf("assets-hub")] },
+  { items: [modeLeaf("configuration")] },
   { items: [modeLeaf("settings")] },
   {
     items: [
@@ -572,12 +578,15 @@ export type JdSwitcherItem = {
   icon?: LucideIcon;
 };
 
-/** Same order/grouping as the Profile flyout, minus Logout. */
+/** Same order/grouping as the Profile flyout, minus Logout and Profile (user card only). */
 export function jdSwitcherGroups(): JdSwitcherItem[][] {
   return profileFlyoutSections
     .map((section) =>
       section.items
-        .filter((item) => item.path !== LOGOUT_PATH)
+        .filter(
+          (item) =>
+            item.path !== LOGOUT_PATH && item.path !== PROFILE_DETAILS_PATH
+        )
         .map((item) => {
           const mode = PROFILE_MODES.find((m) => m.path === item.path);
           return {

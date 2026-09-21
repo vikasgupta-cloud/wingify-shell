@@ -8,7 +8,7 @@ import { ChevronDown } from "@/components/icons/protoLucide";
 import {
   findDrillInLeaf,
   findDrillInSection,
-  jdSwitcherGroups,
+  jdSwitcherItems,
   modeLeaves,
   resolveJdSwitcherItem,
   sectionLandPath,
@@ -111,14 +111,15 @@ function ModeSwitcher({
   pathname: string;
 }) {
   const active = resolveJdSwitcherItem(pathname);
-  const groups = jdSwitcherGroups();
+  // Flat list — Configuration / Settings / Upgrade (no Profile row).
+  const items = jdSwitcherItems();
 
   return (
     <CrumbDropdown
       label={active?.label ?? mode.label}
       ariaLabel="Switch JD destination"
       activeId={active?.id ?? mode.path}
-      groups={groups}
+      items={items}
     />
   );
 }

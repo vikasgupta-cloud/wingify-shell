@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { CirclePlus } from "@/components/icons/protoLucide";
+import { Button } from "@/components/ui/button";
 import { findProfileMode } from "../../config/navigation";
 import { cn } from "../../lib/utils";
+import { useIntegrationRequestStore } from "@/store/integrationRequest";
 import {
   useIsCancellationRevokeWorkspace,
   useIsTrialOverWorkspace,
@@ -13,35 +16,48 @@ import DrillInBreadcrumb from "./DrillInBreadcrumb";
 import DrillInNav from "./DrillInNav";
 import ExpandedNav from "./ExpandedNav";
 import UpgradeNav from "./UpgradeNav";
-import WingifyLogoButton from "./WingifyLogoButton";
+// @undo — logo lived in header; now inside DrillInNav like ExpandedNav
+// import WingifyLogoButton from "./WingifyLogoButton";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
 const EDGE_OPEN_DELAY_MS = 240;
 const OVERLAY_CLOSE_GRACE_MS = 250;
 
+const WNA_SITES_PATH = "/configuration/websites-and-apps/sites";
+const INTEGRATIONS_PATH = "/configuration/integrations";
+
+/** Assets Hub leaf → primary header CTA label (stub actions for now). */
+const ASSETS_HUB_HEADER_CTAS: Record<string, string> = {
+  "/configuration/assets-hub/images": "Upload Image",
+  "/configuration/assets-hub/widgets": "Create Widget",
+  "/configuration/assets-hub/themes": "Create Theme",
+  "/configuration/assets-hub/code-snippets": "Add Code Snippet",
+};
+
 /** Profile drill-ins that show workspace notices in the header. */
 const WORKSPACE_NOTICE_MODE_IDS = new Set([
-  "websites-and-apps",
-  "integrations",
-  "pages",
-  "assets-hub",
+  "configuration",
   "settings",
   "upgrade",
 ]);
 
 /**
  * Linear-style drill-in surface for every Profile flyout destination (Settings,
- * Profile, Websites and Apps, …). Sidebar + back control + left-edge main-rail
- * reveal (same pattern as DetailShell / reports).
+ * Configuration, …). Sidebar + back control + left-edge main-rail reveal.
+ * Header CTAs: Add new (WNA sites), Request new integration (Integrations).
  */
 export default function DrillInShell() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const mode = findProfileMode(pathname);
+  const openIntegrationRequest = useIntegrationRequestStore((s) => s.openRequest);
   const isCancellationWorkspace = useIsCancellationRevokeWorkspace();
   const isTrialOverWorkspace = useIsTrialOverWorkspace();
   const showWorkspaceNotice =
     mode != null && WORKSPACE_NOTICE_MODE_IDS.has(mode.id);
+  const showAddWebsite = pathname === WNA_SITES_PATH;
+  const showRequestIntegration = pathname === INTEGRATIONS_PATH;
+  const assetsHubCtaLabel = ASSETS_HUB_HEADER_CTAS[pathname];
   const [revoked, setRevoked] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [navRendered, setNavRendered] = useState(false);
@@ -114,7 +130,7 @@ export default function DrillInShell() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
           <div className="flex min-w-0 items-center gap-2">
-            <WingifyLogoButton />
+            {/* @undo — <WingifyLogoButton /> removed from header; bird is in DrillInNav */}
             <WorkspaceSwitcher />
             <span className="text-sm text-muted-foreground">/</span>
             <DrillInBreadcrumb mode={mode} pathname={pathname} />
@@ -126,6 +142,27 @@ export default function DrillInShell() {
             {isCancellationWorkspace && !revoked && showWorkspaceNotice && (
               <CancellationRequestNotice onRevoke={() => setRevoked(true)} />
             )}
+            {showAddWebsite ? (
+              <Button type="button" className="h-9 gap-1.5 px-3 shadow-none">
+                <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />
+                Add new
+              </Button>
+            ) : null}
+            {showRequestIntegration ? (
+              <Button
+                type="button"
+                className="h-9 shadow-none"
+                onClick={openIntegrationRequest}
+              >
+                Request new integration
+              </Button>
+            ) : null}
+            {assetsHubCtaLabel ? (
+              <Button type="button" className="h-9 gap-1.5 px-3 shadow-none">
+                <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />
+                {assetsHubCtaLabel}
+              </Button>
+            ) : null}
           </div>
         </header>
 

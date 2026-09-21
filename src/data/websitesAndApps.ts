@@ -1,4 +1,4 @@
-/** Dummy Websites and Apps rows for the `/websites-and-apps/sites` listing. */
+/** Dummy Websites and Apps rows for the Configuration → Websites and Apps listing. */
 
 export type WebsiteAppType = "Website" | "Server-side Project" | "Mobile App";
 

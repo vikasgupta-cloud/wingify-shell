@@ -1,4 +1,5 @@
 // Upgrade left rail — flat product list (badges kept). Other modes use DrillInNav.
+// Logo sits in the same h-14 rail slot as ExpandedNav / DrillInNav.
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown } from "@/components/icons/protoLucide";
@@ -9,6 +10,7 @@ import {
 } from "../../config/upgradeNav";
 import { SETTINGS_NAV_WIDTH } from "../../lib/nav";
 import { cn } from "../../lib/utils";
+import WingifyLogoButton from "./WingifyLogoButton";
 
 function Badge({
   label,
@@ -39,7 +41,13 @@ export default function UpgradeNav() {
       className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-background text-foreground"
       style={{ width: SETTINGS_NAV_WIDTH }}
     >
-      <div className="flex shrink-0 items-center px-3 pb-3 pt-4">
+      <div className="flex h-14 shrink-0 items-center px-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+          <WingifyLogoButton />
+        </span>
+      </div>
+
+      <div className="flex shrink-0 items-center px-3 pb-3">
         <button
           type="button"
           aria-label="Back to main menu"

@@ -1,7 +1,7 @@
-// Product switcher stubs omit PageHeader; Home / settings / other stubs keep it.
+// Product switcher stubs omit PageHeader; Profile drill-ins omit it too (crumb is enough).
 import { useLocation } from "react-router-dom";
 import { PRODUCT_SWITCHER_PATHS, WEB_EXPERIMENT_OLD_PATH } from "../config/navigation";
-import { findItemByPath, iconForPath, pageLabel } from "../lib/nav";
+import { findItemByPath, iconForPath, isProfileModePath, pageLabel } from "../lib/nav";
 import PageHeader from "../components/layout/PageHeader";
 import ComingSoonState from "../components/empty/ComingSoonState";
 
@@ -31,7 +31,8 @@ export default function PlaceholderPage() {
   const { pathname } = useLocation();
   const title = pageLabel(pathname);
   const icon = iconForPath(pathname);
-  const showHeader = !isProductPath(pathname);
+  // @undo — profile drill-ins used to show PageHeader; crumb + ComingSoonState cover it
+  const showHeader = !isProductPath(pathname) && !isProfileModePath(pathname);
 
   return (
     <div className="flex min-h-full flex-col">

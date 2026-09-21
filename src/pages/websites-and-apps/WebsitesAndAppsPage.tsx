@@ -1,11 +1,10 @@
-/** Websites and Apps listing — search + Add new + table (sites moved off the left rail).
+/** Websites and Apps listing — search + table; Add new CTA lives in DrillInShell header.
  * Reuses: shadcn Button/Input/DropdownMenu; AlertTriangle status via warning tokens.
  */
 
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
-  CirclePlus,
   MoreVertical,
   Search,
 } from "@/components/icons/protoLucide";
@@ -53,36 +52,21 @@ export default function WebsitesAndAppsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 px-8 pb-16 pt-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 max-w-xl space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Websites and Apps
-          </h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            View details of and manage all websites, mobile apps and server-side
-            projects you have added to Wingify.
-          </p>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="relative w-[240px]">
-            <Search
-              className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-              strokeWidth={1.75}
-              aria-hidden
-            />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search Websites and Apps"
-              aria-label="Search Websites and Apps"
-              className="h-9 bg-background pl-8 shadow-none"
-            />
-          </div>
-          <Button type="button" className="h-9 gap-1.5 px-3 shadow-none">
-            <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />
-            Add new
-          </Button>
+      {/* Add new CTA lives in DrillInShell header. */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="relative w-[240px]">
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+            strokeWidth={1.75}
+            aria-hidden
+          />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search Websites and Apps"
+            aria-label="Search Websites and Apps"
+            className="h-9 bg-background pl-8 shadow-none"
+          />
         </div>
       </div>
 

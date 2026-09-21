@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import {
   ArrowRight,
   ChevronDown,
-  CircleHelp,
+  // CircleHelp, // @undo — used by removed page header help tooltip
   Link2,
   Plus,
   Search,
@@ -28,12 +28,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+// @undo — Tooltip used by removed page header help control
+// import {
+//   Tooltip,
+//   TooltipContent,
+//   TooltipProvider,
+//   TooltipTrigger,
+// } from "@/components/ui/tooltip";
 import {
   INTEGRATIONS,
   INTEGRATION_CATEGORIES,
@@ -42,6 +43,7 @@ import {
   type Integration,
 } from "../../data/integrations";
 import { useConfigStore } from "../../store/config";
+import { useIntegrationRequestStore } from "@/store/integrationRequest";
 
 function MonogramTile({ name, className }: { name: string; className?: string }) {
   return (
@@ -176,7 +178,8 @@ export default function IntegrationsPage() {
   const [query, setQuery] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [connectionTypes, setConnectionTypes] = useState<string[]>([]);
-  const [requestOpen, setRequestOpen] = useState(false);
+  const requestOpen = useIntegrationRequestStore((s) => s.open);
+  const setRequestOpen = useIntegrationRequestStore((s) => s.setOpen);
   const [requestName, setRequestName] = useState("");
   const [requestSent, setRequestSent] = useState(false);
 
@@ -245,38 +248,7 @@ export default function IntegrationsPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-8 py-10">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="font-title text-3xl font-semibold tracking-tight text-foreground">
-              Integrations
-            </h1>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="rounded-full text-muted-foreground transition-colors hover:text-foreground"
-                    aria-label="About integrations"
-                  >
-                    <CircleHelp className="size-4" strokeWidth={1.75} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  Connect analytics, CRM, CDP, and ABM tools to Wingify.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Wingify integrates with your favorite tools.
-          </p>
-        </div>
-        <Button type="button" onClick={() => setRequestOpen(true)}>
-          Request new integration
-        </Button>
-      </header>
-
+      {/* CTA lives in DrillInShell header (Request new integration). */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

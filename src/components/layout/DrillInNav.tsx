@@ -1,5 +1,5 @@
-/** Linear-style drill-in sidebar for Profile modes (Settings, Websites and Apps, …).
- * @summary alwaysOpen + landRoot headings (e.g. Websites and Apps) are NavLinks like Introduction.
+/** Linear-style drill-in sidebar for Profile modes (Settings, Configuration, …).
+ * @summary Logo bird lives in the left rail (same h-14 slot as ExpandedNav); Back to app below.
  */
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -14,6 +14,7 @@ import {
 import { SETTINGS_NAV_WIDTH } from "../../lib/nav";
 import { cn } from "../../lib/utils";
 import { Input } from "../ui/input";
+import WingifyLogoButton from "./WingifyLogoButton";
 
 function isUnder(pathname: string, path: string) {
   return pathname === path || pathname.startsWith(path + "/");
@@ -226,9 +227,16 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
 
   return (
     <nav
-      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-background py-4 text-foreground"
+      className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-background pb-4 text-foreground"
       style={{ width: SETTINGS_NAV_WIDTH }}
     >
+      {/* Same h-14 logo slot as ExpandedNav — bird stays in the left rail. */}
+      <div className="flex h-14 shrink-0 items-center px-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+          <WingifyLogoButton />
+        </span>
+      </div>
+
       <div className="flex shrink-0 items-center px-3 pb-3">
         <button
           type="button"
