@@ -352,7 +352,9 @@ export const router = createBrowserRouter([
           { path: "chat", element: <WingzChatPage /> },
           { path: "agents", element: <PlaceholderPage /> },
           { path: "workflows", element: <PlaceholderPage /> },
-          { path: "whats-new", element: <PlaceholderPage /> },
+          // @undo — What's New leaf removed from Wingz
+          // { path: "whats-new", element: <PlaceholderPage /> },
+          { path: "whats-new", element: <Navigate to="/wingz/chat" replace /> },
         ],
       },
       // Legacy Wandz URLs → Wingz.

@@ -171,13 +171,14 @@ export const NAV: NavItem[] = [
       { label: "Account Overview", path: "/home/account-overview", hideCreate: true },
     ]},
   ]},
-  { label: "Wingz", path: "/wingz", icon: Wand2, group: 1, pinnable: true, hideCreate: true, sections: [
+  { label: "Wingz", path: "/wingz", icon: Wand2, group: 1, hideCreate: true, sections: [
     { heading: "Assistant", items: [{ label: "Chat", path: "/wingz/chat", hideCreate: true }]},
     { heading: "Automation", items: [
       { label: "Agents", path: "/wingz/agents", hideCreate: true },
       { label: "Workflows", path: "/wingz/workflows", hideCreate: true },
     ]},
-    { heading: "Discover", items: [{ label: "What's New", path: "/wingz/whats-new", hideCreate: true }]},
+    // @undo — What's New removed from Wingz leaf nav
+    // { heading: "Discover", items: [{ label: "What's New", path: "/wingz/whats-new", hideCreate: true }]},
   ]},
   { label: "Experimentation", path: "/experimentation", icon: FlaskConical, group: 2, pinnable: true, sections: [
     { items: [
