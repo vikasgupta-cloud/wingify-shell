@@ -1,8 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { CirclePlus } from "@/components/icons/protoLucide";
+import {
+  ArrowUpRight,
+  Calendar,
+  CircleMinus,
+  CirclePlus,
+  FileText,
+  History,
+  MoreVertical,
+} from "@/components/icons/protoLucide";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { findProfileMode } from "../../config/navigation";
 import { cn } from "../../lib/utils";
 import { useIntegrationRequestStore } from "@/store/integrationRequest";
@@ -25,6 +45,12 @@ const OVERLAY_CLOSE_GRACE_MS = 250;
 
 const WNA_SITES_PATH = "/configuration/websites-and-apps/sites";
 const INTEGRATIONS_PATH = "/configuration/integrations";
+const ACCOUNT_USERS_PATH = "/settings/accounts/users";
+/** Header CTAs (schedule / view plan / more) for every Subscription + Inactive Subscriptions leaf. */
+const SUBSCRIPTION_CTA_PREFIXES = [
+  "/settings/subscription/",
+  "/settings/inactive/",
+] as const;
 
 /** Assets Hub leaf → primary header CTA label (stub actions for now). */
 const ASSETS_HUB_HEADER_CTAS: Record<string, string> = {
@@ -57,6 +83,10 @@ export default function DrillInShell() {
     mode != null && WORKSPACE_NOTICE_MODE_IDS.has(mode.id);
   const showAddWebsite = pathname === WNA_SITES_PATH;
   const showRequestIntegration = pathname === INTEGRATIONS_PATH;
+  const showAddUser = pathname === ACCOUNT_USERS_PATH;
+  const showSubscriptionCtas = SUBSCRIPTION_CTA_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
   const assetsHubCtaLabel = ASSETS_HUB_HEADER_CTAS[pathname];
   const [revoked, setRevoked] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -148,6 +178,12 @@ export default function DrillInShell() {
                 Add new
               </Button>
             ) : null}
+            {showAddUser ? (
+              <Button type="button" className="h-9 gap-1.5 px-3 shadow-none">
+                <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />
+                Add User
+              </Button>
+            ) : null}
             {showRequestIntegration ? (
               <Button
                 type="button"
@@ -162,6 +198,81 @@ export default function DrillInShell() {
                 <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />
                 {assetsHubCtaLabel}
               </Button>
+            ) : null}
+            {showSubscriptionCtas ? (
+              <>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="Setup a meeting"
+                        className="size-9 shadow-none"
+                      >
+                        <Calendar className="size-4" strokeWidth={1.75} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Setup a meeting</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="View Plan"
+                        className="size-9 shadow-none"
+                      >
+                        <ArrowUpRight className="size-4" strokeWidth={1.75} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">View Plan</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="More subscription actions"
+                      className="size-9 shadow-none"
+                    >
+                      <MoreVertical className="size-4" strokeWidth={1.75} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem className="gap-2">
+                      <FileText
+                        className="size-4 text-muted-foreground"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      All Invoices
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2">
+                      <History
+                        className="size-4 text-muted-foreground"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      Timeline
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2">
+                      <CircleMinus
+                        className="size-4 text-muted-foreground"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      Cancel Subscription
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : null}
           </div>
         </header>

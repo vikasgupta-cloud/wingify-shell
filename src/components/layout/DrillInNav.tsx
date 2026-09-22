@@ -45,7 +45,63 @@ function CountPill({ count }: { count: number }) {
 }
 
 function LeafLink({ leaf }: { leaf: NavLeaf }) {
+  const { pathname } = useLocation();
   const Icon = leaf.icon;
+  const hasChildren = !!leaf.items?.length;
+  const [open, setOpen] = useState(() =>
+    hasChildren ? isUnder(pathname, leaf.path) : false
+  );
+
+  useEffect(() => {
+    if (hasChildren && isUnder(pathname, leaf.path)) setOpen(true);
+  }, [pathname, leaf.path, hasChildren]);
+
+  if (hasChildren) {
+    const sectionActive = isUnder(pathname, leaf.path);
+    return (
+      <div>
+        <div className="group flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-muted">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left text-sm text-foreground outline-none",
+              sectionActive && "font-medium"
+            )}
+          >
+            {Icon && (
+              <Icon
+                className="h-4 w-4 shrink-0 text-foreground"
+                strokeWidth={1.75}
+              />
+            )}
+            <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+          </button>
+          <button
+            type="button"
+            aria-label={open ? `Collapse ${leaf.label}` : `Expand ${leaf.label}`}
+            onClick={() => setOpen((v) => !v)}
+            className="shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform duration-150",
+                open && "rotate-180"
+              )}
+            />
+          </button>
+        </div>
+        {open && leaf.items && (
+          <div className="ml-[19px] mt-1 flex flex-col gap-0.5 border-l border-panel-border pb-2 pl-3 pr-1">
+            {leaf.items.map((child) => (
+              <LeafLink key={child.path} leaf={child} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <NavLink
       to={leaf.path}

@@ -53,7 +53,7 @@ export default function WebsitesAndAppsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 px-8 pb-16 pt-10">
       {/* Add new CTA lives in DrillInShell header. */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-start gap-2">
         <div className="relative w-[240px]">
           <Search
             className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"

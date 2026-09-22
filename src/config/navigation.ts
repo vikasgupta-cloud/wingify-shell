@@ -19,14 +19,15 @@ import {
   FileText,
   Contact,
   Building2,
+  Archive,
   // Circle, // reserved for dummyNav placeholder sidebars
   AppWindow,
   // CirclePlus, // @undo — Add new site row removed from WNA nav
-  Image,
+  // Image, // @undo — Assets Hub leaf icons removed
   Images,
-  Component,
-  Palette,
-  CodeXml,
+  // Component, // @undo — Assets Hub leaf icons removed
+  // Palette, // @undo — Assets Hub leaf icons removed
+  // CodeXml, // @undo — Assets Hub leaf icons removed
   Blocks,
   LogOut,
   Zap,
@@ -369,7 +370,7 @@ export const SETTINGS_NAV: DrillInNavItem[] = [
     icon: Settings,
     items: [
       { label: "General", path: "/settings/accounts/general", hideCreate: true },
-      { label: "Usage", path: "/settings/accounts/usage", hideCreate: true },
+      // { label: "Usage", path: "/settings/accounts/usage", hideCreate: true }, // @undo
       { label: "Users", path: "/settings/accounts/users", hideCreate: true },
       { label: "Security", path: "/settings/accounts/security", hideCreate: true },
       { label: "Privacy Center", path: "/settings/accounts/privacy-center", hideCreate: true },
@@ -383,14 +384,87 @@ export const SETTINGS_NAV: DrillInNavItem[] = [
   },
   { label: "Campaigns", path: "/settings/campaigns", icon: Layers, hideCreate: true },
   {
-    label: "Subscription & Invoices",
+    label: "Subscription",
     path: "/settings/subscription",
     icon: FileText,
     items: [
-      { label: "Plan", path: "/settings/subscription/plan", hideCreate: true },
-      { label: "Invoices", path: "/settings/subscription/invoices", hideCreate: true },
-      { label: "Billing details", path: "/settings/subscription/billing", hideCreate: true },
+      {
+        label: "My Subscription",
+        path: "/settings/subscription/my-subscription",
+        hideCreate: true,
+        icon: LayoutGrid,
+      },
+      {
+        label: "Web Experimentation & Rollout",
+        path: "/settings/subscription/web-experimentation-rollout",
+        hideCreate: true,
+      },
+      {
+        label: "Feature Management",
+        path: "/settings/subscription/feature-management",
+        hideCreate: true,
+      },
+      {
+        label: "Behavior Analytics",
+        path: "/settings/subscription/behavior-analytics",
+        hideCreate: true,
+      },
+      {
+        label: "Wingify Insights – Mobile App",
+        path: "/settings/subscription/wingify-insights-mobile-app",
+        hideCreate: true,
+      },
+      {
+        label: "Wingify Rollouts – Web",
+        path: "/settings/subscription/wingify-rollouts-web",
+        hideCreate: true,
+      },
+      {
+        label: "Web Personalization",
+        path: "/settings/subscription/web-personalization",
+        hideCreate: true,
+      },
+      {
+        label: "Wingz",
+        path: "/settings/subscription/wingz",
+        hideCreate: true,
+      },
     ],
+  },
+  {
+    label: "Inactive Subscriptions",
+    path: "/settings/inactive",
+    icon: Archive,
+    items: [
+      {
+        label: "Wingify Testing – Mobile App",
+        path: "/settings/inactive/wingify-testing-mobile-app",
+        hideCreate: true,
+      },
+      {
+        label: "Wingify Testing – Server Side",
+        path: "/settings/inactive/wingify-testing-server-side",
+        hideCreate: true,
+      },
+    ],
+  },
+  {
+    label: "Invoice History",
+    path: "/settings/invoice-history",
+    icon: FileText,
+    hideCreate: true,
+  },
+  {
+    label: "Visitor Allocation",
+    path: "/settings/visitor-allocation",
+    icon: Settings2,
+    hideCreate: true,
+  },
+  {
+    label: "Billing Profile",
+    path: "/settings/billing-profile",
+    icon: Contact,
+    hideCreate: true,
   },
   { label: "Profile details", path: "/settings/profile-details", icon: Contact, hideCreate: true },
   { label: "Workspaces", path: "/settings/workspaces", icon: Building2, hideCreate: true },
@@ -411,7 +485,7 @@ export const CONFIGURATION_NAV: DrillInNavItem[] = [
     icon: AppWindow,
     items: [
       { label: "Introduction", path: `${WNA}/introduction`, hideCreate: true },
-      { label: "Websites and Apps", path: `${WNA}/sites`, hideCreate: true },
+      { label: "Connected", path: `${WNA}/sites`, hideCreate: true },
       { label: "CSP", path: `${WNA}/csp`, hideCreate: true },
       { label: "Debugger", path: `${WNA}/debugger`, hideCreate: true },
       { label: "Privacy", path: `${WNA}/privacy`, hideCreate: true },
@@ -436,13 +510,13 @@ export const CONFIGURATION_NAV: DrillInNavItem[] = [
     path: ASSETS,
     icon: Images,
     items: [
-      { label: "Images", path: `${ASSETS}/images`, icon: Image, count: 167, hideCreate: true },
-      { label: "Widgets", path: `${ASSETS}/widgets`, icon: Component, count: 25, hideCreate: true },
-      { label: "Themes", path: `${ASSETS}/themes`, icon: Palette, count: 10, hideCreate: true },
+      // @undo — leaf icons removed (Image / Component / Palette / CodeXml)
+      { label: "Images", path: `${ASSETS}/images`, count: 167, hideCreate: true },
+      { label: "Widgets", path: `${ASSETS}/widgets`, count: 25, hideCreate: true },
+      { label: "Themes", path: `${ASSETS}/themes`, count: 10, hideCreate: true },
       {
         label: "Code Snippets",
         path: `${ASSETS}/code-snippets`,
-        icon: CodeXml,
         count: 0,
         hideCreate: true,
       },
@@ -475,13 +549,12 @@ export const PAGES_NAV: DrillInNavItem[] = [
  * @undo Standalone Assets Hub Profile mode rail.
  */
 export const ASSETS_HUB_NAV: DrillInNavItem[] = [
-  { label: "Images", path: `${ASSETS}/images`, icon: Image, count: 167, hideCreate: true },
-  { label: "Widgets", path: `${ASSETS}/widgets`, icon: Component, count: 25, hideCreate: true },
-  { label: "Themes", path: `${ASSETS}/themes`, icon: Palette, count: 10, hideCreate: true },
+  { label: "Images", path: `${ASSETS}/images`, count: 167, hideCreate: true },
+  { label: "Widgets", path: `${ASSETS}/widgets`, count: 25, hideCreate: true },
+  { label: "Themes", path: `${ASSETS}/themes`, count: 10, hideCreate: true },
   {
     label: "Code Snippets",
     path: `${ASSETS}/code-snippets`,
-    icon: CodeXml,
     count: 0,
     hideCreate: true,
   },

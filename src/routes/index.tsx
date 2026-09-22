@@ -25,6 +25,8 @@ import ReportsPage from "../pages/reports/ReportsPage";
 import EditorPage from "../pages/editor/EditorPage";
 import IntegrationsPage from "../pages/integrations/IntegrationsPage";
 import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
+import AccountUsersPage from "../pages/settings/AccountUsersPage";
+import MySubscriptionPage from "../pages/settings/MySubscriptionPage";
 import WebsitesAndAppsPage from "../pages/websites-and-apps/WebsitesAndAppsPage";
 import AssetImagesPage from "../pages/configuration/AssetImagesPage";
 import AssetWidgetsPage from "../pages/configuration/AssetWidgetsPage";
@@ -330,6 +332,10 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
             <IntegrationsPage />
           ) : leaf.path === "/settings/accounts/general" ? (
             <AccountGeneralPage />
+          ) : leaf.path === "/settings/accounts/users" ? (
+            <AccountUsersPage />
+          ) : leaf.path === "/settings/subscription/my-subscription" ? (
+            <MySubscriptionPage />
           ) : leaf.path === "/configuration/websites-and-apps/sites" ? (
             <WebsitesAndAppsPage />
           ) : leaf.path === "/configuration/assets-hub/images" ? (

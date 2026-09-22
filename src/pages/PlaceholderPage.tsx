@@ -27,10 +27,18 @@ function isProductPath(pathname: string): boolean {
   );
 }
 
+function isAccountsPath(pathname: string): boolean {
+  return (
+    pathname === "/settings/accounts" ||
+    pathname.startsWith("/settings/accounts/")
+  );
+}
+
 export default function PlaceholderPage() {
   const { pathname } = useLocation();
-  const title = pageLabel(pathname);
-  const icon = iconForPath(pathname);
+  const accountsStub = isAccountsPath(pathname);
+  const title = accountsStub ? "Coming soon" : pageLabel(pathname);
+  const icon = accountsStub ? undefined : iconForPath(pathname);
   // @undo — profile drill-ins used to show PageHeader; crumb + ComingSoonState cover it
   const showHeader = !isProductPath(pathname) && !isProfileModePath(pathname);
 
