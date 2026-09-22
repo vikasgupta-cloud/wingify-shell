@@ -28,9 +28,11 @@ import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
 import AccountUsersPage from "../pages/settings/AccountUsersPage";
 import MySubscriptionPage from "../pages/settings/MySubscriptionPage";
 import WebsitesAndAppsPage from "../pages/websites-and-apps/WebsitesAndAppsPage";
+import WebsiteDetailPage from "../pages/websites-and-apps/WebsiteDetailPage";
 import AssetImagesPage from "../pages/configuration/AssetImagesPage";
 import AssetWidgetsPage from "../pages/configuration/AssetWidgetsPage";
 import AssetThemesPage from "../pages/configuration/AssetThemesPage";
+import PagesPage from "../pages/configuration/PagesPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import FormGalleryPage from "../pages/design/FormGalleryPage";
 import DesignSystemPage from "../pages/design/DesignSystemPage";
@@ -317,13 +319,28 @@ detailRoutes.push({
   ),
 });
 
+const WNA_SITES_LEAF = "/configuration/websites-and-apps/sites";
+
 const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
-  const leaves = modeLeaves(mode);
+  const leaves = modeLeaves(mode).filter(
+    (leaf) => !(mode.id === "configuration" && leaf.path === WNA_SITES_LEAF)
+  );
   return {
     path: mode.path,
     element: <DrillInShell />,
     children: [
       { index: true, element: <Navigate to={firstModePath(mode)} replace /> },
+      ...(mode.id === "configuration"
+        ? [
+            {
+              path: "websites-and-apps/sites",
+              children: [
+                { index: true, element: <WebsitesAndAppsPage /> },
+                { path: ":siteId", element: <WebsiteDetailPage /> },
+              ],
+            },
+          ]
+        : []),
       ...leaves.map((leaf) => ({
         path: leaf.path.slice(mode.path.length + 1),
         element:
@@ -336,14 +353,14 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
             <AccountUsersPage />
           ) : leaf.path === "/settings/subscription/my-subscription" ? (
             <MySubscriptionPage />
-          ) : leaf.path === "/configuration/websites-and-apps/sites" ? (
-            <WebsitesAndAppsPage />
           ) : leaf.path === "/configuration/assets-hub/images" ? (
             <AssetImagesPage />
           ) : leaf.path === "/configuration/assets-hub/widgets" ? (
             <AssetWidgetsPage />
           ) : leaf.path === "/configuration/assets-hub/themes" ? (
             <AssetThemesPage />
+          ) : leaf.path === "/configuration/pages" ? (
+            <PagesPage />
           ) : (
             <PlaceholderPage />
           ),
@@ -351,6 +368,13 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
     ],
   };
 });
+
+/** Absolute site-detail route so `/sites/:id` never falls through to AppLayout `*`. */
+const websiteDetailRoute: RouteObject = {
+  path: `${WNA_SITES_LEAF}/:siteId`,
+  element: <DrillInShell />,
+  children: [{ index: true, element: <WebsiteDetailPage /> }],
+};
 
 export const router = createBrowserRouter([
   {
@@ -377,6 +401,7 @@ export const router = createBrowserRouter([
         path: "/analytics/overview/i/:entityId",
         element: <LegacyAnalyticsItemRedirect />,
       },
+      websiteDetailRoute,
       ...profileModeRoutes,
       // Legacy profile-mode URLs → Configuration shell.
       {

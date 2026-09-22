@@ -1,5 +1,6 @@
 // Drill-in (Settings / Profile modes) breadcrumb — JD mode switcher, then
 // section / leaf switchers (Upgrade is flat: mode + product menu only).
+// Website detail adds a third crumb to switch between Connected sites.
 // Landing uses sectionLandPath (root page when landable, else first child).
 
 import { NavLink } from "react-router-dom";
@@ -15,6 +16,12 @@ import {
   type DrillInNavItem,
   type ProfileMode,
 } from "../../config/navigation";
+import {
+  WEBSITES_AND_APPS,
+  WNA_SITES_BASE,
+  getWebsiteById,
+  websiteDetailPath,
+} from "@/data/websitesAndApps";
 import { cn } from "../../lib/utils";
 
 type CrumbItem = {
@@ -24,6 +31,12 @@ type CrumbItem = {
   id?: string;
   icon?: DrillInNavItem["icon"];
 };
+
+function parseWebsiteDetailId(pathname: string): string | null {
+  if (!pathname.startsWith(`${WNA_SITES_BASE}/`)) return null;
+  const id = pathname.slice(WNA_SITES_BASE.length + 1).split("/")[0];
+  return id || null;
+}
 
 function CrumbDropdown({
   label,
@@ -134,6 +147,8 @@ export default function DrillInBreadcrumb({
   const flat = isFlatProductNav(mode);
   const section = findDrillInSection(pathname, mode);
   const leaf = section ? findDrillInLeaf(pathname, section) : undefined;
+  const websiteId = parseWebsiteDetailId(pathname);
+  const website = websiteId ? getWebsiteById(websiteId) : undefined;
 
   // Flat catalog: Upgrade / [product ▼] across all products.
   if (flat) {
@@ -200,6 +215,12 @@ export default function DrillInBreadcrumb({
     leaf?.path ??
     (section?.landRoot && pathname === section.path ? section.path : null);
 
+  const websiteItems: CrumbItem[] = WEBSITES_AND_APPS.map((row) => ({
+    id: row.id,
+    label: row.name,
+    path: websiteDetailPath(row.id),
+  }));
+
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm">
       <ModeSwitcher mode={mode} pathname={pathname} />
@@ -224,6 +245,18 @@ export default function DrillInBreadcrumb({
             ariaLabel={`Switch ${section.label} page`}
             activeId={leafActiveId}
             items={leafItems}
+          />
+        </>
+      )}
+
+      {website && websiteId && (
+        <>
+          <span className="text-muted-foreground">/</span>
+          <CrumbDropdown
+            label={website.name}
+            ariaLabel="Switch website"
+            activeId={websiteId}
+            items={websiteItems}
           />
         </>
       )}

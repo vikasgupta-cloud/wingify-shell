@@ -26,12 +26,6 @@ import {
 import { findProfileMode } from "../../config/navigation";
 import { cn } from "../../lib/utils";
 import { useIntegrationRequestStore } from "@/store/integrationRequest";
-import {
-  useIsCancellationRevokeWorkspace,
-  useIsTrialOverWorkspace,
-} from "@/store/workspace";
-import CancellationRequestNotice from "./CancellationRequestNotice";
-import TrialOverNotice from "./TrialOverNotice";
 import DrillInBreadcrumb from "./DrillInBreadcrumb";
 import DrillInNav from "./DrillInNav";
 import ExpandedNav from "./ExpandedNav";
@@ -60,27 +54,17 @@ const ASSETS_HUB_HEADER_CTAS: Record<string, string> = {
   "/configuration/assets-hub/code-snippets": "Add Code Snippet",
 };
 
-/** Profile drill-ins that show workspace notices in the header. */
-const WORKSPACE_NOTICE_MODE_IDS = new Set([
-  "configuration",
-  "settings",
-  "upgrade",
-]);
-
 /**
  * Linear-style drill-in surface for every Profile flyout destination (Settings,
  * Configuration, …). Sidebar + back control + left-edge main-rail reveal.
  * Header CTAs: Add new (WNA sites), Request new integration (Integrations).
+ * Workspace status banners live in RootChrome (above header).
  */
 export default function DrillInShell() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const mode = findProfileMode(pathname);
   const openIntegrationRequest = useIntegrationRequestStore((s) => s.openRequest);
-  const isCancellationWorkspace = useIsCancellationRevokeWorkspace();
-  const isTrialOverWorkspace = useIsTrialOverWorkspace();
-  const showWorkspaceNotice =
-    mode != null && WORKSPACE_NOTICE_MODE_IDS.has(mode.id);
   const showAddWebsite = pathname === WNA_SITES_PATH;
   const showRequestIntegration = pathname === INTEGRATIONS_PATH;
   const showAddUser = pathname === ACCOUNT_USERS_PATH;
@@ -88,7 +72,6 @@ export default function DrillInShell() {
     pathname.startsWith(prefix)
   );
   const assetsHubCtaLabel = ASSETS_HUB_HEADER_CTAS[pathname];
-  const [revoked, setRevoked] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [navRendered, setNavRendered] = useState(false);
   const [navShown, setNavShown] = useState(false);
@@ -145,10 +128,6 @@ export default function DrillInShell() {
     return () => window.clearTimeout(unmountTimer);
   }, [navOpen]);
 
-  useEffect(() => {
-    setRevoked(false);
-  }, [isCancellationWorkspace]);
-
   if (!mode) {
     return <Navigate to="/home/dashboard" replace />;
   }
@@ -166,12 +145,6 @@ export default function DrillInShell() {
             <DrillInBreadcrumb mode={mode} pathname={pathname} />
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {isTrialOverWorkspace && showWorkspaceNotice && (
-              <TrialOverNotice onUpgrade={() => navigate("/upgrade")} />
-            )}
-            {isCancellationWorkspace && !revoked && showWorkspaceNotice && (
-              <CancellationRequestNotice onRevoke={() => setRevoked(true)} />
-            )}
             {showAddWebsite ? (
               <Button type="button" className="h-9 gap-1.5 px-3 shadow-none">
                 <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />

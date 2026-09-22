@@ -1,8 +1,9 @@
 /** Websites and Apps listing — search + table; Add new CTA lives in DrillInShell header.
- * Reuses: shadcn Button/Input/DropdownMenu; AlertTriangle status via warning tokens.
+ * Row click opens WebsiteDetailPage. Reuses: shadcn Button/Input/DropdownMenu.
  */
 
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   MoreVertical,
@@ -18,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   WEBSITES_AND_APPS,
+  websiteDetailPath,
   type WebsiteAppRow,
 } from "@/data/websitesAndApps";
 import { cn } from "@/lib/utils";
@@ -39,6 +41,7 @@ function StatusCell({ row }: { row: WebsiteAppRow }) {
 }
 
 export default function WebsitesAndAppsPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
   const rows = useMemo(() => {
@@ -100,7 +103,16 @@ export default function WebsitesAndAppsPage() {
               rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-border last:border-b-0"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(websiteDetailPath(row.id))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(websiteDetailPath(row.id));
+                    }
+                  }}
+                  className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/40"
                 >
                   <td className="max-w-[16rem] px-4 py-3.5">
                     <span
@@ -124,7 +136,11 @@ export default function WebsitesAndAppsPage() {
                   <td className="px-4 py-3.5 text-foreground">
                     {dash(row.lastActivity)}
                   </td>
-                  <td className="px-2 py-3.5 text-right">
+                  <td
+                    className="px-2 py-3.5 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -140,7 +156,11 @@ export default function WebsitesAndAppsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem disabled>View details</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => navigate(websiteDetailPath(row.id))}
+                        >
+                          View details
+                        </DropdownMenuItem>
                         <DropdownMenuItem disabled>Edit</DropdownMenuItem>
                         <DropdownMenuItem disabled>Remove</DropdownMenuItem>
                       </DropdownMenuContent>

@@ -1,4 +1,4 @@
-/** Trial expired notice + Upgrade CTA — TopBar and Profile drill-in shells. */
+/** Trial expired notice + Upgrade CTA — full-width RootChrome status strip. */
 export default function TrialOverNotice({
   onUpgrade,
 }: {
@@ -7,7 +7,7 @@ export default function TrialOverNotice({
   return (
     <div
       role="status"
-      className="flex max-w-full items-center gap-1.5 rounded-md border border-danger-fg/35 bg-danger-bg px-2.5 py-1 text-xs font-medium text-danger-fg"
+      className="flex w-full shrink-0 items-center justify-center gap-1.5 border-b border-danger-fg/25 bg-danger-bg px-4 py-1.5 text-xs font-medium text-danger-fg"
     >
       <span className="truncate">Your trial is over</span>
       <span className="shrink-0 text-danger-fg/50" aria-hidden>

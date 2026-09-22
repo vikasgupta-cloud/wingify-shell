@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { ChevronDown, Plus, Sparkles } from "@/components/icons/protoLucide";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -22,9 +21,7 @@ import {
 } from "@/store/workspace";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import BreadcrumbNav from "./BreadcrumbNav";
-import CancellationRequestNotice from "./CancellationRequestNotice";
 import ChromeExtensionBanner from "./ChromeExtensionBanner";
-import TrialOverNotice from "./TrialOverNotice";
 import VerifyEmailNotice from "./VerifyEmailNotice";
 import WingifyLogoButton from "./WingifyLogoButton";
 import { GET_STARTED_PATH } from "@/lib/getStartedGate";
@@ -102,11 +99,6 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
     (s) => s.getStartedProgress.emailVerified
   );
   const openWingzAndAsk = useWingzStore((s) => s.openWingzAndAsk);
-  const [revoked, setRevoked] = useState(false);
-
-  useEffect(() => {
-    setRevoked(false);
-  }, [isCancellationWorkspace]);
 
   const handleSelect = (option: CreateOption) => {
     // Route-backed options (e.g. Create with Copilot) navigate to their screen.
@@ -169,18 +161,12 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
             preferCollapsed={
               isTrialOverWorkspace ||
               (isGetStartedWorkspace && !getStartedEmailVerified) ||
-              (isCancellationWorkspace && !revoked)
+              isCancellationWorkspace
             }
           />
         )}
-        {isTrialOverWorkspace && (
-          <TrialOverNotice onUpgrade={() => navigate("/upgrade")} />
-        )}
         {isGetStartedWorkspace && !getStartedEmailVerified && (
           <VerifyEmailNotice onVerify={() => navigate(GET_STARTED_PATH)} />
-        )}
-        {isCancellationWorkspace && !revoked && (
-          <CancellationRequestNotice onRevoke={() => setRevoked(true)} />
         )}
         {pathname === "/analytics/overview" && (
           <Badge
