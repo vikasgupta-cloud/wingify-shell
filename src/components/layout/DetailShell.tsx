@@ -1397,10 +1397,17 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               </TooltipProvider>
 
               <div className="flex min-w-0 items-center gap-1.5 text-sm">
-                {/* Overview/Browse is plain text — no list switcher on analytics detail. */}
-                <span className="shrink-0 px-1.5 py-1 font-medium text-foreground">
+                {/* Same destination as the back arrow (list, or board when in board context). */}
+                <Link
+                  to={
+                    isAnalyticsBoardContext && contextBoard
+                      ? analyticsItemPath(contextBoard.id, { basePath })
+                      : basePath
+                  }
+                  className="shrink-0 rounded-md px-1.5 py-1 font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+                >
                   {analyticsListCrumb}
-                </span>
+                </Link>
                 {isAnalyticsBoardContext && contextBoard ? (
                   <>
                     <span className="shrink-0 text-muted-foreground">/</span>
@@ -1806,19 +1813,20 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
             </TooltipProvider>
 
             <div className="flex min-w-0 items-center gap-2 text-sm">
-              {/* Section crumb is plain text (no sibling switcher). Prefer leaf
-                  label — e.g. "Web Experimentation / Campaign". */}
+              {/* Section crumb → same list URL as Back (no sibling switcher). */}
               {leaf ? (
-                <span
+                <Link
+                  to={mainNavCrumbPath(basePath)}
                   title={leaf.label}
-                  className="max-w-[10rem] shrink-0 truncate px-1.5 py-1 text-muted-foreground"
+                  className="max-w-[10rem] shrink-0 truncate rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted"
                 >
                   {leaf.label}
-                </span>
+                </Link>
               ) : (
-                <span
+                <Link
+                  to={mainNavCrumbPath(basePath)}
                   title={item?.label ?? basePath}
-                  className="flex shrink-0 items-center gap-1.5 px-1.5 py-1 text-muted-foreground"
+                  className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted"
                 >
                   {item?.icon && (
                     <item.icon
@@ -1829,7 +1837,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                   <span className="hidden max-w-[10rem] truncate lg:inline">
                     {item?.label ?? basePath}
                   </span>
-                </span>
+                </Link>
               )}
               <span className="shrink-0 text-muted-foreground">/</span>
             <Popover.Root
