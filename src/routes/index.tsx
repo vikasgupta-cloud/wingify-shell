@@ -33,6 +33,7 @@ import AssetImagesPage from "../pages/configuration/AssetImagesPage";
 import AssetWidgetsPage from "../pages/configuration/AssetWidgetsPage";
 import AssetThemesPage from "../pages/configuration/AssetThemesPage";
 import PagesPage from "../pages/configuration/PagesPage";
+import UpgradeTestingWebPage from "../pages/upgrade/UpgradeTestingWebPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import FormGalleryPage from "../pages/design/FormGalleryPage";
 import DesignSystemPage from "../pages/design/DesignSystemPage";
@@ -361,6 +362,8 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
             <AssetThemesPage />
           ) : leaf.path === "/configuration/pages" ? (
             <PagesPage />
+          ) : leaf.path === "/upgrade/testing-web" ? (
+            <UpgradeTestingWebPage />
           ) : (
             <PlaceholderPage />
           ),

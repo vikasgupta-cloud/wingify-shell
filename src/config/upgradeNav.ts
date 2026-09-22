@@ -7,7 +7,7 @@ import {
   Target,
   Rocket,
   MousePointerClick,
-  HeartPulse,
+  UserRound,
   Search,
   SquareStack,
   MessageSquare,
@@ -29,6 +29,8 @@ export type UpgradeProduct = {
 
 export type UpgradeSection = {
   heading: string;
+  /** When true, render a non-clickable group label above the items (e.g. Analytics). */
+  showHeading?: boolean;
   items: UpgradeProduct[];
 };
 
@@ -37,7 +39,7 @@ export const UPGRADE_SECTIONS: UpgradeSection[] = [
     heading: "Experiment",
     items: [
       {
-        label: "Wingify Testing - Web",
+        label: "Web Experimentation & Rollout",
         description: "Web Experimentation",
         path: "/upgrade/testing-web",
         icon: FlaskConical,
@@ -48,7 +50,7 @@ export const UPGRADE_SECTIONS: UpgradeSection[] = [
     heading: "Personalize",
     items: [
       {
-        label: "Wingify Personalize - Web",
+        label: "Web Personalization",
         description: "Web Personalization",
         path: "/upgrade/personalize-web",
         icon: Target,
@@ -59,7 +61,7 @@ export const UPGRADE_SECTIONS: UpgradeSection[] = [
     heading: "Feature Management",
     items: [
       {
-        label: "Wingify Feature Experimentation",
+        label: "Feature Management",
         description: "Feature experimentation, rollouts and pe…",
         path: "/upgrade/feature-experimentation",
         icon: Rocket,
@@ -67,34 +69,36 @@ export const UPGRADE_SECTIONS: UpgradeSection[] = [
     ],
   },
   {
-    heading: "Analyze",
+    heading: "Analytics",
+    showHeading: true,
     items: [
       {
-        label: "Wingify Insights",
+        label: "Behavior Analytics",
         description: "Web Behavior Analytics",
         path: "/upgrade/insights",
         icon: MousePointerClick,
       },
       {
-        label: "Wingify Pulse",
+        label: "User Feedback",
         description: "Voice of Customer",
         path: "/upgrade/pulse",
-        icon: HeartPulse,
+        icon: UserRound,
         badge: { label: "New", tone: "new" },
       },
     ],
   },
   {
     heading: "Commerce",
+    showHeading: true,
     items: [
       {
-        label: "Wingify Search & Ranking",
+        label: "Search",
         description: "Product Discovery",
         path: "/upgrade/search-ranking",
         icon: Search,
       },
       {
-        label: "Wingify Recommendations",
+        label: "Recommendations",
         description: "Product Recommendations",
         path: "/upgrade/recommendations",
         icon: SquareStack,
@@ -105,7 +109,7 @@ export const UPGRADE_SECTIONS: UpgradeSection[] = [
     heading: "Engage",
     items: [
       {
-        label: "Wingify Engage",
+        label: "Push Notifications",
         description: "Push Notifications",
         path: "/upgrade/engage",
         icon: MessageSquare,

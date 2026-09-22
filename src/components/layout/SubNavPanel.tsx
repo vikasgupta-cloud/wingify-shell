@@ -1,5 +1,5 @@
-// Product sub-nav (docked / flyout) — supports nested accordion leaves,
-// icons, premium badge, and section separators (Commerce-style).
+// Product sub-nav (docked / flyout) — nested accordion leaves, premium
+// crown badge, section separators. Sub-leaf leading icons omitted.
 
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -95,16 +95,8 @@ function LeafRow({
   disabled?: boolean;
   lockTooltip?: string | null;
 }) {
-  const Icon = leaf.icon;
   const content = (
     <>
-      {Icon && (
-        <Icon
-          className="h-4 w-4 shrink-0 text-foreground"
-          strokeWidth={1.75}
-          aria-hidden
-        />
-      )}
       <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
       {leaf.badge === "premium" && <PremiumBadge />}
       {leaf.external && (
@@ -198,7 +190,6 @@ function AccordionLeaf({
   navLocked?: boolean;
   lockTooltip?: string | null;
 }) {
-  const Icon = leaf.icon;
   const { pathname } = useLocation();
   const sectionActive = leafActive(pathname, leaf);
 
@@ -216,13 +207,6 @@ function AccordionLeaf({
             sectionActive && "font-medium"
           )}
         >
-          {Icon && (
-            <Icon
-              className="h-4 w-4 shrink-0 text-foreground"
-              strokeWidth={1.75}
-              aria-hidden
-            />
-          )}
           <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
           {leaf.badge === "premium" && <PremiumBadge />}
         </button>

@@ -1,9 +1,11 @@
 /** Linear-style drill-in sidebar for Profile modes (Settings, Configuration, …).
  * @summary Logo bird lives in the left rail (same h-14 slot as ExpandedNav); Back to app below.
+ * Section icons use Phosphor fill when a leaf under them is active (same as Experimentation rail).
  */
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Search } from "@/components/icons/protoLucide";
+import { IconVariantOverride } from "../icons/IconLibraryProvider";
 import {
   findProfileMode,
   sectionLandPath,
@@ -18,6 +20,25 @@ import WingifyLogoButton from "./WingifyLogoButton";
 
 function isUnder(pathname: string, path: string) {
   return pathname === path || pathname.startsWith(path + "/");
+}
+
+/** Active section / leaf icon — fill variant matches ExpandedNav Experimentation. */
+function NavGlyph({
+  icon: Icon,
+  active,
+}: {
+  icon: NonNullable<DrillInNavItem["icon"]>;
+  active: boolean;
+}) {
+  const el = (
+    <Icon className="h-4 w-4 shrink-0 text-foreground" strokeWidth={1.75} />
+  );
+  if (!active) return el;
+  return (
+    <IconVariantOverride libraryId="phosphor" variant="fill">
+      {el}
+    </IconVariantOverride>
+  );
 }
 
 function activeSectionPath(
@@ -69,12 +90,7 @@ function LeafLink({ leaf }: { leaf: NavLeaf }) {
               sectionActive && "font-medium"
             )}
           >
-            {Icon && (
-              <Icon
-                className="h-4 w-4 shrink-0 text-foreground"
-                strokeWidth={1.75}
-              />
-            )}
+            {Icon ? <NavGlyph icon={Icon} active={sectionActive} /> : null}
             <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
           </button>
           <button
@@ -114,14 +130,15 @@ function LeafLink({ leaf }: { leaf: NavLeaf }) {
         )
       }
     >
-      {Icon && (
-        <Icon
-          className="h-4 w-4 shrink-0 text-foreground"
-          strokeWidth={1.75}
-        />
+      {({ isActive }) => (
+        <>
+          {Icon ? (
+            <NavGlyph icon={Icon} active={isActive && !leaf.action} />
+          ) : null}
+          <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+          {leaf.count != null && <CountPill count={leaf.count} />}
+        </>
       )}
-      <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
-      {leaf.count != null && <CountPill count={leaf.count} />}
     </NavLink>
   );
 }
@@ -184,14 +201,13 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
             )
           }
         >
-          {Icon && (
-            <Icon
-              className="h-4 w-4 shrink-0 text-foreground"
-              strokeWidth={1.75}
-            />
+          {({ isActive }) => (
+            <>
+              {Icon ? <NavGlyph icon={Icon} active={isActive} /> : null}
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+              {item.count != null && <CountPill count={item.count} />}
+            </>
           )}
-          <span className="min-w-0 flex-1 truncate">{item.label}</span>
-          {item.count != null && <CountPill count={item.count} />}
         </NavLink>
       );
     }
@@ -212,14 +228,13 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
                 )
               }
             >
-              {Icon && (
-                <Icon
-                  className="h-4 w-4 shrink-0 text-foreground"
-                  strokeWidth={1.75}
-                />
+              {({ isActive }) => (
+                <>
+                  {Icon ? <NavGlyph icon={Icon} active={isActive} /> : null}
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.count != null && <CountPill count={item.count} />}
+                </>
               )}
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              {item.count != null && <CountPill count={item.count} />}
             </NavLink>
           ) : (
             <div className="px-2 pb-1 pt-3 text-xs font-medium text-muted-foreground">
@@ -248,12 +263,7 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
               sectionActive && "font-medium"
             )}
           >
-            {Icon && (
-              <Icon
-                className="h-4 w-4 shrink-0 text-foreground"
-                strokeWidth={1.75}
-              />
-            )}
+            {Icon ? <NavGlyph icon={Icon} active={sectionActive} /> : null}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
           </button>
           <button

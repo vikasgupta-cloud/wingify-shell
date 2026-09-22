@@ -2,9 +2,8 @@
 // Logo sits in the same h-14 rail slot as ExpandedNav / DrillInNav.
 
 import { NavLink, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown } from "@/components/icons/protoLucide";
+import { ArrowLeft } from "@/components/icons/protoLucide";
 import {
-  UPGRADE_ADDONS_PATH,
   UPGRADE_SECTIONS,
   type UpgradeBadgeTone,
 } from "../../config/upgradeNav";
@@ -60,51 +59,60 @@ export default function UpgradeNav() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
-        {UPGRADE_SECTIONS.flatMap((section) =>
-          section.items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted",
-                    isActive &&
-                      "bg-accent font-medium text-accent-foreground hover:bg-accent"
-                  )
-                }
-              >
-                <Icon
-                  className="h-4 w-4 shrink-0 text-foreground"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                  {item.label}
-                </span>
-                {item.badge && (
-                  <Badge label={item.badge.label} tone={item.badge.tone} />
-                )}
-              </NavLink>
-            );
-          })
-        )}
-      </div>
-
-      <div className="shrink-0 border-t border-border px-3 py-3">
-        <NavLink
-          to={UPGRADE_ADDONS_PATH}
-          className={({ isActive }) =>
-            cn(
-              "flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted",
-              isActive && "bg-accent font-medium hover:bg-accent"
-            )
-          }
-        >
-          Explore add-ons
-          <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
-        </NavLink>
+        {UPGRADE_SECTIONS.map((section, i) => {
+          const prev = UPGRADE_SECTIONS[i - 1];
+          // Top hairline when a labeled group follows unlabeled items
+          // (Feature Management → Analytics). Commerce already gets its line
+          // from Analytics’ bottom border — don’t double it.
+          const topDivider = section.showHeading && !prev?.showHeading;
+          return (
+          <div
+            key={section.heading}
+            className={cn(
+              "flex flex-col gap-0.5",
+              // Grouped sections (Analytics, Commerce) get space + hairline so
+              // following unlabeled items (Push Notifications, Wingz) don’t read as children.
+              section.showHeading && "mb-2 border-b border-border pb-3",
+              topDivider && "mt-2 border-t border-border pt-1"
+            )}
+          >
+            {section.showHeading ? (
+              <div className="px-2 pb-1 pt-3 text-xs font-medium text-muted-foreground">
+                {section.heading}
+              </div>
+            ) : null}
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted",
+                      section.showHeading && "ml-1",
+                      isActive &&
+                        "bg-accent font-medium text-accent-foreground hover:bg-accent"
+                    )
+                  }
+                >
+                  <Icon
+                    className="h-4 w-4 shrink-0 text-foreground"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                    {item.label}
+                  </span>
+                  {item.badge && (
+                    <Badge label={item.badge.label} tone={item.badge.tone} />
+                  )}
+                </NavLink>
+              );
+            })}
+          </div>
+          );
+        })}
       </div>
     </nav>
   );

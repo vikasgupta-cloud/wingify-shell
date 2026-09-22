@@ -611,7 +611,6 @@ export default function ExpandedNav({
                         />
                       )}
                       {section.items.map((leaf) => {
-                        const LeafIcon = leaf.icon;
                         const hasChildren = !!leaf.items?.length;
                         const subOpen = openSubPath === leaf.path;
 
@@ -636,12 +635,6 @@ export default function ExpandedNav({
                                     childActive && "font-medium"
                                   )}
                                 >
-                                  {LeafIcon && (
-                                    <LeafIcon
-                                      className="h-4 w-4 shrink-0 text-foreground"
-                                      strokeWidth={1.75}
-                                    />
-                                  )}
                                   <span className="min-w-0 flex-1 truncate">
                                     {leaf.label}
                                   </span>
@@ -675,7 +668,6 @@ export default function ExpandedNav({
                               {subOpen && (
                                 <div className="ml-[18px] mt-0.5 flex flex-col gap-0.5 border-l border-panel-border pb-1 pl-2.5">
                                   {leaf.items!.map((child) => {
-                                    const ChildIcon = child.icon;
                                     if (child.external) {
                                       return (
                                         <a
@@ -686,12 +678,6 @@ export default function ExpandedNav({
                                           tabIndex={open ? undefined : -1}
                                           className="flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-foreground hover:bg-muted"
                                         >
-                                          {ChildIcon && (
-                                            <ChildIcon
-                                              className="h-4 w-4 shrink-0"
-                                              strokeWidth={1.75}
-                                            />
-                                          )}
                                           <span className="min-w-0 flex-1 truncate">
                                             {child.label}
                                           </span>
@@ -715,12 +701,6 @@ export default function ExpandedNav({
                                           )
                                         }
                                       >
-                                        {ChildIcon && (
-                                          <ChildIcon
-                                            className="h-4 w-4 shrink-0"
-                                            strokeWidth={1.75}
-                                          />
-                                        )}
                                         <span className="min-w-0 flex-1 truncate">
                                           {child.label}
                                         </span>
@@ -739,12 +719,6 @@ export default function ExpandedNav({
                               navLocked && !isGetStartedHomeLeaf(leaf.path);
                             const leafContent = (
                               <>
-                                {LeafIcon && (
-                                  <LeafIcon
-                                    className="h-4 w-4 shrink-0 text-foreground"
-                                    strokeWidth={1.75}
-                                  />
-                                )}
                                 <span className="min-w-0 flex-1 truncate">
                                   {leaf.label}
                                 </span>
