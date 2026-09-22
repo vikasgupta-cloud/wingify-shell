@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import {
   ArrowUpRight,
   Calendar,
@@ -61,7 +61,6 @@ const ASSETS_HUB_HEADER_CTAS: Record<string, string> = {
  * Workspace status banners live in RootChrome (above header).
  */
 export default function DrillInShell() {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const mode = findProfileMode(pathname);
   const openIntegrationRequest = useIntegrationRequestStore((s) => s.openRequest);
