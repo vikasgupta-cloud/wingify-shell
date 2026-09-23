@@ -46,12 +46,21 @@ export function IconLibraryProvider({ children }: { children: ReactNode }) {
     const load = () => {
       attempts += 1;
       loadIconRegistry(libraryId, variant)
-        .then((next) => {
+        .then(async (next) => {
           if (cancelled) return;
           // Retry once if a transient HMR race returned an empty pack.
           if (Object.keys(next).length === 0 && attempts < 3) {
             window.setTimeout(load, 50 * attempts);
             return;
+          }
+          // Last resort: if the active pack is empty, fall back to Lucide so
+          // the shell never sticks on HelpCircle question marks in production.
+          if (Object.keys(next).length === 0 && libraryId !== "lucide") {
+            try {
+              next = await loadIconRegistry("lucide", "regular");
+            } catch {
+              /* keep empty — AppIcon still has a final HelpCircle */
+            }
           }
           setRegistry(next);
           setReady(true);
@@ -68,6 +77,9 @@ export function IconLibraryProvider({ children }: { children: ReactNode }) {
         });
     };
 
+    // Drop previous glyphs immediately so a failed pack cannot linger as "?".
+    setReady(false);
+    setRegistry({});
     load();
 
     return () => {

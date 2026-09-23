@@ -148,17 +148,17 @@ async function loadLucideRegistry(variant: string): Promise<IconRegistry> {
 }
 
 async function loadPhosphorRegistry(variant: string): Promise<IconRegistry> {
-  const [phosphor, { PHOSPHOR_ICON_MAP }] = await Promise.all([
-    import("@phosphor-icons/react"),
-    import("./generated/phosphorMap"),
-  ]);
+  // Tree-shaken per-icon module — never import the @phosphor-icons/react barrel
+  // (that alone is ~5MB and was failing/slow on Vercel → every icon = HelpCircle).
+  const { PHOSPHOR_COMPONENTS } = await import("./generated/phosphorRegistry");
 
   const weight = PHOSPHOR_WEIGHT[variant] ?? "regular";
   const registry: IconRegistry = {};
 
   for (const name of APP_ICON_NAMES) {
-    const key = PHOSPHOR_ICON_MAP[name as keyof typeof PHOSPHOR_ICON_MAP];
-    const Icon = (phosphor as unknown as Record<string, IconComponent>)[key];
+    const Icon = (
+      PHOSPHOR_COMPONENTS as Record<string, IconComponent | undefined>
+    )[name];
     if (Icon) registry[name] = wrapPhosphor(Icon, weight);
   }
 

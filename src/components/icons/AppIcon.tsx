@@ -36,13 +36,19 @@ export default function AppIcon({
   }
 
   if (!ready) {
-    // Keep layout and colour while the active pack loads — never render blank.
+    // Reserve space without a fake "?" — HelpCircle made slow/failed loads
+    // look like every icon was broken on production.
+    const dim =
+      typeof size === "number"
+        ? size
+        : typeof size === "string"
+          ? size
+          : "1em";
     return (
-      <HelpCircle
-        {...props}
-        size={size}
-        className={cn("shrink-0", className)}
-        strokeWidth={1.75}
+      <span
+        aria-hidden
+        className={cn("inline-block shrink-0", className)}
+        style={{ width: dim, height: dim }}
       />
     );
   }
