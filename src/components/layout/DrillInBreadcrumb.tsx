@@ -1,13 +1,14 @@
 // Drill-in (Settings / Profile modes) breadcrumb — JD mode switcher, then
 // section / leaf switchers (Upgrade is flat: mode + product menu only).
 // Website detail adds a third crumb to switch between Connected sites.
-// Integration detail adds a third crumb with category filter + fixed-height list.
+// Integration detail crumb mirrors DetailShell (search + ListFilter + max-h list).
 // Landing uses sectionLandPath (root page when landable, else first child).
 
 import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, ChevronRight } from "@/components/icons/protoLucide";
+import * as Popover from "@radix-ui/react-popover";
+import { ChevronDown, ListFilter, Search } from "@/components/icons/protoLucide";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   findDrillInLeaf,
@@ -140,8 +141,9 @@ function CrumbDropdown({
 }
 
 /**
- * Integration detail crumb — Filter by Category (same pattern as Integrations list)
- * plus a fixed-height scrollable app list.
+ * Integration detail crumb — DetailShell-style search + ListFilter, name-only rows.
+ * Category filter is multi-select (checkboxes); while searching, filter is hidden
+ * and matching runs across the full list (same as web-exp entity switcher).
  */
 function IntegrationCrumbDropdown({
   label,
@@ -152,6 +154,9 @@ function IntegrationCrumbDropdown({
   activeId: string;
   strong?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
 
   const categoryCounts = useMemo(() => {
@@ -163,9 +168,13 @@ function IntegrationCrumbDropdown({
   }, []);
 
   const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q) {
+      return INTEGRATIONS.filter((i) => i.name.toLowerCase().includes(q));
+    }
     if (categories.length === 0) return INTEGRATIONS;
     return INTEGRATIONS.filter((i) => categories.includes(i.category));
-  }, [categories]);
+  }, [categories, query]);
 
   const toggleCategory = (category: string) => {
     setCategories((prev) =>
@@ -176,8 +185,17 @@ function IntegrationCrumbDropdown({
   };
 
   return (
-    <DropdownMenu.Root modal={false}>
-      <DropdownMenu.Trigger asChild>
+    <Popover.Root
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          setQuery("");
+          setFilterMenuOpen(false);
+        }
+      }}
+    >
+      <Popover.Trigger asChild>
         <button
           type="button"
           aria-label="Switch integration"
@@ -191,87 +209,101 @@ function IntegrationCrumbDropdown({
           <span className="truncate">{label}</span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
           align="start"
-          sideOffset={4}
-          className="z-50 flex w-72 flex-col overflow-hidden rounded-md border border-border bg-popover p-0 text-sm text-popover-foreground shadow-lg"
-          onCloseAutoFocus={(e) => e.preventDefault()}
+          sideOffset={6}
+          className="z-50 w-[300px] rounded-md border border-border bg-popover p-2 text-sm text-popover-foreground shadow-lg"
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <div className="shrink-0 border-b border-border p-1.5">
-            <DropdownMenu.Sub>
-              <DropdownMenu.SubTrigger className="flex cursor-default items-center justify-between gap-2 rounded-sm px-2.5 py-2 outline-none data-[highlighted]:bg-accent data-[state=open]:bg-accent">
-                <span className="font-medium text-foreground">
-                  Filter by Category
-                  {categories.length > 0 ? (
-                    <span className="ml-1 font-normal text-muted-foreground">
-                      ({categories.length})
-                    </span>
-                  ) : null}
-                </span>
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              </DropdownMenu.SubTrigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.SubContent
-                  sideOffset={6}
-                  alignOffset={-4}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5">
+              <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setFilterMenuOpen(false);
+                }}
+                className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+            {!query.trim() ? (
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  title="Filter by category"
+                  aria-label="Filter by category"
+                  aria-expanded={filterMenuOpen}
+                  onClick={() => setFilterMenuOpen((o) => !o)}
                   className={cn(
-                    "z-50 w-64 overflow-y-auto rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg",
-                    CRUMB_MENU_H
+                    "flex items-center justify-center rounded-md border border-input p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                    categories.length > 0 &&
+                      "border-transparent bg-secondary text-secondary-foreground"
                   )}
                 >
-                  {INTEGRATION_CATEGORIES.map((category) => (
-                    <label
-                      key={category}
-                      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
-                      onClick={(e) => e.preventDefault()}
-                      onPointerDown={(e) => e.preventDefault()}
-                    >
-                      <Checkbox
-                        checked={categories.includes(category)}
-                        onCheckedChange={() => toggleCategory(category)}
-                      />
-                      <span className="min-w-0 flex-1 truncate text-foreground">
-                        {category}
-                      </span>
-                      <span className="tabular-nums text-muted-foreground">
-                        ({categoryCounts.get(category) ?? 0})
-                      </span>
-                    </label>
-                  ))}
-                </DropdownMenu.SubContent>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Sub>
+                  <ListFilter className="h-4 w-4" />
+                </button>
+                {filterMenuOpen && (
+                  <div
+                    className={cn(
+                      "absolute right-0 top-full z-10 mt-1 w-64 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-lg",
+                      CRUMB_MENU_H
+                    )}
+                  >
+                    {INTEGRATION_CATEGORIES.map((category) => (
+                      <label
+                        key={category}
+                        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-muted"
+                      >
+                        <Checkbox
+                          checked={categories.includes(category)}
+                          onCheckedChange={() => toggleCategory(category)}
+                        />
+                        <span className="min-w-0 flex-1 truncate text-foreground">
+                          {category}
+                        </span>
+                        <span className="tabular-nums text-muted-foreground">
+                          ({categoryCounts.get(category) ?? 0})
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
 
-          <div className={cn("overflow-y-auto p-1.5", CRUMB_MENU_H)}>
+          <div className={cn("mt-2 flex flex-col gap-0.5 overflow-y-auto", CRUMB_MENU_H)}>
             {filtered.length === 0 ? (
-              <p className="px-3 py-2 text-muted-foreground">
+              <p className="px-2.5 py-1.5 text-muted-foreground">
                 No integrations match.
               </p>
             ) : (
               filtered.map((row) => {
                 const isActive = row.id === activeId;
                 return (
-                  <DropdownMenu.Item key={row.id} asChild>
-                    <NavLink
-                      to={integrationDetailPath(row.id)}
-                      className={cn(
-                        "flex cursor-pointer items-center rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
-                        isActive && "bg-accent font-medium"
-                      )}
-                    >
-                      <span className="truncate">{row.name}</span>
-                    </NavLink>
-                  </DropdownMenu.Item>
+                  <NavLink
+                    key={row.id}
+                    to={integrationDetailPath(row.id)}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "flex items-center rounded-sm px-2.5 py-1.5 transition-colors hover:bg-[var(--neutral-50)]",
+                      isActive && "bg-[var(--neutral-50)] font-medium"
+                    )}
+                  >
+                    <span className="truncate">{row.name}</span>
+                  </NavLink>
                 );
               })
             )}
           </div>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 
