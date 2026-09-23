@@ -1,12 +1,14 @@
 // Drill-in (Settings / Profile modes) breadcrumb — JD mode switcher, then
 // section / leaf switchers (Upgrade is flat: mode + product menu only).
 // Website detail adds a third crumb to switch between Connected sites.
-// Integration detail adds a third crumb to switch between integrations.
+// Integration detail adds a third crumb with category filter + fixed-height list.
 // Landing uses sectionLandPath (root page when landable, else first child).
 
+import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown } from "@/components/icons/protoLucide";
+import { ChevronDown, ChevronRight } from "@/components/icons/protoLucide";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   findDrillInLeaf,
   findDrillInSection,
@@ -25,11 +27,16 @@ import {
 } from "@/data/websitesAndApps";
 import {
   INTEGRATIONS,
+  INTEGRATION_CATEGORIES,
   INTEGRATIONS_BASE,
   integrationById,
   integrationDetailPath,
 } from "@/data/integrations";
 import { cn } from "../../lib/utils";
+
+/** Matches DetailShell entity switcher — fixed scroll area so menus stay the same height. */
+const CRUMB_MENU_H = "h-64 max-h-64";
+
 
 type CrumbItem = {
   label: string;
@@ -91,7 +98,10 @@ function CrumbDropdown({
         <DropdownMenu.Content
           align="start"
           sideOffset={4}
-          className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
+          className={cn(
+            "z-50 min-w-[220px] overflow-y-auto rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg",
+            CRUMB_MENU_H
+          )}
         >
           {sections.map((section, sectionIndex) => (
             <div key={sectionIndex}>
@@ -123,6 +133,142 @@ function CrumbDropdown({
               })}
             </div>
           ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+/**
+ * Integration detail crumb — Filter by Category (same pattern as Integrations list)
+ * plus a fixed-height scrollable app list.
+ */
+function IntegrationCrumbDropdown({
+  label,
+  activeId,
+  strong = false,
+}: {
+  label: string;
+  activeId: string;
+  strong?: boolean;
+}) {
+  const [categories, setCategories] = useState<string[]>([]);
+
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const i of INTEGRATIONS) {
+      counts.set(i.category, (counts.get(i.category) ?? 0) + 1);
+    }
+    return counts;
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (categories.length === 0) return INTEGRATIONS;
+    return INTEGRATIONS.filter((i) => categories.includes(i.category));
+  }, [categories]);
+
+  const toggleCategory = (category: string) => {
+    setCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  return (
+    <DropdownMenu.Root modal={false}>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Switch integration"
+          className={cn(
+            "flex items-center gap-0.5 truncate rounded-md px-1 py-0.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none",
+            strong
+              ? "font-semibold text-foreground"
+              : "font-normal text-foreground"
+          )}
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="start"
+          sideOffset={4}
+          className="z-50 flex w-72 flex-col overflow-hidden rounded-md border border-border bg-popover p-0 text-sm text-popover-foreground shadow-lg"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <div className="shrink-0 border-b border-border p-1.5">
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger className="flex cursor-default items-center justify-between gap-2 rounded-sm px-2.5 py-2 outline-none data-[highlighted]:bg-accent data-[state=open]:bg-accent">
+                <span className="font-medium text-foreground">
+                  Filter by Category
+                  {categories.length > 0 ? (
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      ({categories.length})
+                    </span>
+                  ) : null}
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </DropdownMenu.SubTrigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.SubContent
+                  sideOffset={6}
+                  alignOffset={-4}
+                  className={cn(
+                    "z-50 w-64 overflow-y-auto rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg",
+                    CRUMB_MENU_H
+                  )}
+                >
+                  {INTEGRATION_CATEGORIES.map((category) => (
+                    <label
+                      key={category}
+                      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
+                      onClick={(e) => e.preventDefault()}
+                      onPointerDown={(e) => e.preventDefault()}
+                    >
+                      <Checkbox
+                        checked={categories.includes(category)}
+                        onCheckedChange={() => toggleCategory(category)}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-foreground">
+                        {category}
+                      </span>
+                      <span className="tabular-nums text-muted-foreground">
+                        ({categoryCounts.get(category) ?? 0})
+                      </span>
+                    </label>
+                  ))}
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
+          </div>
+
+          <div className={cn("overflow-y-auto p-1.5", CRUMB_MENU_H)}>
+            {filtered.length === 0 ? (
+              <p className="px-3 py-2 text-muted-foreground">
+                No integrations match.
+              </p>
+            ) : (
+              filtered.map((row) => {
+                const isActive = row.id === activeId;
+                return (
+                  <DropdownMenu.Item key={row.id} asChild>
+                    <NavLink
+                      to={integrationDetailPath(row.id)}
+                      className={cn(
+                        "flex cursor-pointer items-center rounded-sm px-3 py-2 outline-none data-[highlighted]:bg-accent",
+                        isActive && "bg-accent font-medium"
+                      )}
+                    >
+                      <span className="truncate">{row.name}</span>
+                    </NavLink>
+                  </DropdownMenu.Item>
+                );
+              })
+            )}
+          </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -249,12 +395,6 @@ export default function DrillInBreadcrumb({
     path: websiteDetailPath(row.id),
   }));
 
-  const integrationItems: CrumbItem[] = INTEGRATIONS.map((row) => ({
-    id: row.id,
-    label: row.name,
-    path: integrationDetailPath(row.id),
-  }));
-
   const hasLeafCrumb =
     !!section && leafItems.length > 0 && !!leafLabel && !!leafActiveId;
   const hasWebsiteCrumb = !!website && !!websiteId;
@@ -314,11 +454,9 @@ export default function DrillInBreadcrumb({
           <span className="text-muted-foreground" aria-hidden>
             /
           </span>
-          <CrumbDropdown
+          <IntegrationCrumbDropdown
             label={integration!.name}
-            ariaLabel="Switch integration"
             activeId={integrationId!}
-            items={integrationItems}
             strong
           />
         </>

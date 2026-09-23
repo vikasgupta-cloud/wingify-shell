@@ -333,7 +333,7 @@ export default function IntegrationsPage() {
               <ChevronDown className="size-3.5" strokeWidth={1.75} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuContent align="end" className="max-h-64 w-64 overflow-y-auto">
             <DropdownMenuLabel>Categories</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {INTEGRATION_CATEGORIES.map((category) => (
