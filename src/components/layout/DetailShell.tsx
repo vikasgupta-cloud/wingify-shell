@@ -1361,7 +1361,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
+      <header className="flex h-[52px] shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <WingifyLogoButton />
 
@@ -1812,13 +1812,13 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
               </Tooltip>
             </TooltipProvider>
 
-            <div className="flex min-w-0 items-center gap-2 text-sm">
+            <div className="flex min-w-0 items-center gap-1 text-sm">
               {/* Section crumb → same list URL as Back (no sibling switcher). */}
               {leaf ? (
                 <Link
                   to={mainNavCrumbPath(basePath)}
                   title={leaf.label}
-                  className="max-w-[10rem] shrink-0 truncate rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted"
+                  className="max-w-[10rem] shrink-0 truncate rounded-md px-1 py-0.5 font-normal text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted"
                 >
                   {leaf.label}
                 </Link>
@@ -1826,20 +1826,14 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 <Link
                   to={mainNavCrumbPath(basePath)}
                   title={item?.label ?? basePath}
-                  className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted"
+                  className="hidden max-w-[10rem] shrink-0 truncate rounded-md px-1 py-0.5 font-normal text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted lg:inline"
                 >
-                  {item?.icon && (
-                    <item.icon
-                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                      aria-hidden
-                    />
-                  )}
-                  <span className="hidden max-w-[10rem] truncate lg:inline">
-                    {item?.label ?? basePath}
-                  </span>
+                  {item?.label ?? basePath}
                 </Link>
               )}
-              <span className="shrink-0 text-muted-foreground">/</span>
+              <span className="shrink-0 text-muted-foreground" aria-hidden>
+                /
+              </span>
             <Popover.Root
               open={entityOpen}
               onOpenChange={(o) => {

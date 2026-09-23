@@ -713,7 +713,7 @@ function ReportsChrome({
       >
         <div
           ref={tabsBarRef}
-          className="z-40 flex h-14 shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
+          className="z-40 flex h-[52px] shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
         >
           <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
             {TABS.map((tab) => (

@@ -12,13 +12,16 @@ import {
 } from "../config/navigation";
 
 /** Width of the primary rail in px — shared by the rail, its flyout, and the app grid. */
-export const RAIL_WIDTH = 64;
+export const RAIL_WIDTH = 52;
 
 /** Width of the detail-surface utility rail (right) in px. */
-export const UTILITY_RAIL_WIDTH = 56;
+export const UTILITY_RAIL_WIDTH = 52;
 
 /** Width of the Profile-mode (Settings, …) drill-in sidebar in px. */
-export const SETTINGS_NAV_WIDTH = 260;
+export const SETTINGS_NAV_WIDTH = 240;
+
+/** Height of TopBar / shell chrome headers (logo slot, detail/drill-in headers). */
+export const TOP_CHROME_HEIGHT = 52;
 
 /** The main-nav item whose path (or a section leaf path) owns the pathname. */
 export function findItemByPath(pathname: string): NavItem | undefined {

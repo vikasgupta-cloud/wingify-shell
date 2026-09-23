@@ -38,7 +38,10 @@ import { useHasUnreadNotifications } from "@/store/notifications";
 import { useProfileSubmenuStore } from "@/store/profileSubmenu";
 
 /** Width of the expanded (labeled) navigation sidebar — shared with the app grid. */
-export const EXPANDED_NAV_WIDTH = 280;
+export const EXPANDED_NAV_WIDTH = 240;
+
+/** Collapsed icon hit-target (px). Sized for RAIL_WIDTH 52 with px-2 gutters. */
+const RAIL_ICON_SLOT = 36;
 
 const FLYOUT_CLOSE_GRACE_MS = 120;
 const MORE_CLOSE_GRACE_MS = 150;
@@ -330,7 +333,7 @@ export default function ExpandedNav({
     const iconEl = (
       <Icon
         className={cn(
-          "h-5 w-5 shrink-0",
+          "h-4 w-4 shrink-0",
           isActive && !expanded
             ? "text-rail-active-foreground"
             : "text-foreground"
@@ -359,9 +362,11 @@ export default function ExpandedNav({
       <div
         data-nav-item={item.path}
         className={cn(
-          "group flex items-center gap-0.5 rounded-lg transition-[background-color,color,width] duration-200 hover:bg-muted",
+          "group flex items-center gap-0.5 rounded-md transition-[background-color,color,width] duration-200 hover:bg-muted",
           // Collapsed rows clamp to the icon so the active pill can't bleed past the rail.
-          expanded ? "w-full pr-1.5" : "w-10 justify-start",
+          // Expanded: 4px inset inside selection → icon/chevron sit 16px from nav
+          // (12px container + 4px).
+          expanded ? "w-full px-1" : "w-9 justify-start",
           isActive && expanded && !hasSections && "bg-accent hover:bg-accent",
           isActive &&
             !expanded &&
@@ -425,18 +430,28 @@ export default function ExpandedNav({
             }
           }}
           className={cn(
-            "flex h-10 shrink-0 items-center gap-3 text-sm outline-none",
-            // Collapsed: the label + gap overflow the 40px box, so centering
+            "flex h-9 shrink-0 items-center gap-2 text-sm outline-none",
+            // Collapsed: the label + gap overflow the icon box, so centering
             // would pull the icon left. Start-align and let it spill right.
             // No left padding when expanded: the icon slot must sit at the same
             // x in both states so nothing shifts while the width animates.
             expanded
-              ? "min-w-0 flex-1 pr-1.5 text-left text-foreground"
-              : "w-10 justify-start overflow-hidden",
+              ? "min-w-0 flex-1 text-left text-foreground"
+              : "w-9 justify-start overflow-hidden",
             isActive && expanded && "font-medium"
           )}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+          {/* Open: wrap glyph only so gap-2 is icon→text. Collapsed: 36px hit target. */}
+          <span
+            className={cn(
+              "flex shrink-0 items-center justify-center",
+              expanded
+                ? item.initials
+                  ? "h-7 w-7"
+                  : "h-4 w-4"
+                : "h-9 w-9"
+            )}
+          >
             {leadingIcon}
           </span>
           <span className={labelClass} style={{ transition: revealTransition }}>
@@ -497,13 +512,14 @@ export default function ExpandedNav({
             }}
             className={cn(
               chromeClass,
-              "rounded-sm p-1 text-muted-foreground hover:text-foreground"
+              // Icon-sized control so glyph sits 16px from nav edge (12px + 4px).
+              "flex size-4 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
             )}
             style={{ transition: revealTransition }}
           >
             <ChevronDown
               className={cn(
-                "h-4 w-4 transition-transform duration-200",
+                "size-4 transition-transform duration-200",
                 open && "rotate-180"
               )}
             />
@@ -778,12 +794,15 @@ export default function ExpandedNav({
   };
 
   const separator = (
-    <div className="my-3 shrink-0 px-3" aria-hidden="true">
+    <div
+      className={cn("my-2.5 shrink-0", expanded ? "px-3" : "px-2")}
+      aria-hidden="true"
+    >
       {/* Collapsed rule spans the icon slot exactly, so it stays inside the rail. */}
       <div
         className="h-px bg-panel-border"
         style={{
-          width: expanded ? "100%" : 40,
+          width: expanded ? "100%" : RAIL_ICON_SLOT,
           transition: widthTransition,
         }}
       />
@@ -809,19 +828,34 @@ export default function ExpandedNav({
             className="flex h-full flex-col"
             style={{ width: EXPANDED_NAV_WIDTH }}
           >
-            {/* h-14 matches the top bar / detail headers, and the 40px slot the
-                icon rows, so the mark never moves between views. */}
-            <div className="flex h-14 shrink-0 items-center px-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+            {/* h-[52px] matches the top bar. Open: 12px side inset; collapsed: 8px
+                so the 36px icon slot centers in the 52px rail. */}
+            <div
+              className={cn(
+                "flex h-[52px] shrink-0 items-center",
+                expanded ? "px-3" : "px-2"
+              )}
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center">
                 <WingifyLogoButton />
               </span>
             </div>
 
-            <div className="mt-5 flex shrink-0 flex-col gap-0.5 px-3">
+            <div
+              className={cn(
+                "mt-4 flex shrink-0 flex-col gap-0.5",
+                expanded ? "px-3" : "px-2"
+              )}
+            >
               {group1.map((i) => renderItem(i))}
             </div>
             {separator}
-            <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              className={cn(
+                "flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                expanded ? "px-3" : "px-2"
+              )}
+            >
               {group2.map((i) => renderItem(i))}
               {unpinned.length > 0 && (
                 <>
@@ -861,12 +895,12 @@ export default function ExpandedNav({
                         onFocus={(e) => openMoreFlyout(e.currentTarget)}
                         onBlur={scheduleMoreClose}
                         className={cn(
-                          "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
+                          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted",
                           !!moreFlyout && "bg-muted"
                         )}
                       >
                         <MoreHorizontal
-                          className="h-5 w-5"
+                          className="h-4 w-4"
                           strokeWidth={1.75}
                         />
                       </button>
@@ -876,15 +910,20 @@ export default function ExpandedNav({
               )}
             </div>
             {separator}
-            <div className="flex shrink-0 flex-col gap-0.5 px-3">
+            <div
+              className={cn(
+                "flex shrink-0 flex-col gap-0.5",
+                expanded ? "px-3" : "px-2"
+              )}
+            >
               {group3.map((i) => renderItem(i))}
               {/* Expand/collapse under profile: icon-only, right-aligned with chevrons when open. */}
               {!forceCollapsed && (
                 <div
                   className={cn(
-                    "mt-0.5 flex items-center gap-0.5 rounded-lg transition-[background-color,width] duration-200",
-                    // Match nav rows: collapsed clamps to the 40px icon slot.
-                    expanded ? "w-full pr-1.5" : "w-10 justify-start"
+                    "mt-0.5 flex items-center gap-0.5 rounded-md transition-[background-color,width] duration-200",
+                    // Match nav rows: collapsed clamps to the icon slot.
+                    expanded ? "w-full px-1" : "w-9 justify-start"
                   )}
                 >
                   <Tooltip.Root>
@@ -899,19 +938,19 @@ export default function ExpandedNav({
                         aria-pressed={isDocked}
                         onClick={toggleDock}
                         className={cn(
-                          "flex h-10 shrink-0 items-center outline-none transition-colors",
+                          "flex shrink-0 items-center outline-none transition-colors",
                           expanded
-                            ? // Same trailing chrome slot as section chevrons.
-                              "ml-auto rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                            : "w-10 justify-start overflow-hidden text-foreground hover:bg-muted"
+                            ? // Align with section chevrons: 16px from nav (12+4).
+                              "ml-auto size-4 text-muted-foreground hover:text-foreground"
+                            : "h-9 w-9 justify-start overflow-hidden text-foreground hover:bg-muted"
                         )}
                       >
                         {expanded ? (
-                          <PanelLeft className="h-4 w-4" strokeWidth={1.75} />
+                          <PanelLeft className="size-4" strokeWidth={1.75} />
                         ) : (
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center">
                             <PanelLeft
-                              className="h-5 w-5"
+                              className="h-4 w-4"
                               strokeWidth={1.75}
                             />
                           </span>
@@ -1002,7 +1041,7 @@ export default function ExpandedNav({
                         navigate(firstChildPath(item));
                         closeMore();
                       }}
-                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left outline-none"
+                      className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left outline-none"
                     >
                       <Icon className="h-4 w-4 shrink-0 text-foreground" />
                       <span className="flex-1 truncate font-main-menu">{item.label}</span>

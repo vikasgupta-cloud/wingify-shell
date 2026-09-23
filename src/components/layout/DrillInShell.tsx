@@ -136,11 +136,13 @@ export default function DrillInShell() {
       {mode.id === "upgrade" ? <UpgradeNav /> : <DrillInNav mode={mode} />}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
-          <div className="flex min-w-0 items-center gap-2">
+        <header className="flex h-[52px] shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
+          <div className="flex min-w-0 items-center gap-1.5">
             {/* @undo — <WingifyLogoButton /> removed from header; bird is in DrillInNav */}
             <WorkspaceSwitcher />
-            <span className="text-sm text-muted-foreground">/</span>
+            <span className="text-sm text-muted-foreground" aria-hidden>
+              /
+            </span>
             <DrillInBreadcrumb mode={mode} pathname={pathname} />
           </div>
           <div className="flex shrink-0 items-center gap-2">

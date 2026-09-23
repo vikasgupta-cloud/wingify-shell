@@ -71,7 +71,7 @@ export default function RecommendationDetailPage() {
 
   return (
     <div className="flex h-full flex-col bg-canvas text-foreground">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
+      <header className="flex h-[52px] shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             type="button"

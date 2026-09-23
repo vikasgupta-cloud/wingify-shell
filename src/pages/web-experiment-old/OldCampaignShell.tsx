@@ -53,7 +53,7 @@ export default function OldCampaignShell() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-canvas">
-      <header className="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-stretch gap-4 border-b border-border bg-background px-6">
+      <header className="grid h-[52px] shrink-0 grid-cols-[1fr_auto_1fr] items-stretch gap-4 border-b border-border bg-background px-6">
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate font-title text-sm font-semibold text-foreground">
             {campaign.name}

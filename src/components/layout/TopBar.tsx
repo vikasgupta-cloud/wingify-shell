@@ -139,7 +139,7 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
     <header
       data-slot="top-bar"
       className={cn(
-        "relative z-10 flex h-14 max-h-14 shrink-0 items-center justify-between gap-4 px-4 text-panel-foreground",
+        "relative z-10 flex h-[52px] max-h-[52px] shrink-0 items-center justify-between gap-4 px-4 text-panel-foreground",
         // Immersive shells (no rail): solid bar. Use box-shadow hairline — border-b
         // color utilities don't paint reliably on this white-on-white chrome.
         showLogo
@@ -147,10 +147,12 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
           : "border-b border-border bg-panel/95 backdrop-blur-sm"
       )}
     >
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-1.5">
         {showLogo ? <WingifyLogoButton /> : null}
         <WorkspaceSwitcher />
-        <span className="text-sm text-muted-foreground">/</span>
+        <span className="text-sm text-muted-foreground" aria-hidden>
+          /
+        </span>
         <BreadcrumbNav />
       </div>
 

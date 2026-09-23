@@ -283,7 +283,7 @@ export default function SessionRecordingsPage() {
 
           {/* Filter bar */}
           <div className="flex overflow-hidden rounded-md border border-border bg-background">
-            <div className="flex h-14 shrink-0 items-center border-r border-border px-4">
+            <div className="flex h-[52px] shrink-0 items-center border-r border-border px-4">
               <Funnel className="size-5 text-muted-foreground" aria-hidden />
             </div>
             <FilterSegment value="Jun 25, 2025 - Jul 01, 2025" label="Date Filter" />

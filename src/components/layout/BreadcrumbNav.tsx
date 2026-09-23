@@ -18,26 +18,26 @@ function isSwitcherProduct(item: NavItem): boolean {
   return PRODUCTS.some((p) => p.path === item.path);
 }
 
+const crumbTriggerClass =
+  "flex items-center gap-0.5 truncate rounded-md px-1 py-0.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none";
+
 /** Product crumb — dropdown to jump between Wingz and the other products. */
 function ProductSwitcher({
   item,
   locked = false,
+  strong = false,
 }: {
   item: NavItem;
   locked?: boolean;
+  /** Current page crumb — heavier weight. */
+  strong?: boolean;
 }) {
-  const Icon = item.icon;
   const showSwitcher = isSwitcherProduct(item) && !locked;
+  const weight = strong ? "font-semibold text-foreground" : "font-normal text-foreground";
 
   if (!showSwitcher) {
     return (
-      <span className="flex items-center gap-1.5 truncate px-1.5 font-semibold text-foreground">
-        <Icon
-          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-          aria-hidden
-        />
-        {item.label}
-      </span>
+      <span className={cn("truncate px-1 py-0.5", weight)}>{item.label}</span>
     );
   }
 
@@ -47,12 +47,8 @@ function ProductSwitcher({
         <button
           type="button"
           aria-label="Switch product"
-          className="flex items-center gap-1 truncate rounded-md px-1.5 py-1 font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+          className={cn(crumbTriggerClass, weight)}
         >
-          <Icon
-            className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
           <span className="truncate">{item.label}</span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
@@ -60,7 +56,7 @@ function ProductSwitcher({
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="start"
-          sideOffset={6}
+          sideOffset={4}
           className="z-50 min-w-[240px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
         >
           {PRODUCTS.map((product) => {
@@ -102,18 +98,20 @@ export default function BreadcrumbNav() {
   if (!item.sections || !leaf) {
     return (
       <div className="flex min-w-0 items-center gap-1 text-sm">
-        <ProductSwitcher item={item} locked={navLocked} />
+        <ProductSwitcher item={item} locked={navLocked} strong />
         <PageGuideCluster guide={item.pageGuide} />
       </div>
     );
   }
 
   return (
-    <div className="flex min-w-0 items-center gap-2 text-sm">
+    <div className="flex min-w-0 items-center gap-1 text-sm">
       <ProductSwitcher item={item} locked={navLocked} />
-      <span className="text-muted-foreground">/</span>
+      <span className="text-muted-foreground" aria-hidden>
+        /
+      </span>
       {navLocked ? (
-        <span className="truncate px-1.5 py-1 font-semibold text-foreground">
+        <span className="truncate px-1 py-0.5 font-semibold text-foreground">
           {leaf.label}
         </span>
       ) : (
@@ -121,7 +119,7 @@ export default function BreadcrumbNav() {
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+              className={cn(crumbTriggerClass, "font-semibold text-foreground")}
             >
               <span className="truncate">{leaf.label}</span>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -130,7 +128,7 @@ export default function BreadcrumbNav() {
           <DropdownMenu.Portal>
             <DropdownMenu.Content
               align="start"
-              sideOffset={6}
+              sideOffset={4}
               className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
             >
               {siblings.map((sibling) => (

@@ -34,6 +34,14 @@ import AssetWidgetsPage from "../pages/configuration/AssetWidgetsPage";
 import AssetThemesPage from "../pages/configuration/AssetThemesPage";
 import PagesPage from "../pages/configuration/PagesPage";
 import UpgradeTestingWebPage from "../pages/upgrade/UpgradeTestingWebPage";
+import UpgradePersonalizeWebPage from "../pages/upgrade/UpgradePersonalizeWebPage";
+import UpgradeFeatureManagementPage from "../pages/upgrade/UpgradeFeatureManagementPage";
+import UpgradeBehaviorAnalyticsPage from "../pages/upgrade/UpgradeBehaviorAnalyticsPage";
+import UpgradeUserFeedbackPage from "../pages/upgrade/UpgradeUserFeedbackPage";
+import UpgradeSearchPage from "../pages/upgrade/UpgradeSearchPage";
+import UpgradeRecommendationsPage from "../pages/upgrade/UpgradeRecommendationsPage";
+import UpgradePushNotificationsPage from "../pages/upgrade/UpgradePushNotificationsPage";
+import UpgradeWingzPage from "../pages/upgrade/UpgradeWingzPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import FormGalleryPage from "../pages/design/FormGalleryPage";
 import DesignSystemPage from "../pages/design/DesignSystemPage";
@@ -118,6 +126,18 @@ const PAGES: Partial<Record<string, ComponentType>> = {
   "/plan/observations": PlanObservationsPage,
   "/plan/hypotheses": PlanHypothesesPage,
   "/plan/ideas": PlanIdeasPage,
+};
+
+const UPGRADE_PAGES: Record<string, ComponentType> = {
+  "/upgrade/testing-web": UpgradeTestingWebPage,
+  "/upgrade/personalize-web": UpgradePersonalizeWebPage,
+  "/upgrade/feature-experimentation": UpgradeFeatureManagementPage,
+  "/upgrade/insights": UpgradeBehaviorAnalyticsPage,
+  "/upgrade/pulse": UpgradeUserFeedbackPage,
+  "/upgrade/search-ranking": UpgradeSearchPage,
+  "/upgrade/recommendations": UpgradeRecommendationsPage,
+  "/upgrade/engage": UpgradePushNotificationsPage,
+  "/upgrade/wingz": UpgradeWingzPage,
 };
 
 // Level-1 page routes (inside AppLayout) and level-2 detail routes (outside —
@@ -362,8 +382,11 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
             <AssetThemesPage />
           ) : leaf.path === "/configuration/pages" ? (
             <PagesPage />
-          ) : leaf.path === "/upgrade/testing-web" ? (
-            <UpgradeTestingWebPage />
+          ) : UPGRADE_PAGES[leaf.path] ? (
+            (() => {
+              const UpgradePage = UPGRADE_PAGES[leaf.path]!;
+              return <UpgradePage />;
+            })()
           ) : (
             <PlaceholderPage />
           ),

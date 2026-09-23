@@ -44,6 +44,7 @@ function CrumbDropdown({
   activeId,
   items,
   groups,
+  strong = false,
 }: {
   label: string;
   ariaLabel: string;
@@ -51,6 +52,8 @@ function CrumbDropdown({
   items?: CrumbItem[];
   /** Optional grouped list (JD mode switcher) — separators between groups. */
   groups?: CrumbItem[][];
+  /** Current page crumb — heavier weight. */
+  strong?: boolean;
 }) {
   const sections = groups ?? (items ? [items] : []);
 
@@ -60,7 +63,12 @@ function CrumbDropdown({
         <button
           type="button"
           aria-label={ariaLabel}
-          className="flex items-center gap-1 truncate rounded-md px-1.5 py-1 font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+          className={cn(
+            "flex items-center gap-0.5 truncate rounded-md px-1 py-0.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none",
+            strong
+              ? "font-semibold text-foreground"
+              : "font-normal text-foreground"
+          )}
         >
           <span className="truncate">{label}</span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -69,7 +77,7 @@ function CrumbDropdown({
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="start"
-          sideOffset={6}
+          sideOffset={4}
           className="z-50 min-w-[220px] rounded-md border border-border bg-popover p-1.5 text-sm text-popover-foreground shadow-lg"
         >
           {sections.map((section, sectionIndex) => (
@@ -164,16 +172,19 @@ export default function DrillInBreadcrumb({
       ) ?? products[0];
 
     return (
-      <div className="flex min-w-0 items-center gap-2 text-sm">
+      <div className="flex min-w-0 items-center gap-1 text-sm">
         <ModeSwitcher mode={mode} pathname={pathname} />
         {active && (
           <>
-            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground" aria-hidden>
+              /
+            </span>
             <CrumbDropdown
               label={active.label}
               ariaLabel={`Switch ${mode.label} page`}
               activeId={active.id ?? active.path}
               items={products}
+              strong
             />
           </>
         )}
@@ -221,42 +232,55 @@ export default function DrillInBreadcrumb({
     path: websiteDetailPath(row.id),
   }));
 
+  const hasLeafCrumb =
+    !!section && leafItems.length > 0 && !!leafLabel && !!leafActiveId;
+  const hasWebsiteCrumb = !!website && !!websiteId;
+
   return (
-    <div className="flex min-w-0 items-center gap-2 text-sm">
+    <div className="flex min-w-0 items-center gap-1 text-sm">
       <ModeSwitcher mode={mode} pathname={pathname} />
 
       {section && (
         <>
-          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground" aria-hidden>
+            /
+          </span>
           <CrumbDropdown
             label={section.label}
             ariaLabel={`Switch ${mode.label} section`}
             activeId={section.path}
             items={sectionItems}
+            strong={!hasLeafCrumb && !hasWebsiteCrumb}
           />
         </>
       )}
 
-      {section && leafItems.length > 0 && leafLabel && leafActiveId && (
+      {hasLeafCrumb && (
         <>
-          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground" aria-hidden>
+            /
+          </span>
           <CrumbDropdown
-            label={leafLabel}
-            ariaLabel={`Switch ${section.label} page`}
-            activeId={leafActiveId}
+            label={leafLabel!}
+            ariaLabel={`Switch ${section!.label} page`}
+            activeId={leafActiveId!}
             items={leafItems}
+            strong={!hasWebsiteCrumb}
           />
         </>
       )}
 
-      {website && websiteId && (
+      {hasWebsiteCrumb && (
         <>
-          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground" aria-hidden>
+            /
+          </span>
           <CrumbDropdown
-            label={website.name}
+            label={website!.name}
             ariaLabel="Switch website"
-            activeId={websiteId}
+            activeId={websiteId!}
             items={websiteItems}
+            strong
           />
         </>
       )}

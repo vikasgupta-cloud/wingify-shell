@@ -1067,7 +1067,7 @@ function SegmentsPickerPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+      <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-border px-4">
         <Title className="flex items-center gap-2.5 text-base font-semibold text-foreground">
           <Users className="h-5 w-5" aria-hidden />
           Segments

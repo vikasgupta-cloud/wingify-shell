@@ -25,6 +25,8 @@ export type UpgradeProduct = {
   path: string;
   icon: LucideIcon;
   badge?: { label: string; tone: UpgradeBadgeTone };
+  /** Emphasized row (Wingz) — stands out from buyable product list. */
+  emphasize?: boolean;
 };
 
 export type UpgradeSection = {
@@ -124,7 +126,8 @@ export const UPGRADE_SECTIONS: UpgradeSection[] = [
         description: "AI-Driven Optimization",
         path: "/upgrade/wingz",
         icon: Sparkles,
-        badge: { label: "Core Plan", tone: "plan" },
+        badge: { label: "Requires product", tone: "plan" },
+        emphasize: true,
       },
     ],
   },
