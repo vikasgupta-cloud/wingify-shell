@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   ChevronDown,
@@ -39,6 +40,7 @@ import {
   INTEGRATIONS,
   INTEGRATION_CATEGORIES,
   INTEGRATION_CONNECTION_TYPES,
+  integrationDetailPath,
   monogram,
   type Integration,
 } from "../../data/integrations";
@@ -83,14 +85,21 @@ function IntegrationCard({
   integration: Integration;
   connected: boolean;
 }) {
+  const navigate = useNavigate();
   const connect = useConfigStore((s) => s.connectIntegration);
   const disconnect = useConfigStore((s) => s.disconnectIntegration);
   const showConnections =
     connected && (integration.connectionCount ?? 0) > 0;
+  const detailPath = integrationDetailPath(integration.id);
 
   return (
-    <article className="flex flex-col rounded-xl border border-border bg-background">
-      <div className="flex flex-1 flex-col gap-3 p-5">
+    <div className="relative flex flex-col rounded-xl border border-border bg-background transition-colors hover:bg-muted/30">
+      <Link
+        to={detailPath}
+        className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={`Open ${integration.name}`}
+      />
+      <div className="pointer-events-none relative z-10 flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
           <MonogramTile name={integration.name} className="size-10" />
           {connected ? <ActiveBadge /> : null}
@@ -105,16 +114,18 @@ function IntegrationCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+      <div className="relative z-10 flex items-center justify-between gap-3 border-t border-border px-5 py-3">
         {showConnections ? (
-          <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="pointer-events-none inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
             <Link2 className="size-3.5 shrink-0" strokeWidth={1.75} />
             <span className="truncate">
               {integration.connectionCount} connections
             </span>
           </span>
         ) : (
-          <CategoryChip label={integration.category} />
+          <span className="pointer-events-none">
+            <CategoryChip label={integration.category} />
+          </span>
         )}
 
         {connected ? (
@@ -122,13 +133,16 @@ function IntegrationCard({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
+                className="relative z-20 inline-flex shrink-0 items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
               >
                 Manage
                 <ArrowRight className="size-3.5" strokeWidth={1.75} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate(detailPath)}>
+                Open
+              </DropdownMenuItem>
               <DropdownMenuItem disabled>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => disconnect(integration.id)}>
@@ -139,15 +153,18 @@ function IntegrationCard({
         ) : (
           <button
             type="button"
-            onClick={() => connect(integration.id)}
-            className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
+            onClick={() => {
+              connect(integration.id);
+              navigate(detailPath);
+            }}
+            className="relative z-20 inline-flex shrink-0 items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
           >
             Connect
             <ArrowRight className="size-3.5" strokeWidth={1.75} />
           </button>
         )}
       </div>
-    </article>
+    </div>
   );
 }
 

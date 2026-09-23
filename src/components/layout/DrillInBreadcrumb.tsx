@@ -1,6 +1,7 @@
 // Drill-in (Settings / Profile modes) breadcrumb — JD mode switcher, then
 // section / leaf switchers (Upgrade is flat: mode + product menu only).
 // Website detail adds a third crumb to switch between Connected sites.
+// Integration detail adds a third crumb to switch between integrations.
 // Landing uses sectionLandPath (root page when landable, else first child).
 
 import { NavLink } from "react-router-dom";
@@ -22,6 +23,12 @@ import {
   getWebsiteById,
   websiteDetailPath,
 } from "@/data/websitesAndApps";
+import {
+  INTEGRATIONS,
+  INTEGRATIONS_BASE,
+  integrationById,
+  integrationDetailPath,
+} from "@/data/integrations";
 import { cn } from "../../lib/utils";
 
 type CrumbItem = {
@@ -35,6 +42,12 @@ type CrumbItem = {
 function parseWebsiteDetailId(pathname: string): string | null {
   if (!pathname.startsWith(`${WNA_SITES_BASE}/`)) return null;
   const id = pathname.slice(WNA_SITES_BASE.length + 1).split("/")[0];
+  return id || null;
+}
+
+function parseIntegrationDetailId(pathname: string): string | null {
+  if (!pathname.startsWith(`${INTEGRATIONS_BASE}/`)) return null;
+  const id = pathname.slice(INTEGRATIONS_BASE.length + 1).split("/")[0];
   return id || null;
 }
 
@@ -157,6 +170,10 @@ export default function DrillInBreadcrumb({
   const leaf = section ? findDrillInLeaf(pathname, section) : undefined;
   const websiteId = parseWebsiteDetailId(pathname);
   const website = websiteId ? getWebsiteById(websiteId) : undefined;
+  const integrationId = parseIntegrationDetailId(pathname);
+  const integration = integrationId
+    ? integrationById(integrationId)
+    : undefined;
 
   // Flat catalog: Upgrade / [product ▼] across all products.
   if (flat) {
@@ -232,9 +249,16 @@ export default function DrillInBreadcrumb({
     path: websiteDetailPath(row.id),
   }));
 
+  const integrationItems: CrumbItem[] = INTEGRATIONS.map((row) => ({
+    id: row.id,
+    label: row.name,
+    path: integrationDetailPath(row.id),
+  }));
+
   const hasLeafCrumb =
     !!section && leafItems.length > 0 && !!leafLabel && !!leafActiveId;
   const hasWebsiteCrumb = !!website && !!websiteId;
+  const hasIntegrationCrumb = !!integration && !!integrationId;
 
   return (
     <div className="flex min-w-0 items-center gap-1 text-sm">
@@ -250,7 +274,7 @@ export default function DrillInBreadcrumb({
             ariaLabel={`Switch ${mode.label} section`}
             activeId={section.path}
             items={sectionItems}
-            strong={!hasLeafCrumb && !hasWebsiteCrumb}
+            strong={!hasLeafCrumb && !hasWebsiteCrumb && !hasIntegrationCrumb}
           />
         </>
       )}
@@ -265,7 +289,7 @@ export default function DrillInBreadcrumb({
             ariaLabel={`Switch ${section!.label} page`}
             activeId={leafActiveId!}
             items={leafItems}
-            strong={!hasWebsiteCrumb}
+            strong={!hasWebsiteCrumb && !hasIntegrationCrumb}
           />
         </>
       )}
@@ -280,6 +304,21 @@ export default function DrillInBreadcrumb({
             ariaLabel="Switch website"
             activeId={websiteId!}
             items={websiteItems}
+            strong
+          />
+        </>
+      )}
+
+      {hasIntegrationCrumb && (
+        <>
+          <span className="text-muted-foreground" aria-hidden>
+            /
+          </span>
+          <CrumbDropdown
+            label={integration!.name}
+            ariaLabel="Switch integration"
+            activeId={integrationId!}
+            items={integrationItems}
             strong
           />
         </>

@@ -57,7 +57,8 @@ const ASSETS_HUB_HEADER_CTAS: Record<string, string> = {
 /**
  * Linear-style drill-in surface for every Profile flyout destination (Settings,
  * Configuration, …). Sidebar + back control + left-edge main-rail reveal.
- * Header CTAs: Add new (WNA sites), Request new integration (Integrations).
+ * Header CTAs: Add new (WNA sites), Request new integration (list) /
+ * Create connection (integration detail).
  * Workspace status banners live in RootChrome (above header).
  */
 export default function DrillInShell() {
@@ -66,6 +67,9 @@ export default function DrillInShell() {
   const openIntegrationRequest = useIntegrationRequestStore((s) => s.openRequest);
   const showAddWebsite = pathname === WNA_SITES_PATH;
   const showRequestIntegration = pathname === INTEGRATIONS_PATH;
+  const showCreateConnection =
+    pathname.startsWith(`${INTEGRATIONS_PATH}/`) &&
+    pathname.length > INTEGRATIONS_PATH.length + 1;
   const showAddUser = pathname === ACCOUNT_USERS_PATH;
   const showSubscriptionCtas = SUBSCRIPTION_CTA_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
@@ -165,6 +169,12 @@ export default function DrillInShell() {
                 onClick={openIntegrationRequest}
               >
                 Request new integration
+              </Button>
+            ) : null}
+            {showCreateConnection ? (
+              <Button type="button" className="h-9 gap-1.5 px-3 shadow-none">
+                <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />
+                Create connection
               </Button>
             ) : null}
             {assetsHubCtaLabel ? (

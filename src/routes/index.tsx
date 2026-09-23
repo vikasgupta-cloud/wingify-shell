@@ -24,6 +24,7 @@ import ConfigPage from "../pages/config/ConfigPage";
 import ReportsPage from "../pages/reports/ReportsPage";
 import EditorPage from "../pages/editor/EditorPage";
 import IntegrationsPage from "../pages/integrations/IntegrationsPage";
+import IntegrationDetailPage from "../pages/integrations/IntegrationDetailPage";
 import AccountGeneralPage from "../pages/settings/AccountGeneralPage";
 import AccountUsersPage from "../pages/settings/AccountUsersPage";
 import MySubscriptionPage from "../pages/settings/MySubscriptionPage";
@@ -341,10 +342,15 @@ detailRoutes.push({
 });
 
 const WNA_SITES_LEAF = "/configuration/websites-and-apps/sites";
+const INTEGRATIONS_LEAF = "/configuration/integrations";
 
 const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
   const leaves = modeLeaves(mode).filter(
-    (leaf) => !(mode.id === "configuration" && leaf.path === WNA_SITES_LEAF)
+    (leaf) =>
+      !(
+        mode.id === "configuration" &&
+        (leaf.path === WNA_SITES_LEAF || leaf.path === INTEGRATIONS_LEAF)
+      )
   );
   return {
     path: mode.path,
@@ -360,15 +366,19 @@ const profileModeRoutes: RouteObject[] = PROFILE_MODES.map((mode) => {
                 { path: ":siteId", element: <WebsiteDetailPage /> },
               ],
             },
+            {
+              path: "integrations",
+              children: [
+                { index: true, element: <IntegrationsPage /> },
+                { path: ":integrationId", element: <IntegrationDetailPage /> },
+              ],
+            },
           ]
         : []),
       ...leaves.map((leaf) => ({
         path: leaf.path.slice(mode.path.length + 1),
         element:
-          mode.id === "configuration" &&
-          leaf.path === "/configuration/integrations" ? (
-            <IntegrationsPage />
-          ) : leaf.path === "/settings/accounts/general" ? (
+          leaf.path === "/settings/accounts/general" ? (
             <AccountGeneralPage />
           ) : leaf.path === "/settings/accounts/users" ? (
             <AccountUsersPage />
@@ -402,6 +412,13 @@ const websiteDetailRoute: RouteObject = {
   children: [{ index: true, element: <WebsiteDetailPage /> }],
 };
 
+/** Absolute integration-detail route (same pattern as website detail). */
+const integrationDetailRoute: RouteObject = {
+  path: `${INTEGRATIONS_LEAF}/:integrationId`,
+  element: <DrillInShell />,
+  children: [{ index: true, element: <IntegrationDetailPage /> }],
+};
+
 export const router = createBrowserRouter([
   {
     element: <RootChrome />,
@@ -428,6 +445,7 @@ export const router = createBrowserRouter([
         element: <LegacyAnalyticsItemRedirect />,
       },
       websiteDetailRoute,
+      integrationDetailRoute,
       ...profileModeRoutes,
       // Legacy profile-mode URLs → Configuration shell.
       {

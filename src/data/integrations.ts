@@ -60,9 +60,11 @@ export const INTEGRATIONS: Integration[] = [
   },
   {
     id: "adobe-analytics",
-    name: "Adobe Analytics",
+    name: "Adobe Data Collection",
     category: "Analytics",
-    description: "Push experiment segments into Adobe Analytics reports.",
+    description:
+      "Send campaign data to Adobe Data Collection for reporting and activation.",
+    connectionCount: 1,
   },
   // Customer Data Platform (CDP)
   {
@@ -222,4 +224,37 @@ export function monogram(name: string): string {
   const words = name.replace(/[()]/g, "").trim().split(/\s+/);
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+export const INTEGRATIONS_BASE = "/configuration/integrations";
+
+export function integrationDetailPath(id: string): string {
+  return `${INTEGRATIONS_BASE}/${id}`;
+}
+
+export type IntegrationConnection = {
+  id: string;
+  /** Card headline, e.g. "Send campaign data to …". */
+  title: string;
+  /** Small badge, e.g. "Push based". */
+  kind: string;
+  connectionName: string;
+  created: string;
+  isDefault: boolean;
+};
+
+/** Dummy active connections for the integration detail Config tab. */
+export function connectionsForIntegration(
+  integration: Integration
+): IntegrationConnection[] {
+  const count = Math.max(1, integration.connectionCount ?? 1);
+  return Array.from({ length: count }, (_, i) => ({
+    id: `${integration.id}-conn-${i + 1}`,
+    title: `Send campaign data to ${integration.name}`,
+    kind: i % 2 === 0 ? "Push based" : "Pull based",
+    connectionName:
+      i === 0 ? "Wingify Demo" : `${integration.name} Workspace ${i + 1}`,
+    created: i === 0 ? "June 17, 2026" : "March 3, 2026",
+    isDefault: i === 0,
+  }));
 }
