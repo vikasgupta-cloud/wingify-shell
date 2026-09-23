@@ -40,8 +40,8 @@ import { useProfileSubmenuStore } from "@/store/profileSubmenu";
 /** Width of the expanded (labeled) navigation sidebar — shared with the app grid. */
 export const EXPANDED_NAV_WIDTH = 240;
 
-/** Collapsed icon hit-target (px). Sized for RAIL_WIDTH 52 with px-2 gutters. */
-const RAIL_ICON_SLOT = 36;
+/** Collapsed icon hit-target (px). Sized for RAIL_WIDTH 56 with px-2 gutters. */
+const RAIL_ICON_SLOT = 40;
 
 const FLYOUT_CLOSE_GRACE_MS = 120;
 const MORE_CLOSE_GRACE_MS = 150;
@@ -828,16 +828,21 @@ export default function ExpandedNav({
             className="flex h-full flex-col"
             style={{ width: EXPANDED_NAV_WIDTH }}
           >
-            {/* h-[52px] matches the top bar. Open: 12px side inset; collapsed: 8px
-                so the 36px icon slot centers in the 52px rail. */}
+            {/* h-[56px] matches the top bar. Open: 12px side inset; collapsed: 8px
+                so the 40px icon slot centers in the 56px rail. */}
             <div
               className={cn(
-                "flex h-[52px] shrink-0 items-center",
+                "flex h-[56px] shrink-0 items-center",
                 expanded ? "px-3" : "px-2"
               )}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center">
-                <WingifyLogoButton />
+              <span
+                className={cn(
+                  "flex h-10 shrink-0 items-center",
+                  expanded ? "min-w-0" : "w-10 justify-center"
+                )}
+              >
+                <WingifyLogoButton showWordmark={expanded} />
               </span>
             </div>
 

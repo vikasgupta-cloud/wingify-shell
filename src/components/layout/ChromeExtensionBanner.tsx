@@ -1,6 +1,6 @@
 /**
  * Dashboard-only Chrome extension promo in the TopBar.
- * Single-line control — must stay ≤ other TopBar actions (never grow past 52px chrome).
+ * Single-line control — must stay ≤ other TopBar actions (never grow past 56px chrome).
  * Collapsed → small icon that re-opens the promo.
  * When preferCollapsed (right-side TopBar notice present), start as the small icon.
  */

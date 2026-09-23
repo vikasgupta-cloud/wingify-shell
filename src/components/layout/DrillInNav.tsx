@@ -1,5 +1,5 @@
 /** Linear-style drill-in sidebar for Profile modes (Settings, Configuration, …).
- * @summary Logo bird lives in the left rail (same 52px slot as ExpandedNav); Back to app below.
+ * @summary Logo bird lives in the left rail (same 56px slot as ExpandedNav); Back to app below.
  * Section icons use Phosphor fill when a leaf under them is active (same as Experimentation rail).
  */
 import { useEffect, useState } from "react";
@@ -296,10 +296,10 @@ export default function DrillInNav({ mode }: { mode: ProfileMode }) {
       className="flex h-full flex-col overflow-hidden border-r border-panel-border bg-background pb-4 text-foreground"
       style={{ width: SETTINGS_NAV_WIDTH }}
     >
-      {/* Same 52px logo slot as ExpandedNav — bird stays in the left rail. */}
-      <div className="flex h-[52px] shrink-0 items-center px-2">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center">
-          <WingifyLogoButton />
+      {/* Same 56px logo slot as ExpandedNav — bird + wordmark when open. */}
+      <div className="flex h-[56px] shrink-0 items-center px-3">
+        <span className="flex h-9 min-w-0 shrink-0 items-center">
+          <WingifyLogoButton showWordmark />
         </span>
       </div>
 

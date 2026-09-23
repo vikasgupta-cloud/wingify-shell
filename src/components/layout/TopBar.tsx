@@ -139,7 +139,7 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
     <header
       data-slot="top-bar"
       className={cn(
-        "relative z-10 flex h-[52px] max-h-[52px] shrink-0 items-center justify-between gap-4 px-4 text-panel-foreground",
+        "relative z-10 flex h-[56px] max-h-[56px] shrink-0 items-center justify-between gap-4 px-4 text-panel-foreground",
         // Immersive shells (no rail): solid bar. Use box-shadow hairline — border-b
         // color utilities don't paint reliably on this white-on-white chrome.
         showLogo

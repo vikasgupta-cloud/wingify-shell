@@ -1,7 +1,9 @@
+// @summary Home control: bird mascot; optional wordmark beside it when the left rail is open.
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GET_STARTED_PATH } from "@/lib/getStartedGate";
 import { useIsGetStartedLocked } from "@/store/getStartedOnboarding";
+import wordmarkUrl from "../../assets/wingify-wordmark.png";
 import {
   MASCOT_ASSETS,
   MASCOT_ASSETS_DARK,
@@ -40,12 +42,15 @@ function MascotMark({
   alt,
   colorMode,
   lively,
+  compact,
 }: {
   id: MascotId;
   alt: string;
   colorMode: ColorMode;
   /** Subtle idle motion on the current mark — never swaps the asset. */
   lively: boolean;
+  /** Smaller bird when shown beside the wordmark. */
+  compact?: boolean;
 }) {
   const [front, setFront] = useState(id);
   const [back, setBack] = useState<MascotId | null>(null);
@@ -111,13 +116,17 @@ function MascotMark({
     run(id);
   }, [id]);
 
-  const imgClass =
-    "pointer-events-none absolute inset-0 m-auto h-7 w-auto max-w-8 object-contain transition-opacity ease-out motion-reduce:transition-none";
+  // With wordmark: match lockup height (~24px). Alone: slightly larger rail mark.
+  const imgClass = cn(
+    "pointer-events-none absolute inset-0 m-auto w-auto object-contain transition-opacity ease-out motion-reduce:transition-none",
+    compact ? "h-6 max-w-7" : "h-7 max-w-8"
+  );
 
   return (
     <span
       className={cn(
-        "relative block h-7 w-8 origin-center",
+        "relative block origin-center",
+        compact ? "h-6 w-7" : "h-7 w-8",
         lively && "mascot-lively"
       )}
     >
@@ -153,11 +162,14 @@ function MascotMark({
  * - Active route sets the pose
  * - Product-row hover previews that product's pose
  * - Logo hover keeps the same mark and plays a subtle quirky idle motion
+ * - `showWordmark` adds the wingify wordmark beside a smaller bird (open rails)
  */
 export default function WingifyLogoButton({
   className,
+  showWordmark = false,
 }: {
   className?: string;
+  showWordmark?: boolean;
 }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -190,7 +202,10 @@ export default function WingifyLogoButton({
       onFocus={() => setLogoHover(true)}
       onBlur={() => setLogoHover(false)}
       className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center overflow-visible rounded-lg",
+        "flex shrink-0 items-center overflow-visible rounded-lg",
+        showWordmark
+          ? "h-9 gap-2 px-0.5"
+          : "h-8 w-8 justify-center",
         className
       )}
     >
@@ -199,7 +214,17 @@ export default function WingifyLogoButton({
         alt={`Wingify — ${pose}`}
         colorMode={colorMode}
         lively={logoHover}
+        compact={showWordmark}
       />
+      {showWordmark ? (
+        <img
+          src={wordmarkUrl}
+          alt=""
+          aria-hidden
+          className="h-6 w-auto max-w-[130px] shrink-0 object-contain object-left"
+          draggable={false}
+        />
+      ) : null}
     </button>
   );
 }
