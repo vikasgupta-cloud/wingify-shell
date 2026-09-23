@@ -236,16 +236,28 @@ function IntegrationCrumbDropdown({
                 <button
                   type="button"
                   title="Filter by category"
-                  aria-label="Filter by category"
+                  aria-label={
+                    categories.length > 0
+                      ? `Filter by category, ${categories.length} selected`
+                      : "Filter by category"
+                  }
                   aria-expanded={filterMenuOpen}
                   onClick={() => setFilterMenuOpen((o) => !o)}
                   className={cn(
-                    "flex items-center justify-center rounded-md border border-input p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                    "relative flex items-center justify-center rounded-md border border-input p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
                     categories.length > 0 &&
                       "border-transparent bg-secondary text-secondary-foreground"
                   )}
                 >
                   <ListFilter className="h-4 w-4" />
+                  {categories.length > 0 ? (
+                    <span
+                      aria-hidden
+                      className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-medium leading-none tabular-nums text-background"
+                    >
+                      {categories.length}
+                    </span>
+                  ) : null}
                 </button>
                 {filterMenuOpen && (
                   <div
