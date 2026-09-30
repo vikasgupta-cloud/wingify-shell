@@ -220,8 +220,8 @@ const addDetailRoute = (leafPath: string) => {
     });
     // Feature Flags Rules + Flag report kinds Reports (same Coming soon body).
     if (leafPath === "/feature-management/feature-flags") {
-      detailRoutes.push({
-        path: `${leafPath}/c/:entityId/rules`,
+      for (const suffix of ["configuration", "rules", "reports"]) detailRoutes.push({
+        path: `${leafPath}/c/:entityId/${suffix}`,
         element: (
           <DetailShell basePath={leafPath}>
             <FlagDetailPage listPath={leafPath} />

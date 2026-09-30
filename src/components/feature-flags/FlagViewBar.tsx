@@ -15,7 +15,7 @@ import {
 } from "../../store/flagViews";
 import { cn } from "../../lib/utils";
 
-const LAYOUTS: Layout[] = ["table", "card"];
+const LAYOUTS: Layout[] = ["table"];
 
 function DirtyDot() {
   return (

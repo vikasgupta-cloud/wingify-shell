@@ -1,0 +1,27 @@
+.flag-environment-sidebar { width: 300px; }
+.flag-rule-main { font-size: 14px; }
+.flag-rule-workspace .flag-environment-heading > button { height: 32px; padding: 6px 12px; border-radius: 2px; font-weight: 400; }
+.flag-rule-tabs { height: 32px; border-radius: 4px; gap: 4px; background: var(--secondary); --appearance-tabs-list-background: var(--secondary); }
+.flag-rule-tabs [role="tab"] { height: 24px; padding: 2px 8px; border-radius: 2px; font-weight: 400; box-shadow: none; }
+.flag-rule-tabs [data-state="active"] { font-weight: 500; }
+.flag-rule-toolbar button { height: 28px; padding: 4px 6px; border-radius: 2px; font-weight: 400; }
+.flag-rule-card { border-radius: 2px !important; box-shadow: 0 1px 2px rgb(27 25 19 / 5%); }
+.flag-rule-card h3 { font-size: 14px; line-height: 20px; }
+.flag-rule-small-switch { width: 28px; height: 16px; border-width: 1px; padding: 1px; --appearance-toggle-thumb: var(--foreground); }
+.flag-rule-small-switch > span { width: 12px; height: 12px; }
+.flag-rule-small-switch > span[data-state="checked"] { transform: translateX(12px); }
+.flag-rule-actions button, .flag-rule-actions a { height: 20px; padding: 0; font-weight: 400; }
+.flag-rule-reorder { color: var(--muted-foreground); cursor: ns-resize; }
+.flag-impact-panel { border-color: var(--border-strong); border-radius: 2px; box-shadow: none; margin-top: 20px; }
+.flag-impact-panel h2 { font-size: 16px; line-height: 24px; }
+.flag-impact-panel a { height: 28px; padding: 4px 6px; border-radius: 2px; font-weight: 400; margin-top: 12px; }
+@media (max-width: 1000px) {
+  .flag-environment-sidebar { width: 200px; }
+  .flag-impact-panel img { width: 100px; object-fit: contain; }
+}
+
+.flag-rule-summary { margin-left: 80px; }
+
+.flag-rule-toolbar .flag-rule-split-button > button { border-radius: 0; }
+
+.flag-impact-panel, .flag-impact-panel:hover { background: transparent; border-color: var(--border-strong); color: var(--card-foreground); }

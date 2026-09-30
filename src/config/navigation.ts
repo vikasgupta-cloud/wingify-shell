@@ -192,16 +192,11 @@ export const NAV: NavItem[] = [
   { label: "Web experimentation (Old)", path: "/web-experiment-old", icon: FlaskConical, group: 2 },
   { label: "Personalize", path: "/personalize", icon: Target, group: 2, pinnable: true },
   { label: "Feature Management", path: "/feature-management", icon: Flag, group: 2, pinnable: true, sections: [
-    { heading: "Create", items: [
+    { items: [
       { label: "Feature Flags", path: "/feature-management/feature-flags" },
+      { label: "Holdout", path: "/feature-management/holdout", hideCreate: true },
+      { label: "Tech Debt", path: "/feature-management/tech-debt", hideCreate: true },
     ]},
-    { heading: "Reports", items: [
-      { label: "Flag Rollout", path: "/feature-management/flag-rollout", hideCreate: true },
-      { label: "Flag Testing", path: "/feature-management/flag-testing", hideCreate: true },
-      { label: "Flag Personalize", path: "/feature-management/flag-personalize", hideCreate: true },
-      { label: "Flag Multivariate", path: "/feature-management/flag-multivariate", hideCreate: true },
-    ]},
-    { heading: "Maintain", items: [{ label: "Tech Debt", path: "/feature-management/tech-debt", hideCreate: true }]},
   ]},
   { label: "Commerce", path: "/commerce", icon: ShoppingCart, group: 2, pinnable: true, sections: [
     { items: [

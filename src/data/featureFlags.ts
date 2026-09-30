@@ -16,7 +16,7 @@ function iso(y: number, m: number, d: number) {
 export const FEATURE_FLAGS: FeatureFlag[] = [
   {
     id: "30",
-    name: "wizard_flow_experiment",
+    name: "PDP Experience",
     createdOn: iso(2026, 6, 21),
     createdBy: "Ankit Jain",
     environment: null,
@@ -24,7 +24,7 @@ export const FEATURE_FLAGS: FeatureFlag[] = [
   },
   {
     id: "29",
-    name: "Test_client_email",
+    name: "Checkout Redesign",
     createdOn: iso(2026, 6, 21),
     createdBy: "Ankit Jain",
     environment: null,
@@ -32,7 +32,7 @@ export const FEATURE_FLAGS: FeatureFlag[] = [
   },
   {
     id: "28",
-    name: "teing 1231",
+    name: "Search V2",
     createdOn: iso(2026, 6, 19),
     createdBy: "Ankit Jain",
     environment: null,
