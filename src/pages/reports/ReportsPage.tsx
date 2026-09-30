@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowUpLeft,
   ArrowUpRight,
+  ChevronDown,
   Info,
   RefreshCw,
   Trophy,
@@ -10,11 +11,21 @@ import {
 } from "@/components/icons/protoLucide";
 import {
   hasReport,
+  type Campaign,
   type CampaignStatus,
 } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VitalsGlyph } from "@/components/ui/StatusBadge";
@@ -36,7 +47,8 @@ import {
   COLLECT_MIN_VISITORS,
 } from "../../data/campaignConclusion";
 import { formatNumber } from "./reportMetrics";
-import ResultsTab from "./ResultsTab";
+import ResultsTab, { ResultsFilterPanel } from "./ResultsTab";
+import { SURVEYS } from "@/data/surveys";
 import VitalsTab from "./VitalsTab";
 import WingzPanel from "../../components/wingz/WingzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
@@ -758,6 +770,9 @@ function ReportsChrome({
               <TabsContent value="behaviour" className="mt-0 focus-visible:outline-none">
                 <BehaviourComingSoon />
               </TabsContent>
+              <TabsContent value="surveys" className="mt-0 focus-visible:outline-none">
+                <SurveysTabBody key={campaign.id} campaign={campaign} />
+              </TabsContent>
               <TabsContent value="live-hits" className="mt-0 focus-visible:outline-none">
                 <LiveHitsComingSoon />
               </TabsContent>
@@ -786,7 +801,7 @@ function ReportsChrome({
   );
 }
 
-const TABS = ["Overview", "Results", "Behaviour", "Live hits", "Vitals"];
+const TABS = ["Overview", "Results", "Behaviour", "Surveys", "Live hits", "Vitals"];
 const tabValue = (tab: string) => tab.toLowerCase().replace(/\s+/g, "-");
 const REPORT_TAB_VALUES = new Set(TABS.map(tabValue));
 
@@ -932,6 +947,339 @@ function BehaviourComingSoon() {
         <p className="max-w-sm text-sm text-muted-foreground">
           Session replays, heatmaps, and click paths for this campaign will show
           up here.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SurveysIllustration({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 280 180"
+      className={className}
+      aria-hidden
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="36"
+        y="18"
+        width="208"
+        height="144"
+        rx="12"
+        stroke="var(--border)"
+        strokeWidth="1.5"
+        fill="var(--background)"
+      />
+      <rect
+        x="56"
+        y="36"
+        width="112"
+        height="10"
+        rx="3"
+        fill="var(--foreground)"
+        fillOpacity="0.55"
+      />
+      <rect
+        x="56"
+        y="54"
+        width="160"
+        height="6"
+        rx="2"
+        fill="rgb(from var(--muted-foreground) r g b / 0.28)"
+      />
+      <rect
+        x="56"
+        y="74"
+        width="168"
+        height="22"
+        rx="6"
+        fill="rgb(from var(--muted) r g b / 0.55)"
+        stroke="var(--border)"
+        strokeWidth="1"
+      />
+      <circle cx="72" cy="85" r="5" stroke="var(--foreground)" strokeOpacity="0.45" strokeWidth="1.25" />
+      <rect
+        x="86"
+        y="81"
+        width="72"
+        height="7"
+        rx="2"
+        fill="rgb(from var(--muted-foreground) r g b / 0.28)"
+      />
+      <rect
+        x="56"
+        y="104"
+        width="168"
+        height="22"
+        rx="6"
+        fill="rgb(from var(--muted) r g b / 0.4)"
+        stroke="var(--border)"
+        strokeWidth="1"
+      />
+      <circle cx="72" cy="115" r="5" fill="var(--foreground)" fillOpacity="0.45" />
+      <rect
+        x="86"
+        y="111"
+        width="88"
+        height="7"
+        rx="2"
+        fill="rgb(from var(--muted-foreground) r g b / 0.28)"
+      />
+    </svg>
+  );
+}
+
+type SurveyReportScenario = 1 | 2 | 3;
+
+/** Dummy split so each campaign report shows one of the three survey states. */
+function surveyReportScenario(campaignId: string): SurveyReportScenario {
+  const remainder = Number(campaignId) % 3;
+  if (remainder === 1) return 1;
+  if (remainder === 2) return 2;
+  return 3;
+}
+
+function SurveysTabBody({ campaign }: { campaign: Campaign }) {
+  const scenario = surveyReportScenario(campaign.id);
+  const canAdd = scenario !== 3;
+  const defaultIds =
+    scenario === 1 ? SURVEYS.slice(0, 2).map((survey) => survey.id) : [];
+  const [linkedIds, setLinkedIds] = useState<string[]>(defaultIds);
+  const [addedIds, setAddedIds] = useState<string[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    defaultIds[0] ?? null
+  );
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const linked = linkedIds
+    .map((id) => SURVEYS.find((survey) => survey.id === id))
+    .filter((survey): survey is (typeof SURVEYS)[number] => Boolean(survey));
+  const pickerSurveys = SURVEYS.filter((survey) => !defaultIds.includes(survey.id));
+  const selected = linked.find((survey) => survey.id === selectedId) ?? null;
+
+  const addSurvey = (id: string) => {
+    setLinkedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setAddedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setSelectedId((current) => current ?? id);
+  };
+
+  const removeAdded = (id: string) => {
+    if (!addedIds.includes(id)) return;
+    const remaining = linkedIds.filter((item) => item !== id);
+    setAddedIds((prev) => prev.filter((item) => item !== id));
+    setLinkedIds(remaining);
+    setSelectedId((current) => (current === id ? remaining[0] ?? null : current));
+  };
+
+  const togglePickerSurvey = (id: string, checked: boolean) => {
+    if (checked) addSurvey(id);
+    else removeAdded(id);
+  };
+
+  return (
+    <div className="mx-auto w-full min-w-[44rem] max-w-[1120px] px-8 pb-8 pt-8 sm:px-12">
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+          value={selected?.id}
+          onValueChange={setSelectedId}
+          disabled={linked.length === 0}
+        >
+          <SelectTrigger className="h-9 w-[min(100%,22rem)] bg-background shadow-none">
+            <SelectValue placeholder="Select a survey" />
+          </SelectTrigger>
+          <SelectContent>
+            {linked.map((survey) => {
+              const removable = addedIds.includes(survey.id);
+              return (
+                <SelectItem
+                  key={survey.id}
+                  value={survey.id}
+                  className={cn(
+                    "data-[state=checked]:bg-accent [&>span.absolute]:hidden",
+                    removable && "pr-9"
+                  )}
+                >
+                  <span className="block truncate">{survey.name}</span>
+                  {removable ? (
+                    <span
+                      className="absolute right-2 top-1/2 z-10 -translate-y-1/2"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked
+                        aria-label={`Remove ${survey.name}`}
+                        onCheckedChange={() => removeAdded(survey.id)}
+                      />
+                    </span>
+                  ) : null}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+        {canAdd ? (
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button type="button" variant="link" className="h-9 px-1">
+                Add Existing Survey Report
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-1.5">
+              <div className="max-h-72 space-y-0.5 overflow-y-auto">
+                {pickerSurveys.map((survey) => (
+                  <label
+                    key={survey.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                    onPointerDown={(event) => event.preventDefault()}
+                  >
+                    <Checkbox
+                      checked={addedIds.includes(survey.id)}
+                      onCheckedChange={(checked) =>
+                        togglePickerSurvey(survey.id, checked === true)
+                      }
+                    />
+                    <span className="min-w-0 flex-1 truncate text-foreground">
+                      {survey.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : null}
+      </div>
+
+      {selected ? (
+        <>
+          <div className="mt-8 space-y-3">
+            <ResultsFilterPanel campaignId={campaign.id} />
+            <SurveysViewBar campaign={campaign} />
+          </div>
+          <SurveysComingSoon />
+        </>
+      ) : (
+        <SurveysEmptyState canAdd={canAdd} />
+      )}
+    </div>
+  );
+}
+
+function SurveysEmptyState({ canAdd }: { canAdd: boolean }) {
+  return (
+    <div className="flex min-h-[min(28rem,calc(100dvh-12rem))] flex-col items-center justify-center gap-5 px-6 py-16 text-center">
+      <SurveysIllustration className="h-auto w-full max-w-[280px] text-foreground" />
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-foreground">No survey report</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          {canAdd
+            ? "Add an existing survey to view its report for this campaign."
+            : "This campaign has no surveys, and none can be added."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const SURVEY_VIEWS = ["Overview", "Respondents", "Questions"] as const;
+type SurveyView = (typeof SURVEY_VIEWS)[number];
+
+function SurveysFilterMenu({
+  label,
+  options,
+}: {
+  label: string;
+  options: string[];
+}) {
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const toggle = (option: string) => {
+    setSelected((prev) =>
+      prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option]
+    );
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-foreground transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60"
+        >
+          <span>{label}</span>
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-2">
+        <div className="max-h-60 space-y-0.5 overflow-y-auto">
+          {options.map((option) => (
+            <label
+              key={option}
+              className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+            >
+              <Checkbox
+                checked={selected.includes(option)}
+                onCheckedChange={() => toggle(option)}
+              />
+              <span className="min-w-0 flex-1 truncate">{option}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function SurveysViewBar({ campaign }: { campaign: Campaign }) {
+  const [view, setView] = useState<SurveyView>("Overview");
+  const variations = campaign.report.variants.map((variant) => variant.name);
+  const metrics = [
+    campaign.primaryMetric,
+    ...campaign.report.otherMetrics.map((metric) => metric.name),
+  ];
+
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 text-sm text-muted-foreground">Filter by</span>
+        <SurveysFilterMenu label="Variations" options={variations} />
+        <SurveysFilterMenu label="Metrics" options={metrics} />
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="text-sm text-muted-foreground">View by</span>
+        <div className="inline-flex overflow-hidden rounded-md border border-border bg-background">
+          {SURVEY_VIEWS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              aria-pressed={view === item}
+              onClick={() => setView(item)}
+              className={cn(
+                "h-8 border-l border-border px-3 text-sm first:border-l-0",
+                view === item
+                  ? "bg-secondary font-medium text-foreground"
+                  : "bg-background text-foreground hover:bg-muted/60"
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SurveysComingSoon() {
+  return (
+    <div className="flex min-h-[min(28rem,calc(100dvh-12rem))] flex-col items-center justify-center gap-5 px-6 py-16 text-center">
+      <SurveysIllustration className="h-auto w-full max-w-[280px] text-foreground" />
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-foreground">Surveys coming soon</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          In-campaign surveys and responses will show up here.
         </p>
       </div>
     </div>

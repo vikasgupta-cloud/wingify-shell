@@ -351,9 +351,12 @@ function ModeSwitcher({
 export default function DrillInBreadcrumb({
   mode,
   pathname,
+  hideModeSwitcher = false,
 }: {
   mode: ProfileMode;
   pathname: string;
+  /** Entity detail (site / integration) — drop the Configuration mode crumb. */
+  hideModeSwitcher?: boolean;
 }) {
   const flat = isFlatProductNav(mode);
   const section = findDrillInSection(pathname, mode);
@@ -446,13 +449,17 @@ export default function DrillInBreadcrumb({
 
   return (
     <div className="flex min-w-0 items-center gap-1 text-sm">
-      <ModeSwitcher mode={mode} pathname={pathname} />
+      {hideModeSwitcher ? null : (
+        <ModeSwitcher mode={mode} pathname={pathname} />
+      )}
 
       {section && (
         <>
-          <span className="text-muted-foreground" aria-hidden>
-            /
-          </span>
+          {hideModeSwitcher ? null : (
+            <span className="text-muted-foreground" aria-hidden>
+              /
+            </span>
+          )}
           <CrumbDropdown
             label={section.label}
             ariaLabel={`Switch ${mode.label} section`}

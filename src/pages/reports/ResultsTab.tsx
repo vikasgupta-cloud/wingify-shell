@@ -793,7 +793,7 @@ function AppliedFiltersInline({ campaignId }: { campaignId: string }) {
 }
 */
 
-function ResultsFilterPanel({
+export function ResultsFilterPanel({
   campaignId,
   right,
   appliedTrailing,
