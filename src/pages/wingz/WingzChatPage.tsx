@@ -1,4 +1,5 @@
 // @summary Full-page Wingz chat + campaign canvas (editor/form) with shared AI thread.
+// Sidebar "Wingz updates" footer is commented out. Uses existing Button.
 // Canvas drops the right chat column and uses editor Copilot / form Wingz panel.
 // Exit leaves a campaign artifact in main chat (status, name, URL, created).
 // Top-right library popover lists campaign artifacts + uploaded files.
@@ -882,6 +883,7 @@ export default function WingzChatPage() {
             </ul>
           </div>
 
+          {/* @undo Wingz updates footer
           <div className="sticky bottom-0 shrink-0 border-t border-border bg-panel px-3 py-3">
             <Button
               type="button"
@@ -894,6 +896,7 @@ export default function WingzChatPage() {
               Wingz updates
             </Button>
           </div>
+          */}
         </aside>
       ) : (
         <div className="flex w-12 shrink-0 flex-col items-center border-r border-panel-border bg-panel py-3">

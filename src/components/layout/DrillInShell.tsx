@@ -70,6 +70,11 @@ export default function DrillInShell() {
   const showCreateConnection =
     pathname.startsWith(`${INTEGRATIONS_PATH}/`) &&
     pathname.length > INTEGRATIONS_PATH.length + 1;
+  const isWebsiteDetail =
+    pathname.startsWith(`${WNA_SITES_PATH}/`) &&
+    pathname.length > WNA_SITES_PATH.length + 1;
+  // Campaign detail hides workspace + mode crumbs; same on these entity pages.
+  const hideParentCrumbs = showCreateConnection || isWebsiteDetail;
   const showAddUser = pathname === ACCOUNT_USERS_PATH;
   const showSubscriptionCtas = SUBSCRIPTION_CTA_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
@@ -143,11 +148,19 @@ export default function DrillInShell() {
         <header className="flex h-[56px] shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
           <div className="flex min-w-0 items-center gap-1.5">
             {/* @undo — <WingifyLogoButton /> removed from header; bird is in DrillInNav */}
-            <WorkspaceSwitcher />
-            <span className="text-sm text-muted-foreground" aria-hidden>
-              /
-            </span>
-            <DrillInBreadcrumb mode={mode} pathname={pathname} />
+            {hideParentCrumbs ? null : (
+              <>
+                <WorkspaceSwitcher />
+                <span className="text-sm text-muted-foreground" aria-hidden>
+                  /
+                </span>
+              </>
+            )}
+            <DrillInBreadcrumb
+              mode={mode}
+              pathname={pathname}
+              hideModeSwitcher={hideParentCrumbs}
+            />
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {showAddWebsite ? (
