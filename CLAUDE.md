@@ -1,7 +1,7 @@
 # Wingify Shell — invariants
 
 ## Stack
-Vite + React 18 + TS, Tailwind 3.4, Zustand (persist), Radix, React Router 6, Lucide.
+Vite + React 19 + TS, Tailwind 3.4, Zustand (persist), Radix, React Router 6, Lucide.
 
 ## Rules
 - ALL nav derives from src/config/navigation.ts. Never hardcode nav items elsewhere.
