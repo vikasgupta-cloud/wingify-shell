@@ -59,7 +59,7 @@ export default function FlagEnvironmentTable({ rows }: { rows: FeatureFlag[] }) 
                 const summary = (['Active', 'Inactive', 'Paused', 'Draft', 'Scheduled', 'Completed'] as const)
                   .map(status => ({ status, count: rules.filter(rule => ruleStatus(rule, isOn) === status).length }))
                   .filter(item => item.count > 0);
-                return <section key={environment} aria-label={`${flag.name} ${environment} rules`} className="my-4 overflow-hidden rounded-lg border border-border bg-background">
+                return <section key={environment} aria-label={`${flag.name} ${environment} rules`} className="my-4 overflow-hidden rounded-[2px] border border-border bg-background">
                   <div className="flex items-center gap-4 bg-muted/40 px-4 py-3">
                     <h3 className="min-w-0"><Button variant="ghost" className="h-auto w-full justify-start gap-3 p-0 text-xs font-semibold uppercase tracking-wider" aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${environment} rules for ${flag.name}`} aria-expanded={isOpen} aria-controls={contentId} onClick={() => setEnvironmentExpanded(previous => ({ ...previous, [key]: !isOpen }))}>
                       {isOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}{environment}
