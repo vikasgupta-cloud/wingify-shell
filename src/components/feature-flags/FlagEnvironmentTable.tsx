@@ -64,7 +64,7 @@ export default function FlagEnvironmentTable({ rows }: { rows: FeatureFlag[] }) 
                     <h3 className="min-w-0"><Button variant="ghost" className="h-auto w-full justify-start gap-3 p-0 text-xs font-semibold uppercase tracking-wider" aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${environment} rules for ${flag.name}`} aria-expanded={isOpen} aria-controls={contentId} onClick={() => setEnvironmentExpanded(previous => ({ ...previous, [key]: !isOpen }))}>
                       {isOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}{environment}
                     </Button></h3>
-                    <Tooltip><TooltipTrigger asChild><span tabIndex={0} aria-label={`${environment}: ${isOn ? 'On' : 'Off'}`} className="inline-flex cursor-default"><Badge tone={isOn ? 'green' : 'amber'}>{isOn ? 'ON' : 'OFF'}</Badge></span></TooltipTrigger><TooltipContent>{isOn ? 'Flag is turned On for this environment' : 'Flag is turned Off for this environment'}</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><span tabIndex={0} aria-label={`${environment}: ${isOn ? 'On' : 'Off'}`} className="inline-flex cursor-default"><Badge tone={isOn ? 'green' : 'amber'}>{isOn ? 'ON' : 'OFF'}</Badge></span></TooltipTrigger><TooltipContent>{`Flag is ${isOn ? 'on' : 'off'} for ${environment}`}</TooltipContent></Tooltip>
                     <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
                       {summary.length ? summary.map(({ status, count }) => <Badge key={status} tone={tones[status]}>{count} {status.toLowerCase()}</Badge>) : <span>No rules created</span>}
                     </div>
