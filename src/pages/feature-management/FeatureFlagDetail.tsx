@@ -89,7 +89,7 @@ function FlagWorkspace({ flagId }: { flagId: string }) {
 
   return <TooltipProvider><div className="flag-rule-workspace flex h-full min-h-full flex-1 overflow-auto">
     <aside aria-label="Flag environments" className="flag-environment-sidebar shrink-0 bg-background p-4">
-      {FLAG_ENVIRONMENTS.map(env => { const on = enabled[`${flagId}:${env}`] ?? `${flagId}:${env}` !== '30:LocalTest'; return <Button key={env} variant="ghost" aria-current={environment === env ? 'page' : undefined} onClick={() => { setQuery({ environment: env }); }} className={`mb-1.5 h-8 w-full justify-between rounded-sm px-3 font-normal ${environment === env ? 'bg-muted' : ''}`}><span>{env}</span><span className={`inline-flex items-center gap-1.5 text-xs font-medium ${on ? 'text-[var(--success-fg)]' : 'text-[var(--warning-fg)]'}`}><span aria-hidden="true" className="size-1.5 rounded-full bg-current" />{on ? 'ON' : 'OFF'}</span></Button>; })}
+      {FLAG_ENVIRONMENTS.map(env => { const on = enabled[`${flagId}:${env}`] ?? `${flagId}:${env}` !== '30:LocalTest'; return <Button key={env} variant="ghost" aria-current={environment === env ? 'page' : undefined} onClick={() => { setQuery({ environment: env }); }} className={`mb-1.5 h-8 w-full justify-between rounded-sm px-3 font-normal ${environment === env ? 'bg-muted' : ''}`}><span>{env}</span><Badge tone={on ? 'green' : 'amber'}>{on ? 'ON' : 'OFF'}</Badge></Button>; })}
     </aside>
     <div className="flag-rule-main min-w-0 flex-1 bg-canvas px-5 py-3">
       <div className="flag-environment-heading mb-4 flex items-start justify-between gap-4"><div><div className="flex items-center gap-3"><Switch checked={isOn} aria-label={`${environment} flag enabled`} onCheckedChange={next => {

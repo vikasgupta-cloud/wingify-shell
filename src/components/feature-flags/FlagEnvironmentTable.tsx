@@ -47,7 +47,7 @@ export default function FlagEnvironmentTable({ rows }: { rows: FeatureFlag[] }) 
                 <Flag className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                 <Link className="font-medium hover:underline" to={`/feature-management/feature-flags/c/${flag.id}`}>{flag.name}</Link>
               </div></td>
-              {FLAG_ENVIRONMENTS.map(environment => { const count = activeRuleCount(rulesForFlag(flag.id, environment), environmentOn(`${flag.id}:${environment}`)); return <td key={environment} className="px-5 py-4 tabular-nums">{!environmentOn(`${flag.id}:${environment}`) ? <span className="text-muted-foreground">Off</span> : count ? <span className={purple}>{count} active</span> : <span className="text-muted-foreground">—</span>}</td>; })}
+              {FLAG_ENVIRONMENTS.map(environment => { const count = activeRuleCount(rulesForFlag(flag.id, environment), environmentOn(`${flag.id}:${environment}`)); return <td key={environment} className="px-5 py-4 tabular-nums">{!environmentOn(`${flag.id}:${environment}`) ? <Badge tone="amber">OFF</Badge> : count ? <span className={purple}>{count} active</span> : <span className="text-muted-foreground">—</span>}</td>; })}
             </tr>
             {expanded.has(flag.id) && <tr id={`flag-rules-${flag.id}`}><td colSpan={6} className="border-b border-border bg-muted/10 px-7 py-2">
               {FLAG_ENVIRONMENTS.map(environment => {
@@ -64,7 +64,7 @@ export default function FlagEnvironmentTable({ rows }: { rows: FeatureFlag[] }) 
                     <h3 className="min-w-0"><Button variant="ghost" className="h-auto w-full justify-start gap-3 p-0 text-xs font-semibold uppercase tracking-wider" aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${environment} rules for ${flag.name}`} aria-expanded={isOpen} aria-controls={contentId} onClick={() => setEnvironmentExpanded(previous => ({ ...previous, [key]: !isOpen }))}>
                       {isOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}{environment}
                     </Button></h3>
-                    <Tooltip><TooltipTrigger asChild><span tabIndex={0} aria-label={`${environment}: ${isOn ? 'On' : 'Off'}`} className={`inline-flex cursor-default items-center gap-1.5 text-xs font-medium ${isOn ? 'text-[var(--success-fg)]' : 'text-[var(--warning-fg)]'}`}><span aria-hidden="true" className="size-1.5 rounded-full bg-current" />{isOn ? 'ON' : 'OFF'}</span></TooltipTrigger><TooltipContent>{isOn ? 'Flag is turned On for this environment' : 'Flag is turned Off for this environment'}</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><span tabIndex={0} aria-label={`${environment}: ${isOn ? 'On' : 'Off'}`} className="inline-flex cursor-default"><Badge tone={isOn ? 'green' : 'amber'}>{isOn ? 'ON' : 'OFF'}</Badge></span></TooltipTrigger><TooltipContent>{isOn ? 'Flag is turned On for this environment' : 'Flag is turned Off for this environment'}</TooltipContent></Tooltip>
                     <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
                       {summary.length ? summary.map(({ status, count }) => <Badge key={status} tone={tones[status]}>{count} {status.toLowerCase()}</Badge>) : <span>No rules created</span>}
                     </div>
