@@ -13,7 +13,6 @@ import {
   hasReport,
   type Campaign,
   type CampaignStatus,
-  type Campaign,
 } from "../../data/campaigns";
 import { useVisibleCampaigns } from "../../store/rows";
 import { Button } from "@/components/ui/button";
