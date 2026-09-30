@@ -1,3 +1,4 @@
+import { Layers, ArrowRight, FlaskConical, UserRound } from '@/components/icons/protoLucide';
 import FlagGroupedResults from "./FlagGroupedResults";
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -5,6 +6,7 @@ import ReportsPage from '@/pages/reports/ReportsPage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CAMPAIGNS, type Campaign } from '@/data/campaigns';
 import { FLAG_ENVIRONMENTS, type FlagRule } from '@/data/featureFlagRules';
+import { useFlagEnvironmentsStore } from '@/store/flagEnvironments';
 import { useFlagRulesStore } from '@/store/flagRules';
 import { useVisibleFeatureFlags } from '@/store/flagRows';
 
@@ -14,6 +16,7 @@ export default function FeatureFlagReports({ flagId }: { flagId: string }) {
   const allRules = useFlagRulesStore(state => state.rules);
   const flag = useVisibleFeatureFlags().find(item => item.id === flagId);
   const environment = FLAG_ENVIRONMENTS.find(item => item === params.get('environment')) ?? 'Production';
+  const environmentEnabled = useFlagEnvironmentsStore(state => state.enabled[`${flagId}:${environment}`]) ?? `${flagId}:${environment}` !== '30:LocalTest';
   const rules = allRules.filter(rule => rule.flagId === flagId && rule.environment === environment);
   const linkedRule = rules.find(rule => rule.id === params.get('rule'));
   const type = linkedRule?.type ?? TYPES.find(item => item === params.get('ruleType')) ?? 'Rollout';
@@ -38,8 +41,8 @@ export default function FeatureFlagReports({ flagId }: { flagId: string }) {
     });
   }
   const controls = <div className="flex shrink-0 items-center gap-2 border-r border-border pr-4">
-    <Select value={environment} onValueChange={value => update('environment', value)}><SelectTrigger aria-label="Report environment" className="h-9 w-auto min-w-[170px] gap-2 border-0 shadow-none"><span className="text-muted-foreground">Environment:</span><SelectValue /></SelectTrigger><SelectContent>{FLAG_ENVIRONMENTS.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
-    <Select value={selection} onValueChange={value => update('rule', value)}><SelectTrigger aria-label="Report rule" className="h-9 w-auto min-w-[145px] max-w-[270px] gap-2 border-0 shadow-none"><span className="text-muted-foreground">Rule:</span><SelectValue /></SelectTrigger><SelectContent>{TYPES.filter(item => item !== 'Testing').map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}{rules.filter(rule => rule.type === 'Testing').map(rule => <SelectItem key={rule.id} value={`rule:${rule.id}`}>{rule.type} · {rule.name}</SelectItem>)}</SelectContent></Select>
+    <Select value={environment} onValueChange={value => update('environment', value)}><SelectTrigger aria-label={`Report environment: ${environment}, flag ${environmentEnabled ? 'on' : 'off'}`} className="h-8 w-auto gap-2 border-0 text-sm shadow-none"><Layers className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" /><SelectValue /><span aria-hidden="true" title={`Flag is ${environmentEnabled ? 'on' : 'off'} for ${environment}`} className={`size-1.5 shrink-0 rounded-full ${environmentEnabled ? 'bg-[var(--success-fg)]' : 'bg-[var(--warning-fg)]'}`} /></SelectTrigger><SelectContent>{FLAG_ENVIRONMENTS.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
+    <Select value={selection} onValueChange={value => update('rule', value)}><SelectTrigger aria-label="Report rule" className="h-8 w-auto max-w-[270px] gap-2 border-0 text-sm shadow-none"><span className="shrink-0 text-muted-foreground" aria-hidden="true">{type === 'Rollout' ? <ArrowRight className="size-4" /> : type === 'Testing' ? <FlaskConical className="size-4" /> : <UserRound className="size-4" />}</span><SelectValue /></SelectTrigger><SelectContent>{TYPES.filter(item => item !== 'Testing').map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}{rules.filter(rule => rule.type === 'Testing').map(rule => <SelectItem key={rule.id} value={`rule:${rule.id}`}>{rule.type} · {rule.name}</SelectItem>)}</SelectContent></Select>
   </div>;
   return <ReportsPage featureFlagReport campaignOverride={campaign} leadingControls={controls} resultsTable={type !== 'Testing' ? <FlagGroupedResults rules={selected} type={type} /> : undefined} emptyMessage={(type === 'Testing' ? visitors === 0 : selected.length === 0) ? 'No report data for this selection yet. Reports appear after a rule receives user activity.' : undefined} />;
 }

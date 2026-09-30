@@ -733,9 +733,9 @@ function ReportsChrome({
       >
         <div
           ref={tabsBarRef}
-          className={cn("z-40 flex shrink-0 justify-between gap-4 border-b border-border bg-background px-4", featureFlagReport ? "h-14 items-center" : "h-[52px] items-end")}
+          className={cn("z-40 flex shrink-0 justify-between gap-4 border-b border-border bg-background px-4", featureFlagReport ? "h-10 items-center" : "h-[52px] items-end")}
         >
-          <div className={cn("flex min-w-0 gap-4 overflow-x-auto", featureFlagReport ? "h-full items-center" : "items-end")}>
+          <div className={cn("flex min-w-0 gap-4 overflow-x-auto", featureFlagReport ? "h-full items-center overflow-y-hidden" : "items-end")}>
           {leadingControls}
           <TabsList className={cn("gap-5 rounded-none bg-transparent p-0", featureFlagReport ? "h-full" : "h-auto")}>
             {TABS.filter(tab => !featureFlagReport || tab !== "Overview").map((tab) => (
