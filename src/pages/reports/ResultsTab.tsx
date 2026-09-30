@@ -5932,7 +5932,9 @@ function CompareView({
 export default function ResultsTab({
   campaign,
   onNavigateToVitals,
+  resultsTable,
 }: {
+  resultsTable?: ReactNode;
   campaign: Campaign;
   onNavigateToVitals: () => void;
 }) {
@@ -6058,14 +6060,14 @@ export default function ResultsTab({
                   onViewVitalsDetails={onNavigateToVitals}
                 />
                 <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
-                <div className="border-b border-border">
+                {!resultsTable && <div className="border-b border-border">
                   <ConclusionBanner
                     conclusion={conclusion}
                     variantName={best.name}
                     controlName={campaign.report.variants[0]?.name ?? "Control"}
                     embedded
                   />
-                </div>
+                </div>}
                 <div className="border-b border-border px-4 pb-0 pt-4">
                   <ReportViewBar
                     campaignId={campaign.id}
@@ -6079,7 +6081,7 @@ export default function ResultsTab({
                     }
                   />
                 </div>
-                {isStatisticsPreset ? (
+                {resultsTable ?? (isStatisticsPreset ? (
                   <StatisticsPresetEmptyState metricName={selectedMetric} />
                 ) : viewSettings.layout === "graphs-first" ? (
                   <div className="flex flex-col gap-12">
@@ -6132,7 +6134,7 @@ export default function ResultsTab({
                       defaultGraph={viewSettings.defaultGraph}
                     />
                   </div>
-                )}
+                ))}
                 </div>
               </div>
             </>

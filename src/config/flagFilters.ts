@@ -1,3 +1,4 @@
+import { FLAG_ENVIRONMENTS, rulesForFlag } from "../data/featureFlagRules";
 import type { FeatureFlag } from "../data/featureFlags";
 
 export type FlagFilterField = "createdBy" | "creationDate" | "environment";
@@ -26,13 +27,7 @@ export function getFlagFilterFields(rows: FeatureFlag[]): FlagFilterFieldDef[] {
   const creators = [...new Set(rows.map((r) => r.createdBy))].sort((a, b) =>
     a.localeCompare(b)
   );
-  const environments = [
-    ...new Set(
-      rows
-        .map((r) => r.environment)
-        .filter((e): e is NonNullable<FeatureFlag["environment"]> => e != null)
-    ),
-  ].sort((a, b) => a.localeCompare(b));
+  const environments = FLAG_ENVIRONMENTS;
   return [
     { field: "creationDate", label: "Creation Date", options: [...CREATION_DATE_OPTIONS] },
     { field: "createdBy", label: "Campaign Creator", options: creators },
@@ -70,7 +65,11 @@ function matches(row: FeatureFlag, filter: FlagFilter): boolean {
 
   let value: string | string[];
   if (filter.field === "createdBy") value = row.createdBy;
-  else value = row.environment ?? "";
+  else {
+    const allowed = Array.isArray(filter.value) ? filter.value : [filter.value];
+    const hit = rulesForFlag(row.id).some(rule => allowed.includes(rule.environment));
+    return filter.op === "isNoneOf" ? !hit : hit;
+  }
 
   if (filter.op === "is") return value === filter.value;
   const allowed = Array.isArray(filter.value) ? filter.value : [filter.value];

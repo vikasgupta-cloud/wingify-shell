@@ -1,5 +1,6 @@
 /** Feature Management detail placeholder — breadcrumbs from DetailShell; body is Coming soon. */
 
+import FeatureFlagDetail from "./FeatureFlagDetail";
 import ComingSoonState from "@/components/empty/ComingSoonState";
 import {
   FLAG_REPORT_CONFIG,
@@ -26,6 +27,7 @@ const COPY: Record<
 };
 
 export default function FlagDetailPage({ listPath }: { listPath: string }) {
+  if (listPath === "/feature-management/feature-flags") return <FeatureFlagDetail />;
   const kind = FLAG_REPORT_PATHS[listPath];
   const report = kind ? FLAG_REPORT_CONFIG[kind] : undefined;
   const preset = COPY[listPath];

@@ -27,7 +27,6 @@ export type FlagView = { id: string; name: string; state: FlagViewState };
 export const FLAG_OVERVIEW_ID = "flag-overview";
 
 const SEED_TABLE_ID = "flag-seed-table";
-const SEED_CARD_ID = "flag-seed-card";
 
 function makeState(layout: FlagLayout): FlagViewState {
   return {
@@ -44,7 +43,6 @@ export const FLAG_BASE_STATE: FlagViewState = makeState("table");
 function seedViews(): FlagView[] {
   return [
     { id: SEED_TABLE_ID, name: "Table View", state: makeState("table") },
-    { id: SEED_CARD_ID, name: "Card View", state: makeState("card") },
   ];
 }
 
@@ -272,8 +270,8 @@ export const useFlagViewsStore = create<FlagViewsState>()(
         const p = persisted as Partial<
           Pick<FlagViewsState, "views" | "activeViewId" | "defaultViewId">
         >;
-        const views =
-          Array.isArray(p.views) && p.views.length ? p.views : current.views;
+        const tableViews = Array.isArray(p.views) ? p.views.filter(view => view.state.layout === "table") : [];
+        const views = tableViews.length ? tableViews : current.views;
         const isView = (id: string | undefined) =>
           !!id && views.some((v) => v.id === id);
         const defaultViewId = isView(p.defaultViewId)

@@ -5,6 +5,9 @@ export type FlagRowDensity = "compact" | "default" | "comfortable";
 
 type FlagTableState = {
   search: string;
+  createdFrom: string;
+  createdTo: string;
+  setCreatedRange: (from: string, to: string) => void;
   pageSize: number;
   page: number;
   rowDensity: FlagRowDensity;
@@ -18,6 +21,9 @@ export const useFlagTableStore = create<FlagTableState>()(
   persist(
     (set) => ({
       search: "",
+      createdFrom: "",
+      createdTo: "",
+      setCreatedRange: (createdFrom, createdTo) => set({ createdFrom, createdTo, page: 1 }),
       pageSize: 10,
       page: 1,
       rowDensity: "default",

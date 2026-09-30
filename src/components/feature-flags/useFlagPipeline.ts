@@ -48,11 +48,14 @@ export function sortFeatureFlags(
 
 export function useFlagPipeline(): FeatureFlag[] {
   const rows = useVisibleFeatureFlags();
-  const search = useFlagTableStore((s) => s.search);
+  const { search, createdFrom, createdTo } = useFlagTableStore();
   const { filters, sort } = useActiveFlagViewState();
 
   return useMemo(() => {
-    const filtered = applyFlagFilters(rows, filters);
+    const filtered = applyFlagFilters(rows, filters).filter(flag => {
+      const day = flag.createdOn.slice(0, 10);
+      return (!createdFrom || day >= createdFrom) && (!createdTo || day <= createdTo);
+    });
     const q = search.trim().toLowerCase();
     const searched = q
       ? filtered.filter(
@@ -60,5 +63,5 @@ export function useFlagPipeline(): FeatureFlag[] {
         )
       : filtered;
     return sortFeatureFlags(searched, sort);
-  }, [rows, filters, search, sort]);
+  }, [rows, filters, search, sort, createdFrom, createdTo]);
 }

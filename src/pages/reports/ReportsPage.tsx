@@ -699,7 +699,15 @@ function ReportsChrome({
   setActiveTab,
   tabsBarRef,
   tabsBarHeight,
+  leadingControls,
+  emptyMessage,
+  featureFlagReport = false,
+  resultsTable,
 }: {
+  resultsTable?: ReactNode;
+  featureFlagReport?: boolean;
+  leadingControls?: ReactNode;
+  emptyMessage?: string;
   activeTab: string;
   setActiveTab: (value: string) => void;
   tabsBarRef: RefObject<HTMLDivElement | null>;
@@ -725,21 +733,24 @@ function ReportsChrome({
       >
         <div
           ref={tabsBarRef}
-          className="z-40 flex h-[52px] shrink-0 items-end justify-between gap-4 border-b border-border bg-background px-4"
+          className={cn("z-40 flex shrink-0 justify-between gap-4 border-b border-border bg-background px-4", featureFlagReport ? "h-14 items-center" : "h-[52px] items-end")}
         >
-          <TabsList className="h-auto gap-5 rounded-none bg-transparent p-0">
-            {TABS.map((tab) => (
+          <div className={cn("flex min-w-0 gap-4 overflow-x-auto", featureFlagReport ? "h-full items-center" : "items-end")}>
+          {leadingControls}
+          <TabsList className={cn("gap-5 rounded-none bg-transparent p-0", featureFlagReport ? "h-full" : "h-auto")}>
+            {TABS.filter(tab => !featureFlagReport || tab !== "Overview").map((tab) => (
               <TabsTrigger
                 key={tab}
                 value={tabValue(tab)}
-                className="relative rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:scale-x-0 after:bg-foreground after:transition-transform data-[state=active]:after:scale-x-100"
+                className={cn("relative rounded-none border-0 bg-transparent px-1 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:scale-x-0 after:bg-foreground after:transition-transform data-[state=active]:after:scale-x-100", featureFlagReport ? "h-full py-0" : "pb-3 pt-2")}
               >
                 {tab}
               </TabsTrigger>
             ))}
           </TabsList>
+          </div>
 
-          <div className="flex shrink-0 items-center gap-2 pb-2.5">
+          <div className={cn("flex shrink-0 items-center gap-2", !featureFlagReport && "pb-2.5")}>
             <span className="whitespace-nowrap text-sm text-muted-foreground">
               Last updated {overview.lastUpdated}
             </span>
@@ -753,10 +764,11 @@ function ReportsChrome({
           className="flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden"
           style={{ paddingRight: UTILITY_RAIL_WIDTH }}
         >
-          {activeTab === "results" ? (
+          {emptyMessage ? <div className="flex flex-1 items-center justify-center p-12 text-sm text-muted-foreground">{emptyMessage}</div> : activeTab === "results" ? (
             <ResultsTab
               key={campaign.id}
               campaign={campaign}
+              resultsTable={resultsTable}
               onNavigateToVitals={() => setActiveTab("vitals")}
             />
           ) : (
@@ -1491,18 +1503,18 @@ function LiveHitsComingSoon() {
   );
 }
 
-export default function ReportsPage() {
+export default function ReportsPage({ campaignOverride, leadingControls, emptyMessage, featureFlagReport = false, resultsTable }: { campaignOverride?: Campaign; leadingControls?: ReactNode; emptyMessage?: string; featureFlagReport?: boolean; resultsTable?: ReactNode } = {}) {
   const { entityId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const campaigns = useVisibleCampaigns();
-  const campaign = campaigns.find((c) => c.id === entityId);
+  const campaign = campaignOverride ?? campaigns.find((c) => c.id === entityId);
   const tabsBarRef = useRef<HTMLDivElement>(null);
   const [tabsBarHeight, setTabsBarHeight] = useState(reportsTabsStickyHeightFallback);
 
-  const defaultTab = campaign ? defaultReportTab(campaign.status) : "overview";
+  const defaultTab = featureFlagReport ? "results" : campaign ? defaultReportTab(campaign.status) : "overview";
   const tabParam = searchParams.get("tab");
   const activeTab =
-    tabParam && REPORT_TAB_VALUES.has(tabParam) ? tabParam : defaultTab;
+    tabParam && REPORT_TAB_VALUES.has(tabParam) && !(featureFlagReport && tabParam === "overview") ? tabParam : defaultTab;
 
   const setActiveTab = (value: string) => {
     setSearchParams(
@@ -1534,7 +1546,7 @@ export default function ReportsPage() {
     );
   }
 
-  if (!hasReport(campaign.status)) {
+  if (!campaignOverride && !hasReport(campaign.status)) {
     return <ReportsEmptyState campaign={campaign} />;
   }
 
@@ -1545,6 +1557,10 @@ export default function ReportsPage() {
         setActiveTab={setActiveTab}
         tabsBarRef={tabsBarRef}
         tabsBarHeight={tabsBarHeight}
+        leadingControls={leadingControls}
+        emptyMessage={emptyMessage}
+        featureFlagReport={featureFlagReport}
+        resultsTable={resultsTable}
       />
     </ReportDataProvider>
   );

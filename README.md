@@ -19,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL Vite prints (usually `http://localhost:5173`).
+Open `http://localhost:5174`. The dev server uses port 5174 and exits if that port is already in use.
 
 | Script | Purpose |
 | --- | --- |

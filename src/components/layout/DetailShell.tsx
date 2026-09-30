@@ -217,7 +217,7 @@ function FlagSurfaceTabs({
   /** Match WE Configure/Reports — PenLine + FileBarChart (Flag Rollout). */
   withIcons?: boolean;
 }) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const configPath = `${basePath}/c/${entityId}`;
   const secondaryPath = `${configPath}${secondary.suffix}`;
   const onSecondary = pathname.endsWith(secondary.suffix);
@@ -230,6 +230,16 @@ function FlagSurfaceTabs({
         ? "border-foreground text-foreground"
         : "border-transparent text-muted-foreground hover:text-foreground"
     );
+
+  if (basePath === "/feature-management/feature-flags") {
+    return <nav aria-label="Feature flag sections" className="flex items-stretch gap-4">
+      {[
+        { label: "Configuration", suffix: "/configuration" },
+        { label: "Environment & Rules", suffix: "/rules" },
+        { label: "Reports", suffix: "/reports" },
+      ].map(item => <Link key={item.suffix} to={`${configPath}${item.suffix}${search}`} aria-current={pathname.endsWith(item.suffix) ? "page" : undefined} className={tab(pathname.endsWith(item.suffix))}>{item.label}</Link>)}
+    </nav>;
+  }
 
   return (
     <div className="flex items-stretch gap-4">
