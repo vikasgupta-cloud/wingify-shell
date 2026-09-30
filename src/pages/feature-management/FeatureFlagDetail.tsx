@@ -61,10 +61,7 @@ function FlagWorkspace({ flagId }: { flagId: string }) {
     const timeout = window.setTimeout(() => setNotice(null), 3000);
     return () => window.clearTimeout(timeout);
   }, [notice]);
-  const { holdout, analysis, setAnalysis, configuration, saveConfiguration } = useFlagDetailPreferences();
-  const [configTab, setConfigTab] = useState('Variables');
-  const [config, setConfig] = useState<Record<string, string>>(configuration[flagId] ?? { Variables: 'enabled: boolean = false', Variations: 'Control\nVariation 1', Metrics: 'Conversion rate' });
-  const [savedConfig, setSavedConfig] = useState(false);
+  const { holdout, analysis, setAnalysis } = useFlagDetailPreferences();
   const environmentRules = rules.filter(rule => rule.environment === environment);
   const rollout = environmentRules.filter(rule => rule.type === 'Rollout');
   const experiments = environmentRules.filter(rule => rule.type !== 'Rollout');
@@ -84,12 +81,11 @@ function FlagWorkspace({ flagId }: { flagId: string }) {
     catch { setNotice({ message: 'Couldn’t copy. Please select and copy the text manually.' }); }
   }
 
-  if (section === 'configuration') return <div className="mx-auto w-full max-w-5xl p-10">
-    <h1 className="text-2xl font-semibold">Configuration</h1><p className="mt-2 text-sm text-muted-foreground">Shared configuration across all environments.</p>
-    <Tabs value={configTab} onValueChange={setConfigTab} className="mt-8"><TabsList>{['Variables','Variations','Metrics'].map(name => <TabsTrigger key={name} value={name}>{name}</TabsTrigger>)}</TabsList></Tabs>
-    <Card className="mt-5"><CardContent className="space-y-4 p-6"><Label htmlFor="shared-config">{configTab}</Label><Input id="shared-config" value={config[configTab]} onChange={event => { setConfig({ ...config, [configTab]: event.target.value }); setSavedConfig(false); }} /><p className="text-sm text-muted-foreground">{configTab === 'Variables' ? 'Define the values your application receives.' : configTab === 'Variations' ? 'Define the experiences used by your rules.' : 'Choose the shared success metrics for this flag.'}</p><Button onClick={() => { saveConfiguration(flagId, config); setSavedConfig(true); }}>Save configuration</Button>{savedConfig && <p role="status" className="text-sm text-muted-foreground">Configuration saved locally.</p>}</CardContent></Card>
-    <Button asChild variant="outline" className="mt-5"><Link to={`${base}/rules`}>Set up environments & rules</Link></Button>
-  </div>;
+  if (section === 'configuration') return <section className="flex min-h-[480px] w-full flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+    <ComingSoonIllustration className="mb-6 h-auto w-full max-w-[280px]" />
+    <h1 className="text-2xl font-semibold">Flag configuration is being built</h1>
+    <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">Soon, you’ll be able to edit this flag’s variables, variations, and metrics here, shared across all environments.</p>
+  </section>;
 
   return <TooltipProvider><div className="flag-rule-workspace flex h-full min-h-full flex-1 overflow-auto">
     <aside aria-label="Flag environments" className="flag-environment-sidebar shrink-0 bg-background p-4">
