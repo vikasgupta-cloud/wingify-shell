@@ -176,8 +176,9 @@ export const NAV: NavItem[] = [
   { label: "Wingz", path: "/wingz", icon: Wand2, group: 1, hideCreate: true, sections: [
     { heading: "Assistant", items: [{ label: "Chat", path: "/wingz/chat", hideCreate: true }]},
     { heading: "Automation", items: [
-      { label: "Agents", path: "/wingz/agents", hideCreate: true },
-      { label: "Workflows", path: "/wingz/workflows", hideCreate: true },
+      { label: "Agents", path: "/wingz/agents" },
+      { label: "Workflows", path: "/wingz/workflows" },
+      { label: "Synthetic A/B", path: "/wingz/synthetic-ab" },
     ]},
     // @undo — What's New removed from Wingz leaf nav
     // { heading: "Discover", items: [{ label: "What's New", path: "/wingz/whats-new", hideCreate: true }]},

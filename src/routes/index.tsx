@@ -75,6 +75,9 @@ import RecommendationDetailPage from "../pages/commerce/RecommendationDetailPage
 import RecommendationReportPage from "../pages/commerce/RecommendationReportPage";
 import WingzChatShell from "../components/wingz/WingzChatShell";
 import WingzChatPage from "../pages/wingz/WingzChatPage";
+import WingzAgentsPage from "../pages/wingz/WingzAgentsPage";
+import WingzWorkflowsPage from "../pages/wingz/WingzWorkflowsPage";
+import WingzSyntheticAbPage from "../pages/wingz/WingzSyntheticAbPage";
 import AnalyticsOverviewPage from "../pages/analytics/AnalyticsOverviewPage";
 import AnalyticsBrowsePage from "../pages/analytics/AnalyticsBrowsePage";
 import AnalyticsItemDetailPage from "../pages/analytics/AnalyticsItemDetailPage";
@@ -489,8 +492,9 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/wingz/chat" replace /> },
           { path: "chat", element: <WingzChatPage /> },
-          { path: "agents", element: <PlaceholderPage /> },
-          { path: "workflows", element: <PlaceholderPage /> },
+          { path: "agents", element: <WingzAgentsPage /> },
+          { path: "workflows", element: <WingzWorkflowsPage /> },
+          { path: "synthetic-ab", element: <WingzSyntheticAbPage /> },
           // @undo — What's New leaf removed from Wingz
           // { path: "whats-new", element: <PlaceholderPage /> },
           { path: "whats-new", element: <Navigate to="/wingz/chat" replace /> },

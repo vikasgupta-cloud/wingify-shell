@@ -132,6 +132,8 @@ const SUMMARISE_EXCLUDED_PATHS = new Set([
   "/plan/observations",
   "/plan/hypotheses",
   "/plan/ideas",
+  "/wingz/workflows",
+  "/wingz/synthetic-ab",
 ]);
 
 /** Summarise on these listing routes without a Create button. */

@@ -100,6 +100,33 @@ CREATE_MENU["/plan/ideas"] = [
   },
 ];
 
+CREATE_MENU["/wingz/agents"] = [
+  {
+    id: "agent",
+    label: "Agent",
+    description: "Build an AI agent for your optimization goals",
+    icon: Plus,
+  },
+];
+
+CREATE_MENU["/wingz/workflows"] = [
+  {
+    id: "workflow",
+    label: "Workflow",
+    description: "Automate campaign and analytics actions",
+    icon: Plus,
+  },
+];
+
+CREATE_MENU["/wingz/synthetic-ab"] = [
+  {
+    id: "synthetic-ab-test",
+    label: "Synthetic A/B test",
+    description: "Create a synthetic experiment to validate ideas",
+    icon: Plus,
+  },
+];
+
 // Sections without a bespoke menu fall back to a single generic option.
 export function getCreateOptions(pathname: string, label: string): CreateOption[] {
   return (
