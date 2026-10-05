@@ -153,7 +153,7 @@ export default function WingzWorkflowsPage() {
                   type="button"
                   className="flex w-56 shrink-0 flex-col gap-3 rounded-xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted"
                 >
-                  {template.scratch ? (
+                  {template.id === "scratch" ? (
                     <span className="flex size-10 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground">
                       <CirclePlus className="size-5" aria-hidden />
                     </span>
