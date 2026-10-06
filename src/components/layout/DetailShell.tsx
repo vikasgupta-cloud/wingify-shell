@@ -113,7 +113,8 @@ import {
   useConceptTestRowsStore,
   useVisibleConceptTests,
 } from "../../store/conceptTestRows";
-import { SURVEY_STATUSES } from "@/data/surveys";
+import SurveyStatusMenu from "@/components/surveys/SurveyStatusMenu";
+import { SURVEY_STATUSES, type Survey } from "@/data/surveys";
 import { CONCEPT_TEST_STATUSES } from "@/data/conceptTests";
 import { FLAG_REPORT_ROWS } from "@/data/flagReports";
 import {
@@ -526,6 +527,118 @@ function filterCampaigns(
   }
   if (q) list = list.filter((c) => c.name.toLowerCase().includes(q));
   return list.map((c) => ({ id: c.id, name: c.name }));
+}
+
+/** Survey detail header actions — status CTA + Clone · History · More (A/B cluster). */
+function SurveyDetailActions({
+  survey,
+  listPath,
+  onRemove,
+}: {
+  survey: Survey;
+  listPath: string;
+  onRemove: (ids: string[]) => void;
+}) {
+  const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5">
+        <SurveyStatusMenu survey={survey} triggerVariant="button" />
+        <div className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Clone survey"
+                onClick={() => {
+                  /* TODO — Clone modal is a deferred prompt */
+                }}
+                className={HEADER_ICON_BTN}
+              >
+                <CopyPlus className="size-4" strokeWidth={1.75} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Clone</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="History"
+                className={HEADER_ICON_BTN}
+              >
+                <History className="size-4" strokeWidth={1.75} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">History</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <DropdownMenuRoot modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="More actions"
+              className={HEADER_ICON_BTN}
+            >
+              <MoreVertical className="size-4" strokeWidth={1.75} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              className={HEADER_MENU_ITEM}
+              onSelect={() => {
+                /* TODO */
+              }}
+            >
+              <Share2 />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className={HEADER_MENU_ITEM}
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <CircleMinus />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuRoot>
+      </div>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete survey?</DialogTitle>
+            <DialogDescription>This can't be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                onRemove([survey.id]);
+                setDeleteOpen(false);
+                navigate(listPath);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 // Campaign detail header actions (Web Exp + Personalize): Status | divider |
@@ -943,9 +1056,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const isPlanDetail =
     basePath === "/plan/observations" || basePath === "/plan/hypotheses";
   // Coming-soon bodies with breadcrumb chrome only (no center tabs / right cluster).
-  // Surveys: detail header without Configure/Reports.
-  const chromeOnlyDetail =
-    isPlanDetail || isSurveyDetail || isConceptTestDetail;
+  // Surveys: A/B-style breadcrumb + CTAs, but no Configure/Reports header tabs.
+  const chromeOnlyDetail = isPlanDetail || isConceptTestDetail;
   const analyticsListCrumb = analyticsListLabel(basePath);
   const analyticsNameOverrides = useAnalyticsRowsStore((s) => s.nameOverrides);
   const analyticsRename = useAnalyticsRowsStore((s) => s.rename);
@@ -1000,6 +1112,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const removeFlag = useFlagRowsStore((s) => s.remove);
   const surveys = useVisibleSurveys();
   const renameSurvey = useSurveyRowsStore((s) => s.rename);
+  const removeSurvey = useSurveyRowsStore((s) => s.remove);
   const conceptTests = useVisibleConceptTests();
   const renameConceptTest = useConceptTestRowsStore((s) => s.rename);
   const renameFlagReport = useFlagReportRowsStore((s) => s.rename);
@@ -2110,7 +2223,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         {/* Center switcher: Configure/Reports for campaigns; Configuration/Rules
             for Feature Flags; Configuration/Reports for Flag Rollout & Testing. */}
         <div className="flex shrink-0 items-end justify-center self-stretch">
-          {isAnalytics || chromeOnlyDetail ? null : isFeatureFlags ? (
+          {isAnalytics || chromeOnlyDetail || isSurveyDetail ? null : isFeatureFlags ? (
             <FlagSurfaceTabs
               basePath={basePath}
               entityId={entityId}
@@ -2141,6 +2254,18 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
         <div className="flex flex-1 items-center justify-end gap-2">
           {isAnalytics ? (
             <AnalyticsDetailActions entityId={entityId} listBase={basePath} />
+          ) : isSurveyDetail && selected ? (
+            (() => {
+              const survey =
+                surveys.find((s) => s.id === selected.id) ?? surveys[0];
+              return survey ? (
+                <SurveyDetailActions
+                  survey={survey}
+                  listPath={basePath}
+                  onRemove={removeSurvey}
+                />
+              ) : null;
+            })()
           ) : isFeatureFlags && selected ? (
             <FeatureFlagsDetailActions
               entityId={selected.id}

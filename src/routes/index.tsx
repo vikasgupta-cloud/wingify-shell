@@ -180,7 +180,7 @@ const addDetailRoute = (leafPath: string) => {
   ) {
     return;
   }
-  // Pulse Surveys — Coming soon detail; DetailShell breadcrumbs only (no Configure/Reports).
+  // Pulse Surveys — Settings Summary; DetailShell breadcrumb + CTAs (no header tabs).
   if (leafPath === "/pulse/surveys") {
     detailRoutes.push({
       path: `${leafPath}/c/:entityId`,

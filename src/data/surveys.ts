@@ -25,6 +25,20 @@ function iso(y: number, m: number, d: number) {
 
 export const SURVEYS: Survey[] = [
   {
+    id: "2401",
+    name: "Blog page survey (Cloned)",
+    url: "https://vwo.com/blog/why-use-breadcrumbs?wingifytestblog=890",
+    status: "Paused",
+    displayed: 4200,
+    attempted: 186,
+    completed: 54,
+    createdOn: iso(2026, 7, 10),
+    createdBy: "Wingify Support",
+    startedOn: iso(2026, 7, 12),
+    labels: ["blog"],
+    platform: "Web",
+  },
+  {
     id: "2118",
     name: "FE _ KB survey_Oct25",
     url: "https://help.vwo.com/hc/en-us/articles/survey-oct25",
