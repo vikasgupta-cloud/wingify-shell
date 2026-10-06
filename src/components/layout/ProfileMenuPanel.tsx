@@ -1,6 +1,6 @@
 // @summary JD avatar flyout: user card + notifications, destinations, language, theme, stubs, Logout.
 // Feedback modal mounts in ExpandedNav (not here) so closing the flyout does not unmount it.
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { ExternalLink, History, Sparkles } from "@/components/icons/protoLucide";
 import {
   CURRENT_USER,
@@ -23,16 +23,22 @@ const PANEL_WIDTH = 280;
 /**
  * Avatar flyout: user card, destinations, light/dark theme, Logout.
  * Button colors / fonts live in the right-edge design floating CTA.
+ * `welcomeChrome` keeps only Language, Theme, and Logout.
  */
 export default function ProfileMenuPanel({
   item,
   onRequestClose,
   onSwitchToOldNav,
+  welcomeChrome: welcomeChromeProp,
 }: {
   item: NavItem;
   onRequestClose?: () => void;
   onSwitchToOldNav?: () => void;
+  welcomeChrome?: boolean;
 }) {
+  const { pathname } = useLocation();
+  const welcomeChrome =
+    welcomeChromeProp ?? pathname === "/design/welcome-start";
   const onOldNavigation = useIsOldNavigationWorkspace();
   const leaveOldNavigation = useWorkspaceStore((s) => s.leaveOldNavigation);
 
@@ -63,12 +69,8 @@ export default function ProfileMenuPanel({
       className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg"
       style={{ width: PANEL_WIDTH }}
     >
-      <div className="flex items-center gap-1 rounded-md bg-muted/40 px-1.5 py-1.5">
-        <NavLink
-          to={PROFILE_DETAILS_PATH}
-          onClick={() => onRequestClose?.()}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1.5 py-1.5 transition-colors hover:bg-muted"
-        >
+      {welcomeChrome ? (
+        <div className="flex items-center gap-3 rounded-md bg-muted/40 px-3 py-2.5">
           <ProfileAvatar initials={CURRENT_USER.initials} size="lg" />
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="truncate text-sm font-semibold tracking-tight text-foreground">
@@ -78,24 +80,65 @@ export default function ProfileMenuPanel({
               {CURRENT_USER.email}
             </span>
           </span>
-        </NavLink>
-        <NotificationsMenu />
-      </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 rounded-md bg-muted/40 px-1.5 py-1.5">
+          <NavLink
+            to={PROFILE_DETAILS_PATH}
+            onClick={() => onRequestClose?.()}
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1.5 py-1.5 transition-colors hover:bg-muted"
+          >
+            <ProfileAvatar initials={CURRENT_USER.initials} size="lg" />
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="truncate text-sm font-semibold tracking-tight text-foreground">
+                {CURRENT_USER.name}
+              </span>
+              <span className="truncate text-xs text-muted-foreground">
+                {CURRENT_USER.email}
+              </span>
+            </span>
+          </NavLink>
+          <NotificationsMenu />
+        </div>
+      )}
 
-      {mainSections.flatMap((section) =>
-        section.items.map((leaf) => {
+      {!welcomeChrome &&
+        mainSections.flatMap((section) =>
+          section.items.map((leaf) => {
+            const Icon = leaf.icon;
+            return (
+              <NavLink
+                key={leaf.path}
+                to={leaf.path}
+                onClick={() => onRequestClose?.()}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted",
+                    isActive && "bg-accent font-medium"
+                  )
+                }
+              >
+                {Icon && (
+                  <Icon
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    strokeWidth={1.75}
+                  />
+                )}
+                <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
+              </NavLink>
+            );
+          })
+        )}
+
+      {!welcomeChrome &&
+        beforeLogout.map((leaf) => {
           const Icon = leaf.icon;
           return (
             <NavLink
               key={leaf.path}
               to={leaf.path}
               onClick={() => onRequestClose?.()}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted",
-                  isActive && "bg-accent font-medium"
-                )
-              }
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
             >
               {Icon && (
                 <Icon
@@ -106,73 +149,56 @@ export default function ProfileMenuPanel({
               <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
             </NavLink>
           );
-        })
+        })}
+
+      {!welcomeChrome && (
+        <button
+          type="button"
+          title="Opens in a new tab"
+          onClick={() => onRequestClose?.()}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          <ExternalLink
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={1.75}
+            aria-hidden
+          />
+          <span className="min-w-0 flex-1 truncate">Product updates</span>
+        </button>
       )}
-
-      {beforeLogout.map((leaf) => {
-        const Icon = leaf.icon;
-        return (
-          <NavLink
-            key={leaf.path}
-            to={leaf.path}
-            onClick={() => onRequestClose?.()}
-            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-          >
-            {Icon && (
-              <Icon
-                className="h-4 w-4 shrink-0 text-muted-foreground"
-                strokeWidth={1.75}
-              />
-            )}
-            <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
-          </NavLink>
-        );
-      })}
-
-      <button
-        type="button"
-        title="Opens in a new tab"
-        onClick={() => onRequestClose?.()}
-        className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
-      >
-        <ExternalLink
-          className="h-4 w-4 shrink-0 text-muted-foreground"
-          strokeWidth={1.75}
-          aria-hidden
-        />
-        <span className="min-w-0 flex-1 truncate">Product updates</span>
-      </button>
 
       <LanguageMenu />
 
       <ColorModeToggle className="rounded-md px-3" />
 
-      <button
-        type="button"
-        onClick={() => {
-          onRequestClose?.();
-          if (onOldNavigation) leaveOldNavigation();
-          else onSwitchToOldNav?.();
-        }}
-        className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
-      >
-        {onOldNavigation ? (
-          <Sparkles
-            className="h-4 w-4 shrink-0 text-muted-foreground"
-            strokeWidth={1.75}
-          />
-        ) : (
-          <History
-            className="h-4 w-4 shrink-0 text-muted-foreground"
-            strokeWidth={1.75}
-          />
-        )}
-        <span className="min-w-0 flex-1 truncate">
-          {onOldNavigation
-            ? "Switch to new Navigation"
-            : "Switch to old Navigation"}
-        </span>
-      </button>
+      {!welcomeChrome && (
+        <button
+          type="button"
+          onClick={() => {
+            onRequestClose?.();
+            if (onOldNavigation) leaveOldNavigation();
+            else onSwitchToOldNav?.();
+          }}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          {onOldNavigation ? (
+            <Sparkles
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          ) : (
+            <History
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          )}
+          <span className="min-w-0 flex-1 truncate">
+            {onOldNavigation
+              ? "Switch to new Navigation"
+              : "Switch to old Navigation"}
+          </span>
+        </button>
+      )}
 
       {logoutLeaf ? (
         <NavLink

@@ -46,6 +46,7 @@ import UpgradeWingzPage from "../pages/upgrade/UpgradeWingzPage";
 import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import FormGalleryPage from "../pages/design/FormGalleryPage";
 import DesignSystemPage from "../pages/design/DesignSystemPage";
+import WelcomeStartPreviewPage from "../pages/design/WelcomeStartPreviewPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
 import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
@@ -509,6 +510,11 @@ export const router = createBrowserRouter([
           { path: "/", element: <Navigate to="/home/dashboard" replace /> },
           { path: "/design/charts", element: <AnalyticsChartsPage /> },
           { path: "/design/forms", element: <FormGalleryPage /> },
+          // Design preview — not listed in nav; rail shows Help + Profile only.
+          {
+            path: "/design/welcome-start",
+            element: <WelcomeStartPreviewPage />,
+          },
           {
             path: "/design-system",
             element: <Navigate to="/design-system/overview" replace />,

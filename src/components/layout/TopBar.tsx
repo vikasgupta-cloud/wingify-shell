@@ -135,6 +135,8 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
     );
   };
 
+  const welcomeChrome = pathname === "/design/welcome-start";
+
   return (
     <header
       data-slot="top-bar"
@@ -149,16 +151,20 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
     >
       <div className="flex min-w-0 items-center gap-1.5">
         {showLogo ? <WingifyLogoButton /> : null}
-        <WorkspaceSwitcher />
-        <span className="text-sm text-muted-foreground" aria-hidden>
-          /
-        </span>
-        <BreadcrumbNav />
+        {!welcomeChrome && (
+          <>
+            <WorkspaceSwitcher />
+            <span className="text-sm text-muted-foreground" aria-hidden>
+              /
+            </span>
+            <BreadcrumbNav />
+          </>
+        )}
       </div>
 
       {/* Actions slot — first-level TopBar only (not DetailShell / DrillIn). */}
       <div className="flex shrink-0 items-center gap-2">
-        {pathname === "/home/dashboard" && (
+        {!welcomeChrome && pathname === "/home/dashboard" && (
           <ChromeExtensionBanner
             preferCollapsed={
               isTrialOverWorkspace ||
@@ -167,10 +173,10 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
             }
           />
         )}
-        {isGetStartedWorkspace && !getStartedEmailVerified && (
+        {!welcomeChrome && isGetStartedWorkspace && !getStartedEmailVerified && (
           <VerifyEmailNotice onVerify={() => navigate(GET_STARTED_PATH)} />
         )}
-        {pathname === "/analytics/overview" && (
+        {!welcomeChrome && pathname === "/analytics/overview" && (
           <Badge
             tone="green"
             fill="light"
@@ -181,7 +187,7 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
             Collecting Data
           </Badge>
         )}
-        {showsSummarise(pathname) && (
+        {!welcomeChrome && showsSummarise(pathname) && (
           <Button
             type="button"
             variant="outline"
@@ -195,7 +201,8 @@ export default function TopBar({ showLogo = false }: { showLogo?: boolean }) {
             Summarise
           </Button>
         )}
-        {showsCreate(pathname) &&
+        {!welcomeChrome &&
+          showsCreate(pathname) &&
           (createOptions.length === 1 ? (
             // Single option (e.g. Attributes): Create fires directly — no dropdown.
             <Button

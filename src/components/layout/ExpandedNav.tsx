@@ -278,12 +278,24 @@ export default function ExpandedNav({
   useClampedFlyoutTop(moreNestedRef, moreNested);
 
   const isVisible = (i: NavItem) => !i.pinnable || pinnedPaths.includes(i.path);
-  const group1 = nav.filter((i) => i.group === 1 && isVisible(i));
-  const group2 = nav.filter((i) => i.group === 2 && isVisible(i));
-  const group3 = nav.filter((i) => i.group === 3);
-  const unpinned = nav.filter(
-    (i) => i.pinnable && !pinnedPaths.includes(i.path)
-  );
+  // Welcome preview: real rail chrome, but product links have not appeared yet —
+  // only Help + Profile (group 3) stay active.
+  const welcomeChrome = pathname === "/design/welcome-start";
+  const group1 = welcomeChrome
+    ? []
+    : nav.filter((i) => i.group === 1 && isVisible(i));
+  const group2 = welcomeChrome
+    ? []
+    : nav.filter((i) => i.group === 2 && isVisible(i));
+  const group3 = welcomeChrome
+    ? nav.filter(
+        (i) =>
+          i.group === 3 && (i.path === "/helpdesk" || i.path === "/profile")
+      )
+    : nav.filter((i) => i.group === 3);
+  const unpinned = welcomeChrome
+    ? []
+    : nav.filter((i) => i.pinnable && !pinnedPaths.includes(i.path));
   const flyoutItem = flyout
     ? nav.find((i) => i.path === flyout.path)
     : undefined;
@@ -846,23 +858,26 @@ export default function ExpandedNav({
               </span>
             </div>
 
-            <div
-              className={cn(
-                "mt-4 flex shrink-0 flex-col gap-0.5",
-                expanded ? "px-3" : "px-2"
-              )}
-            >
-              {group1.map((i) => renderItem(i))}
-            </div>
-            {separator}
+            {!welcomeChrome && (
+              <div
+                className={cn(
+                  "mt-4 flex shrink-0 flex-col gap-0.5",
+                  expanded ? "px-3" : "px-2"
+                )}
+              >
+                {group1.map((i) => renderItem(i))}
+              </div>
+            )}
+            {!welcomeChrome && separator}
             <div
               className={cn(
                 "flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-                expanded ? "px-3" : "px-2"
+                expanded ? "px-3" : "px-2",
+                welcomeChrome && "mt-4"
               )}
             >
-              {group2.map((i) => renderItem(i))}
-              {unpinned.length > 0 && (
+              {!welcomeChrome && group2.map((i) => renderItem(i))}
+              {!welcomeChrome && unpinned.length > 0 && (
                 <>
                   <div
                     className="grid"
@@ -923,7 +938,7 @@ export default function ExpandedNav({
             >
               {group3.map((i) => renderItem(i))}
               {/* Expand/collapse under profile: icon-only, right-aligned with chevrons when open. */}
-              {!forceCollapsed && (
+              {!forceCollapsed && !welcomeChrome && (
                 <div
                   className={cn(
                     "mt-0.5 flex items-center gap-0.5 rounded-md transition-[background-color,width] duration-200",
@@ -999,6 +1014,7 @@ export default function ExpandedNav({
                 item={flyoutItem}
                 onRequestClose={() => setFlyout(null)}
                 onSwitchToOldNav={() => setOldNavFeedbackOpen(true)}
+                welcomeChrome={welcomeChrome}
               />
             ) : (
               <SubNavPanel
