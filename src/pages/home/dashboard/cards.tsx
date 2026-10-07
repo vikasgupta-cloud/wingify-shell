@@ -200,11 +200,13 @@ export function WingzHero() {
   return (
     <section className="mx-auto w-full max-w-3xl">
       <header className="flex flex-col items-center text-center">
-        <h2 className="relative font-heading text-[1.875rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2rem]">
-          <Sparkles
-            className="pointer-events-none absolute right-full top-[0.2em] mr-2.5 size-[0.9em] text-foreground"
+        <h2 className="inline-flex items-center gap-2.5 font-heading text-[1.875rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2rem]">
+          <span
+            className="relative inline-block h-[1cap] w-[1cap] shrink-0 text-foreground"
             aria-hidden
-          />
+          >
+            <Sparkles className="absolute left-1/2 top-1/2 size-[1.35cap] -translate-x-1/2 -translate-y-[54%]" />
+          </span>
           Meet Wingz
         </h2>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">

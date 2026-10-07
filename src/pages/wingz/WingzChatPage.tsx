@@ -7,10 +7,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
+  BarChart3,
   ChevronDown,
   FileText,
   Files,
+  Flag,
   FlaskConical,
+  Layers,
+  Lightbulb,
   MessageSquare,
   Mic,
   PanelLeft,
@@ -34,12 +38,11 @@ import {
   isCampaignEditIntent,
   WINGZ_CHAT_CTAS,
   WINGZ_COMPOSER_PLACEHOLDER,
+  WINGZ_CONTINUE_CHAT,
   WINGZ_EMPTY_SUBTITLE,
   WINGZ_RECENT_ACTIVITY,
   WINGZ_SAVED_CHATS,
   WINGZ_TASKS,
-  WINGZ_TIP,
-  WINGZ_USER_FIRST_NAME,
   wingzAskForUrlMessage,
   wingzCampaignArtifactMessage,
   wingzCanvasOpenedMessage,
@@ -59,11 +62,10 @@ import { useRowsStore, useVisibleCampaigns } from "@/store/rows";
 import { useWingzStore } from "@/store/wingz";
 
 const CTA_ICONS = {
-  create: FlaskConical,
-  analyze: Sparkles,
-  friction: MessageSquare,
-  ideas: Sparkles,
-  explore: MessageSquare,
+  analyze: BarChart3,
+  friction: Layers,
+  ideas: Lightbulb,
+  explore: Flag,
 } as const;
 
 type CanvasSurface = "editor" | "form";
@@ -384,12 +386,15 @@ function Composer({
   onSend,
   onAttach,
   compact,
+  empty,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSend: () => void;
   onAttach?: (files: FileList) => void;
   compact?: boolean;
+  /** Empty landing — softer focus, hide Thinking until a thread starts. */
+  empty?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -397,7 +402,9 @@ function Composer({
     <div
       className={cn(
         "rounded-2xl border border-border bg-background transition-[box-shadow,border-color] duration-200",
-        "focus-within:border-[var(--semantic-border-focus)] focus-within:ring-2 focus-within:ring-[var(--semantic-border-focus)]/15"
+        empty
+          ? "focus-within:border-border focus-within:ring-2 focus-within:ring-foreground/5"
+          : "focus-within:border-[var(--semantic-border-focus)] focus-within:ring-2 focus-within:ring-[var(--semantic-border-focus)]/15"
       )}
     >
       <Textarea
@@ -440,24 +447,28 @@ function Composer({
           </Button>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            Thinking
-            <ChevronDown className="size-3.5 opacity-60" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8 text-muted-foreground hover:text-foreground"
-            aria-label="Voice input"
-          >
-            <Mic className="size-4" />
-          </Button>
+          {!empty && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              Thinking
+              <ChevronDown className="size-3.5 opacity-60" />
+            </Button>
+          )}
+          {!empty && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8 text-muted-foreground hover:text-foreground"
+              aria-label="Voice input"
+            >
+              <Mic className="size-4" />
+            </Button>
+          )}
           <Button
             type="button"
             size="icon"
@@ -712,49 +723,77 @@ export default function WingzChatPage() {
       {isEmpty ? (
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-10">
           <div className="mx-auto w-full max-w-2xl">
-            <header className="flex flex-col items-center text-center">
-              <h1 className="relative font-heading text-[1.875rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2rem]">
-                <Sparkles
-                  className="pointer-events-none absolute right-full top-[0.2em] mr-2.5 size-[0.9em] text-foreground"
-                  aria-hidden
-                />
-                Hey there, {WINGZ_USER_FIRST_NAME}
-              </h1>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            <header className="animate-in fade-in-0 slide-in-from-bottom-1 flex flex-col items-center text-center duration-300 fill-mode-both">
+              <div className="flex items-center gap-2 text-foreground">
+                <Sparkles className="size-4" strokeWidth={1.75} aria-hidden />
+                <h1 className="text-base font-semibold tracking-tight">Wingz</h1>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
                 {WINGZ_EMPTY_SUBTITLE}
               </p>
             </header>
 
-            <div className="mt-8 space-y-4">
-              <Composer
-                value={prompt}
-                onChange={setPrompt}
-                onSend={() => send()}
-                onAttach={attachFiles}
-              />
+            <div className="mt-8 space-y-5">
+              <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both duration-300 delay-100">
+                <Composer
+                  value={prompt}
+                  onChange={setPrompt}
+                  onSend={() => send()}
+                  onAttach={attachFiles}
+                  empty
+                />
+              </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-2">
+              <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both flex flex-wrap items-center justify-center gap-x-1 gap-y-1 duration-300 delay-150">
                 {WINGZ_CHAT_CTAS.map((cta) => {
                   const Icon = CTA_ICONS[cta.id];
                   return (
                     <Button
                       key={cta.id}
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="rounded-full shadow-none"
+                      className="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-foreground"
                       onClick={() => send(cta.prompt)}
                     >
-                      <Icon aria-hidden />
+                      <Icon className="size-3.5" aria-hidden />
                       {cta.label}
                     </Button>
                   );
                 })}
               </div>
 
-              <p className="pt-2 text-center text-xs text-muted-foreground">
-                {WINGZ_TIP}
-              </p>
+              <div className="animate-in fade-in-0 fill-mode-both space-y-3 pt-2 duration-300 delay-200">
+                <Separator />
+                <p className="text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Continue
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChatId(WINGZ_CONTINUE_CHAT.id);
+                    setMessages([
+                      wingzUserMessage(WINGZ_CONTINUE_CHAT.preview),
+                      wingzReplyFor(WINGZ_CONTINUE_CHAT.preview),
+                    ]);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-muted"
+                >
+                  <MessageSquare
+                    className="size-4 shrink-0 text-muted-foreground"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                    {WINGZ_CONTINUE_CHAT.title}
+                  </span>
+                  {WINGZ_CONTINUE_CHAT.relativeTime ? (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {WINGZ_CONTINUE_CHAT.relativeTime}
+                    </span>
+                  ) : null}
+                </button>
+              </div>
             </div>
           </div>
         </div>

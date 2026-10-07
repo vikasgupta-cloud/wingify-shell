@@ -45,6 +45,8 @@ export type WingzSavedChat = {
   id: string;
   title: string;
   preview: string;
+  /** Relative time label for empty-state Continue row (dummy). */
+  relativeTime?: string;
 };
 
 export type WingzTask = {
@@ -55,7 +57,7 @@ export type WingzTask = {
 export const WINGZ_USER_FIRST_NAME = "Vikas";
 
 export const WINGZ_EMPTY_SUBTITLE =
-  "Ask about campaigns, recordings, heatmaps, and test ideas. All in one conversation.";
+  "Ask about campaigns, heatmaps, and ideas.";
 
 export const WINGZ_COMPOSER_PLACEHOLDER =
   "Ask anything, draft a campaign, or analyze your data…";
@@ -63,12 +65,8 @@ export const WINGZ_COMPOSER_PLACEHOLDER =
 export const WINGZ_TIP =
   "Tip: Type @ to add an Agent — choose one to pull insights, run analyses, or ask follow-ups.";
 
+/** Empty-state starters — quiet text actions (no Create; product chrome owns that). */
 export const WINGZ_CHAT_CTAS = [
-  {
-    id: "create",
-    label: "Create a campaign",
-    prompt: "Create a campaign",
-  },
   {
     id: "analyze",
     label: "Analyze data",
@@ -104,8 +102,9 @@ export const WINGZ_RECENT_ACTIVITY = [
 export const WINGZ_SAVED_CHATS: WingzSavedChat[] = [
   {
     id: "c1",
-    title: "New A/B Test Setup",
-    preview: "Help me set up a homepage CTA test…",
+    title: "Free Trial Sign Up Problem Analysis",
+    preview: "Where are free-trial visitors dropping off…",
+    relativeTime: "57 minutes ago",
   },
   {
     id: "c2",
@@ -128,6 +127,9 @@ export const WINGZ_SAVED_CHATS: WingzSavedChat[] = [
     preview: "Compare US vs UK conversion…",
   },
 ];
+
+/** Single Continue row under the empty composer. */
+export const WINGZ_CONTINUE_CHAT = WINGZ_SAVED_CHATS[0];
 
 function stamp(): string {
   return new Date().toLocaleString("en-US", {
