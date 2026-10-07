@@ -616,17 +616,24 @@ const modeLeaf = (id: string): NavLeaf => {
 };
 
 // Profile is its own flyout entry but lands inside the Settings shell.
+// Sections map 1:1 to flyout divider groups (user card is rendered separately).
 const profileFlyoutSections: NavSection[] = [
   {
     items: [
       { label: "Profile", path: PROFILE_DETAILS_PATH, hideCreate: true, icon: Contact },
     ],
   },
-  { items: [modeLeaf("configuration")] },
-  { items: [modeLeaf("settings")] },
+  // Destinations — Configuration / Settings / Upgrade
   {
     items: [
+      modeLeaf("configuration"),
+      modeLeaf("settings"),
       modeLeaf("upgrade"),
+    ],
+  },
+  // Session
+  {
+    items: [
       { label: "Logout", path: LOGOUT_PATH, hideCreate: true, icon: LogOut },
     ],
   },

@@ -20,10 +20,18 @@ import ProfileAvatar from "./ProfileAvatar";
 
 const PANEL_WIDTH = 280;
 
+function ProfileMenuDivider() {
+  return <div className="my-1.5 h-px bg-border" role="separator" />;
+}
+
 /**
- * Avatar flyout: user card, destinations, light/dark theme, Logout.
- * Button colors / fonts live in the right-edge design floating CTA.
- * `welcomeChrome` keeps only Language, Theme, and Logout.
+ * Avatar flyout — max 3 dividers (no line after the profile card):
+ * 1. User card + destinations (Configuration / Settings / Upgrade)
+ * 2. Product updates + Language / Theme
+ * 3. Navigation switch
+ * 4. Logout
+ *
+ * `welcomeChrome` keeps user card, Language, Theme, and Logout.
  */
 export default function ProfileMenuPanel({
   item,
@@ -44,24 +52,15 @@ export default function ProfileMenuPanel({
 
   if (!item.sections) return null;
 
-  const sections = item.sections
-    .map((section) => ({
-      ...section,
-      items: section.items.filter((leaf) => leaf.path !== PROFILE_DETAILS_PATH),
-    }))
-    .filter((section) => section.items.length > 0);
-
-  const mainSections = sections.filter(
-    (section) => !section.items.some((leaf) => leaf.path === LOGOUT_PATH)
-  );
-  const logoutSection = sections.find((section) =>
-    section.items.some((leaf) => leaf.path === LOGOUT_PATH)
-  );
-  const beforeLogout =
-    logoutSection?.items.filter((leaf) => leaf.path !== LOGOUT_PATH) ?? [];
-  const logoutLeaf = logoutSection?.items.find(
-    (leaf) => leaf.path === LOGOUT_PATH
-  );
+  const destinationLeaves = item.sections
+    .flatMap((section) => section.items)
+    .filter(
+      (leaf) =>
+        leaf.path !== PROFILE_DETAILS_PATH && leaf.path !== LOGOUT_PATH
+    );
+  const logoutLeaf = item.sections
+    .flatMap((section) => section.items)
+    .find((leaf) => leaf.path === LOGOUT_PATH);
   const LogoutIcon = logoutLeaf?.icon;
 
   return (
@@ -69,6 +68,7 @@ export default function ProfileMenuPanel({
       className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg"
       style={{ width: PANEL_WIDTH }}
     >
+      {/* Group 1 — identity + destinations (no divider after profile) */}
       {welcomeChrome ? (
         <div className="flex items-center gap-3 rounded-md bg-muted/40 px-3 py-2.5">
           <ProfileAvatar initials={CURRENT_USER.initials} size="lg" />
@@ -103,42 +103,19 @@ export default function ProfileMenuPanel({
       )}
 
       {!welcomeChrome &&
-        mainSections.flatMap((section) =>
-          section.items.map((leaf) => {
-            const Icon = leaf.icon;
-            return (
-              <NavLink
-                key={leaf.path}
-                to={leaf.path}
-                onClick={() => onRequestClose?.()}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted",
-                    isActive && "bg-accent font-medium"
-                  )
-                }
-              >
-                {Icon && (
-                  <Icon
-                    className="h-4 w-4 shrink-0 text-muted-foreground"
-                    strokeWidth={1.75}
-                  />
-                )}
-                <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
-              </NavLink>
-            );
-          })
-        )}
-
-      {!welcomeChrome &&
-        beforeLogout.map((leaf) => {
+        destinationLeaves.map((leaf) => {
           const Icon = leaf.icon;
           return (
             <NavLink
               key={leaf.path}
               to={leaf.path}
               onClick={() => onRequestClose?.()}
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted",
+                  isActive && "bg-accent font-medium"
+                )
+              }
             >
               {Icon && (
                 <Icon
@@ -151,6 +128,8 @@ export default function ProfileMenuPanel({
           );
         })}
 
+      {/* Divider 1 — utilities / preferences */}
+      <ProfileMenuDivider />
       {!welcomeChrome && (
         <button
           type="button"
@@ -166,54 +145,60 @@ export default function ProfileMenuPanel({
           <span className="min-w-0 flex-1 truncate">Product updates</span>
         </button>
       )}
-
       <LanguageMenu />
-
       <ColorModeToggle className="rounded-md px-3" />
 
-      {!welcomeChrome && (
-        <button
-          type="button"
-          onClick={() => {
-            onRequestClose?.();
-            if (onOldNavigation) leaveOldNavigation();
-            else onSwitchToOldNav?.();
-          }}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
-        >
-          {onOldNavigation ? (
-            <Sparkles
-              className="h-4 w-4 shrink-0 text-muted-foreground"
-              strokeWidth={1.75}
-            />
-          ) : (
-            <History
-              className="h-4 w-4 shrink-0 text-muted-foreground"
-              strokeWidth={1.75}
-            />
-          )}
-          <span className="min-w-0 flex-1 truncate">
-            {onOldNavigation
-              ? "Switch to new Navigation"
-              : "Switch to old Navigation"}
-          </span>
-        </button>
-      )}
+      {/* Divider 2 — navigation switch */}
+      {!welcomeChrome ? (
+        <>
+          <ProfileMenuDivider />
+          <button
+            type="button"
+            onClick={() => {
+              onRequestClose?.();
+              if (onOldNavigation) leaveOldNavigation();
+              else onSwitchToOldNav?.();
+            }}
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
+          >
+            {onOldNavigation ? (
+              <Sparkles
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+            ) : (
+              <History
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+            )}
+            <span className="min-w-0 flex-1 truncate">
+              {onOldNavigation
+                ? "Switch to new Navigation"
+                : "Switch to old Navigation"}
+            </span>
+          </button>
+        </>
+      ) : null}
 
+      {/* Divider 3 — session */}
       {logoutLeaf ? (
-        <NavLink
-          to={logoutLeaf.path}
-          onClick={() => onRequestClose?.()}
-          className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-        >
-          {LogoutIcon && (
-            <LogoutIcon
-              className="h-4 w-4 shrink-0 text-muted-foreground"
-              strokeWidth={1.75}
-            />
-          )}
-          <span className="min-w-0 flex-1 truncate">{logoutLeaf.label}</span>
-        </NavLink>
+        <>
+          <ProfileMenuDivider />
+          <NavLink
+            to={logoutLeaf.path}
+            onClick={() => onRequestClose?.()}
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+          >
+            {LogoutIcon && (
+              <LogoutIcon
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+            )}
+            <span className="min-w-0 flex-1 truncate">{logoutLeaf.label}</span>
+          </NavLink>
+        </>
       ) : null}
     </nav>
   );
