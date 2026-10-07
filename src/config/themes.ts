@@ -34,12 +34,17 @@ export const THEME_IDS = [
 ] as const;
 
 export const COLOR_MODES = ["light", "dark"] as const;
+export const COLOR_MODE_PREFERENCES = ["light", "dark", "system"] as const;
 
 export type ThemeId = (typeof THEME_IDS)[number];
+/** Resolved surface mode used for tokens / `data-mode`. */
 export type ColorMode = (typeof COLOR_MODES)[number];
+/** User-facing theme preference (may follow the OS). */
+export type ColorModePreference = (typeof COLOR_MODE_PREFERENCES)[number];
 
 export const DEFAULT_THEME_ID: ThemeId = "wingify";
 export const DEFAULT_COLOR_MODE: ColorMode = "light";
+export const DEFAULT_COLOR_MODE_PREFERENCE: ColorModePreference = "light";
 
 const LEGACY_THEME_IDS: Record<string, ThemeId> = {
   warm: "yellow",
@@ -191,6 +196,15 @@ export function isColorMode(value: unknown): value is ColorMode {
   );
 }
 
+export function isColorModePreference(
+  value: unknown
+): value is ColorModePreference {
+  return (
+    typeof value === "string" &&
+    (COLOR_MODE_PREFERENCES as readonly string[]).includes(value)
+  );
+}
+
 export function resolveThemeId(value: unknown): ThemeId {
   if (isThemeId(value)) return value;
   if (typeof value === "string" && value in LEGACY_THEME_IDS) {
@@ -203,6 +217,32 @@ export function resolveColorMode(value: unknown): ColorMode {
   return isColorMode(value) ? value : DEFAULT_COLOR_MODE;
 }
 
+/** Migrate stored light/dark/system into a preference. */
+export function resolveColorModePreference(
+  value: unknown
+): ColorModePreference {
+  return isColorModePreference(value)
+    ? value
+    : isColorMode(value)
+      ? value
+      : DEFAULT_COLOR_MODE_PREFERENCE;
+}
+
+export function getSystemColorMode(): ColorMode {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return DEFAULT_COLOR_MODE;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+export function resolveEffectiveColorMode(
+  preference: ColorModePreference
+): ColorMode {
+  return preference === "system" ? getSystemColorMode() : preference;
+}
+
 export function applyTheme(themeId: ThemeId, colorMode: ColorMode) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -213,6 +253,7 @@ export function applyTheme(themeId: ThemeId, colorMode: ColorMode) {
 export function readStoredTheme(): {
   themeId: ThemeId;
   colorMode: ColorMode;
+  colorModePreference: ColorModePreference;
   ctaTokenId: string | null;
   backgroundTokenId: string | null;
   headerTokenId: string | null;
@@ -223,6 +264,7 @@ export function readStoredTheme(): {
     return {
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
+      colorModePreference: DEFAULT_COLOR_MODE_PREFERENCE,
       ctaTokenId: null,
       backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
       headerTokenId: DEFAULT_HEADER_TOKEN_ID,
@@ -236,6 +278,7 @@ export function readStoredTheme(): {
       return {
         themeId: DEFAULT_THEME_ID,
         colorMode: DEFAULT_COLOR_MODE,
+        colorModePreference: DEFAULT_COLOR_MODE_PREFERENCE,
         ctaTokenId: null,
         backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
         headerTokenId: DEFAULT_HEADER_TOKEN_ID,
@@ -247,6 +290,7 @@ export function readStoredTheme(): {
       state?: {
         themeId?: unknown;
         colorMode?: unknown;
+        colorModePreference?: unknown;
         ctaTokenId?: unknown;
         backgroundTokenId?: unknown;
         headerTokenId?: unknown;
@@ -260,7 +304,10 @@ export function readStoredTheme(): {
         : null;
     const rawTheme = parsed?.state?.themeId;
     const themeId = resolveThemeId(rawTheme);
-    const colorMode = resolveColorMode(parsed?.state?.colorMode);
+    const colorModePreference = resolveColorModePreference(
+      parsed?.state?.colorModePreference ?? parsed?.state?.colorMode
+    );
+    const colorMode = resolveEffectiveColorMode(colorModePreference);
     const chrome =
       themeId === "wingify"
         ? resolveWingifyChromeTokens(
@@ -281,6 +328,7 @@ export function readStoredTheme(): {
     return {
       themeId,
       colorMode,
+      colorModePreference,
       ctaTokenId: cta,
       backgroundTokenId: chrome.backgroundTokenId,
       headerTokenId: chrome.headerTokenId,
@@ -298,6 +346,7 @@ export function readStoredTheme(): {
     return {
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
+      colorModePreference: DEFAULT_COLOR_MODE_PREFERENCE,
       ctaTokenId: null,
       backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
       headerTokenId: DEFAULT_HEADER_TOKEN_ID,

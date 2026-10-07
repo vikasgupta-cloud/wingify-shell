@@ -1,5 +1,9 @@
-import { Moon, Palette, Sun } from "@/components/icons/protoLucide";
-import { THEMES, type ThemeId } from "../../config/themes";
+import { Monitor, Moon, Palette, Sun } from "@/components/icons/protoLucide";
+import {
+  THEMES,
+  type ColorModePreference,
+  type ThemeId,
+} from "../../config/themes";
 import {
   FORM_ELEMENT_SCHEMES,
   type FormElementSchemeId,
@@ -26,11 +30,22 @@ export default function ThemePicker({
 }) {
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
+  const colorModePreference = useThemeStore((s) => s.colorModePreference);
   const formElementSchemeId = useThemeStore((s) => s.formElementSchemeId);
   const setTheme = useThemeStore((s) => s.setTheme);
   const setColorMode = useThemeStore((s) => s.setColorMode);
   const setFormElementScheme = useThemeStore((s) => s.setFormElementScheme);
   const yellowSelected = themeId === "yellow";
+
+  const modeOptions: {
+    value: ColorModePreference;
+    label: string;
+    icon: typeof Sun;
+  }[] = [
+    { value: "light", label: "Light", icon: Sun },
+    { value: "dark", label: "Dark", icon: Moon },
+    { value: "system", label: "System", icon: Monitor },
+  ];
 
   return (
     <div className={cn(compact ? "px-1.5 py-2.5" : "px-3 py-3.5", className)}>
@@ -49,39 +64,27 @@ export default function ThemePicker({
 
         <div
           role="group"
-          aria-label="Light or dark"
+          aria-label="Light, dark, or system"
           className="inline-flex rounded-lg border border-border bg-background p-0.5"
         >
-          <button
-            type="button"
-            aria-pressed={colorMode === "light"}
-            aria-label="Light"
-            onClick={() => setColorMode("light")}
-            className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors",
-              colorMode === "light"
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Sun className="size-3.5" strokeWidth={1.75} />
-            Light
-          </button>
-          <button
-            type="button"
-            aria-pressed={colorMode === "dark"}
-            aria-label="Dark"
-            onClick={() => setColorMode("dark")}
-            className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors",
-              colorMode === "dark"
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Moon className="size-3.5" strokeWidth={1.75} />
-            Dark
-          </button>
+          {modeOptions.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={colorModePreference === value}
+              aria-label={label}
+              onClick={() => setColorMode(value)}
+              className={cn(
+                "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors",
+                colorModePreference === value
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="size-3.5" strokeWidth={1.75} />
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 

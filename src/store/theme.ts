@@ -21,10 +21,13 @@ import {
 } from "../config/surfaceTokens";
 import {
   DEFAULT_COLOR_MODE,
+  DEFAULT_COLOR_MODE_PREFERENCE,
   DEFAULT_THEME_ID,
-  resolveColorMode,
+  resolveColorModePreference,
+  resolveEffectiveColorMode,
   resolveThemeId,
   type ColorMode,
+  type ColorModePreference,
   type ThemeId,
 } from "../config/themes";
 
@@ -50,7 +53,10 @@ function isWingifyDefaultChrome(
 
 type ThemeState = {
   themeId: ThemeId;
+  /** Resolved light/dark used for tokens and chrome. */
   colorMode: ColorMode;
+  /** User preference — may be `system`. */
+  colorModePreference: ColorModePreference;
   ctaTokenId: string | null;
   backgroundTokenId: string | null;
   /** Shared grey for table / kanban / gantt headers. */
@@ -59,7 +65,9 @@ type ThemeState = {
   /** Chrome / body / card surface preset. null = theme defaults. */
   surfaceSchemeId: SurfaceSchemeId | null;
   setTheme: (themeId: ThemeId) => void;
-  setColorMode: (colorMode: ColorMode) => void;
+  setColorMode: (preference: ColorModePreference) => void;
+  /** Re-resolve when OS preference changes while on System. */
+  syncSystemColorMode: () => void;
   setCtaToken: (ctaTokenId: string | null) => void;
   setBackgroundToken: (backgroundTokenId: string | null) => void;
   setHeaderToken: (headerTokenId: string | null) => void;
@@ -93,6 +101,7 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       themeId: DEFAULT_THEME_ID,
       colorMode: DEFAULT_COLOR_MODE,
+      colorModePreference: DEFAULT_COLOR_MODE_PREFERENCE,
       ctaTokenId: null,
       backgroundTokenId: DEFAULT_BACKGROUND_TOKEN_ID,
       headerTokenId: DEFAULT_HEADER_TOKEN_ID,
@@ -119,7 +128,9 @@ export const useThemeStore = create<ThemeState>()(
         );
         set({ themeId, ctaTokenId: null, ...chrome });
       },
-      setColorMode: (colorMode) => {
+      setColorMode: (preference) => {
+        const colorModePreference = resolveColorModePreference(preference);
+        const colorMode = resolveEffectiveColorMode(colorModePreference);
         const {
           themeId,
           ctaTokenId,
@@ -153,11 +164,19 @@ export const useThemeStore = create<ThemeState>()(
           nextSurface
         );
         set({
+          colorModePreference,
           colorMode,
           backgroundTokenId: nextBg,
           headerTokenId: nextHeader,
           surfaceSchemeId: nextSurface,
         });
+      },
+      syncSystemColorMode: () => {
+        const { colorModePreference, colorMode } = get();
+        if (colorModePreference !== "system") return;
+        const next = resolveEffectiveColorMode("system");
+        if (next === colorMode) return;
+        get().setColorMode("system");
       },
       setCtaToken: (ctaTokenId) => {
         const {
@@ -274,6 +293,7 @@ export const useThemeStore = create<ThemeState>()(
         set({
           themeId: DEFAULT_THEME_ID,
           colorMode: DEFAULT_COLOR_MODE,
+          colorModePreference: DEFAULT_COLOR_MODE_PREFERENCE,
           ctaTokenId: null,
           backgroundTokenId: chrome.backgroundTokenId,
           headerTokenId: chrome.headerTokenId,
@@ -287,6 +307,7 @@ export const useThemeStore = create<ThemeState>()(
       partialize: (s) => ({
         themeId: s.themeId,
         colorMode: s.colorMode,
+        colorModePreference: s.colorModePreference,
         ctaTokenId: s.ctaTokenId,
         backgroundTokenId: s.backgroundTokenId,
         headerTokenId: s.headerTokenId,
@@ -299,7 +320,10 @@ export const useThemeStore = create<ThemeState>()(
           ?.themeId;
         const wasYellowB = rawTheme === "yellow-b";
         const themeId = resolveThemeId(rawTheme ?? current.themeId);
-        const colorMode = resolveColorMode(p.colorMode ?? current.colorMode);
+        const colorModePreference = resolveColorModePreference(
+          p.colorModePreference ?? p.colorMode ?? current.colorModePreference
+        );
+        const colorMode = resolveEffectiveColorMode(colorModePreference);
         const formElementSchemeId = resolveFormElementSchemeId(
           wasYellowB
             ? "yellow-maroon"
@@ -330,6 +354,7 @@ export const useThemeStore = create<ThemeState>()(
           ...current,
           ...p,
           themeId,
+          colorModePreference,
           colorMode,
           ctaTokenId: resolveCtaTokenId(p.ctaTokenId ?? current.ctaTokenId),
           backgroundTokenId: chrome.backgroundTokenId,
@@ -344,7 +369,10 @@ export const useThemeStore = create<ThemeState>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         const themeId = resolveThemeId(state.themeId);
-        const colorMode = resolveColorMode(state.colorMode);
+        const colorModePreference = resolveColorModePreference(
+          state.colorModePreference ?? state.colorMode
+        );
+        const colorMode = resolveEffectiveColorMode(colorModePreference);
         const surfaceSchemeId =
           state.surfaceSchemeId === undefined
             ? DEFAULT_SURFACE_SCHEME_ID
@@ -360,6 +388,8 @@ export const useThemeStore = create<ThemeState>()(
                 backgroundTokenId: resolveNeutralTokenId(state.backgroundTokenId),
                 headerTokenId: resolveNeutralTokenId(state.headerTokenId),
               };
+        state.colorModePreference = colorModePreference;
+        state.colorMode = colorMode;
         state.surfaceSchemeId = surfaceSchemeId;
         state.backgroundTokenId = chrome.backgroundTokenId;
         state.headerTokenId = chrome.headerTokenId;

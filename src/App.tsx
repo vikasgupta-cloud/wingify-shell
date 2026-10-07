@@ -11,6 +11,8 @@ import BootSplash from "./components/layout/BootSplash";
 export default function App() {
   const themeId = useThemeStore((s) => s.themeId);
   const colorMode = useThemeStore((s) => s.colorMode);
+  const colorModePreference = useThemeStore((s) => s.colorModePreference);
+  const syncSystemColorMode = useThemeStore((s) => s.syncSystemColorMode);
   const ctaTokenId = useThemeStore((s) => s.ctaTokenId);
   const backgroundTokenId = useThemeStore((s) => s.backgroundTokenId);
   const headerTokenId = useThemeStore((s) => s.headerTokenId);
@@ -37,6 +39,15 @@ export default function App() {
     formElementSchemeId,
     surfaceSchemeId,
   ]);
+
+  useEffect(() => {
+    if (colorModePreference !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => syncSystemColorMode();
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [colorModePreference, syncSystemColorMode]);
 
   useEffect(() => {
     applyFonts(fontAssignments);
