@@ -1,13 +1,27 @@
+/*
+ * Change summary: the expand/collapse navigation toggle no longer occupies a row under the
+ * profile item. It is now a small round handle straddling the nav's right border, centred on the
+ * Activity separator line (zero-height anchor, so no slot is used), revealed only while
+ * hovering the nav (or keyboard-focusing it). Reuses the shadcn `Button` (outline variant), the
+ * existing Radix tooltip styling, and `toggleDock`. Old markup is kept commented out (@undo).
+ * Icon: ChevronRight (expand) / ChevronLeft (collapse) from the existing protoLucide set.
+ * The open nav's "More" section is renamed "Unpinned" and is now a collapsible header
+ * (collapsed by default), reusing the existing ChevronDown + grid accordion transition.
+ * The bottom profile row shows the active workspace (reused `WorkspaceKindIcon` + workspace
+ * store label) instead of the JD avatar; it still opens the same profile menu.
+ */
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Crown,
   ExternalLink,
   MoreHorizontal,
-  PanelLeft,
+  // PanelLeft, // @undo — replaced by ChevronLeft/ChevronRight on the edge handle
   Pin,
   PinOff,
 } from "@/components/icons/protoLucide";
@@ -26,6 +40,7 @@ import { canUnpinPath, useUIStore } from "../../store/ui";
 import { useMascotPreviewStore } from "../../store/mascotPreview";
 import { mascotForPath } from "../../config/mascots";
 import { cn } from "../../lib/utils";
+import { Button } from "@/components/ui/button";
 import { IconVariantOverride } from "../icons/IconLibraryProvider";
 import SubNavPanel from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
@@ -34,6 +49,8 @@ import ActivityOverviewPopover from "./ActivityOverviewPopover";
 import HelpSupportPopover from "./HelpSupportPopover";
 import WingifyLogoButton from "./WingifyLogoButton";
 import ProfileAvatar from "./ProfileAvatar";
+import { WorkspaceKindIcon } from "./WorkspaceSwitcher";
+import { useActiveWorkspace } from "@/store/workspace";
 import { useHasUnreadNotifications } from "@/store/notifications";
 import { useProfileSubmenuStore } from "@/store/profileSubmenu";
 
@@ -141,6 +158,12 @@ export default function ExpandedNav({
     null
   );
   const [oldNavFeedbackOpen, setOldNavFeedbackOpen] = useState(false);
+  const activeWorkspace = useActiveWorkspace();
+  // Unpinned section in the open nav starts collapsed each time the nav opens.
+  const [unpinnedOpen, setUnpinnedOpen] = useState(false);
+  useEffect(() => {
+    if (!expanded) setUnpinnedOpen(false);
+  }, [expanded]);
   const closeTimer = useRef<number | undefined>(undefined);
   const flyoutRef = useRef<HTMLDivElement>(null);
   const [moreFlyout, setMoreFlyout] = useState<{ top: number } | null>(null);
@@ -357,7 +380,26 @@ export default function ExpandedNav({
         strokeWidth={1.75}
       />
     );
-    const leadingIcon = item.initials ? (
+    const isProfile = item.path === "/profile";
+    const label = isProfile ? activeWorkspace.label : item.label;
+    const leadingIcon = isProfile ? (
+      <span className="relative inline-flex shrink-0">
+        <WorkspaceKindIcon
+          workspace={activeWorkspace}
+          className={
+            isActive && !expanded && !activeWorkspace.isMainAccount
+              ? "text-rail-active-foreground"
+              : undefined
+          }
+        />
+        {hasUnreadNotifications ? (
+          <span
+            className="absolute -right-1 -top-1 size-2 rounded-full bg-[var(--status-running-fg)] ring-2 ring-panel"
+            aria-hidden
+          />
+        ) : null}
+      </span>
+    ) : item.initials ? (
       <ProfileAvatar
         initials={item.initials}
         size="sm"
@@ -415,7 +457,7 @@ export default function ExpandedNav({
       >
         <button
           type="button"
-          aria-label={item.label}
+          aria-label={label}
           aria-expanded={expandOnly ? flyout?.path === item.path : undefined}
           onClick={(e) => {
             if (navDisabled) return;
@@ -464,7 +506,7 @@ export default function ExpandedNav({
             {leadingIcon}
           </span>
           <span className={labelClass} style={{ transition: revealTransition }}>
-            {item.label}
+            {label}
           </span>
         </button>
 
@@ -821,7 +863,7 @@ export default function ExpandedNav({
   return (
     <Tooltip.Provider delayDuration={300} skipDelayDuration={100}>
       <div
-        className="relative h-full shrink-0 overflow-hidden"
+        className="group/nav relative h-full shrink-0 overflow-hidden"
         style={{
           width: expanded ? EXPANDED_NAV_WIDTH : RAIL_WIDTH,
           transition: widthTransition,
@@ -871,10 +913,41 @@ export default function ExpandedNav({
                     aria-hidden={!expanded}
                   >
                     <div className="min-h-0 overflow-hidden">
+                      {/* @undo — was a static "More" label with items always listed:
                       <div className="px-2.5 pb-1 pt-4 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                         More
                       </div>
                       {unpinned.map((i) => renderItem(i, true))}
+                      */}
+                      <button
+                        type="button"
+                        aria-expanded={unpinnedOpen}
+                        tabIndex={expanded ? undefined : -1}
+                        onClick={() => setUnpinnedOpen((o) => !o)}
+                        // pr-0 + size-4 chevron lines up with the row chevrons (8px from nav edge).
+                        className="flex w-full items-center justify-between pb-1 pl-2.5 pr-0 pt-8 text-[11px] font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                      >
+                        Unpinned
+                        <ChevronDown
+                          className={cn(
+                            "size-4 transition-transform duration-200",
+                            unpinnedOpen && "rotate-180"
+                          )}
+                        />
+                      </button>
+                      <div
+                        className="grid"
+                        style={{
+                          gridTemplateRows: unpinnedOpen ? "1fr" : "0fr",
+                          opacity: unpinnedOpen ? 1 : 0,
+                          transition: accordionTransition,
+                        }}
+                        aria-hidden={!unpinnedOpen}
+                      >
+                        <div className="min-h-0 overflow-hidden">
+                          {unpinned.map((i) => renderItem(i, true))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div
@@ -889,7 +962,7 @@ export default function ExpandedNav({
                     <div className="min-h-0 overflow-hidden">
                       <button
                         type="button"
-                        aria-label="More navigation items"
+                        aria-label="Unpinned navigation items"
                         tabIndex={expanded ? -1 : undefined}
                         onClick={(e) => openMoreFlyout(e.currentTarget)}
                         onMouseEnter={(e) => openMoreFlyout(e.currentTarget)}
@@ -913,6 +986,57 @@ export default function ExpandedNav({
                 </>
               )}
             </div>
+            {/* Zero-height anchor: the toggle is centred on the Activity separator's rule
+                (mt = separator's my-2.5 + half the 1px rule) without taking a nav slot. It's
+                fixed (top left at its static position) so it can straddle the nav's right
+                border despite the clipping wrappers. */}
+            {!forceCollapsed && !welcomeChrome && (
+              <div className="relative h-0 shrink-0">
+                <div>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label={
+                          isDocked ? "Collapse navigation" : "Expand navigation"
+                        }
+                        aria-pressed={isDocked}
+                        onClick={toggleDock}
+                        className={cn(
+                          "pointer-events-none fixed z-30 mt-[calc(0.625rem+0.5px)] h-[22px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 shadow-sm transition-opacity duration-150 focus-visible:pointer-events-auto focus-visible:opacity-100 [&_svg]:size-[11px]",
+                          // Stay hidden while a nav flyout is open so it never sits on top of one.
+                          !flyout &&
+                            !moreFlyout &&
+                            "group-hover/nav:pointer-events-auto group-hover/nav:opacity-100"
+                        )}
+                        style={{
+                          left: expanded ? EXPANDED_NAV_WIDTH : RAIL_WIDTH,
+                          transition: `left ${WIDTH_MS}ms ${WIDTH_EASE}, opacity 150ms`,
+                        }}
+                      >
+                        {/* @undo — was: <PanelLeft strokeWidth={1.75} /> */}
+                        {isDocked ? (
+                          <ChevronLeft strokeWidth={1.75} />
+                        ) : (
+                          <ChevronRight strokeWidth={1.75} />
+                        )}
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        side="right"
+                        sideOffset={8}
+                        className={tooltipContentClass}
+                      >
+                        {isDocked ? "Collapse navigation" : "Expand navigation"}
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </div>
+              </div>
+            )}
             {separator}
             <div
               className={cn(
@@ -921,7 +1045,8 @@ export default function ExpandedNav({
               )}
             >
               {group3.map((i) => renderItem(i))}
-              {/* Expand/collapse under profile: icon-only, left-aligned with nav icons when open. */}
+              {/* @undo — previous in-list expand/collapse row (took a nav slot under profile).
+              Expand/collapse under profile: icon-only, left-aligned with nav icons when open.
               {!forceCollapsed && !welcomeChrome && (
                 <div
                   className={cn(
@@ -960,6 +1085,7 @@ export default function ExpandedNav({
                   </Tooltip.Root>
                 </div>
               )}
+              */}
             </div>
           </div>
         </nav>

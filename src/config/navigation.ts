@@ -1,3 +1,8 @@
+/*
+ * Change summary: Configuration is now a group-3 rail item above Activity (reuses the existing
+ * Settings2 icon and /configuration drill-in) and is removed from the profile flyout; the
+ * drill-in mode switcher (jdSwitcherGroups) still lists it.
+ */
 import type { LucideIcon } from "@/components/icons/protoLucide";
 import {
   Home,
@@ -466,6 +471,8 @@ export const NAV: NavItem[] = [
       },
     ],
   },
+  // Direct item; "/configuration" index redirects to the first Configuration leaf.
+  { label: "Configuration", path: "/configuration", icon: Settings2, group: 3, hideCreate: true },
   { label: "Activity", path: "/activity-timeline", icon: Activity, group: 3, flyoutOnly: true, hideCreate: true },
   { label: "Need Help?", path: "/helpdesk", icon: Headphones, group: 3, flyoutOnly: true, hideCreate: true },
   // Settings lives in the Profile flyout (no rail gear). Avatar expands options; does not navigate.
@@ -744,10 +751,10 @@ const profileFlyoutSections: NavSection[] = [
       { label: "Profile", path: PROFILE_DETAILS_PATH, hideCreate: true, icon: Contact },
     ],
   },
-  // Destinations — Configuration / Settings / Upgrade
+  // Destinations — Settings / Upgrade (Configuration moved to the rail above Activity)
   {
     items: [
-      modeLeaf("configuration"),
+      // modeLeaf("configuration"), // @undo
       modeLeaf("settings"),
       modeLeaf("upgrade"),
     ],
@@ -777,7 +784,13 @@ export type JdSwitcherItem = {
 
 /** Same order/grouping as the Profile flyout, minus Logout and Profile (user card only). */
 export function jdSwitcherGroups(): JdSwitcherItem[][] {
-  return profileFlyoutSections
+  // Configuration left the profile menu for the rail, but the drill-in switcher still lists it.
+  const switcherSections = profileFlyoutSections.map((section) =>
+    section.items.some((i) => i.path === "/settings")
+      ? { ...section, items: [modeLeaf("configuration"), ...section.items] }
+      : section
+  );
+  return switcherSections
     .map((section) =>
       section.items
         .filter(

@@ -1,4 +1,5 @@
 /** Workspace switcher — golden crown for main, building for subs, #id badge; selected = neutral-50 (no check). */
+/* Change summary: `WorkspaceKindIcon` is now exported so the nav's bottom workspace row reuses it. */
 
 import { useState, type MouseEvent } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -96,7 +97,7 @@ function WorkspaceIdBadge({
   );
 }
 
-function WorkspaceKindIcon({
+export function WorkspaceKindIcon({
   workspace,
   className,
 }: {

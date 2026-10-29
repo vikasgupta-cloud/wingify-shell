@@ -1,3 +1,4 @@
+/* Change summary: Configuration drill-in pages now highlight the Configuration rail item, not the profile row. */
 import type { LucideIcon } from "lucide-react";
 import {
   NAV,
@@ -28,7 +29,10 @@ export const TOP_CHROME_HEIGHT = 56;
 export function findItemByPath(pathname: string): NavItem | undefined {
   const mode = findProfileMode(pathname);
   if (mode) {
-    // All Profile-mode drill-ins highlight the JD avatar (Settings is flyout-only).
+    // Configuration has its own rail item; other Profile-mode drill-ins highlight the profile row.
+    if (mode.id === "configuration") {
+      return NAV.find((i) => i.path === mode.path);
+    }
     return NAV.find((i) => i.path === "/profile");
   }
   // Prefer the longest matching path among the item and its leaves so a leaf
