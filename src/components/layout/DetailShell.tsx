@@ -1,8 +1,18 @@
 /** DetailShell — entity detail chrome (header crumbs, tabs, overlay nav).
  * @summary Section crumb + analytics Overview/Browse are plain text (no switcher);
  * board + entity switchers unchanged. Reuses resolveBreadcrumb, Popover, shadcn menus.
+ * @summary Entity name spans carry `data-crumb-fit` so DetailCrumbOverflow knows when to fold the
+ * inline workspace/product icon steps back into ⋯ (only when the name would truncate).
+ * @summary Trail is icons everywhere except the entity name: section crumb uses LeafCrumb
+ * `iconOnly`, analytics list crumb is its nav icon (text Link kept as fallback), and analytics
+ * detail now passes its product to DetailCrumbOverflow.
+ * @summary Tight headers: the entity name group shrinks first but keeps at least half its name
+ * (and the rename pencil) visible — measured floor via useShrinkFloor (src/lib/useShrinkFloor.ts);
+ * the workspace crumb gives way after it. Once the workspace has folded to its icon, the name may
+ * go below half (down to a few letters) so nothing overlaps the centred tabs.
  */
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useShrinkFloor } from "@/lib/useShrinkFloor";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 // @undo — section-crumb DropdownMenu removed; entity/header menus use shadcn DropdownMenu.
@@ -66,7 +76,12 @@ import {
   resolveBreadcrumb,
 } from "../../lib/nav";
 import { useIsGetStartedLocked } from "@/store/getStartedOnboarding";
-import { LeafCrumb, ProductCrumb } from "./CrumbSwitchers";
+import {
+  CrumbIconTooltip,
+  crumbIconTriggerClass,
+  LeafCrumb,
+  ProductCrumb,
+} from "./CrumbSwitchers";
 import { cn } from "../../lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1142,6 +1157,8 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const entityGroupRef = useRef<HTMLDivElement>(null);
+  useShrinkFloor(entityGroupRef, { selector: "[data-crumb-fit]", keep: 0.5, tightEm: 3 });
   const switcherClickTimer = useRef<number | undefined>(undefined);
 
   const productRows = isPersonalize
@@ -1540,9 +1557,10 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
 
               <div className="flex min-w-0 items-center gap-1.5 text-sm">
                 <DetailCrumbOverflow
+                  product={item}
                   earlier={
                     isAnalyticsBoardContext
-                      ? [{ label: analyticsListCrumb, to: basePath }]
+                      ? [{ label: analyticsListCrumb, to: basePath, icon: leaf?.icon }]
                       : undefined
                   }
                 />
@@ -1550,7 +1568,23 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                   /
                 </span>
                 {/* Last two: list (or board when in board context) + entity. */}
-                {!(isAnalyticsBoardContext && contextBoard) && (
+                {!(isAnalyticsBoardContext && contextBoard) && leaf?.icon ? (
+                  <CrumbIconTooltip label={analyticsListCrumb}>
+                    <Link
+                      to={basePath}
+                      aria-label={analyticsListCrumb}
+                      className={crumbIconTriggerClass}
+                    >
+                      <leaf.icon
+                        className="h-4 w-4 shrink-0 text-muted-foreground"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                    </Link>
+                  </CrumbIconTooltip>
+                ) : null}
+                {/* @undo — text list crumb; now only used when the list page has no nav icon. */}
+                {!(isAnalyticsBoardContext && contextBoard) && !leaf?.icon && (
                   <Link
                     to={basePath}
                     className="shrink-0 rounded-md px-1.5 py-1 font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
@@ -1709,7 +1743,11 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                     }, 280);
                   }}
                 >
-                  <div className="group/entity flex min-w-0 items-center gap-0.5">
+                  {/* @undo className="group/entity flex min-w-0 items-center gap-0.5" */}
+                  <div
+                    ref={entityGroupRef}
+                    className="group/entity flex min-w-[var(--shrink-floor,0px)] shrink-[100000] items-center gap-0.5 [header:has([data-squeezed])_&]:min-w-[var(--shrink-floor-tight,0px)]"
+                  >
                     {renaming ? (
                       <Input
                         ref={nameInputRef}
@@ -1765,7 +1803,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                                 />
                               )}
                             </span>
-                            <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                            <span data-crumb-fit className="min-w-0 truncate text-sm font-medium text-foreground">
                               {selected?.name ?? "Untitled"}
                             </span>
                             <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -1973,6 +2011,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                   siblings={siblings}
                   locked={navLocked}
                   tone="muted"
+                  iconOnly
                 />
               ) : item ? (
                 <ProductCrumb item={item} locked={navLocked} tone="muted" />
@@ -2006,7 +2045,11 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                 }, 280);
               }}
             >
-              <div className="group/entity flex min-w-0 items-center gap-0.5">
+              {/* @undo className="group/entity flex min-w-0 items-center gap-0.5" */}
+              <div
+                ref={entityGroupRef}
+                className="group/entity flex min-w-[var(--shrink-floor,0px)] shrink-[100000] items-center gap-0.5 [header:has([data-squeezed])_&]:min-w-[var(--shrink-floor-tight,0px)]"
+              >
                 {renaming && canRename ? (
                   <Input
                     ref={nameInputRef}
@@ -2040,7 +2083,7 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
                         }}
                         className="flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                       >
-                        <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+                        <span data-crumb-fit className="min-w-0 truncate text-sm font-semibold text-foreground">
                           {selected?.name ?? "Untitled"}
                         </span>
                         {!isAnalytics && !isPlanDetail && badgeId ? (

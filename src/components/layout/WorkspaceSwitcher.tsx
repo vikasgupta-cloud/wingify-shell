@@ -1,9 +1,17 @@
 /** Workspace switcher — golden crown for main, building for subs, #id badge; selected = neutral-50 (no check). */
 /* Change summary: `WorkspaceKindIcon` is now exported so the nav's bottom workspace row reuses it. */
+/* Change summary: new `iconOnly` prop — crown/building icon + hover label for the compact
+ * detail-header trail (reuses CrumbIconTooltip / crumbIconTriggerClass). Menu unchanged. */
+/* Change summary: the header trigger shows the full workspace name (no 12rem cap) and gives way
+ * first when the header is tight — the name shrinks/hides before the page or item name, while the
+ * icon, #number and chevron stay (flex shrink priority, no measuring). */
+/* Change summary: tight headers — the name shrinks first, then the #number; once both are squeezed
+ * out the trigger folds to icon + chevron (full name stays in the hover title). Uses the shared
+ * useShrinkFloor / useSqueezeCollapse helpers (src/lib/useShrinkFloor.ts); menu unchanged. */
 
-import { useState, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
   Check,
@@ -19,6 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { GET_STARTED_PATH } from "@/lib/getStartedGate";
+import { useShrinkFloor, useSqueezeCollapse } from "@/lib/useShrinkFloor";
 import {
   WORKSPACES,
   useActiveWorkspace,
@@ -28,6 +37,8 @@ import {
 } from "@/store/workspace";
 import { cn } from "@/lib/utils";
 import {
+  CrumbIconTooltip,
+  crumbIconTriggerClass,
   crumbToneClass,
   crumbTriggerClass,
   type CrumbTone,
@@ -37,9 +48,12 @@ import {
 function WorkspaceIdBadge({
   accountId,
   className,
+  shrinkable = false,
 }: {
   accountId: string;
   className?: string;
+  /** Header trigger only: the number gives way after the name (then folds with it). */
+  shrinkable?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -60,7 +74,12 @@ function WorkspaceIdBadge({
       tone="neutral"
       fill="light"
       size="sm"
-      className={cn("shrink-0 gap-1 font-normal tabular-nums", className)}
+      data-shrink-flex={shrinkable ? "" : undefined}
+      className={cn(
+        "shrink-0 gap-1 font-normal tabular-nums",
+        shrinkable && "min-w-0 shrink overflow-hidden group-data-[squeezed]:hidden",
+        className
+      )}
     >
       <span>#{accountId}</span>
       <TooltipProvider delayDuration={200}>
@@ -130,20 +149,43 @@ export default function WorkspaceSwitcher({
   /** Match product/leaf crumb chrome (detail overflow trail). */
   compact = false,
   tone = "normal",
+  iconOnly = false,
 }: {
   /** Notify parents (e.g. overflow popover) when the menu opens/closes. */
   onOpenChange?: (open: boolean) => void;
   compact?: boolean;
   tone?: CrumbTone;
+  /** Show only the workspace kind icon; the name moves to a hover label. */
+  iconOnly?: boolean;
 } = {}) {
   const navigate = useNavigate();
   const active = useActiveWorkspace();
   const setWorkspaceId = useWorkspaceStore((s) => s.setWorkspaceId);
+  const { pathname } = useLocation();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  useShrinkFloor(triggerRef);
+  useSqueezeCollapse(triggerRef, pathname);
+
+  const iconTrigger = (
+    <DropdownMenu.Trigger asChild>
+      <button
+        type="button"
+        aria-label={`Switch workspace (${active.triggerLabel})`}
+        className={crumbIconTriggerClass}
+      >
+        <WorkspaceKindIcon workspace={active} />
+      </button>
+    </DropdownMenu.Trigger>
+  );
 
   return (
     <DropdownMenu.Root modal={false} onOpenChange={onOpenChange}>
+      {iconOnly ? (
+        <CrumbIconTooltip label={active.triggerLabel}>{iconTrigger}</CrumbIconTooltip>
+      ) : (
       <DropdownMenu.Trigger asChild>
         <button
+          ref={triggerRef}
           type="button"
           title={active.triggerLabel}
           className={cn(
@@ -153,17 +195,26 @@ export default function WorkspaceSwitcher({
                   "max-w-[16rem] gap-1.5",
                   crumbToneClass(tone)
                 )
-              : "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+              : // @undo — fixed: "flex items-center gap-2 …" (did not shrink; name capped at 12rem)
+                "group flex min-w-0 shrink-[999] items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
           )}
         >
           <WorkspaceKindIcon workspace={active} />
-          <span className={cn("truncate", compact ? "max-w-[8rem]" : "max-w-[12rem]")}>
+          <span
+            data-shrink-flex
+            className={cn(
+              "min-w-0 shrink-[100000] truncate group-data-[squeezed]:hidden",
+              compact && "max-w-[8rem]"
+            )}
+          >
             {active.triggerLabel}
           </span>
-          <WorkspaceIdBadge accountId={active.accountId} />
+          {/* @undo <WorkspaceIdBadge accountId={active.accountId} /> */}
+          <WorkspaceIdBadge accountId={active.accountId} shrinkable={!compact} />
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
       </DropdownMenu.Trigger>
+      )}
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="start"

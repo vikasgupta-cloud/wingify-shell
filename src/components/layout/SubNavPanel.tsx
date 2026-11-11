@@ -1,10 +1,12 @@
 // Product sub-nav (docked / flyout) — nested accordion leaves, premium
-// crown badge, section separators. Sub-leaf leading icons omitted.
+// crown badge, section separators, leading leaf icons (LeafIcon).
 // Change summary: `toSentenceCase` is exported so the open nav (ExpandedNav) reuses it for group labels.
 // A row also highlights on its page-tab pages (leafOwnsPath from lib/nav); existing NavLink styling reused.
 // Suites (Analytics): SuiteProductSwitcher on top, then only the active product's pages (section
 // rendering moved into renderSections, markup unchanged).
 // Suite hover flyout (NavItem `suite`): SuitePanels — products left, hovered product's pages right.
+// Rows now show the leaf's nav icon (new exported `LeafIcon`, also used by ExpandedNav) — replaces
+// the earlier "sub-leaf leading icons omitted" choice. Rows without an icon render as before.
 
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -87,6 +89,15 @@ function activeAccordionPath(
   return null;
 }
 
+/** Leading glyph for a sub-nav row; nothing when the leaf has no icon. */
+export function LeafIcon({ leaf }: { leaf: NavLeaf }) {
+  const Icon = leaf.icon;
+  if (!Icon) return null;
+  return (
+    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+  );
+}
+
 function PremiumBadge() {
   return (
     <span
@@ -115,6 +126,7 @@ function LeafRow({
   const { pathname } = useLocation();
   const content = (
     <>
+      <LeafIcon leaf={leaf} />
       <span className="min-w-0 flex-1 truncate">
         {toSentenceCase(leaf.label)}
       </span>
@@ -223,6 +235,7 @@ function AccordionLeaf({
             sectionActive && "text-accent-foreground"
           )}
         >
+          <LeafIcon leaf={leaf} />
           <span className="min-w-0 flex-1 truncate">
             {toSentenceCase(leaf.label)}
           </span>
@@ -321,6 +334,7 @@ function SuitePanels({
                 isShown && "bg-muted"
               )}
             >
+              <LeafIcon leaf={product} />
               <span className="min-w-0 flex-1 truncate">
                 {toSentenceCase(product.label)}
               </span>

@@ -1,3 +1,9 @@
+/*
+ * Change summary: Compare Metrics now uses the library's Columns2 icon (button, compare panel
+ * header, empty state) instead of Columns3. Reuses the existing protoLucide icon set.
+ * @undo: swap `Columns2` back to `Columns3` at the three Compare Metrics spots and restore the
+ * commented-out `Columns3` import.
+ */
 import {
   Fragment,
   forwardRef,
@@ -15,7 +21,9 @@ import {
   CalendarClock,
   CalendarRange,
   ChevronDown,
-  Columns3,
+  Columns2,
+  // @undo Columns3 — only referenced inside the commented-out AppliedFiltersInline block now.
+  // Columns3,
   Compass,
   Construction,
   Crosshair,
@@ -5507,7 +5515,7 @@ function MetricSelector({
               className="h-8 gap-2 rounded-md font-medium"
               onClick={onEnterCompare}
             >
-              <Columns3 className="h-4 w-4" aria-hidden />
+              <Columns2 className="h-4 w-4" aria-hidden />
               Compare Metrics
             </Button>
           </div>
@@ -5884,7 +5892,7 @@ function CompareView({
     <div className="overflow-hidden rounded-lg border border-border bg-background">
       <div className="flex items-start justify-between px-5 py-4">
         <div className="flex items-start gap-3">
-          <Columns3 className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" aria-hidden />
+          <Columns2 className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" aria-hidden />
           <div>
             <p className="text-base font-medium text-foreground">Compare Metrics</p>
             <p className="text-sm text-muted-foreground">
@@ -5905,7 +5913,7 @@ function CompareView({
       {count === 0 ? (
         <div className="flex h-[360px] flex-col items-center justify-center gap-4 px-6 text-center">
           <div className="flex h-28 w-28 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40">
-            <Columns3 className="h-12 w-12 text-muted-foreground/50" aria-hidden />
+            <Columns2 className="h-12 w-12 text-muted-foreground/50" aria-hidden />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">No metrics selected</p>

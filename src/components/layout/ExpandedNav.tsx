@@ -11,6 +11,8 @@
  * show no name tooltip; click still opens. Previous click-to-toggle kept as @undo.
  * Activity / Help tooltips hide immediately on click and stay hidden until the pointer leaves.
  * Expanded nav: the Settings menu opens above the gear (not to the right over the other icons).
+ * Docked sub-nav rows (pages, accordion parents, nested children) show the leaf's nav icon via
+ * SubNavPanel's `LeafIcon` (reused, same as the flyout).
  */
 import {
   useEffect,
@@ -54,7 +56,7 @@ import {
 import { canUnpinPath, useUIStore } from "../../store/ui";
 import { cn } from "../../lib/utils";
 import { IconVariantOverride } from "../icons/IconLibraryProvider";
-import SubNavPanel, { toSentenceCase } from "./SubNavPanel";
+import SubNavPanel, { LeafIcon, toSentenceCase } from "./SubNavPanel";
 import ProfileMenuPanel from "./ProfileMenuPanel";
 import OldNavFeedbackDialog from "./OldNavFeedbackDialog";
 import ActivityOverviewPopover from "./ActivityOverviewPopover";
@@ -991,6 +993,7 @@ export default function ExpandedNav({
                                     childActive && "font-medium"
                                   )}
                                 >
+                                  <LeafIcon leaf={leaf} />
                                   <span className="min-w-0 flex-1 truncate">
                                     {leaf.label}
                                   </span>
@@ -1034,6 +1037,7 @@ export default function ExpandedNav({
                                           tabIndex={open ? undefined : -1}
                                           className="flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-foreground hover:bg-muted"
                                         >
+                                          <LeafIcon leaf={child} />
                                           <span className="min-w-0 flex-1 truncate">
                                             {child.label}
                                           </span>
@@ -1057,6 +1061,7 @@ export default function ExpandedNav({
                                           )
                                         }
                                       >
+                                        <LeafIcon leaf={child} />
                                         <span className="min-w-0 flex-1 truncate">
                                           {child.label}
                                         </span>
@@ -1075,6 +1080,7 @@ export default function ExpandedNav({
                               navLocked && !isGetStartedHomeLeaf(leaf.path);
                             const leafContent = (
                               <>
+                                <LeafIcon leaf={leaf} />
                                 <span className="min-w-0 flex-1 truncate">
                                   {leaf.label}
                                 </span>

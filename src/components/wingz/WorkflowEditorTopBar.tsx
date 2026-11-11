@@ -1,4 +1,7 @@
 /** Detail-style TopBar for Wingz workflow editor — crumbs + rename + CTAs. */
+/* Change summary: workflow title span carries `data-crumb-fit` so the shared DetailCrumbOverflow
+ * trail folds into ⋯ only when the title would truncate. The section crumb is icon-only
+ * (LeafCrumb `iconOnly`), matching the detail header. */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -146,6 +149,7 @@ export default function WorkflowEditorTopBar() {
               siblings={siblings}
               locked={navLocked}
               tone="muted"
+              iconOnly
             />
           ) : (
             <Link
@@ -210,7 +214,7 @@ export default function WorkflowEditorTopBar() {
                       }}
                       className="flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                     >
-                      <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+                      <span data-crumb-fit className="min-w-0 truncate text-sm font-semibold text-foreground">
                         {title}
                       </span>
                       <Badge

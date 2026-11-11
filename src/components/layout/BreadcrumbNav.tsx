@@ -1,3 +1,5 @@
+/* Change summary: product and section crumbs show their nav icon before the name (`withIcon` on
+ * the existing ProductCrumb / LeafCrumb), matching the workspace crown. @undo: drop `withIcon`. */
 import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { GET_STARTED_PROGRESS } from "@/data/getStarted";
@@ -17,7 +19,7 @@ export default function BreadcrumbNav() {
   if (!item.sections || !leaf) {
     return (
       <div className="flex min-w-0 items-center gap-1 text-sm">
-        <ProductCrumb item={item} locked={navLocked} tone="strong" />
+        <ProductCrumb item={item} locked={navLocked} tone="strong" withIcon />
         <PageGuideCluster guide={item.pageGuide} />
       </div>
     );
@@ -25,7 +27,7 @@ export default function BreadcrumbNav() {
 
   return (
     <div className="flex min-w-0 items-center gap-1 text-sm">
-      <ProductCrumb item={item} locked={navLocked} tone="normal" />
+      <ProductCrumb item={item} locked={navLocked} tone="normal" withIcon />
       <span className="text-muted-foreground" aria-hidden>
         /
       </span>
@@ -34,6 +36,7 @@ export default function BreadcrumbNav() {
         siblings={siblings}
         locked={navLocked}
         tone="strong"
+        withIcon
       />
       <PageGuideCluster guide={leaf.pageGuide} />
       {leaf.path === "/home/get-started" && (

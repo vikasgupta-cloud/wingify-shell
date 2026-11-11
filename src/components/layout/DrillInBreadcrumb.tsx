@@ -3,6 +3,9 @@
 // Website detail adds a third crumb to switch between Connected sites.
 // Integration detail crumb mirrors DetailShell (search + ListFilter + max-h list).
 // Landing uses sectionLandPath (root page when landable, else first child).
+// Change summary: mode, section and page crumbs show their nav icon before the name (new optional
+// `icon` on CrumbDropdown, same glyph style as the menus). Entity names (site / integration) stay
+// text. @undo: stop passing `icon` to CrumbDropdown.
 
 import { useMemo, useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
@@ -73,10 +76,13 @@ function CrumbDropdown({
   groups,
   strong = false,
   trailing,
+  icon: LabelIcon,
 }: {
   label: string;
   ariaLabel: string;
   activeId: string;
+  /** Nav icon shown before the label. */
+  icon?: CrumbItem["icon"];
   items?: CrumbItem[];
   /** Optional grouped list (JD mode switcher) — separators between groups. */
   groups?: CrumbItem[][];
@@ -95,12 +101,19 @@ function CrumbDropdown({
           aria-label={ariaLabel}
           className={cn(
             "flex min-w-0 items-center rounded-md px-1 py-0.5 outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none",
-            trailing ? "gap-1.5" : "gap-0.5",
+            trailing || LabelIcon ? "gap-1.5" : "gap-0.5",
             strong
               ? "font-semibold text-foreground"
               : "font-normal text-foreground"
           )}
         >
+          {LabelIcon ? (
+            <LabelIcon
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          ) : null}
           <span className="truncate">{label}</span>
           {trailing}
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -352,6 +365,7 @@ function ModeSwitcher({
   return (
     <CrumbDropdown
       label={active?.label ?? mode.label}
+      icon={active?.icon}
       ariaLabel="Switch JD destination"
       activeId={active?.id ?? mode.path}
       items={items}
@@ -402,6 +416,7 @@ export default function DrillInBreadcrumb({
             </span>
             <CrumbDropdown
               label={active.label}
+              icon={active.icon}
               ariaLabel={`Switch ${mode.label} page`}
               activeId={active.id ?? active.path}
               items={products}
@@ -481,6 +496,7 @@ export default function DrillInBreadcrumb({
           )}
           <CrumbDropdown
             label={section.label}
+            icon={section.icon}
             ariaLabel={`Switch ${mode.label} section`}
             activeId={section.path}
             items={sectionItems}
@@ -496,6 +512,7 @@ export default function DrillInBreadcrumb({
           </span>
           <CrumbDropdown
             label={leafLabel!}
+            icon={leaf?.icon}
             ariaLabel={`Switch ${section!.label} page`}
             activeId={leafActiveId!}
             items={leafItems}

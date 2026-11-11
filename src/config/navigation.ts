@@ -6,6 +6,14 @@
  * NavItem `suite` makes the hover flyout two-panel (products left, hovered product's pages right).
  * NavSection `product` (product switcher) and NavLeaf `tabs` (page tabs) are kept but currently
  * unused. All page URLs unchanged.
+ * Every live product sub-nav page (and each Analytics product) now has an `icon` — shown in the
+ * sub-nav rows and as icon-only steps in the detail-page breadcrumb. Icons come from protoLucide.
+ * @undo: remove the `icon:` keys added to Home, Wingz, Experimentation, Feature Management,
+ * Analytics and Data Platform leaves (Commerce / Plan icons pre-existed).
+ * Configuration mode icon is SlidersHorizontal (was Settings2, which drew the same gear as Settings).
+ * Configuration → Behavioural Analytics uses MousePointerClick (was Eye) to match the Analytics suite.
+ * Configuration menu order: Websites and Apps, Integrations, Assets Hub, Campaigns, Behavioural
+ * Analytics, Pages, Attributes List (entries moved, not changed).
  */
 import type { LucideIcon } from "@/components/icons/protoLucide";
 import {
@@ -16,7 +24,7 @@ import {
   Headphones,
   UserCircle,
   Settings,
-  Settings2,
+  // Settings2, // @undo — Configuration now uses SlidersHorizontal
   Layers,
   FileText,
   Contact,
@@ -48,6 +56,35 @@ import {
   Eye,
   Lightbulb,
   Sparkles,
+  // Sub-nav page icons (also used as icon-only detail breadcrumb steps):
+  Rocket,
+  TrendingUp,
+  MessageSquare,
+  Bot,
+  GitBranch,
+  WandSparkles,
+  Monitor,
+  Globe,
+  Smartphone,
+  Flag,
+  FlaskConical,
+  Target,
+  Lock,
+  Wrench,
+  Compass,
+  MousePointerClick,
+  List,
+  Flame,
+  Video,
+  ClipboardList,
+  LineChart,
+  Funnel,
+  LayoutTemplate,
+  ListTree,
+  PieChart,
+  Users,
+  Hash,
+  History,
 } from "@/components/icons/protoLucide";
 import {
   ShellAnalyticsCustomFillIcon,
@@ -232,10 +269,10 @@ function dummyNav(
 export const NAV: NavItem[] = [
   { label: "Home", path: "/home", icon: Home, group: 1, sections: [
     { items: [
-      { label: "Dashboard", path: "/home/dashboard", hideCreate: true },
-      { label: "Get Started", path: "/home/get-started", hideCreate: true },
-      { label: "Campaigns Overview", path: "/home/roi-dashboard", hideCreate: true },
-      { label: "Impact Dashboard", path: "/home/account-overview", hideCreate: true },
+      { label: "Dashboard", path: "/home/dashboard", icon: LayoutGrid, hideCreate: true },
+      { label: "Get Started", path: "/home/get-started", icon: Rocket, hideCreate: true },
+      { label: "Campaigns Overview", path: "/home/roi-dashboard", icon: BarChart3, hideCreate: true },
+      { label: "Impact Dashboard", path: "/home/account-overview", icon: TrendingUp, hideCreate: true },
     ]},
   ]},
   {
@@ -246,11 +283,11 @@ export const NAV: NavItem[] = [
     group: 1,
     hideCreate: true,
     sections: [
-    { heading: "Assistant", items: [{ label: "Chat", path: "/wingz/chat", hideCreate: true }]},
+    { heading: "Assistant", items: [{ label: "Chat", path: "/wingz/chat", icon: MessageSquare, hideCreate: true }]},
     { heading: "Automation", items: [
-      { label: "Agents", path: "/wingz/agents" },
-      { label: "Workflows", path: "/wingz/workflows" },
-      { label: "Synthetic A/B", path: "/wingz/synthetic-ab" },
+      { label: "Agents", path: "/wingz/agents", icon: Bot },
+      { label: "Workflows", path: "/wingz/workflows", icon: GitBranch },
+      { label: "Synthetic A/B", path: "/wingz/synthetic-ab", icon: WandSparkles },
     ]},
     // @undo — What's New removed from Wingz leaf nav
     // { heading: "Discover", items: [{ label: "What's New", path: "/wingz/whats-new", hideCreate: true }]},
@@ -264,9 +301,9 @@ export const NAV: NavItem[] = [
     pinnable: true,
     sections: [
     { items: [
-      { label: "Web Experimentation", path: "/web-experiment" },
-      { label: "Web Rollout", path: "/web-rollouts", hideCreate: true },
-      { label: "Mobile App A/B", path: "/mobile-app-ab", hideCreate: true },
+      { label: "Web Experimentation", path: "/web-experiment", icon: Monitor },
+      { label: "Web Rollout", path: "/web-rollouts", icon: Globe, hideCreate: true },
+      { label: "Mobile App A/B", path: "/mobile-app-ab", icon: Smartphone, hideCreate: true },
     ]},
   ]},
   {
@@ -293,17 +330,17 @@ export const NAV: NavItem[] = [
     pinnable: true,
     sections: [
     { items: [
-      { label: "Feature Flags", path: "/feature-management/feature-flags" },
+      { label: "Feature Flags", path: "/feature-management/feature-flags", icon: Flag },
     ]},
     { items: [
-      { label: "Feature Rollout", path: "/feature-management/flag-rollout" },
-      { label: "Feature Experimentation", path: "/feature-management/flag-testing" },
-      { label: "Feature Multivariate", path: "/feature-management/flag-multivariate" },
-      { label: "Feature Personalization", path: "/feature-management/flag-personalize" },
+      { label: "Feature Rollout", path: "/feature-management/flag-rollout", icon: Rocket },
+      { label: "Feature Experimentation", path: "/feature-management/flag-testing", icon: FlaskConical },
+      { label: "Feature Multivariate", path: "/feature-management/flag-multivariate", icon: Layers },
+      { label: "Feature Personalization", path: "/feature-management/flag-personalize", icon: Target },
     ]},
     { items: [
-      { label: "Holdouts", path: "/feature-management/holdout", hideCreate: true },
-      { label: "Tech Debt", path: "/feature-management/tech-debt", hideCreate: true },
+      { label: "Holdouts", path: "/feature-management/holdout", icon: Lock, hideCreate: true },
+      { label: "Tech Debt", path: "/feature-management/tech-debt", icon: Wrench, hideCreate: true },
     ]},
   ]},
   { label: "Commerce", path: "/commerce", icon: ShoppingCart, group: 2, pinnable: true, sections: [
@@ -378,20 +415,23 @@ export const NAV: NavItem[] = [
         {
           label: "Journey analytics",
           path: "/analytics/journey",
+          icon: Compass,
           items: [
-            { label: "Overview", path: "/analytics/overview" },
-            { label: "Browse", path: "/analytics/browse" },
+            { label: "Overview", path: "/analytics/overview", icon: LayoutGrid },
+            { label: "Browse", path: "/analytics/browse", icon: List },
           ],
         },
         {
           label: "Behaviour analytics",
           path: "/insights",
+          icon: MousePointerClick,
           items: [
-            { label: "Dashboard", path: "/insights/dashboard", hideCreate: true },
-            { label: "Heatmaps", path: "/insights/heatmaps", hideCreate: true },
+            { label: "Dashboard", path: "/insights/dashboard", icon: LayoutGrid, hideCreate: true },
+            { label: "Heatmaps", path: "/insights/heatmaps", icon: Flame, hideCreate: true },
             {
               label: "Session Recordings",
               path: "/insights/session-recordings",
+              icon: Video,
               hideCreate: true,
               pageGuide: {
                 tutorial: { label: "Play tutorial" },
@@ -411,20 +451,21 @@ export const NAV: NavItem[] = [
                 },
               },
             },
-            { label: "Mobile Recordings", path: "/insights/mobile-recordings", hideCreate: true },
-            { label: "Form Analytics", path: "/insights/forms" },
-            { label: "Metric Reports", path: "/insights/metric-reports" },
-            { label: "Funnel Reports", path: "/insights/funnel-reports" },
+            { label: "Mobile Recordings", path: "/insights/mobile-recordings", icon: Smartphone, hideCreate: true },
+            { label: "Form Analytics", path: "/insights/forms", icon: FileText },
+            { label: "Metric Reports", path: "/insights/metric-reports", icon: LineChart },
+            { label: "Funnel Reports", path: "/insights/funnel-reports", icon: Funnel },
           ],
         },
         {
           label: "User feedback",
           path: "/pulse",
+          icon: MessageSquare,
           items: [
-            { label: "Surveys", path: "/pulse/surveys" },
-            { label: "Concept Test", path: "/pulse/concept-test" },
-            { label: "Templates", path: "/pulse/templates", hideCreate: true },
-            { label: "Settings", path: "/pulse/settings", hideCreate: true },
+            { label: "Surveys", path: "/pulse/surveys", icon: ClipboardList },
+            { label: "Concept Test", path: "/pulse/concept-test", icon: Lightbulb },
+            { label: "Templates", path: "/pulse/templates", icon: LayoutTemplate, hideCreate: true },
+            { label: "Settings", path: "/pulse/settings", icon: Settings, hideCreate: true },
           ],
         },
       ]},
@@ -713,20 +754,20 @@ export const NAV: NavItem[] = [
     pinnable: true,
     sections: [
     { items: [
-      { label: "Introduction", path: "/data-360/introduction", hideCreate: true },
-      { label: "Profiles", path: "/data-360/profiles" },
-      { label: "Attributes", path: "/data-360/attributes" },
-      { label: "Events", path: "/data-360/events" },
-      { label: "Segments", path: "/data-360/segments" },
+      { label: "Introduction", path: "/data-360/introduction", icon: BookOpen, hideCreate: true },
+      { label: "Profiles", path: "/data-360/profiles", icon: UserCircle },
+      { label: "Attributes", path: "/data-360/attributes", icon: ListTree },
+      { label: "Events", path: "/data-360/events", icon: Activity },
+      { label: "Segments", path: "/data-360/segments", icon: PieChart },
     ]},
     { items: [
-      { label: "Triggers", path: "/data-360/triggers" },
-      { label: "Audiences", path: "/data-360/audiences" },
-      { label: "Metrics", path: "/data-360/metrics" },
-      { label: "Funnels", path: "/data-360/funnels" },
+      { label: "Triggers", path: "/data-360/triggers", icon: Zap },
+      { label: "Audiences", path: "/data-360/audiences", icon: Users },
+      { label: "Metrics", path: "/data-360/metrics", icon: Hash },
+      { label: "Funnels", path: "/data-360/funnels", icon: Funnel },
     ]},
     { items: [
-      { label: "Audit", path: "/data-360/audit", hideCreate: true },
+      { label: "Audit", path: "/data-360/audit", icon: History, hideCreate: true },
     ]},
   ]},
   {
@@ -914,22 +955,12 @@ export const CONFIGURATION_NAV: DrillInNavItem[] = [
       { label: "FAQs", path: `${WNA}/faqs`, hideCreate: true },
     ],
   },
-  {
-    label: "Campaigns",
-    path: `${CONFIG}/campaigns`,
-    icon: Layers,
-    hideCreate: true,
-  },
+  // @undo — previous order: Websites and Apps, Campaigns, Integrations, Pages, Assets Hub,
+  // Behavioural Analytics, Attributes List.
   {
     label: "Integrations",
     path: `${CONFIG}/integrations`,
     icon: Blocks,
-    hideCreate: true,
-  },
-  {
-    label: "Pages",
-    path: `${CONFIG}/pages`,
-    icon: FileText,
     hideCreate: true,
   },
   {
@@ -951,9 +982,22 @@ export const CONFIGURATION_NAV: DrillInNavItem[] = [
   },
   // { label: "Apps", path: "/settings/accounts/apps", icon: Puzzle, hideCreate: true }, // @undo
   {
+    label: "Campaigns",
+    path: `${CONFIG}/campaigns`,
+    icon: Layers,
+    hideCreate: true,
+  },
+  {
     label: "Behavioural Analytics",
     path: `${CONFIG}/behavioural-analytics`,
-    icon: Eye,
+    // @undo icon: Eye — now matches the Analytics suite's Behaviour analytics icon.
+    icon: MousePointerClick,
+    hideCreate: true,
+  },
+  {
+    label: "Pages",
+    path: `${CONFIG}/pages`,
+    icon: FileText,
     hideCreate: true,
   },
   {
@@ -1041,7 +1085,8 @@ export const CURRENT_USER = {
 
 const MODE_ICONS: Record<string, LucideIcon> = {
   settings: Settings,
-  configuration: Settings2,
+  // @undo configuration: Settings2 — renders as the same gear as Settings in the icon library.
+  configuration: SlidersHorizontal,
   upgrade: Zap,
 };
 

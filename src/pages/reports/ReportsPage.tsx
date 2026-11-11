@@ -1,3 +1,8 @@
+/*
+ * Change summary: the "Results" report tab now reads "Metrics" via TAB_LABELS (display only —
+ * the tab value stays "results", so URLs and tab logic are unchanged). Reuses the existing tabs.
+ * @undo: render `{tab}` in the TabsTrigger again and remove TAB_LABELS.
+ */
 import { type CSSProperties, type ReactNode, type RefObject, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
@@ -744,7 +749,8 @@ function ReportsChrome({
                 value={tabValue(tab)}
                 className={cn("relative rounded-none border-0 bg-transparent px-1 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:scale-x-0 after:bg-foreground after:transition-transform data-[state=active]:after:scale-x-100", featureFlagReport ? "h-full py-0" : "pb-3 pt-2")}
               >
-                {tab}
+                {/* @undo {tab} */}
+                {TAB_LABELS[tab] ?? tab}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -815,6 +821,8 @@ function ReportsChrome({
 
 const TABS = ["Overview", "Results", "Behaviour", "Surveys", "Live hits", "Vitals"];
 const tabValue = (tab: string) => tab.toLowerCase().replace(/\s+/g, "-");
+/** Display-only renames; tab values (URLs, default-tab logic) stay derived from TABS. */
+const TAB_LABELS: Record<string, string> = { Results: "Metrics" };
 const REPORT_TAB_VALUES = new Set(TABS.map(tabValue));
 
 const OVERVIEW_DEFAULT_STATUSES: CampaignStatus[] = [
