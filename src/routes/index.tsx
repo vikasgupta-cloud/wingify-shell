@@ -53,6 +53,7 @@ import AnalyticsChartsPage from "../pages/design/AnalyticsChartsPage";
 import FormGalleryPage from "../pages/design/FormGalleryPage";
 import DesignSystemPage from "../pages/design/DesignSystemPage";
 import WelcomeStartPreviewPage from "../pages/design/WelcomeStartPreviewPage";
+import BreadcrumbWorkspaceOptionsPage from "../pages/design/BreadcrumbWorkspaceOptionsPage";
 import SessionRecordingsPage from "../pages/insights/SessionRecordingsPage";
 import HeatmapsPage from "../pages/insights/HeatmapsPage";
 import HeatmapViewerPage from "../pages/insights/HeatmapViewerPage";
@@ -607,6 +608,10 @@ export const router = createBrowserRouter([
           {
             path: "/design/welcome-start",
             element: <WelcomeStartPreviewPage />,
+          },
+          {
+            path: "/design/breadcrumb-workspace",
+            element: <BreadcrumbWorkspaceOptionsPage />,
           },
           {
             path: "/design-system",
