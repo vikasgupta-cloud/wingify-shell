@@ -162,6 +162,20 @@ export function ShellBagArrowIcon(props: ShellIconProps) {
   );
 }
 
+/**
+ * Storefront mark for the Commerce rail item — filled bag + pointer in the
+ * carved corner (matches `sidebar-nav-icons/commerce-storefront.png` / commerce.svg).
+ */
+export function ShellStorefrontIcon(props: ShellIconProps) {
+  return (
+    <Svg {...props}>
+      <path d={NOTCH_BAG_BODY} fill="currentColor" />
+      <path d={NOTCH_BAG_HANDLE} {...STROKE} />
+      <path d={NOTCH_ARROW} fill="currentColor" />
+    </Svg>
+  );
+}
+
 /** Bag with carved bottom-left corner holding a spark — outline only. */
 export function ShellBagCornerSparkIcon(props: ShellIconProps) {
   return (

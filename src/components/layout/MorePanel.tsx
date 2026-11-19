@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Eye } from "@/components/icons/protoLucide";
+import { ExternalLink, Eye } from "@/components/icons/protoLucide";
 import { visibleNav } from "../../config/navigation";
 import { firstChildPath } from "../../lib/nav";
 import { useUIStore } from "../../store/ui";
@@ -34,13 +34,30 @@ export default function MorePanel() {
                 <div className="flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-muted">
                   <button
                     type="button"
-                    onClick={() => navigate(firstChildPath(item))}
+                    onClick={() => {
+                      if (item.external) {
+                        const href =
+                          item.href !== undefined ? item.href : item.path;
+                        if (href) {
+                          window.open(href, "_blank", "noopener,noreferrer");
+                        }
+                        return;
+                      }
+                      navigate(firstChildPath(item));
+                    }}
                     className="flex min-w-0 flex-1 items-center gap-2.5 px-2 py-2 text-left"
                   >
                     <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-sm font-medium text-foreground">
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                       {item.label}
                     </span>
+                    {item.external && (
+                      <ExternalLink
+                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                    )}
                   </button>
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
