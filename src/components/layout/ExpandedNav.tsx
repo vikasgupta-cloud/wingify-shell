@@ -710,7 +710,10 @@ export default function ExpandedNav({
           // Expanded: 4px inset inside selection → icon/chevron sit 16px from nav
           // (12px container + 4px).
           expanded ? "w-full" : "w-9 justify-start",
-          isActive && expanded && !hasSections && "bg-accent hover:bg-accent",
+          isActive &&
+            expanded &&
+            (!hasSections || item.external) &&
+            "bg-accent hover:bg-accent",
           isActive &&
             !expanded &&
             "bg-rail-active text-rail-active-foreground hover:bg-rail-active",
@@ -755,6 +758,15 @@ export default function ExpandedNav({
                 "[data-nav-item]"
               ) as HTMLElement | null;
               if (rowEl) toggleFlyout(item, rowEl);
+              return;
+            }
+            if (item.external) {
+              // Blank href (`href: ""`) is intentional — no navigation.
+              const href =
+                item.href !== undefined ? item.href : item.path;
+              if (href) {
+                window.open(href, "_blank", "noopener,noreferrer");
+              }
               return;
             }
             if (navLocked && item.path === "/home") {
@@ -837,7 +849,23 @@ export default function ExpandedNav({
           </Tooltip.Root>
         )}
 
-        {hasSections && !expandOnly && (
+        {item.external && (
+          <span
+            className={cn(
+              chromeClass,
+              "flex size-4 shrink-0 items-center justify-center text-muted-foreground"
+            )}
+            style={{ transition: revealTransition }}
+            aria-hidden
+          >
+            <ExternalLink
+              className="h-3.5 w-3.5 shrink-0"
+              strokeWidth={1.75}
+            />
+          </span>
+        )}
+
+        {hasSections && !expandOnly && !item.external && (
           <button
             type="button"
             aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
@@ -932,7 +960,7 @@ export default function ExpandedNav({
       <div key={item.path}>
         {hoverRow}
 
-        {hasSections && item.sections && !expandOnly && (
+        {hasSections && item.sections && !expandOnly && !item.external && (
           <div
             className="grid"
             style={{
@@ -1679,6 +1707,15 @@ export default function ExpandedNav({
                     <button
                       type="button"
                       onClick={() => {
+                        if (item.external) {
+                          const href =
+                            item.href !== undefined ? item.href : item.path;
+                          if (href) {
+                            window.open(href, "_blank", "noopener,noreferrer");
+                          }
+                          closeMore();
+                          return;
+                        }
                         navigate(firstChildPath(item));
                         closeMore();
                       }}
@@ -1686,6 +1723,13 @@ export default function ExpandedNav({
                     >
                       <Icon className="h-4 w-4 shrink-0 text-foreground" />
                       <span className="flex-1 truncate font-main-menu">{item.label}</span>
+                      {item.external && (
+                        <ExternalLink
+                          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                      )}
                     </button>
                     <Tooltip.Root>
                       <Tooltip.Trigger asChild>

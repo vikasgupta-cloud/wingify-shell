@@ -1,6 +1,6 @@
 /*
- * Change summary: Commerce is hidden from the rail via HIDDEN_NAV_PATHS (used by visibleNav and
- * PINNABLE_PATHS); its routes and pages are unchanged.
+ * Change summary: Commerce is visible on the rail as an external-style item (blank href, storefront
+ * icon, right-side external affordance). Routes and pages are unchanged.
  * Journey analytics, Behaviour analytics and User feedback are products inside one "Analytics"
  * suite item, shown as always-visible nested accordion rows (existing NavLeaf `items` pattern).
  * NavItem `suite` makes the hover flyout two-panel (products left, hovered product's pages right).
@@ -94,8 +94,8 @@ import {
   ShellCalendarBlankIcon,
 } from "@/components/icons/shell/CalendarBlankIcons";
 import {
-  ShellCommerceFillIcon,
-  ShellCommerceIcon,
+  // @undo ShellCommerceFillIcon, ShellCommerceIcon — bag + spark before storefront mark
+  ShellStorefrontIcon,
 } from "@/components/icons/shell/CommerceIcons";
 import {
   ShellFlaskFillIcon,
@@ -198,6 +198,16 @@ export type NavItem = {
    * and the hovered product's pages on the right, so any page is one click away.
    */
   suite?: boolean;
+  /**
+   * Show an external-link affordance on the right (expanded rail / Other), matching
+   * leaf `external` rows. Click opens `href` (or `path` when href is omitted) in a new tab.
+   */
+  external?: boolean;
+  /**
+   * Anchor target when `external` is set. Use `""` for a blank href.
+   * When omitted, falls back to `path`.
+   */
+  href?: string;
 };
 
 /** Sidebar row inside a Profile-mode drill-in (Settings, Profile, …). */
@@ -346,7 +356,18 @@ export const NAV: NavItem[] = [
       { label: "Tech Debt", path: "/feature-management/tech-debt", icon: Wrench, hideCreate: true },
     ]},
   ]},
-  { label: "Commerce", path: "/commerce", icon: ShellCommerceIcon as LucideIcon, activeIcon: ShellCommerceFillIcon as LucideIcon, group: 2, pinnable: true, sections: [
+  {
+    label: "Commerce",
+    path: "/commerce",
+    // Blank external href — rail shows storefront + right-side external affordance.
+    href: "",
+    external: true,
+    icon: ShellStorefrontIcon as LucideIcon,
+    // @undo icon/activeIcon: ShellCommerceIcon / ShellCommerceFillIcon (bag + spark)
+    activeIcon: ShellStorefrontIcon as LucideIcon,
+    group: 2,
+    pinnable: true,
+    sections: [
     { items: [
       { label: "Catalog", path: "/commerce/catalog", icon: BookOpen, hideCreate: true },
     ]},
@@ -1182,7 +1203,8 @@ export function resolveJdSwitcherItem(pathname: string): JdSwitcherItem | undefi
 }
 
 /** Products kept in NAV (routes, breadcrumbs) but hidden from the rail and never pinnable. */
-export const HIDDEN_NAV_PATHS: string[] = ["/commerce"];
+// @undo was: ["/commerce"] — Commerce is shown on the rail as an external-style item.
+export const HIDDEN_NAV_PATHS: string[] = [];
 
 export const PINNABLE_PATHS = NAV.filter(
   (i) => i.pinnable && !HIDDEN_NAV_PATHS.includes(i.path)
