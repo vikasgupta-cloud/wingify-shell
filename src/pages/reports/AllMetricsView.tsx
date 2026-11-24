@@ -12,7 +12,12 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Focus, Rows3 } from "@/components/icons/protoLucide";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   reportGuardrailMetrics,
@@ -53,6 +58,10 @@ const ROLE_LABEL: Record<MetricRole, string> = {
 
 const ROLE_ORDER: MetricRole[] = ["primary", "secondary", "guardrail"];
 
+/**
+ * Theme-switcher style: muted track, active = raised pill with icon+label,
+ * inactive = icon only (tooltip for the label).
+ */
 function MetricsLayoutSwitch({
   value,
   onChange,
@@ -60,26 +69,49 @@ function MetricsLayoutSwitch({
   value: "focus" | "all";
   onChange: (next: "focus" | "all") => void;
 }) {
+  const options = [
+    { id: "focus" as const, label: "One metric", Icon: Focus },
+    { id: "all" as const, label: "All metrics", Icon: Rows3 },
+  ];
+
   return (
-    <Tabs
-      value={value}
-      onValueChange={(next) => {
-        if (next === "focus" || next === "all") onChange(next);
-      }}
+    <div
+      className="inline-flex h-9 items-center gap-0.5 rounded-lg border border-border bg-secondary p-1"
+      role="group"
+      aria-label="Choose how to view metrics"
     >
-      {/*
-        Pill tabs use --muted for the track, but muted === canvas on reports,
-        so the track disappears. Force secondary fill so the DS pill reads.
-      */}
-      <TabsList
-        variant="pill"
-        aria-label="Choose how to view metrics"
-        className="border-transparent bg-secondary"
-      >
-        <TabsTrigger value="focus">One metric</TabsTrigger>
-        <TabsTrigger value="all">All metrics</TabsTrigger>
-      </TabsList>
-    </Tabs>
+      {options.map((opt) => {
+        const active = value === opt.id;
+        const button = (
+          <button
+            type="button"
+            aria-label={opt.label}
+            aria-pressed={active}
+            onClick={() => onChange(opt.id)}
+            className={cn(
+              "inline-flex h-7 items-center justify-center gap-1.5 rounded-md text-sm transition-colors",
+              active
+                ? "bg-background px-2.5 font-medium text-foreground shadow-sm"
+                : "w-7 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <opt.Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            {active ? <span>{opt.label}</span> : null}
+          </button>
+        );
+
+        if (active) {
+          return <span key={opt.id}>{button}</span>;
+        }
+
+        return (
+          <Tooltip key={opt.id}>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent side="bottom">{opt.label}</TooltipContent>
+          </Tooltip>
+        );
+      })}
+    </div>
   );
 }
 

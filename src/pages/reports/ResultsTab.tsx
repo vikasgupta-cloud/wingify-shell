@@ -1760,11 +1760,11 @@ function MetricHeader({
           ) : (
             <span className={cn(metricTitleClass, "truncate")}>{metric}</span>
           )}
-          {isPrimary && (
-            <span className="inline-flex items-center rounded border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground/70">
+          {isPrimary ? (
+            <span className="inline-flex shrink-0 items-center rounded border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground/70">
               Primary
             </span>
-          )}
+          ) : null}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -6232,7 +6232,7 @@ export default function ResultsTab({
         <MetricHeader
           campaign={campaign}
           metric={item.name}
-          isPrimary={false}
+          isPrimary={item.role === "primary"}
         />
         {renderMetricResultsCard(item.name, {
           showConclusion: item.role === "primary",
