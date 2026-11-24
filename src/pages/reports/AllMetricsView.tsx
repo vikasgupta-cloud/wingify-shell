@@ -12,12 +12,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { Focus, Rows3 } from "@/components/icons/protoLucide";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   reportGuardrailMetrics,
@@ -66,38 +61,25 @@ function MetricsLayoutSwitch({
   onChange: (next: "focus" | "all") => void;
 }) {
   return (
-    <div
-      className="inline-flex h-8 overflow-hidden rounded-md border border-border bg-background"
-      role="group"
-      aria-label="Metrics layout"
+    <Tabs
+      value={value}
+      onValueChange={(next) => {
+        if (next === "focus" || next === "all") onChange(next);
+      }}
     >
-      {(
-        [
-          { id: "focus" as const, label: "Focus", Icon: Focus },
-          { id: "all" as const, label: "All metrics", Icon: Rows3 },
-        ] as const
-      ).map((opt) => (
-        <Tooltip key={opt.id}>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={opt.label}
-              aria-pressed={value === opt.id}
-              onClick={() => onChange(opt.id)}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center transition-colors",
-                value === opt.id
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              )}
-            >
-              <opt.Icon className="h-4 w-4" aria-hidden />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{opt.label}</TooltipContent>
-        </Tooltip>
-      ))}
-    </div>
+      {/*
+        Pill tabs use --muted for the track, but muted === canvas on reports,
+        so the track disappears. Force secondary fill so the DS pill reads.
+      */}
+      <TabsList
+        variant="pill"
+        aria-label="Choose how to view metrics"
+        className="border-transparent bg-secondary"
+      >
+        <TabsTrigger value="focus">One metric</TabsTrigger>
+        <TabsTrigger value="all">All metrics</TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 }
 
