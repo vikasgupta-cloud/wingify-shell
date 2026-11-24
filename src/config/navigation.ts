@@ -1,6 +1,7 @@
 /*
- * Change summary: Commerce is hidden from the rail via HIDDEN_NAV_PATHS (used by visibleNav and
- * PINNABLE_PATHS); its routes and pages are unchanged.
+ * Change summary: Commerce is shown in the rail again (removed from HIDDEN_NAV_PATHS).
+ * @undo — Commerce was hidden via HIDDEN_NAV_PATHS (used by visibleNav and PINNABLE_PATHS);
+ * its routes and pages were always unchanged.
  * Journey analytics, Behaviour analytics and User feedback are products inside one "Analytics"
  * suite item, shown as always-visible nested accordion rows (existing NavLeaf `items` pattern).
  * NavItem `suite` makes the hover flyout two-panel (products left, hovered product's pages right).
@@ -1182,7 +1183,8 @@ export function resolveJdSwitcherItem(pathname: string): JdSwitcherItem | undefi
 }
 
 /** Products kept in NAV (routes, breadcrumbs) but hidden from the rail and never pinnable. */
-export const HIDDEN_NAV_PATHS: string[] = ["/commerce"];
+// @undo export const HIDDEN_NAV_PATHS: string[] = ["/commerce"];
+export const HIDDEN_NAV_PATHS: string[] = [];
 
 export const PINNABLE_PATHS = NAV.filter(
   (i) => i.pinnable && !HIDDEN_NAV_PATHS.includes(i.path)

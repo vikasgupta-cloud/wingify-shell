@@ -2,6 +2,7 @@
  * Change summary: the "Results" report tab now reads "Metrics" via TAB_LABELS (display only —
  * the tab value stays "results", so URLs and tab logic are unchanged). Reuses the existing tabs.
  * @undo: render `{tab}` in the TabsTrigger again and remove TAB_LABELS.
+ * Follow-up: Surveys metrics filter also lists report.secondaryMetrics.
  */
 import { type CSSProperties, type ReactNode, type RefObject, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -1258,6 +1259,7 @@ function SurveysViewBar({ campaign }: { campaign: Campaign }) {
   const metrics = [
     campaign.primaryMetric,
     ...campaign.report.otherMetrics.map((metric) => metric.name),
+    ...campaign.report.secondaryMetrics.map((metric) => metric.name),
   ];
 
   return (

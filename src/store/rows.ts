@@ -1,3 +1,6 @@
+/** Campaign rows store — list CRUD + empty Draft reports.
+ * @summary emptyReport includes secondaryMetrics: [] to match Report.
+ */
 import { create } from "zustand";
 import {
   CAMPAIGNS,
@@ -44,6 +47,7 @@ function emptyReport(): Campaign["report"] {
     trafficSplit: "Equal",
     audience: "All visitors",
     otherMetrics: [],
+    secondaryMetrics: [],
     variants: [
       { id: "control", label: "C", name: "Control", convRate: 0, uplift: null, confidence: null, isBest: false },
     ],

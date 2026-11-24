@@ -1,3 +1,8 @@
+/** Campaign seed data for Web Experimentation lists + reports.
+ * @summary Each report now carries five Secondary-only metrics (Bounce rate, Time on
+ * page, Form submits, Scroll depth, Click-through rate) with uplifts shaped by the
+ * campaign name / type / scenario. Guardrails stay on `otherMetrics`.
+ */
 export type CampaignStatus =
   | "Draft"
   | "In QA"
@@ -58,8 +63,30 @@ export type Report = {
   trafficSplit: "Equal" | "Custom";
   audience: string;
   otherMetrics: MetricPerf[];
+  /** Always shown under Secondary only (not split into Guardrails). */
+  secondaryMetrics: MetricPerf[];
   variants: Variant[];
 };
+
+/** Guardrails slice of `otherMetrics` (same split the Metrics rail uses). */
+export function reportGuardrailMetrics(report: Report): MetricPerf[] {
+  const others = report.otherMetrics;
+  const splitAt = Math.max(
+    1,
+    others.length - Math.max(1, Math.floor(others.length / 3))
+  );
+  return others.slice(0, splitAt);
+}
+
+/** Secondary = remainder of `otherMetrics` + dedicated `secondaryMetrics`. */
+export function reportSecondaryMetrics(report: Report): MetricPerf[] {
+  const others = report.otherMetrics;
+  const splitAt = Math.max(
+    1,
+    others.length - Math.max(1, Math.floor(others.length / 3))
+  );
+  return [...others.slice(splitAt), ...report.secondaryMetrics];
+}
 
 // The statuses that carry live report data (mirrors the Reports/Quick view rules).
 export const REPORTABLE_STATUSES: CampaignStatus[] = ["Running", "In Analysis", "Ended"];
@@ -175,6 +202,88 @@ const OTHER_METRIC_POOL = [
   "Wishlist adds",
   "Pages per session",
 ];
+
+/** Fixed Secondary-only metrics (never folded into Guardrails). */
+const SECONDARY_METRIC_NAMES = [
+  "Bounce rate",
+  "Time on page",
+  "Form submits",
+  "Scroll depth",
+  "Click-through rate",
+] as const;
+
+/**
+ * Five Secondary metrics with uplifts shaped by campaign theme + scenario
+ * (e.g. bounce improves when winners lift engagement; form submits stronger
+ * on checkout / signup campaigns).
+ */
+function generateSecondaryMetrics(
+  scenario: Scenario,
+  name: string,
+  type: CampaignType,
+  primaryMetric: string,
+  rng: (min: number, max: number) => number
+): MetricPerf[] {
+  const n = name.toLowerCase();
+  const isCheckout = /checkout|cart|bag|purchase|order|buy/.test(n);
+  const isPdp = /pdp|product|sticky|add to|jewelry|ring|scarf/.test(n);
+  const isCta = /cta|button|click|hero|banner|trust|review/.test(n);
+  const isForm = /form|signup|subscribe|lead|email/.test(n);
+  const isMobile = /mobile/.test(n);
+
+  const relevance: Record<(typeof SECONDARY_METRIC_NAMES)[number], number> = {
+    "Bounce rate": isPdp || isCta || isMobile ? 1.35 : 1,
+    "Time on page": isPdp || type === "Multipage" ? 1.4 : 1,
+    "Form submits":
+      isForm || isCheckout ? 1.55 : type === "Split URL" ? 1.15 : 0.85,
+    "Scroll depth": isPdp || type === "Multipage" ? 1.4 : 1,
+    "Click-through rate": isCta || isPdp ? 1.5 : 1.1,
+  };
+
+  // Bounce rate is inverse of engagement: winners lower bounce (negative %).
+  const bouncePolarity = -1;
+
+  return SECONDARY_METRIC_NAMES.filter((m) => m !== primaryMetric).map(
+    (metricName) => {
+      const weight = relevance[metricName] ?? 1;
+      const polarity = metricName === "Bounce rate" ? bouncePolarity : 1;
+
+      if (
+        scenario === "not-started" ||
+        scenario === "collecting-early" ||
+        scenario === "collecting-mixed"
+      ) {
+        return { name: metricName, uplift: null };
+      }
+
+      let base: number;
+      switch (scenario) {
+        case "winner-strong":
+          base = rng(8, 28) * polarity * weight;
+          break;
+        case "winner-marginal":
+          base = rng(2, 12) * polarity * weight;
+          break;
+        case "baseline":
+          base = rng(-4, 4) * weight;
+          break;
+        case "inconclusive":
+          base = rng(-14, 14) * weight;
+          break;
+        case "progress":
+        case "all-disabled":
+          base = rng(-10, 18) * polarity * weight;
+          break;
+        default:
+          base = rng(-12, 16) * weight;
+      }
+
+      // Sparse "No improvement" sparingly so the rail still looks populated.
+      if (rng(0, 11) === 0) return { name: metricName, uplift: null };
+      return { name: metricName, uplift: Number(base.toFixed(1)) };
+    }
+  );
+}
 
 type BaseRow = {
   name: string;
@@ -405,7 +514,9 @@ function generateReport(
   visitors: number,
   uniqueConversions: number,
   primaryMetric: string,
-  startedOn: string | null
+  startedOn: string | null,
+  name: string,
+  type: CampaignType
 ): Report {
   let seed = hashId(id + "-report") || 1;
   const rng = (min: number, max: number) => {
@@ -539,6 +650,14 @@ function generateReport(
     });
   }
 
+  const secondaryMetrics = generateSecondaryMetrics(
+    scenario,
+    name,
+    type,
+    primaryMetric,
+    rng
+  );
+
   return {
     estimatedEndDate,
     elapsedDays,
@@ -549,6 +668,7 @@ function generateReport(
     trafficSplit,
     audience,
     otherMetrics,
+    secondaryMetrics,
     variants,
   };
 }
@@ -624,7 +744,9 @@ export const CAMPAIGNS: Campaign[] = BASE.map((row, i) => {
     visitors,
     uniqueConversions,
     primaryMetric,
-    startedOn
+    startedOn,
+    row.name,
+    row.type
   );
   // Derive from report + decision (avoid circular import with campaignConclusion).
   let leadingVariation = "—";

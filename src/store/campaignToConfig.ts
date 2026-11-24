@@ -1,3 +1,6 @@
+/** Maps a Campaign row into editor CampaignConfig (dummy).
+ * @summary Observation metrics include report.secondaryMetrics when catalog-matched.
+ */
 import type { Campaign } from "../data/campaigns";
 import { METRICS } from "../data/metrics";
 import { DEFAULT_SEGMENT_LABEL, findSegmentByLabel } from "../config/segments";
@@ -39,11 +42,11 @@ export function campaignToConfig(campaign: Campaign): Partial<CampaignConfig> {
   const successMetric =
     METRICS.find((m) => m.name === campaign.primaryMetric)?.id ?? null;
 
-  // De-duplicated catalog ids for the report's other metrics; names that don't
-  // resolve drop out. otherMetrics is only 3 long, so no picker cap is needed.
+  // De-duplicated catalog ids for other + secondary metrics; names that don't
+  // resolve drop out.
   const observationMetrics = Array.from(
     new Set(
-      report.otherMetrics
+      [...report.otherMetrics, ...report.secondaryMetrics]
         .map((o) => METRICS.find((m) => m.name === o.name)?.id)
         .filter((id): id is string => Boolean(id))
     )

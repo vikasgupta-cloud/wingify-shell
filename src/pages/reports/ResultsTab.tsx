@@ -3,6 +3,12 @@
  * header, empty state) instead of Columns3. Reuses the existing protoLucide icon set.
  * @undo: swap `Columns2` back to `Columns3` at the three Compare Metrics spots and restore the
  * commented-out `Columns3` import.
+ * Follow-up: Metrics rail Secondary list includes five dedicated secondaryMetrics from the
+ * campaign report (via reportSecondaryMetrics); Guardrails unchanged.
+ * Follow-up: Focus | All metrics layout switch — All metrics scrolls compact blocks; rail jumps.
+ * Follow-up: All metrics — smoother jump scroll, no role dividers, single inline View full.
+ * Follow-up: Page Metrics header; Stat+Download by metric name; All metrics = Focus tables + graph toggle.
+ * Follow-up: All metrics graphs use a sparkline “Performance over time” unfold under the table; primary open by default.
  */
 import {
   Fragment,
@@ -52,6 +58,10 @@ import {
   X,
 } from "@/components/icons/protoLucide";
 import type { Campaign, Variant } from "../../data/campaigns";
+import {
+  reportGuardrailMetrics,
+  reportSecondaryMetrics,
+} from "../../data/campaigns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { VitalsGlyph } from "@/components/ui/StatusBadge";
@@ -102,11 +112,17 @@ import {
   useActiveResultsRowDensity,
   useActiveResultsTableColumns,
   useCampaignSharedFilters,
+  useReportMetricsLayout,
   useReportMetricsNavCollapsed,
   useReportSelectedMetric,
   useReportViewsStore,
   type ReportDateRange,
 } from "../../store/reportViews";
+import AllMetricsView, {
+  buildMetricNavItems,
+  MetricsLayoutSwitch,
+  type MetricNavItem,
+} from "./AllMetricsView";
 import {
   METRICS_NAV_WIDTH,
   useMetricsNavWidthStore,
@@ -1645,22 +1661,85 @@ function StatisticalConfigurationTooltip({
 }
 
 // ---------------------------------------------------------------------------
-// Metric header
+// Page-level Metrics header (above filters) + per-metric name row
+
+function MetricsPageHeader({
+  campaign,
+  metricsLayout,
+  onMetricsLayoutChange,
+  showLayoutSwitch,
+  onOpenLearnings,
+  onViewVitalsDetails,
+}: {
+  campaign: Campaign;
+  metricsLayout: "focus" | "all";
+  onMetricsLayoutChange: (next: "focus" | "all") => void;
+  showLayoutSwitch: boolean;
+  onOpenLearnings: () => void;
+  onViewVitalsDetails: () => void;
+}) {
+  const openWingzAndAsk = useWingzStore((s) => s.openWingzAndAsk);
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          Metrics
+        </h1>
+        {showLayoutSwitch ? (
+          <MetricsLayoutSwitch
+            value={metricsLayout}
+            onChange={onMetricsLayoutChange}
+          />
+        ) : null}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onOpenLearnings}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
+              aria-label="Campaign learnings"
+            >
+              <LearningIcon className="h-[18px] w-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={8}>
+            Learnings
+          </TooltipContent>
+        </Tooltip>
+        <ExperimentVitalsPopover onViewDetails={onViewVitalsDetails} />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 gap-1.5 rounded-md font-medium"
+          aria-label="Campaign summary"
+          onClick={() =>
+            openWingzAndAsk(
+              { kind: "campaign", campaignId: campaign.id },
+              "Summarise this campaign for me"
+            )
+          }
+        >
+          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          Campaign summary
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function MetricHeader({
   campaign,
   metric,
   isPrimary,
-  onOpenLearnings,
-  onViewVitalsDetails,
 }: {
   campaign: Campaign;
   metric: string;
   isPrimary: boolean;
-  onOpenLearnings: () => void;
-  onViewVitalsDetails: () => void;
 }) {
-  const openWingzAndAsk = useWingzStore((s) => s.openWingzAndAsk);
   const metricTitleClass =
     "border-b border-dashed border-muted-foreground text-lg font-semibold leading-tight tracking-tight text-foreground";
 
@@ -1688,7 +1767,7 @@ function MetricHeader({
           )}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1">
         <StatisticalConfigurationTooltip
           campaign={campaign}
           metricName={metric}
@@ -1701,49 +1780,59 @@ function MetricHeader({
             <PieChart className="h-[18px] w-[18px]" aria-hidden />
           </button>
         </StatisticalConfigurationTooltip>
-        <ExperimentVitalsPopover onViewDetails={onViewVitalsDetails} />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={onOpenLearnings}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
-              aria-label="Campaign learnings"
-            >
-              <LearningIcon className="h-[18px] w-[18px]" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" sideOffset={8}>
-            Learnings
-          </TooltipContent>
-        </Tooltip>
         <DownloadCsvMenu metricName={metric} />
-        {/* @undo Settings moved to the table-header gear (View Settings).
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted/60"
-          aria-label="Settings"
-        >
-          <Settings className="h-[18px] w-[18px]" aria-hidden />
-        </button>
-        */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-9 gap-1.5 rounded-md font-medium"
-          aria-label="Campaign summary"
-          onClick={() =>
-            openWingzAndAsk(
-              { kind: "campaign", campaignId: campaign.id },
-              "Summarise this campaign for me"
-            )
-          }
-        >
-          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          Campaign summary
-        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Unfold control under the results table — expands full graphs in place (All metrics).
+ */
+function MetricGraphsReveal({
+  open,
+  onToggle,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="border-t border-border">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+        className={cn(
+          "group flex h-9 w-full items-center justify-center gap-1.5 px-3 transition-colors",
+          open ? "bg-muted/40 hover:bg-muted/55" : "hover:bg-muted/35"
+        )}
+      >
+        <LineChart
+          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+        <span className="text-sm font-medium text-foreground">
+          {open ? "Hide graphs" : "Show graphs"}
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
+            open && "rotate-180"
+          )}
+          aria-hidden
+        />
+      </button>
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-300 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          {open ? <div className="border-t border-border pb-2">{children}</div> : null}
+        </div>
       </div>
     </div>
   );
@@ -3158,6 +3247,7 @@ function ResultsTotalMetricCell({
   sessionConversions,
   sessions,
   rowDensity,
+  thickTop = false,
 }: {
   columnId: ResultsTableColumnId;
   conversions: number;
@@ -3167,11 +3257,13 @@ function ResultsTotalMetricCell({
   sessionConversions: number;
   sessions: number;
   rowDensity: ResultsRowDensity;
+  thickTop?: boolean;
 }) {
   const cell = cn(
     resultsMetricColChrome,
     RESULTS_ROW_H[rowDensity],
     "flex items-center border-b border-border",
+    thickTop && "border-t-2 border-t-border",
     STICKY_HEADER_BG
   );
   const numeric = cn(
@@ -3558,12 +3650,14 @@ function TotalRow({
     RESULTS_ROW_H[rowDensity]
   );
   const gridStyle = buildResultsGrid(columns);
+  // -mt-px covers the thin border-b from the row above → one thicker rule.
+  const totalCell = cn(cell, "border-t-2 border-t-border");
   return (
-    <div className="group grid items-stretch" style={gridStyle}>
+    <div className="group -mt-px grid items-stretch" style={gridStyle}>
       <div
         className={cn(
           stickyVariationsCellClass(edgeShadows.left),
-          cell,
+          totalCell,
           "min-w-0 gap-2.5 pl-6 pr-4"
         )}
       >
@@ -3583,13 +3677,14 @@ function TotalRow({
           sessionConversions={sessionConversions}
           sessions={sessions}
           rowDensity={rowDensity}
+          thickTop
         />
       ))}
       <div
         className={cn(
           stickyActionsCellClass(edgeShadows.right),
           RESULTS_ROW_H[rowDensity],
-          "flex items-center justify-center border-b border-border",
+          "flex items-center justify-center border-b border-border border-t-2 border-t-border",
           STICKY_HEADER_BG
         )}
       />
@@ -5399,6 +5494,7 @@ function MetricSelector({
   onEnterCompare,
   collapsed,
   onToggleCollapsed,
+  showCompare = true,
 }: {
   campaign: Campaign;
   selectedMetric: string;
@@ -5406,13 +5502,12 @@ function MetricSelector({
   onEnterCompare: () => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  /** Compare Metrics is Focus-only. */
+  showCompare?: boolean;
 }) {
-  const others = campaign.report.otherMetrics;
-  // Guardrails take the bulk of the list; the remainder become Secondary so
-  // both groups stay populated regardless of how many metrics exist.
-  const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
-  const guardrails = others.slice(0, splitAt);
-  const secondary = others.slice(splitAt);
+  // Guardrails stay the otherMetrics slice; Secondary adds the dedicated five.
+  const guardrails = reportGuardrailMetrics(campaign.report);
+  const secondary = reportSecondaryMetrics(campaign.report);
 
   const collapsedContent = (
     <TooltipProvider delayDuration={200}>
@@ -5466,7 +5561,7 @@ function MetricSelector({
         <div className={metricsSidebarScrollClass}>
           {/* Primary Metric */}
           <div className={metricsSidebarPrimarySectionClass}>
-            <MetricGroupLabel>Primary Metric</MetricGroupLabel>
+            <MetricGroupLabel>Primary</MetricGroupLabel>
             {campaign.primaryMetric === "Conversion rate" ? (
               <MetricDefinitionTooltip side="right">
                 {primaryMetricItem}
@@ -5506,20 +5601,22 @@ function MetricSelector({
           ))}
         </div>
 
-        {/* Compare Metrics */}
-        <div className={metricsSidebarActionStripClass}>
-          <div className="flex w-full justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-2 rounded-md font-medium"
-              onClick={onEnterCompare}
-            >
-              <Columns2 className="h-4 w-4" aria-hidden />
-              Compare Metrics
-            </Button>
+        {/* Compare Metrics — Focus layout only */}
+        {showCompare ? (
+          <div className={metricsSidebarActionStripClass}>
+            <div className="flex w-full justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2 rounded-md font-medium"
+                onClick={onEnterCompare}
+              >
+                <Columns2 className="h-4 w-4" aria-hidden />
+                Compare Metrics
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
       </MetricsNavShell>
     </TooltipProvider>
@@ -5572,9 +5669,7 @@ function CompareMetricSelector({
   collapsed: boolean;
   onToggleCollapsed: () => void;
 }) {
-  const others = campaign.report.otherMetrics;
-  const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
-  const secondary = others.slice(splitAt);
+  const secondary = reportSecondaryMetrics(campaign.report);
   const primary = campaign.primaryMetric;
   const count = selected.length;
 
@@ -5582,7 +5677,7 @@ function CompareMetricSelector({
     <MetricsNavShell collapsed={collapsed} onToggleCollapsed={onToggleCollapsed}>
       <div className={metricsSidebarScrollClass}>
         <div className={metricsSidebarPrimarySectionClass}>
-          <MetricGroupLabel>Primary Metric</MetricGroupLabel>
+          <MetricGroupLabel>Primary</MetricGroupLabel>
           <CompareCheckItem
             name={primary}
             checked={selected.includes(primary)}
@@ -5953,6 +6048,7 @@ export default function ResultsTab({
     campaign.id,
     campaign.primaryMetric
   );
+  const [metricsLayout, setMetricsLayout] = useReportMetricsLayout(campaign.id);
   const [compareMode, setCompareMode] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("variation");
   const [resultsGroupBy, setResultsGroupBy] =
@@ -5960,6 +6056,32 @@ export default function ResultsTab({
   const [learningsOpen, setLearningsOpen] = useState(false);
   const [metricsNavCollapsed, setMetricsNavCollapsed] =
     useReportMetricsNavCollapsed(campaign.id);
+  const metricsScrollRef = useRef<HTMLDivElement>(null);
+  const [jumpRequest, setJumpRequest] = useState(0);
+  const [graphsOpenByMetric, setGraphsOpenByMetric] = useState<
+    Record<string, boolean>
+  >(() => ({ [campaign.primaryMetric]: true }));
+  const metricNavCount = buildMetricNavItems(campaign).length;
+  const showLayoutSwitch = metricNavCount > 1;
+  const effectiveLayout =
+    showLayoutSwitch && metricsLayout === "all" ? "all" : "focus";
+  const isAllMetrics = effectiveLayout === "all" && !compareMode;
+
+  useEffect(() => {
+    if (!showLayoutSwitch && metricsLayout === "all") {
+      setMetricsLayout("focus");
+    }
+  }, [showLayoutSwitch, metricsLayout, setMetricsLayout]);
+
+  const handleSelectMetric = useCallback(
+    (name: string) => {
+      setSelectedMetric(name);
+      if (effectiveLayout === "all" && !compareMode) {
+        setJumpRequest((n) => n + 1);
+      }
+    },
+    [setSelectedMetric, effectiveLayout, compareMode]
+  );
 
   const activePresetId = useActiveReportPresetId(campaign.id);
   const viewState = useActiveReportPresetState(campaign.id);
@@ -5980,13 +6102,12 @@ export default function ResultsTab({
     setResultsRowDensityDraft(campaign.id, next);
   const isStatisticsPreset = activePresetId === REPORT_PRESET_IDS.statistics;
 
-  const others = campaign.report.otherMetrics;
-  const splitAt = Math.max(1, others.length - Math.max(1, Math.floor(others.length / 3)));
-  const compareableMetrics = others.slice(splitAt);
+  const compareableMetrics = reportSecondaryMetrics(campaign.report);
   const [compareSelected, setCompareSelected] = useState<string[]>([]);
 
   const enterCompare = () => {
     setCompareSelected([]);
+    setMetricsLayout("focus");
     setCompareMode(true);
   };
   const toggleCompare = (name: string) =>
@@ -6002,6 +6123,138 @@ export default function ResultsTab({
   const orderedCompareMetrics = allMetrics.filter((m) =>
     compareSelected.includes(m.name)
   );
+
+  const toggleGraphs = (metricName: string) => {
+    setGraphsOpenByMetric((prev) => ({
+      ...prev,
+      [metricName]: !prev[metricName],
+    }));
+  };
+
+  const renderMetricResultsCard = (
+    metricName: string,
+    opts: {
+      showConclusion: boolean;
+      /** Focus: always show graphs. All metrics: unfold drawer under the table. */
+      graphs: "always" | { open: boolean; onToggle: () => void };
+    }
+  ) => {
+    const graphPanel = (
+      <GraphPanel
+        campaign={campaign}
+        metricName={metricName}
+        filters={filters}
+        defaultGraph={viewSettings.defaultGraph}
+        className={opts.graphs === "always" ? undefined : "pt-4"}
+      />
+    );
+    const graphsFirst =
+      opts.graphs === "always" && viewSettings.layout === "graphs-first";
+
+    return (
+      <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+        {opts.showConclusion && !resultsTable ? (
+          <div className="border-b border-border">
+            <ConclusionBanner
+              conclusion={conclusion}
+              variantName={best.name}
+              controlName={campaign.report.variants[0]?.name ?? "Control"}
+              embedded
+            />
+          </div>
+        ) : null}
+        <div className="border-b border-border px-4 pb-0 pt-4">
+          <ReportViewBar
+            campaignId={campaign.id}
+            trailing={
+              filters.segments.length > 0 ? (
+                <ResultsGroupByControl
+                  value={resultsGroupBy}
+                  onChange={setResultsGroupBy}
+                />
+              ) : undefined
+            }
+          />
+        </div>
+        {resultsTable && metricName === selectedMetric ? (
+          resultsTable
+        ) : isStatisticsPreset ? (
+          <StatisticsPresetEmptyState metricName={metricName} />
+        ) : (
+          <>
+            <div className="flex flex-col gap-12">
+              {graphsFirst ? (
+                <GraphPanel
+                  campaign={campaign}
+                  metricName={metricName}
+                  filters={filters}
+                  defaultGraph={viewSettings.defaultGraph}
+                  className="pt-6"
+                />
+              ) : null}
+              <ResultsTable
+                campaign={campaign}
+                metricName={metricName}
+                filters={filters}
+                dataMode={dataMode}
+                showTotalRow={viewSettings.showTotalRow}
+                columns={resultsTableColumns}
+                rowDensity={resultsRowDensity}
+                groupBy={resultsGroupBy}
+                settings={viewSettings}
+                onSettingsChange={(next) => {
+                  updateActivePreset(campaign.id, { viewSettings: next });
+                }}
+                onColumnsChange={setResultsTableColumns}
+                onRowDensityChange={setResultsRowDensity}
+              />
+              {opts.graphs === "always" && !graphsFirst ? graphPanel : null}
+            </div>
+            {opts.graphs !== "always" ? (
+              <MetricGraphsReveal
+                open={opts.graphs.open}
+                onToggle={opts.graphs.onToggle}
+              >
+                {graphPanel}
+              </MetricGraphsReveal>
+            ) : null}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderAllMetricBlock = (item: MetricNavItem) => {
+    const graphsOpen =
+      graphsOpenByMetric[item.name] ?? item.role === "primary";
+    return (
+      <div className="space-y-4">
+        <MetricHeader
+          campaign={campaign}
+          metric={item.name}
+          isPrimary={false}
+        />
+        {renderMetricResultsCard(item.name, {
+          showConclusion: item.role === "primary",
+          graphs: {
+            open: graphsOpen,
+            onToggle: () => toggleGraphs(item.name),
+          },
+        })}
+      </div>
+    );
+  };
+
+  const pageHeader = !compareMode ? (
+    <MetricsPageHeader
+      campaign={campaign}
+      metricsLayout={effectiveLayout}
+      onMetricsLayoutChange={setMetricsLayout}
+      showLayoutSwitch={showLayoutSwitch}
+      onOpenLearnings={() => setLearningsOpen(true)}
+      onViewVitalsDetails={onNavigateToVitals}
+    />
+  ) : null;
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -6019,13 +6272,17 @@ export default function ResultsTab({
         <MetricSelector
           campaign={campaign}
           selectedMetric={selectedMetric}
-          onSelectMetric={setSelectedMetric}
+          onSelectMetric={handleSelectMetric}
           onEnterCompare={enterCompare}
           collapsed={metricsNavCollapsed}
           onToggleCollapsed={() => setMetricsNavCollapsed(!metricsNavCollapsed)}
+          showCompare={!isAllMetrics}
         />
       )}
-      <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+      <div
+        ref={metricsScrollRef}
+        className="min-h-0 min-w-0 flex-1 overflow-auto"
+      >
         <div className="mx-auto w-full min-w-[44rem] max-w-[1120px] space-y-8 px-8 pb-8 pt-12 sm:px-12">
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           {compareMode ? (
@@ -6056,94 +6313,35 @@ export default function ResultsTab({
                 onClear={() => setCompareMode(false)}
               />
             </>
+          ) : isAllMetrics ? (
+            <>
+              {pageHeader}
+              <ResultsFilterPanel campaignId={campaign.id} />
+              <AllMetricsView
+                campaign={campaign}
+                scrollRootRef={metricsScrollRef}
+                activeMetric={selectedMetric}
+                onActiveMetricChange={setSelectedMetric}
+                jumpRequest={jumpRequest}
+                renderMetric={renderAllMetricBlock}
+              />
+            </>
           ) : (
             <>
+              {pageHeader}
               <ResultsFilterPanel campaignId={campaign.id} />
               <div className="space-y-4">
                 <MetricHeader
                   campaign={campaign}
                   metric={selectedMetric}
                   isPrimary={selectedMetric === campaign.primaryMetric}
-                  onOpenLearnings={() => setLearningsOpen(true)}
-                  onViewVitalsDetails={onNavigateToVitals}
                 />
-                <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
-                {!resultsTable && <div className="border-b border-border">
-                  <ConclusionBanner
-                    conclusion={conclusion}
-                    variantName={best.name}
-                    controlName={campaign.report.variants[0]?.name ?? "Control"}
-                    embedded
-                  />
-                </div>}
-                <div className="border-b border-border px-4 pb-0 pt-4">
-                  <ReportViewBar
-                    campaignId={campaign.id}
-                    trailing={
-                      filters.segments.length > 0 ? (
-                        <ResultsGroupByControl
-                          value={resultsGroupBy}
-                          onChange={setResultsGroupBy}
-                        />
-                      ) : undefined
-                    }
-                  />
-                </div>
-                {resultsTable ?? (isStatisticsPreset ? (
-                  <StatisticsPresetEmptyState metricName={selectedMetric} />
-                ) : viewSettings.layout === "graphs-first" ? (
-                  <div className="flex flex-col gap-12">
-                    <GraphPanel
-                      campaign={campaign}
-                      metricName={selectedMetric}
-                      filters={filters}
-                      defaultGraph={viewSettings.defaultGraph}
-                      className="pt-6"
-                    />
-                    <ResultsTable
-                      campaign={campaign}
-                      metricName={selectedMetric}
-                      filters={filters}
-                      dataMode={dataMode}
-                      showTotalRow={viewSettings.showTotalRow}
-                      columns={resultsTableColumns}
-                      rowDensity={resultsRowDensity}
-                      groupBy={resultsGroupBy}
-                      settings={viewSettings}
-                      onSettingsChange={(next) => {
-                        updateActivePreset(campaign.id, { viewSettings: next });
-                      }}
-                      onColumnsChange={setResultsTableColumns}
-                      onRowDensityChange={setResultsRowDensity}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-12">
-                    <ResultsTable
-                      campaign={campaign}
-                      metricName={selectedMetric}
-                      filters={filters}
-                      dataMode={dataMode}
-                      showTotalRow={viewSettings.showTotalRow}
-                      columns={resultsTableColumns}
-                      rowDensity={resultsRowDensity}
-                      groupBy={resultsGroupBy}
-                      settings={viewSettings}
-                      onSettingsChange={(next) => {
-                        updateActivePreset(campaign.id, { viewSettings: next });
-                      }}
-                      onColumnsChange={setResultsTableColumns}
-                      onRowDensityChange={setResultsRowDensity}
-                    />
-                    <GraphPanel
-                      campaign={campaign}
-                      metricName={selectedMetric}
-                      filters={filters}
-                      defaultGraph={viewSettings.defaultGraph}
-                    />
-                  </div>
-                ))}
-                </div>
+                {renderMetricResultsCard(selectedMetric, {
+                  showConclusion:
+                    !resultsTable &&
+                    selectedMetric === campaign.primaryMetric,
+                  graphs: "always",
+                })}
               </div>
             </>
           )}

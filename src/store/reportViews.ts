@@ -475,9 +475,13 @@ const EMPTY_SLICE: CampaignSlice = {
   hiddenPresetIds: [],
 };
 
+/** Focus = one metric at a time; all = scrollable summary of every metric. */
+export type MetricsLayoutMode = "focus" | "all";
+
 type CampaignReportUi = {
   selectedMetric: string;
   metricsNavCollapsed: boolean;
+  metricsLayout: MetricsLayoutMode;
 };
 
 type SaveHint = {
@@ -542,6 +546,7 @@ type ReportViewsState = {
   reorderCustomViews: (campaignId: string, from: number, to: number) => void;
   setSelectedMetric: (campaignId: string, metric: string) => void;
   setMetricsNavCollapsed: (campaignId: string, collapsed: boolean) => void;
+  setMetricsLayout: (campaignId: string, layout: MetricsLayoutMode) => void;
   clearSaveHint: () => void;
   applySavedFilter: (campaignId: string, filterId: string) => void;
   /** Leave the active saved filter without changing live filters/metric. */
@@ -785,6 +790,7 @@ export const useReportViewsStore = create<ReportViewsState>()(
               nextUi[campaignId] = {
                 selectedMetric: seed.primaryMetric,
                 metricsNavCollapsed: false,
+                metricsLayout: "focus",
               };
             }
 
@@ -1380,6 +1386,7 @@ export const useReportViewsStore = create<ReportViewsState>()(
                   [campaignId]: {
                     selectedMetric: metric,
                     metricsNavCollapsed: false,
+                    metricsLayout: "focus",
                   },
                 },
               };
@@ -1402,6 +1409,30 @@ export const useReportViewsStore = create<ReportViewsState>()(
               uiByCampaign: {
                 ...s.uiByCampaign,
                 [campaignId]: { ...ui, metricsNavCollapsed: collapsed },
+              },
+            };
+          }),
+
+        setMetricsLayout: (campaignId, layout) =>
+          set((s) => {
+            const ui = s.uiByCampaign[campaignId];
+            if (!ui) {
+              return {
+                uiByCampaign: {
+                  ...s.uiByCampaign,
+                  [campaignId]: {
+                    selectedMetric: "",
+                    metricsNavCollapsed: false,
+                    metricsLayout: layout,
+                  },
+                },
+              };
+            }
+            if (ui.metricsLayout === layout) return s;
+            return {
+              uiByCampaign: {
+                ...s.uiByCampaign,
+                [campaignId]: { ...ui, metricsLayout: layout },
               },
             };
           }),
@@ -1599,6 +1630,20 @@ export function useReportMetricsNavCollapsed(
     [campaignId, setCollapsed]
   );
   return [collapsed, setNavCollapsed];
+}
+
+export function useReportMetricsLayout(
+  campaignId: string
+): [MetricsLayoutMode, (layout: MetricsLayoutMode) => void] {
+  const layout = useReportViewsStore(
+    (s) => s.uiByCampaign[campaignId]?.metricsLayout ?? "focus"
+  );
+  const setLayout = useReportViewsStore((s) => s.setMetricsLayout);
+  const setMetricsLayout = useCallback(
+    (value: MetricsLayoutMode) => setLayout(campaignId, value),
+    [campaignId, setLayout]
+  );
+  return [layout, setMetricsLayout];
 }
 
 export function toYmd(d: Date): string {

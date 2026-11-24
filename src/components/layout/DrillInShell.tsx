@@ -3,6 +3,9 @@
  * always shown on the left of Settings / Configuration / Upgrade; it cannot be expanded. The
  * left-edge slide-out overlay and the "[" shortcut are commented out (@undo) as redundant.
  * A hairline (existing border-panel-border token) separates the rail from the sub-nav.
+ * Follow-up: the breadcrumb header spans the full width next to the main rail; Settings /
+ * Configuration / Upgrade sub-nav starts below that header (not beside it).
+ * Follow-up: Tag status badge (Badge + Tooltip) only on Websites and Apps → Introduction.
  */
 // @undo — edge slide-out state: import { useEffect, useRef, useState } from "react";
 // @undo — edge slide-out portal: import { createPortal } from "react-dom";
@@ -18,6 +21,8 @@ import {
   History,
   MoreVertical,
 } from "@/components/icons/protoLucide";
+// @undo RefreshCw — Tag badge no longer shows a leading icon
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
+  TooltipArrow,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
@@ -52,8 +58,59 @@ import WorkspaceSwitcher from "./WorkspaceSwitcher";
 // const OVERLAY_CLOSE_GRACE_MS = 250;
 
 const WNA_SITES_PATH = "/configuration/websites-and-apps/sites";
+const WNA_INTRODUCTION_PATH = "/configuration/websites-and-apps/introduction";
 const INTEGRATIONS_PATH = "/configuration/integrations";
 const ACCOUNT_USERS_PATH = "/settings/accounts/users";
+
+/** Dummy tag compile status — DS neutral light pill Badge + rich Tooltip. */
+function TagStatusBadge() {
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="Tag status"
+            className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {/* @undo variant="outline" — DS sample is tone=neutral fill=light pill */}
+            {/* DS medium = 28px → Badge size="lg" (h-7). @undo size="md" (24px) */}
+            <Badge
+              tone="neutral"
+              fill="light"
+              size="lg"
+              className="pointer-events-none font-medium"
+            >
+              {/* @undo <RefreshCw strokeWidth={1.75} aria-hidden /> */}
+              Tag
+            </Badge>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="bottom"
+          align="end"
+          sideOffset={8}
+          className="max-w-[20rem] border border-border bg-popover px-3 py-3 text-left text-popover-foreground shadow-md"
+        >
+          {/* @undo — info callout removed:
+          <p className="rounded-md bg-[var(--info-bg)] …">Compiling the tag…</p>
+          */}
+          <div className="flex flex-col gap-1 text-xs leading-snug text-foreground">
+            <p>
+              Tag version:{" "}
+              {/* @undo text-[var(--badge-berry-light-fg)] */}
+              <span className="font-semibold text-foreground">next</span>
+            </p>
+            <p className="text-muted-foreground">
+              Last update: 11/19/2026 - 6:04:13 AM - UTC -05:00
+            </p>
+          </div>
+          <TooltipArrow width={12} height={6} />
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 /** Header CTAs (schedule / view plan / more) for every Subscription + Inactive Subscriptions leaf. */
 const SUBSCRIPTION_CTA_PREFIXES = [
   "/settings/subscription/",
@@ -80,6 +137,7 @@ export default function DrillInShell() {
   const mode = findProfileMode(pathname);
   const openIntegrationRequest = useIntegrationRequestStore((s) => s.openRequest);
   const showAddWebsite = pathname === WNA_SITES_PATH;
+  const showTagBadge = pathname === WNA_INTRODUCTION_PATH;
   const showRequestIntegration = pathname === INTEGRATIONS_PATH;
   const showCreateConnection =
     pathname.startsWith(`${INTEGRATIONS_PATH}/`) &&
@@ -162,16 +220,15 @@ export default function DrillInShell() {
 
   return (
     <div className="flex h-full bg-background text-foreground">
-      {/* Hairline separates the main rail from the drill-in sub-nav (same token as the sub-nav's right edge). */}
+      {/* Hairline separates the main rail from the header + drill-in column. */}
       <div className="flex h-full shrink-0 border-r border-panel-border">
         <ExpandedNav forceCollapsed />
       </div>
-      {mode.id === "upgrade" ? (
-        <UpgradeNav title={mode.label} />
-      ) : (
-        <DrillInNav mode={mode} />
-      )}
 
+      {/* @undo — sub-nav sat beside the header:
+          {mode.id === "upgrade" ? <UpgradeNav … /> : <DrillInNav … />}
+          then a column with header + main only.
+          Now the breadcrumb header spans to the main rail; sub-nav starts below it. */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-[56px] shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4">
           <div className="flex min-w-0 items-center gap-1.5">
@@ -191,6 +248,7 @@ export default function DrillInShell() {
             />
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {showTagBadge ? <TagStatusBadge /> : null}
             {showAddWebsite ? (
               <Button type="button" className="h-9 gap-1.5 px-3 shadow-none">
                 <CirclePlus className="size-4" strokeWidth={1.75} aria-hidden />
@@ -346,9 +404,16 @@ export default function DrillInShell() {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto bg-canvas">
-          <Outlet />
-        </main>
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {mode.id === "upgrade" ? (
+            <UpgradeNav title={mode.label} />
+          ) : (
+            <DrillInNav mode={mode} />
+          )}
+          <main className="min-h-0 flex-1 overflow-y-auto bg-canvas">
+            <Outlet />
+          </main>
+        </div>
       </div>
 
       {/* @undo — left-edge hover zone + slide-out overlay of the main nav:

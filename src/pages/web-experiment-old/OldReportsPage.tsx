@@ -1,3 +1,6 @@
+/** Legacy Web Experimentation reports shell.
+ * @summary Other-metrics strip includes secondaryMetrics as well.
+ */
 import { useParams } from "react-router-dom";
 import {
   Filter,
@@ -67,7 +70,9 @@ export default function OldReportsPage() {
               Primary
             </span>
           </div>
-          {campaign.report.otherMetrics.slice(0, 6).map((m, i) => (
+          {[...campaign.report.otherMetrics, ...campaign.report.secondaryMetrics]
+            .slice(0, 11)
+            .map((m, i) => (
             <button
               key={m.name}
               type="button"

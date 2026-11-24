@@ -1,3 +1,6 @@
+/** Per-variant metric stats for Web Experimentation reports.
+ * @summary Looks up listed uplifts from otherMetrics and secondaryMetrics.
+ */
 import { campaignBestVariantIndex } from "../../data/campaignConclusion";
 import type { Campaign, Variant } from "../../data/campaigns";
 import {
@@ -154,7 +157,9 @@ export function metricRowStats(
     };
   }
 
-  const listed = campaign.report.otherMetrics.find((m) => m.name === metricName);
+  const listed =
+    campaign.report.otherMetrics.find((m) => m.name === metricName) ??
+    campaign.report.secondaryMetrics.find((m) => m.name === metricName);
   const seed = hashMetricSeed(
     `${campaign.id}:${metricName}:${variant.id}:${suffix}:${dataMode}`
   );

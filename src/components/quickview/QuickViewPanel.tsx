@@ -1,3 +1,6 @@
+/** Campaign Quick View side panel.
+ * @summary “Other metrics” list includes dedicated secondaryMetrics.
+ */
 import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -379,7 +382,7 @@ function DecidedCard({
           <span className="text-sm text-muted-foreground">Uplift</span>
         </div>
         <div className="mt-2 space-y-2">
-          {r.otherMetrics.map((m, i) => (
+          {[...r.otherMetrics, ...r.secondaryMetrics].map((m, i) => (
             <div key={i} className="flex items-center justify-between gap-2">
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" aria-hidden />
