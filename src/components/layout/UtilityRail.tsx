@@ -43,8 +43,8 @@ export default function UtilityRail({ entityId }: { entityId?: string }) {
   const wingzOpen = useWingzStore((s) => s.open);
   const detailOpen = useDetailPanelsStore((s) => s.openId) !== null;
   const [peeked, setPeeked] = useState(false);
-  const openTimer = useRef<number>();
-  const closeTimer = useRef<number>();
+  const openTimer = useRef<number | undefined>(undefined);
+  const closeTimer = useRef<number | undefined>(undefined);
 
   // Keep visible while Wingz / a detail panel is open so the controls stay reachable.
   const visible = peeked || wingzOpen || detailOpen;

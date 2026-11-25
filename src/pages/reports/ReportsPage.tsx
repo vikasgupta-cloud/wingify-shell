@@ -54,7 +54,8 @@ import {
 import { formatNumber } from "./reportMetrics";
 import ResultsTab, { ResultsFilterPanel } from "./ResultsTab";
 import { SURVEYS } from "@/data/surveys";
-import VitalsTab from "./VitalsTab";
+// @undo Vitals tab removed from report chrome — restore when Vitals returns to TABS.
+// import VitalsTab from "./VitalsTab";
 import WingzPanel from "../../components/wingz/WingzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
 import ReportsEmptyState from "../../components/reports/ReportsEmptyState";
@@ -667,7 +668,8 @@ function VitalsBreachSection({ onViewDetails }: { onViewDetails: () => void }) {
   );
 }
 
-function ReportsOverview({
+/** @undo Kept for when Overview returns to report tabs. */
+export function ReportsOverview({
   onViewFullStats,
   onViewVitalsDetails,
 }: {
@@ -951,7 +953,8 @@ function BehaviourIllustration({ className }: { className?: string }) {
   );
 }
 
-function BehaviourComingSoon() {
+/** @undo Kept for when Behaviour returns to report tabs. */
+export function BehaviourComingSoon() {
   return (
     <div className="flex min-h-[min(28rem,calc(100dvh-12rem))] flex-col items-center justify-center gap-5 px-6 py-16 text-center">
       <BehaviourIllustration className="h-auto w-full max-w-[280px] text-foreground" />
@@ -1054,7 +1057,8 @@ function surveyReportScenario(campaignId: string): SurveyReportScenario {
   return 3;
 }
 
-function SurveysTabBody({ campaign }: { campaign: Campaign }) {
+/** @undo Kept for when Surveys returns to report tabs. */
+export function SurveysTabBody({ campaign }: { campaign: Campaign }) {
   const scenario = surveyReportScenario(campaign.id);
   const canAdd = scenario !== 3;
   const defaultIds =
@@ -1490,7 +1494,8 @@ function LiveHitsIllustration({ className }: { className?: string }) {
   );
 }
 
-function LiveHitsComingSoon() {
+/** @undo Kept for when Live hits returns to report tabs. */
+export function LiveHitsComingSoon() {
   return (
     <div className="flex min-h-[min(28rem,calc(100dvh-12rem))] flex-col items-center justify-center gap-5 px-6 py-16 text-center">
       <LiveHitsIllustration className="h-auto w-full max-w-[280px] text-foreground" />
