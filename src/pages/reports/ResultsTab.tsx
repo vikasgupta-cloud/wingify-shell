@@ -6455,7 +6455,7 @@ export default function ResultsTab({
         ref={metricsScrollRef}
         className="min-h-0 min-w-0 flex-1 overflow-auto"
       >
-        <div className="mx-auto w-full min-w-[44rem] max-w-[1120px] space-y-8 px-8 pb-8 pt-12 sm:px-12">
+        <div className="w-full min-w-[44rem] space-y-8 px-8 py-8">
           <LearningsDialog open={learningsOpen} onOpenChange={setLearningsOpen} />
           {compareMode ? (
             <>

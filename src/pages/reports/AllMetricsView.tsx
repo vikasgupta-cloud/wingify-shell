@@ -227,7 +227,7 @@ export default function AllMetricsView({
   }, [items, scrollRootRef, onActiveMetricChange, campaign.id]);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
       {groups.map((group) => (
         <div key={group.role} className="flex flex-col gap-8">
           {group.role !== "primary" ? (
