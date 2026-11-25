@@ -36,7 +36,6 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VitalsGlyph } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
-import { UTILITY_RAIL_WIDTH } from "../../lib/nav";
 import { ReportDataProvider, useReportData } from "./reportDataContext";
 import type { ReportConclusionSnapshot } from "./reportDataContext";
 import ConclusionStateIcon from "@/components/reports/ConclusionStateIcon";
@@ -728,7 +727,7 @@ function ReportsChrome({
     <div
       className={cn(
         "flex h-full min-h-0 flex-col",
-        activeTab === "vitals" ? "bg-background" : "bg-canvas"
+        "bg-canvas"
       )}
       style={{ "--reports-tabs-height": tabsBarHeight } as CSSProperties}
     >
@@ -744,7 +743,7 @@ function ReportsChrome({
           <div className={cn("flex min-w-0 gap-4 overflow-x-auto", featureFlagReport ? "h-full items-center overflow-y-hidden" : "items-end")}>
           {leadingControls}
           <TabsList className={cn("gap-5 rounded-none bg-transparent p-0", featureFlagReport ? "h-full" : "h-auto")}>
-            {TABS.filter(tab => !featureFlagReport || tab !== "Overview").map((tab) => (
+            {TABS.map((tab) => (
               <TabsTrigger
                 key={tab}
                 value={tabValue(tab)}
@@ -767,39 +766,24 @@ function ReportsChrome({
           </div>
         </div>
 
-        <div
-          className="flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden"
-          style={{ paddingRight: UTILITY_RAIL_WIDTH }}
-        >
-          {emptyMessage ? <div className="flex flex-1 items-center justify-center p-12 text-sm text-muted-foreground">{emptyMessage}</div> : activeTab === "results" ? (
+        <div className="flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
+          {emptyMessage ? <div className="flex flex-1 items-center justify-center p-12 text-sm text-muted-foreground">{emptyMessage}</div> : activeTab === "metrics" || activeTab === "results" ? (
             <ResultsTab
               key={campaign.id}
               campaign={campaign}
               resultsTable={resultsTable}
-              onNavigateToVitals={() => setActiveTab("vitals")}
+              onNavigateToVitals={() => setActiveTab("metrics")}
             />
           ) : (
             <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-              <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
-                <ReportsOverview
-                  onViewFullStats={() => setActiveTab("results")}
-                  onViewVitalsDetails={() => setActiveTab("vitals")}
-                />
+              <TabsContent value="heatmaps" className="mt-0 focus-visible:outline-none">
+                <ReportSectionComingSoon title="Heatmaps" />
               </TabsContent>
-              <TabsContent value="behaviour" className="mt-0 focus-visible:outline-none">
-                <BehaviourComingSoon />
+              <TabsContent value="session-recordings" className="mt-0 focus-visible:outline-none">
+                <ReportSectionComingSoon title="Session Recordings" />
               </TabsContent>
-              <TabsContent value="surveys" className="mt-0 focus-visible:outline-none">
-                <SurveysTabBody key={campaign.id} campaign={campaign} />
-              </TabsContent>
-              <TabsContent value="live-hits" className="mt-0 focus-visible:outline-none">
-                <LiveHitsComingSoon />
-              </TabsContent>
-              <TabsContent
-                value="vitals"
-                className="mt-0 bg-background focus-visible:outline-none"
-              >
-                <VitalsTab key={campaign.id} campaign={campaign} />
+              <TabsContent value="audit" className="mt-0 focus-visible:outline-none">
+                <ReportSectionComingSoon title="Audit" />
               </TabsContent>
             </div>
           )}
@@ -820,20 +804,28 @@ function ReportsChrome({
   );
 }
 
-const TABS = ["Overview", "Results", "Behaviour", "Surveys", "Live hits", "Vitals"];
+/** Report chrome tabs — matches live product: Metrics / Heatmaps / Session Recordings / Audit. */
+const TABS = ["Metrics", "Heatmaps", "Session Recordings", "Audit"];
 const tabValue = (tab: string) => tab.toLowerCase().replace(/\s+/g, "-");
-/** Display-only renames; tab values (URLs, default-tab logic) stay derived from TABS. */
-const TAB_LABELS: Record<string, string> = { Results: "Metrics" };
-const REPORT_TAB_VALUES = new Set(TABS.map(tabValue));
+const TAB_LABELS: Record<string, string> = {};
+const REPORT_TAB_VALUES = new Set([
+  ...TABS.map(tabValue),
+  "results", // legacy URL compat → Metrics
+]);
 
-const OVERVIEW_DEFAULT_STATUSES: CampaignStatus[] = [
-  "Paused",
-  "In Analysis",
-  "Ended",
-];
+function defaultReportTab(_status: CampaignStatus): string {
+  return "metrics";
+}
 
-function defaultReportTab(status: CampaignStatus): string {
-  return OVERVIEW_DEFAULT_STATUSES.includes(status) ? "overview" : "results";
+function ReportSectionComingSoon({ title }: { title: string }) {
+  return (
+    <div className="flex min-h-[min(28rem,calc(100dvh-12rem))] flex-col items-center justify-center gap-2 px-6 py-16 text-center">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="max-w-sm text-sm text-muted-foreground">
+        This report section is not wired in the prototype yet.
+      </p>
+    </div>
+  );
 }
 
 function BehaviourIllustration({ className }: { className?: string }) {
@@ -1521,10 +1513,11 @@ export default function ReportsPage({ campaignOverride, leadingControls, emptyMe
   const tabsBarRef = useRef<HTMLDivElement>(null);
   const [tabsBarHeight, setTabsBarHeight] = useState(reportsTabsStickyHeightFallback);
 
-  const defaultTab = featureFlagReport ? "results" : campaign ? defaultReportTab(campaign.status) : "overview";
-  const tabParam = searchParams.get("tab");
+  const defaultTab = featureFlagReport ? "metrics" : campaign ? defaultReportTab(campaign.status) : "metrics";
+  const tabParamRaw = searchParams.get("tab");
+  const tabParam = tabParamRaw === "results" ? "metrics" : tabParamRaw;
   const activeTab =
-    tabParam && REPORT_TAB_VALUES.has(tabParam) && !(featureFlagReport && tabParam === "overview") ? tabParam : defaultTab;
+    tabParam && REPORT_TAB_VALUES.has(tabParam) ? tabParam : defaultTab;
 
   const setActiveTab = (value: string) => {
     setSearchParams(

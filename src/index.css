@@ -146,6 +146,17 @@
 
   --vitals-healthy: var(--green-500);
   --vitals-unhealthy: var(--cherry-600);
+  /* Metric ID badges on reports rail (soft tints — screenshot parity). */
+  --metric-badge-1-bg: var(--cherry-100);
+  --metric-badge-1-fg: var(--cherry-700);
+  --metric-badge-2-bg: var(--ocean-100);
+  --metric-badge-2-fg: var(--ocean-700);
+  --metric-badge-3-bg: var(--amber-100);
+  --metric-badge-3-fg: var(--amber-700);
+  --metric-badge-4-bg: var(--green-100);
+  --metric-badge-4-fg: var(--green-700);
+  --metric-badge-5-bg: var(--berry-100);
+  --metric-badge-5-fg: var(--berry-700);
 
   --decision-winner-fg: var(--green-700);
   --decision-baseline-fg: var(--cherry-500);
@@ -336,6 +347,17 @@
   --report-track: var(--neutral-100);
   --vitals-healthy: var(--green-500);
   --vitals-unhealthy: var(--cherry-600);
+  /* Metric ID badges on reports rail (soft tints — screenshot parity). */
+  --metric-badge-1-bg: var(--cherry-100);
+  --metric-badge-1-fg: var(--cherry-700);
+  --metric-badge-2-bg: var(--ocean-100);
+  --metric-badge-2-fg: var(--ocean-700);
+  --metric-badge-3-bg: var(--amber-100);
+  --metric-badge-3-fg: var(--amber-700);
+  --metric-badge-4-bg: var(--green-100);
+  --metric-badge-4-fg: var(--green-700);
+  --metric-badge-5-bg: var(--berry-100);
+  --metric-badge-5-fg: var(--berry-700);
 }
 
 [data-mode="dark"] {
@@ -420,6 +442,16 @@
   --report-track: var(--semantic-border-subtle);
   --vitals-healthy: var(--green-300);
   --vitals-unhealthy: var(--cherry-500);
+  --metric-badge-1-bg: color-mix(in srgb, var(--cherry-500) 22%, transparent);
+  --metric-badge-1-fg: var(--cherry-300);
+  --metric-badge-2-bg: color-mix(in srgb, var(--ocean-500) 22%, transparent);
+  --metric-badge-2-fg: var(--ocean-300);
+  --metric-badge-3-bg: color-mix(in srgb, var(--amber-500) 22%, transparent);
+  --metric-badge-3-fg: var(--amber-300);
+  --metric-badge-4-bg: color-mix(in srgb, var(--green-500) 22%, transparent);
+  --metric-badge-4-fg: var(--green-300);
+  --metric-badge-5-bg: color-mix(in srgb, var(--berry-500) 22%, transparent);
+  --metric-badge-5-fg: var(--berry-300);
 
   /* Chart tokens — brighter family steps for dark surfaces. */
   --chart-1: var(--vwo-cherry-400);

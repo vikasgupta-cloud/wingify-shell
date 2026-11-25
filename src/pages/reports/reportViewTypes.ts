@@ -38,13 +38,12 @@ export const RESULTS_TABLE_COLUMN_IDS: ResultsTableColumnId[] = [
   "revenue-per-visitor",
 ];
 
+/** Default columns match live report screenshots (Focus + All metrics). */
 export const DEFAULT_RESULTS_TABLE_COLUMNS: ResultsTableColumnId[] = [
-  "total-visitors",
   "unique-conversions",
   "conversion-rate",
   "expected-improvement",
-  "conversions-per-visitor",
-  "conversions-per-visitor-improvement",
+  "probability",
 ];
 
 const RESULTS_TABLE_COLUMN_ID_SET = new Set<string>(RESULTS_TABLE_COLUMN_IDS);

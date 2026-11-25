@@ -24,6 +24,7 @@ import WorkflowMode from "./workflow/WorkflowMode";
 import WingzPanel from "../../components/wingz/WingzPanel";
 import DetailSidePanel from "../../components/detail-panels/DetailSidePanel";
 import UtilityRail from "../../components/layout/UtilityRail";
+import { UTILITY_RAIL_WIDTH } from "../../lib/nav";
 import { useDetailPanelsStore } from "../../store/detailPanels";
 import { useWingzStore } from "../../store/wingz";
 import { TYPE_ICONS } from "../../components/icons/campaignTypeIcons";
@@ -236,7 +237,7 @@ export default function ConfigPage({
     <div
       className={cn(
         "bg-canvas",
-        embedded ? "flex h-full min-h-0" : "min-h-full",
+        embedded ? "relative flex h-full min-h-0" : "min-h-full",
         !embedded && dockState === "docked" && "flex items-start"
       )}
     >
@@ -373,7 +374,14 @@ export default function ConfigPage({
       {embedded && wingzOpen ? (
         <WingzPanel fillHeight className="min-h-0 self-stretch" />
       ) : null}
-      {embedded ? <UtilityRail entityId={id} /> : null}
+      {embedded ? (
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-30"
+          style={{ width: UTILITY_RAIL_WIDTH }}
+        >
+          <UtilityRail entityId={id} />
+        </div>
+      ) : null}
     </div>
   );
 }

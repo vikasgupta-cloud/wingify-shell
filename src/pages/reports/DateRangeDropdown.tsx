@@ -119,6 +119,15 @@ function formatRangeChip(from: Date, to: Date) {
   return `${part(from)} - ${part(to)}`;
 }
 
+/** Full-year chip for the stacked report filter bar (e.g. "Jun 03, 2025 - Jun 10, 2025"). */
+function formatRangeStacked(from: Date, to: Date) {
+  const part = (d: Date) => {
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${MONTHS[d.getUTCMonth()]} ${day}, ${d.getUTCFullYear()}`;
+  };
+  return `${part(from)} - ${part(to)}`;
+}
+
 /** Compact range label for the inline preset bar (e.g. "1 Jan 24 - 1 Dec 24"). */
 function formatRangeBar(from: Date, to: Date) {
   const part = (d: Date) => {
@@ -203,8 +212,8 @@ type DateRangeDropdownProps = {
   /** Controlled value — when set, changes go through onChange. */
   value?: DateRange;
   onChange?: (range: DateRange) => void;
-  /** Filter bar chip, inline preset bar, or overview outline control */
-  variant?: "filter" | "presets" | "outline";
+  /** Filter bar chip, stacked report segment, inline preset bar, or overview outline */
+  variant?: "filter" | "stacked" | "presets" | "outline";
   className?: string;
 };
 
@@ -483,6 +492,39 @@ export default function DateRangeDropdown({
           </div>
         )}
       </div>
+    );
+  }
+
+  if (variant === "stacked") {
+    const stackedLabel = formatRangeStacked(selected.from, selected.to);
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            className={cn(
+              "flex h-full min-w-0 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/40 data-[state=open]:bg-muted/50",
+              className
+            )}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+                {stackedLabel}
+              </span>
+              <span className="block text-xs leading-4 text-muted-foreground">
+                Date Filter
+              </span>
+            </span>
+            <ChevronDown
+              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+          </button>
+        </PopoverTrigger>
+        {pickerPanel}
+      </Popover>
     );
   }
 

@@ -27,9 +27,10 @@ import {
   CalendarClock,
   CalendarRange,
   ChevronDown,
-  Columns2,
-  // @undo Columns3 — only referenced inside the commented-out AppliedFiltersInline block now.
+  // @undo Columns2 / Columns3 / SquareStack — Compare Metrics previously used library icons.
+  // Columns2,
   // Columns3,
+  // SquareStack,
   Compass,
   Construction,
   Crosshair,
@@ -38,7 +39,6 @@ import {
   GripVertical,
   HelpCircle,
   Info,
-  LayoutPanelTop,
   LineChart,
   MousePointerClick,
   MoreVertical,
@@ -49,14 +49,17 @@ import {
   PieChart,
   Plus,
   RotateCcw,
+  Scale,
   Sparkles,
   Star,
   Settings,
+  ThumbsUp,
   TrendingUp,
   Wrench,
   ChevronRight,
   X,
 } from "@/components/icons/protoLucide";
+import { MetricIdBadge } from "./reportMetricBadges";
 import type { Campaign, Variant } from "../../data/campaigns";
 import {
   reportGuardrailMetrics,
@@ -169,6 +172,30 @@ import {
 
 const WINNER_THRESHOLD = 95;
 
+/** Soft expected-rate band for dummy report tables (screenshot parity). */
+function expectedRateBand(rate: number): { low: number; high: number } {
+  const half = Math.max(0.25, rate * 0.29);
+  return {
+    low: Math.max(0, rate - half),
+    high: rate + half,
+  };
+}
+
+/** Badge index for a metric in Primary → Secondary → Guardrails order. */
+function metricBadgeIndexForCampaign(
+  campaign: Campaign,
+  metricName: string
+): number {
+  if (metricName === campaign.primaryMetric) return 0;
+  const secondary = reportSecondaryMetrics(campaign.report);
+  const secIdx = secondary.findIndex((m) => m.name === metricName);
+  if (secIdx >= 0) return 1 + secIdx;
+  const guardrails = reportGuardrailMetrics(campaign.report);
+  const gIdx = guardrails.findIndex((m) => m.name === metricName);
+  if (gIdx >= 0) return 1 + secondary.length + gIdx;
+  return 0;
+}
+
 type ResultsGroupBy = "variation" | "segment" | "none";
 
 const RESULTS_TABLE_COLUMN_META: Record<
@@ -176,9 +203,9 @@ const RESULTS_TABLE_COLUMN_META: Record<
   { label: string; gridWidth: string; minWidthPx: number }
 > = {
   "unique-conversions": {
-    label: "Conversions (v)",
-    gridWidth: "minmax(152px, 1fr)",
-    minWidthPx: 152,
+    label: "Unique Conversions / Visitors",
+    gridWidth: "minmax(200px, 1fr)",
+    minWidthPx: 200,
   },
   "total-visitors": {
     label: "Visitors",
@@ -186,19 +213,19 @@ const RESULTS_TABLE_COLUMN_META: Record<
     minWidthPx: 132,
   },
   "expected-improvement": {
-    label: "Improvement % (v)",
-    gridWidth: "minmax(200px, 1.2fr)",
-    minWidthPx: 200,
+    label: "Expected Improvement",
+    gridWidth: "minmax(220px, 1.2fr)",
+    minWidthPx: 220,
   },
   probability: {
-    label: "Probability to be Better",
-    gridWidth: "minmax(280px, 1.5fr)",
-    minWidthPx: 280,
+    label: "Probability to be Better or Equivalent",
+    gridWidth: "minmax(300px, 1.5fr)",
+    minWidthPx: 300,
   },
   "conversion-rate": {
-    label: "Conversion Rate (v)",
-    gridWidth: "minmax(148px, 1fr)",
-    minWidthPx: 148,
+    label: "Expected Conversion Rate",
+    gridWidth: "minmax(180px, 1fr)",
+    minWidthPx: 180,
   },
   "revenue-per-visitor": {
     label: "Revenue per visitor",
@@ -269,8 +296,12 @@ function buildResultsGrid(columns: ResultsTableColumnId[], grouped = false) {
   } as const;
 }
 
-/** Opaque sticky header fill — surface white so headers don’t merge with canvas. */
-const STICKY_HEADER_BG = "bg-background";
+/**
+ * Opaque sticky header fill. Must stay fully opaque — `bg-muted/40` is translucent
+ * and lets horizontally scrolled cells bleed through the sticky Variations / Actions columns.
+ */
+const STICKY_HEADER_BG =
+  "bg-[color-mix(in_srgb,var(--muted)_40%,var(--background))]";
 
 function stickyGroupCellClass(showEdgeShadow: boolean) {
   return cn(
@@ -402,9 +433,12 @@ function GraphBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }
     <span
       className={cn(
         "flex h-5 min-w-[28px] shrink-0 items-center justify-center rounded-full border px-2 text-xs font-medium",
-        tone === "ctrl" && "border-border bg-muted text-foreground",
-        tone === "v1" && "border-border bg-secondary text-foreground",
-        tone === "v2" && "border-border bg-muted text-foreground",
+        tone === "ctrl" &&
+          "border-report-ctrl-border bg-report-ctrl-bg text-report-ctrl-fg",
+        tone === "v1" &&
+          "border-report-v1-border bg-report-v1-bg text-report-v1-fg",
+        tone === "v2" &&
+          "border-report-v2-border bg-report-v2-bg text-report-v2-fg",
         tone === "total" && "border-border bg-muted/50 text-foreground"
       )}
     >
@@ -433,6 +467,25 @@ function FunnelIcon({ className }: { className?: string }) {
   );
 }
 
+/** Two overlapping rounded squares — matches the live Compare Metrics glyph. */
+function CompareMetricsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.35"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="1.5" y="1.5" width="8.5" height="8.5" rx="1.5" />
+      <rect x="6" y="6" width="8.5" height="8.5" rx="1.5" />
+    </svg>
+  );
+}
+
 function MultiSelectFilterChip({
   icon,
   label,
@@ -441,6 +494,9 @@ function MultiSelectFilterChip({
   onChange,
   maxSelections,
   plain,
+  stacked,
+  emptyValue = "-",
+  sublabel,
 }: {
   icon?: ReactNode;
   label: string;
@@ -450,9 +506,13 @@ function MultiSelectFilterChip({
   maxSelections?: number;
   /** Text-only chip for the results filter bar. */
   plain?: boolean;
+  /** Two-line report filter segment. */
+  stacked?: boolean;
+  emptyValue?: string;
+  sublabel?: string;
 }) {
   const summary =
-    value.length === 0 ? label : value.join(", ");
+    value.length === 0 ? (stacked ? emptyValue : label) : value.join(", ");
 
   const toggle = (option: string) => {
     const isSelected = value.includes(option);
@@ -471,19 +531,41 @@ function MultiSelectFilterChip({
           type="button"
           title={summary}
           className={cn(
-            "inline-flex items-center rounded-md border border-border bg-background text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-            plain
-              ? "h-8 px-3 text-foreground/80"
-              : "h-7 gap-1.5 px-2.5 text-foreground/80",
-            value.length > 0 && "text-foreground"
+            stacked
+              ? "flex h-full min-w-0 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/40 data-[state=open]:bg-muted/50"
+              : "inline-flex items-center rounded-md border border-border bg-background text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
+            !stacked &&
+              (plain
+                ? "h-8 px-3 text-foreground/80"
+                : "h-7 gap-1.5 px-2.5 text-foreground/80"),
+            !stacked && value.length > 0 && "text-foreground"
           )}
         >
-          {!plain && icon}
-          <span className={cn("truncate", plain ? "" : "max-w-[180px]")}>
-            {summary}
-          </span>
-          {!plain && (
-            <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+          {stacked ? (
+            <>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+                  {summary}
+                </span>
+                <span className="block text-xs leading-4 text-muted-foreground">
+                  {sublabel ?? label}
+                </span>
+              </span>
+              <ChevronDown
+                className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                aria-hidden
+              />
+            </>
+          ) : (
+            <>
+              {!plain && icon}
+              <span className={cn("truncate", plain ? "" : "max-w-[180px]")}>
+                {summary}
+              </span>
+              {!plain && (
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+              )}
+            </>
           )}
         </button>
       </PopoverTrigger>
@@ -583,40 +665,46 @@ function FilterBar({
   const showTrailing = Boolean(right);
 
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <FunnelIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <DateRangeDropdown
-          variant="presets"
-          presets={datePresets}
-          value={storedToDateRange(dateRange)}
-          onChange={(range) =>
-            updateSharedFilters(campaignId, {
-              dateRange: dateRangeToStored(range),
-            })
-          }
-        />
+    <div className="flex items-stretch gap-3">
+      <div className="flex min-w-0 flex-1 items-stretch overflow-hidden rounded-md border border-border bg-background">
+        <div className="flex w-11 shrink-0 items-center justify-center border-r border-border">
+          <FunnelIcon className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+        <div className="grid min-w-0 flex-1 grid-cols-3 divide-x divide-border">
+          <DateRangeDropdown
+            variant="stacked"
+            presets={datePresets}
+            value={storedToDateRange(dateRange)}
+            onChange={(range) =>
+              updateSharedFilters(campaignId, {
+                dateRange: dateRangeToStored(range),
+              })
+            }
+          />
+          <SegmentsSelector
+            stacked
+            value={segments}
+            onChange={(next) =>
+              updateSharedFilters(campaignId, { segments: next })
+            }
+          />
+          <MultiSelectFilterChip
+            stacked
+            label="Visitor Dimensions"
+            sublabel="Visitor Dimensions"
+            emptyValue="-"
+            options={REPORT_DIMENSION_OPTIONS}
+            value={dimensions}
+            onChange={(next) =>
+              updateSharedFilters(campaignId, { dimensions: next })
+            }
+            maxSelections={MAX_VISITOR_DIMENSIONS}
+          />
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <SegmentsSelector
-          plain
-          value={segments}
-          onChange={(next) =>
-            updateSharedFilters(campaignId, { segments: next })
-          }
-        />
-        <MultiSelectFilterChip
-          plain
-          label="Dimensions"
-          options={REPORT_DIMENSION_OPTIONS}
-          value={dimensions}
-          onChange={(next) =>
-            updateSharedFilters(campaignId, { dimensions: next })
-          }
-          maxSelections={MAX_VISITOR_DIMENSIONS}
-        />
-        {showTrailing && right}
-      </div>
+      {showTrailing ? (
+        <div className="flex shrink-0 items-center gap-2">{right}</div>
+      ) : null}
     </div>
   );
 }
@@ -833,15 +921,11 @@ export function ResultsFilterPanel({
   return (
     <div
       className={cn(
-        embedded
-          ? "border-b border-border bg-background"
-          : "overflow-hidden rounded-lg border border-surface-border bg-surface"
+        embedded ? "border-b border-border bg-background px-5 py-4" : "space-y-3"
       )}
     >
       <SavedFilterBar campaignId={campaignId} embedded />
-      <div className={filterPanelInsetClass}>
-        <FilterBar campaignId={campaignId} right={right} />
-      </div>
+      <FilterBar campaignId={campaignId} right={right} />
       <AppliedSegmentsRow
         campaignId={campaignId}
         trailing={appliedTrailing}
@@ -921,6 +1005,29 @@ function ConclusionInfoTooltip({
   );
 }
 
+function ConclusionProgressTrack({
+  progress,
+}: {
+  progress: ReportConclusionSnapshot["progress"];
+}) {
+  const pct = Math.min(
+    100,
+    Math.round(
+      (progress.visitors / Math.max(1, progress.requiredVisitors)) * 100
+    )
+  );
+  return (
+    <div className="mt-4 flex items-center gap-2">
+      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-report-brand"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function ConclusionBanner({
   conclusion,
   variantName,
@@ -953,13 +1060,6 @@ function ConclusionBanner({
           />
           <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
         </div>
-        {/* @undo Applied filters chips moved to the top ResultsFilterPanel.
-        {filtersActive && (
-          <div className="mt-3 pl-7">
-            <AppliedFiltersInline campaignId={campaignId} />
-          </div>
-        )}
-        */}
       </div>
     );
   }
@@ -1041,60 +1141,121 @@ function ConclusionBanner({
             </div>
           </ConclusionInfoTooltip>
         </p>
+        <ConclusionProgressTrack progress={progress} />
       </div>
     );
   }
 
-  // Baseline + inconclusive — grayscale, single-line copy with state icon.
-  if (kind === "baseline" || kind === "inconclusive") {
+  // Baseline — teal strip with thumbs-up (screenshot parity).
+  if (kind === "baseline") {
     return (
-      <div className={cn(shell, "flex items-start gap-3.5 px-6 py-5")}>
-        <ConclusionStateIcon kind={kind} size={18} />
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm font-semibold text-foreground">{title}</p>
-          <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+      <div
+        className={cn(
+          "overflow-hidden px-6 py-4",
+          embedded
+            ? "border-y border-report-blue-border bg-report-blue-bg/40"
+            : "rounded-xl border border-report-blue-border bg-report-blue-bg/40 shadow-sm"
+        )}
+      >
+        <div className="flex items-start gap-3.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-report-blue-border bg-background">
+            <ThumbsUp className="h-4 w-4 text-report-blue-fg" aria-hidden />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              Stick to {controlName}{" "}
+              <span className="inline-flex align-middle rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+                Baseline
+              </span>{" "}
+              as no variation shows the potential to outperform the baseline.
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+          </div>
         </div>
+        <ConclusionProgressTrack progress={progress} />
       </div>
     );
   }
 
-  // Winner — keep the existing decision-accent treatment. "Rollout" in the body
-  // is a stub link (rollout flow wires up later); split around the word so the
-  // copy stays centralized in conclusionCopy.
+  // Inconclusive — soft muted strip with scales icon.
+  if (kind === "inconclusive") {
+    return (
+      <div
+        className={cn(
+          "overflow-hidden px-6 py-4",
+          embedded
+            ? "border-y border-border bg-muted/40"
+            : "rounded-xl border border-border bg-muted/40 shadow-sm"
+        )}
+      >
+        <div className="flex items-start gap-3.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background">
+            <Scale className="h-4 w-4 text-report-blue-fg" aria-hidden />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              No significant winner
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {body}{" "}
+              <button
+                type="button"
+                className="font-medium text-report-link underline-offset-2 hover:underline"
+              >
+                Clone &amp; Modify
+              </button>
+            </p>
+          </div>
+        </div>
+        <ConclusionProgressTrack progress={progress} />
+      </div>
+    );
+  }
+
+  // Winner — green strip with trophy + uplift cue.
   const [rolloutPre, ...rolloutRest] = body.split("Rollout");
   return (
     <div
       className={cn(
-        "flex items-start gap-4 overflow-hidden bg-report-green-tint px-6 py-3.5",
+        "overflow-hidden bg-report-green-tint px-6 py-4",
         embedded
-          ? "border-0"
+          ? "border-y border-report-green-border"
           : "rounded-xl border border-report-green-border shadow-sm"
       )}
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-report-green-border bg-background shadow-sm">
-        <Award className="h-5 w-5 text-decision-winner-fg" aria-hidden />
-      </span>
-      <div className="min-w-0 space-y-1">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="text-sm leading-relaxed text-foreground/80">
-          {rolloutRest.length === 0 ? (
-            body
-          ) : (
-            <>
-              {rolloutPre}
-              <button
-                type="button"
-                onClick={() => {
-                  /* stub — rollout flow wires up later */
-                }}
-                className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
-              >
-                Rollout
-              </button>
-              {rolloutRest.join("Rollout")}
-            </>
-          )}
-        </p>
+      <div className="flex items-start gap-4">
+        <div className="flex shrink-0 flex-col items-center gap-1.5">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-report-green-border bg-background shadow-sm">
+            <Award className="h-5 w-5 text-decision-winner-fg" aria-hidden />
+          </span>
+        </div>
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            {variantName} is equivalent to or better than baseline
+          </p>
+          <p className="text-sm leading-relaxed text-foreground/80">
+            {rolloutRest.length === 0 ? (
+              body
+            ) : (
+              <>
+                {rolloutPre}
+                <button
+                  type="button"
+                  onClick={() => {
+                    /* stub — rollout flow wires up later */
+                  }}
+                  className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
+                >
+                  Rollout
+                </button>
+                {rolloutRest.join("Rollout")}
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
+        <div className="h-full w-[28%] rounded-full bg-report-blue-fg" />
       </div>
     </div>
   );
@@ -1559,11 +1720,13 @@ function StatisticalConfigurationTooltip({
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent
         side="bottom"
-        align="center"
+        align="end"
         sideOffset={8}
-        className="relative w-[min(100vw-2rem,420px)] overflow-visible rounded-xl border border-border bg-background p-0 text-left text-foreground shadow-xl"
+        collisionPadding={24}
+        avoidCollisions
+        className="z-[60] max-h-[min(32rem,calc(100dvh-1.5rem))] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-background p-0 text-left text-foreground shadow-xl"
       >
-        <TooltipArrow className="fill-background" />
+        <TooltipArrow className="fill-background" width={12} height={6} />
         <div className="space-y-5 px-5 py-5">
           <div className="space-y-1.5">
             <p className="text-base font-semibold text-foreground">
@@ -1735,10 +1898,12 @@ function MetricHeader({
   campaign,
   metric,
   isPrimary,
+  badgeIndex,
 }: {
   campaign: Campaign;
   metric: string;
   isPrimary: boolean;
+  badgeIndex: number;
 }) {
   const metricTitleClass =
     "border-b border-dashed border-muted-foreground text-lg font-semibold leading-tight tracking-tight text-foreground";
@@ -1746,10 +1911,7 @@ function MetricHeader({
   return (
     <div className="flex flex-nowrap items-center justify-between gap-4">
       <div className="flex min-w-0 items-center gap-2.5">
-        <MousePointerClick
-          className="h-5 w-5 shrink-0 text-foreground"
-          aria-hidden
-        />
+        <MetricIdBadge index={badgeIndex} starred={isPrimary} />
         <div className="flex min-w-0 flex-wrap items-center gap-2.5">
           {metric === "Conversion rate" ? (
             <MetricDefinitionTooltip side="bottom">
@@ -2634,8 +2796,8 @@ function ExpectedImprovementHelp() {
 function ProbabilityBetterOrEquivalentHelp() {
   return (
     <TableColumnHelp
-      title="Probability to be Better"
-      ariaLabel="What is probability to be better"
+      title="Probability to be Better or Equivalent"
+      ariaLabel="What is probability to be better or equivalent"
       body="The probability that this variation performs at least as well as the control, given your data and statistical settings (MDE, ROPE, statistical power, and false positive rate). Higher values indicate stronger evidence in favor of the variation."
     />
   );
@@ -2798,11 +2960,13 @@ function TableHeader({
   } as const;
 
   const titleCellClass = cn(
-    "flex items-center gap-1.5 overflow-hidden bg-background pb-1.5 pt-3",
+    "flex items-center gap-1.5 overflow-hidden pb-1.5 pt-3",
+    STICKY_HEADER_BG,
     resultsMetricColChrome
   );
   const subheadCellClass = cn(
-    "flex items-start overflow-hidden bg-background pb-3 pt-1",
+    "flex items-start overflow-hidden pb-3 pt-1",
+    STICKY_HEADER_BG,
     resultsMetricColChrome
   );
 
@@ -2850,9 +3014,12 @@ function TableHeader({
             "flex min-w-0 items-center px-4 pb-1.5 pt-3"
           )}
         >
-          <span className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}>
-            Variations
-          </span>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className={cn(resultsTableHeaderLabelClass, "min-w-0 truncate")}>
+              Variations
+            </span>
+            <FunnelIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+          </div>
         </div>
       )}
       {columns.map((id) => {
@@ -2962,43 +3129,15 @@ function TableHeader({
             <div
               key={`sub-${id}`}
               className={cn(
-                "flex flex-col items-start gap-0.5 overflow-visible bg-background pb-1 pt-1",
+                "flex items-center gap-1 overflow-visible pb-1 pt-1",
+                STICKY_HEADER_BG,
                 resultsMetricColChrome
               )}
             >
-              <div className="flex min-w-0 items-center gap-1">
-                <span className={cn(resultsTableSubheadClass, "truncate")}>
-                  MDE ±20% · ROPE 1.5% · Power 80% · FPR 5%
-                </span>
-                <Pencil
-                  className="h-3 w-3 shrink-0 text-muted-foreground"
-                  aria-hidden
-                />
-              </div>
-              {/* "95%" centered on the dashed divider; label + help share its baseline. */}
-              <div className="relative h-4 w-full overflow-visible">
-                <div
-                  className="absolute top-0"
-                  style={{ left: `${WINNER_THRESHOLD}%` }}
-                >
-                  <div className="relative flex -translate-x-1/2 items-end whitespace-nowrap">
-                    <span
-                      className={cn(
-                        resultsTableSubheadClass,
-                        "absolute right-full bottom-0 pr-0.5"
-                      )}
-                    >
-                      Winner threshold:
-                    </span>
-                    <span className={resultsTableSubheadClass}>
-                      {WINNER_THRESHOLD}%
-                    </span>
-                    <span className="absolute bottom-0 left-full ml-1 flex items-end">
-                      <WinnerThresholdHelp />
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <span className={resultsTableSubheadClass}>
+                Winner Threshold: {WINNER_THRESHOLD}%
+              </span>
+              <WinnerThresholdHelp />
             </div>
           );
         }
@@ -3160,7 +3299,13 @@ function ResultsMetricCell({
   );
   switch (columnId) {
     case "unique-conversions":
-      return <div className={numericCell}>{formatNumber(conversions)}</div>;
+      return (
+        <div className={numericCell}>
+          {formatNumber(conversions)}{" "}
+          <span className="text-muted-foreground">/</span>{" "}
+          {formatNumber(visitors)}
+        </div>
+      );
     case "total-visitors":
       return <div className={numericCell}>{formatNumber(visitors)}</div>;
     case "expected-improvement":
@@ -3187,8 +3332,32 @@ function ResultsMetricCell({
           )}
         </div>
       );
-    case "conversion-rate":
-      return <div className={numericCell}>{conversionRate.toFixed(2)}%</div>;
+    case "conversion-rate": {
+      const band = expectedRateBand(conversionRate);
+      const winnerRate =
+        !isControl && confidence !== null && confidence >= WINNER_THRESHOLD;
+      return (
+        <div
+          className={cn(
+            metricCell,
+            rowH,
+            "flex flex-col items-end justify-center gap-0.5 border-b border-border text-right tabular-nums"
+          )}
+        >
+          <span
+            className={cn(
+              "text-sm font-medium",
+              winnerRate ? "text-success-fg" : "text-foreground"
+            )}
+          >
+            {conversionRate.toFixed(2)}%
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            {band.low.toFixed(2)}% to {band.high.toFixed(2)}%
+          </span>
+        </div>
+      );
+    }
     case "revenue-per-visitor":
       return (
         <div className={numericCell}>${revenuePerVisitorValue.toFixed(2)}</div>
@@ -3272,7 +3441,13 @@ function ResultsTotalMetricCell({
   );
   switch (columnId) {
     case "unique-conversions":
-      return <div className={numeric}>{formatNumber(conversions)}</div>;
+      return (
+        <div className={numeric}>
+          {formatNumber(conversions)}{" "}
+          <span className="text-muted-foreground">/</span>{" "}
+          {formatNumber(visitors)}
+        </div>
+      );
     case "total-visitors":
       return <div className={numeric}>{formatNumber(visitors)}</div>;
     case "expected-improvement":
@@ -3468,7 +3643,7 @@ function ProbabilityCell({
       <div className="relative h-[15px] w-full">
         {isWinner && (
           <span className="absolute -top-[18px] left-0 whitespace-nowrap text-xs font-medium text-success-fg">
-            Better than baseline
+            Better or Equivalent to Baseline
           </span>
         )}
         {/* track */}
@@ -3477,18 +3652,18 @@ function ProbabilityCell({
         <div
           className={cn(
             "absolute inset-y-0 left-0 rounded-[3px]",
-            isWinner ? "bg-success-fg" : "bg-muted-foreground/30"
+            isWinner ? "bg-success-fg" : "bg-muted-foreground/35"
           )}
           style={{ width: `${value}%` }}
         />
         {/* pct label */}
         <span
           className={cn(
-            "absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase",
-            isWinner ? "text-success-fg" : "text-foreground/70"
+            "absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold tabular-nums",
+            isWinner ? "text-background" : "text-foreground"
           )}
         >
-          {value}%
+          {value.toFixed(2)}%
         </span>
         <WinnerThresholdMark rowDensity={rowDensity} />
       </div>
@@ -5415,16 +5590,14 @@ const MetricListItem = forwardRef<
       onClick={onClick}
       aria-current={active ? "true" : undefined}
       className={cn(
-        "flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-foreground transition-colors hover:bg-muted",
-        active && "bg-accent text-accent-foreground",
+        "flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-foreground transition-colors hover:bg-muted/70",
+        active && "bg-muted font-medium text-foreground",
         className
       )}
       {...props}
     >
-      <span className="shrink-0 text-foreground/70">{icon}</span>
-      <span
-        className={cn("min-w-0 flex-1 truncate", active && "font-medium")}
-      >
+      <span className="shrink-0">{icon}</span>
+      <span className={cn("min-w-0 flex-1 truncate", active && "font-semibold")}>
         {label}
       </span>
       {trailing ? (
@@ -5436,7 +5609,9 @@ const MetricListItem = forwardRef<
 
 function MetricGroupLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="px-2 pb-1 text-sm font-semibold text-foreground">{children}</p>
+    <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      {children}
+    </p>
   );
 }
 
@@ -5462,7 +5637,7 @@ function MetricRailItem({
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
             active
-              ? "bg-accent text-foreground"
+              ? "bg-muted text-foreground"
               : "text-foreground hover:bg-muted/60"
           )}
         >
@@ -5485,8 +5660,6 @@ const metricsSidebarSectionClass = "mt-3 flex flex-col gap-1 border-t border-pan
 const metricsSidebarActionStripClass =
   "mt-3 flex min-h-[44px] items-center border-t border-panel-border px-3 pt-3";
 
-const cursorIcon = <MousePointerClick className="h-4 w-4" aria-hidden />;
-
 function MetricSelector({
   campaign,
   selectedMetric,
@@ -5508,32 +5681,32 @@ function MetricSelector({
   // Guardrails stay the otherMetrics slice; Secondary adds the dedicated five.
   const guardrails = reportGuardrailMetrics(campaign.report);
   const secondary = reportSecondaryMetrics(campaign.report);
+  const secondaryStart = 1;
+  const guardrailStart = secondaryStart + secondary.length;
 
   const collapsedContent = (
     <TooltipProvider delayDuration={200}>
       <MetricRailItem
-        icon={cursorIcon}
+        icon={<MetricIdBadge index={0} starred />}
         label={campaign.primaryMetric}
         active={selectedMetric === campaign.primaryMetric}
         onClick={() => onSelectMetric(campaign.primaryMetric)}
       />
       <MetricRailDivider />
-      {guardrails.map((metric, i) => (
+      {secondary.map((metric, i) => (
         <MetricRailItem
           key={metric.name}
-          icon={
-            i === 1 ? <LayoutPanelTop className="h-4 w-4" aria-hidden /> : cursorIcon
-          }
+          icon={<MetricIdBadge index={secondaryStart + i} />}
           label={metric.name}
           active={selectedMetric === metric.name}
           onClick={() => onSelectMetric(metric.name)}
         />
       ))}
       <MetricRailDivider />
-      {secondary.map((metric) => (
+      {guardrails.map((metric, i) => (
         <MetricRailItem
           key={metric.name}
-          icon={cursorIcon}
+          icon={<MetricIdBadge index={guardrailStart + i} />}
           label={metric.name}
           active={selectedMetric === metric.name}
           onClick={() => onSelectMetric(metric.name)}
@@ -5544,7 +5717,7 @@ function MetricSelector({
 
   const primaryMetricItem = (
     <MetricListItem
-      icon={cursorIcon}
+      icon={<MetricIdBadge index={0} starred />}
       label={campaign.primaryMetric}
       active={selectedMetric === campaign.primaryMetric}
       onClick={() => onSelectMetric(campaign.primaryMetric)}
@@ -5574,10 +5747,10 @@ function MetricSelector({
         {/* Secondary */}
         <div className={metricsSidebarSectionClass}>
           <MetricGroupLabel>Secondary</MetricGroupLabel>
-          {secondary.map((metric) => (
+          {secondary.map((metric, i) => (
             <MetricListItem
               key={metric.name}
-              icon={cursorIcon}
+              icon={<MetricIdBadge index={secondaryStart + i} />}
               label={metric.name}
               active={selectedMetric === metric.name}
               onClick={() => onSelectMetric(metric.name)}
@@ -5591,9 +5764,7 @@ function MetricSelector({
           {guardrails.map((metric, i) => (
             <MetricListItem
               key={metric.name}
-              icon={
-                i === 1 ? <LayoutPanelTop className="h-4 w-4" aria-hidden /> : cursorIcon
-              }
+              icon={<MetricIdBadge index={guardrailStart + i} />}
               label={metric.name}
               active={selectedMetric === metric.name}
               onClick={() => onSelectMetric(metric.name)}
@@ -5608,10 +5779,10 @@ function MetricSelector({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 gap-2 rounded-md font-medium"
+                className="h-8 w-full gap-2 rounded-md font-medium"
                 onClick={onEnterCompare}
               >
-                <Columns2 className="h-4 w-4" aria-hidden />
+                <CompareMetricsIcon className="h-4 w-4" />
                 Compare Metrics
               </Button>
             </div>
@@ -5987,7 +6158,7 @@ function CompareView({
     <div className="overflow-hidden rounded-lg border border-border bg-background">
       <div className="flex items-start justify-between px-5 py-4">
         <div className="flex items-start gap-3">
-          <Columns2 className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" aria-hidden />
+          <CompareMetricsIcon className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" />
           <div>
             <p className="text-base font-medium text-foreground">Compare Metrics</p>
             <p className="text-sm text-muted-foreground">
@@ -6008,7 +6179,7 @@ function CompareView({
       {count === 0 ? (
         <div className="flex h-[360px] flex-col items-center justify-center gap-4 px-6 text-center">
           <div className="flex h-28 w-28 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40">
-            <Columns2 className="h-12 w-12 text-muted-foreground/50" aria-hidden />
+            <CompareMetricsIcon className="h-12 w-12 text-muted-foreground/50" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">No metrics selected</p>
@@ -6233,6 +6404,7 @@ export default function ResultsTab({
           campaign={campaign}
           metric={item.name}
           isPrimary={item.role === "primary"}
+          badgeIndex={metricBadgeIndexForCampaign(campaign, item.name)}
         />
         {renderMetricResultsCard(item.name, {
           showConclusion: item.role === "primary",
@@ -6335,6 +6507,10 @@ export default function ResultsTab({
                   campaign={campaign}
                   metric={selectedMetric}
                   isPrimary={selectedMetric === campaign.primaryMetric}
+                  badgeIndex={metricBadgeIndexForCampaign(
+                    campaign,
+                    selectedMetric
+                  )}
                 />
                 {renderMetricResultsCard(selectedMetric, {
                   showConclusion:

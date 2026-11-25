@@ -2443,16 +2443,17 @@ export default function DetailShell({ basePath: basePathProp, children }: Detail
           >
             {children}
           </div>
-          {onReports ? (
-            <div
-              className="absolute bottom-0 right-0 top-14 z-30"
-              style={{ width: UTILITY_RAIL_WIDTH }}
-            >
-              <UtilityRail entityId={entityId} />
-            </div>
-          ) : null}
+          {/* Peeks from the right edge on hover — no layout reserve. */}
+          <div
+            className={cn(
+              "pointer-events-none absolute bottom-0 right-0 z-30",
+              onReports ? "top-14" : "top-0"
+            )}
+            style={{ width: UTILITY_RAIL_WIDTH }}
+          >
+            <UtilityRail entityId={entityId} />
+          </div>
         </main>
-        {!onReports ? <UtilityRail entityId={entityId} /> : null}
       </div>
       </div>
 

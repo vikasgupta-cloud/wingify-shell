@@ -1387,11 +1387,14 @@ export function SegmentsSelector({
   value,
   onChange,
   plain,
+  stacked,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   /** Text-only chip for the results filter bar. */
   plain?: boolean;
+  /** Two-line report filter segment (value + “Visitor Segments”). */
+  stacked?: boolean;
 }) {
   const [mode, setMode] = useState<"closed" | "mini" | "drawer">("closed");
   const modeRef = useRef(mode);
@@ -1403,7 +1406,9 @@ export function SegmentsSelector({
 
   const summary =
     value.length === 0
-      ? "Segments"
+      ? stacked
+        ? "All Visitors"
+        : "Segments"
       : value.length === 1
         ? value[0]
         : `Segments(${value.length})`;
@@ -1451,22 +1456,45 @@ export function SegmentsSelector({
           <button
             type="button"
             className={cn(
-              "inline-flex items-center rounded-md border border-border bg-background text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
-              plain
-                ? "h-8 px-3 text-foreground/80"
-                : "h-7 gap-1.5 px-2.5 text-foreground/80",
-              value.length > 0 &&
+              stacked
+                ? "flex h-full min-w-0 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/40 data-[state=open]:bg-muted/50"
+                : "inline-flex items-center rounded-md border border-border bg-background text-sm transition-colors hover:bg-muted/60 data-[state=open]:bg-muted/60",
+              !stacked &&
+                (plain
+                  ? "h-8 px-3 text-foreground/80"
+                  : "h-7 gap-1.5 px-2.5 text-foreground/80"),
+              !stacked &&
+                value.length > 0 &&
                 (plain
                   ? "text-foreground"
                   : "border-foreground/30 bg-accent/40 text-foreground")
             )}
           >
-            {!plain && <Compass className="h-3.5 w-3.5" aria-hidden />}
-            <span className={cn("truncate", plain ? "" : "max-w-[140px]")}>
-              {summary}
-            </span>
-            {!plain && (
-              <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+            {stacked ? (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold leading-5 text-foreground">
+                    {summary}
+                  </span>
+                  <span className="block text-xs leading-4 text-muted-foreground">
+                    Visitor Segments
+                  </span>
+                </span>
+                <ChevronDown
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+              </>
+            ) : (
+              <>
+                {!plain && <Compass className="h-3.5 w-3.5" aria-hidden />}
+                <span className={cn("truncate", plain ? "" : "max-w-[140px]")}>
+                  {summary}
+                </span>
+                {!plain && (
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
+                )}
+              </>
             )}
           </button>
         </PopoverTrigger>
